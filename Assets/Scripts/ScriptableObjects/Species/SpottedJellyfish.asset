@@ -29,8 +29,8 @@ MonoBehaviour:
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.01
-  maxDepthFraction: 0.12
+  minDepthFraction: 0.005
+  maxDepthFraction: 0.1
   instanceCount: 4
   wanderRadius: 12
   moveSpeed: 1.5

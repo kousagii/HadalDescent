@@ -3,11 +3,14 @@ using UnityEngine;
 
 /// <summary>
 /// Reads SpeciesRegistry and spawns species into the current zone following
-/// ecological placement rules (biome band + depth fraction match).
+/// strict ecological placement rules:
+///   1. Exact depth range match (minDepthFraction to maxDepthFraction).
+///   2. Biome preference match (Hard reef, Soft seagrass, Rock boulders, Open water).
+///   3. Raycast ground/rock snapping for stationary species.
 ///
-/// Mobile species  → gets Rigidbody + ContextSteering + SpeciesAI.
-/// Stationary      → gets BoxCollider trigger + ScanTarget.
-/// Both types are detected by ScannerSystem via OverlapSphere.
+/// Mobile species     → Rigidbody + ContextSteering + SpeciesAI (swims in depth band).
+/// Stationary species → snaps to rocks/reef structures/seabed via Raycast,
+///                      aligns to surface normal, gets BoxCollider trigger + ScanTarget.
 /// </summary>
 public class SpeciesSpawner : MonoBehaviour
 {
@@ -21,9 +24,9 @@ public class SpeciesSpawner : MonoBehaviour
 
     [Header("Spawn Parameters")]
     [Tooltip("Max random placement attempts per creature instance before giving up.")]
-    [SerializeField] private int   maxAttempts   = 30;
+    [SerializeField] private int   maxAttempts   = 60;
     [Tooltip("Minimum distance between two spawned entities.")]
-    [SerializeField] private float minSeparation = 8f;
+    [SerializeField] private float minSeparation = 5f;
     [Tooltip("Radius used to check for terrain overlap at a candidate position.")]
     [SerializeField] private float overlapRadius = 1.5f;
     [Tooltip("Layer(s) to check against for terrain overlap (should match TerrainGenerator).")]
@@ -45,6 +48,12 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void Start()
     {
+        if (terrain == null) terrain = FindFirstObjectByType<TerrainGenerator>();
+        if (terrain != null && !terrain.HasGenerated)
+        {
+            // TerrainGenerator will call SpawnForZone once mesh & props are baked!
+            return;
+        }
         if (!_hasSpawned) SpawnForZone(0);
     }
 
@@ -67,6 +76,7 @@ public class SpeciesSpawner : MonoBehaviour
         }
 
         EnsureCreatureParent();
+        ClearExistingCreatures();
 
         var allSpecies = registry.GetSpeciesForZone(zoneIndex);
         int totalSpawned = 0;
@@ -89,9 +99,9 @@ public class SpeciesSpawner : MonoBehaviour
         int spawned = 0;
         for (int i = 0; i < data.instanceCount; i++)
         {
-            if (TryFindSpawnPosition(data, out Vector3 pos))
+            if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot))
             {
-                SpawnInstance(data, pos);
+                SpawnInstance(data, pos, rot);
                 _usedPositions.Add(pos);
                 spawned++;
             }
@@ -101,46 +111,89 @@ public class SpeciesSpawner : MonoBehaviour
         return spawned;
     }
 
-    private bool TryFindSpawnPosition(SpeciesData data, out Vector3 result)
+    private bool TryFindSpawnPosition(SpeciesData data, out Vector3 resultPos, out Quaternion resultRot)
     {
         float W = _zoneDef != null ? _zoneDef.playableWidth : 600f;
         float L = _zoneDef != null ? _zoneDef.playableLength : 600f;
         float D = _zoneDef != null ? _zoneDef.playableDepth : 200f;
 
+        resultPos = Vector3.zero;
+        resultRot = Quaternion.identity;
+
+        int terrainLayerMask = LayerMask.GetMask("Terrain", "Default");
+        if (terrainLayerMask == 0) terrainLayerMask = ~0;
+
+        // Depth bounds in world Y coordinates:
+        // minDepthFraction = 0 (surface Y=0m), maxDepthFraction = 1 (floor Y=-Dm)
+        float depthMinY = Mathf.Lerp(0f, -D, data.minDepthFraction);
+        float depthMaxY = Mathf.Lerp(0f, -D, data.maxDepthFraction);
+        float upperDepthLimit = Mathf.Max(depthMinY, depthMaxY);
+        float lowerDepthLimit = Mathf.Min(depthMinY, depthMaxY);
+
+        Vector3 bestCandidatePos = Vector3.zero;
+        Quaternion bestCandidateRot = Quaternion.identity;
+        float bestDepthDiff = float.MaxValue;
+
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            float rx = Random.Range(-W * 0.45f, W * 0.45f);
-            float rz = Random.Range(-L * 0.45f, L * 0.45f);
+            float rx = Random.Range(-W * 0.44f, W * 0.44f);
+            float rz = Random.Range(-L * 0.44f, L * 0.44f);
 
-            // Check biome match (strict for first 15 attempts, relaxed after)
-            if (attempt < 15 && terrain != null && terrain.GetBiomeAt(rx, rz) != data.preferredBiome)
-                continue;
-
-            // Compute Y position
             float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
-            float ry;
+            Vector3 candidatePos;
+            Quaternion candidateRot = Quaternion.identity;
 
             if (data.isStationary)
             {
-                // Sit directly on the mesh surface
-                ry = floorY + Random.Range(0.2f, 1.2f);
+                // Raycast downward to snap onto rocks, reef props, or the seabed floor
+                Vector3 rayOrigin = new Vector3(rx, 5f, rz);
+                if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, D + 50f, terrainLayerMask))
+                {
+                    candidatePos = hit.point;
+                    Quaternion surfaceAlign = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                    Quaternion randomSpin  = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    candidateRot = surfaceAlign * randomSpin;
+                }
+                else
+                {
+                    candidatePos = new Vector3(rx, floorY, rz);
+                    candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                }
+
+                // Check depth difference to preferred biological depth window
+                float depthDiff = 0f;
+                if (candidatePos.y > upperDepthLimit) depthDiff = candidatePos.y - upperDepthLimit;
+                else if (candidatePos.y < lowerDepthLimit) depthDiff = lowerDepthLimit - candidatePos.y;
+
+                if (depthDiff < bestDepthDiff)
+                {
+                    bestDepthDiff = depthDiff;
+                    bestCandidatePos = candidatePos;
+                    bestCandidateRot = candidateRot;
+                }
+
+                // Strict biological match for first 25 attempts
+                float tolerance = attempt > 25 ? 15f + (attempt - 25) * 1.5f : 4f;
+                if (depthDiff > tolerance)
+                {
+                    continue; // Keep searching for a closer reef summit or rock structure
+                }
             }
             else
             {
-                // Swim in depth band, but never below the floor or above surface
-                float topY    = Mathf.Lerp(-2f, -D, data.minDepthFraction);
-                float bottomY = Mathf.Lerp(-2f, -D, data.maxDepthFraction);
-                ry = Random.Range(Mathf.Min(topY, bottomY), Mathf.Max(topY, bottomY));
-                ry = Mathf.Clamp(ry, floorY + 2.5f, -2f);
+                // Mobile species: swim in depth band, stay safely above the floor
+                float ry = Random.Range(lowerDepthLimit, upperDepthLimit);
+                ry       = Mathf.Clamp(ry, floorY + 2.5f, -1.5f);
+
+                candidatePos = new Vector3(rx, ry, rz);
+                candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
 
-            Vector3 candidate = new Vector3(rx, ry, rz);
-
-            // Minimum separation check
+            // Minimum separation check against already placed entities
             bool tooClose = false;
             foreach (var used in _usedPositions)
             {
-                if (Vector3.Distance(candidate, used) < minSeparation)
+                if (Vector3.Distance(candidatePos, used) < minSeparation)
                 {
                     tooClose = true;
                     break;
@@ -148,11 +201,19 @@ public class SpeciesSpawner : MonoBehaviour
             }
             if (tooClose) continue;
 
-            result = candidate;
+            resultPos = candidatePos;
+            resultRot = candidateRot;
             return true;
         }
 
-        result = Vector3.zero;
+        // Fallback: use best candidate found during search
+        if (bestCandidatePos != Vector3.zero)
+        {
+            resultPos = bestCandidatePos;
+            resultRot = bestCandidateRot;
+            return true;
+        }
+
         return false;
     }
 
@@ -160,11 +221,11 @@ public class SpeciesSpawner : MonoBehaviour
     // Instantiation
     // -----------------------------------------------------------------------
 
-    private void SpawnInstance(SpeciesData data, Vector3 position)
+    private void SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation)
     {
         GameObject go = data.modelPrefab != null
-            ? Instantiate(data.modelPrefab, position, Quaternion.identity, creatureParent)
-            : CreatePlaceholder(data, position);
+            ? Instantiate(data.modelPrefab, position, rotation, creatureParent)
+            : CreatePlaceholder(data, position, rotation);
 
         go.name = $"{data.commonName} [{data.speciesId}]";
 
@@ -172,7 +233,7 @@ public class SpeciesSpawner : MonoBehaviour
         else                   SetupMobile(go, data, position);
     }
 
-    private GameObject CreatePlaceholder(SpeciesData data, Vector3 position)
+    private GameObject CreatePlaceholder(SpeciesData data, Vector3 position, Quaternion rotation)
     {
         PrimitiveType pType = data.placeholderShape switch
         {
@@ -185,6 +246,7 @@ public class SpeciesSpawner : MonoBehaviour
         var go = GameObject.CreatePrimitive(pType);
         go.transform.SetParent(creatureParent, false);
         go.transform.position   = position;
+        go.transform.rotation   = rotation;
         go.transform.localScale = data.placeholderScale != Vector3.zero ? data.placeholderScale : Vector3.one;
 
         var rend = go.GetComponent<Renderer>();
@@ -211,7 +273,6 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SetupStationary(GameObject go, SpeciesData data)
     {
-        // Safe check for collider without using ?? operator on UnityEngine.Object
         var col = go.GetComponent<Collider>();
         if (col == null)
         {
@@ -230,7 +291,6 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SetupMobile(GameObject go, SpeciesData data, Vector3 spawnCenter)
     {
-        // Rigidbody (required by ContextSteering) - Safe check without ?? operator
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null)
         {
@@ -239,7 +299,6 @@ public class SpeciesSpawner : MonoBehaviour
         rb.useGravity     = false;
         rb.freezeRotation = true;
 
-        // Ensure trigger collider exists for scanner
         var col = go.GetComponent<Collider>();
         if (col == null)
         {
@@ -273,5 +332,14 @@ public class SpeciesSpawner : MonoBehaviour
         creatureParent.position   = Vector3.zero;
         creatureParent.rotation   = Quaternion.identity;
         creatureParent.localScale = Vector3.one;
+    }
+
+    private void ClearExistingCreatures()
+    {
+        if (creatureParent == null) return;
+        for (int i = creatureParent.childCount - 1; i >= 0; i--)
+        {
+            Destroy(creatureParent.GetChild(i).gameObject);
+        }
     }
 }

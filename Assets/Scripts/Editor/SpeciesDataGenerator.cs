@@ -5,7 +5,7 @@ using UnityEngine;
 
 /// <summary>
 /// Editor utility to generate and register all scientific species assets
-/// for Hadal Descent based on official marine biological data.
+/// for Hadal Descent with accurate biological depth ranges and habitats.
 ///
 /// Run via Unity Editor Menu: HadalDescent → Populate All Species (Sunlight Zone)
 /// </summary>
@@ -22,7 +22,8 @@ public static class SpeciesDataGenerator
 
         var createdAssets = new List<SpeciesData>();
 
-        // 1. Clownfish
+        // Total zone depth = 200m in Sunlight Zone
+        // 1. Clownfish (1–15m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "Clownfish", new SpeciesDataConfig
         {
             speciesId        = "clownfish_001",
@@ -38,9 +39,9 @@ public static class SpeciesDataGenerator
             scanDifficulty   = 1, // Easy
             isStationary     = false,
             isShy            = false,
-            preferredBiome   = BiomeBand.Hard, // Coral
-            minDepthFraction = 0.005f, // 1m
-            maxDepthFraction = 0.08f,  // 15m
+            preferredBiome   = BiomeBand.Hard, // Coral Reef
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.075f, // 15m depth
             instanceCount    = 5,
             wanderRadius     = 8f,
             moveSpeed        = 2.2f,
@@ -50,7 +51,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(0.5f, 0.5f, 0.5f)
         }));
 
-        // 2. Bubble-tip Sea Anemone
+        // 2. Bubble-tip Sea Anemone (0–35m on shallow reef summits)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "BubbleTipAnemone", new SpeciesDataConfig
         {
             speciesId        = "anemone_001",
@@ -58,7 +59,7 @@ public static class SpeciesDataGenerator
             scientificName   = "Entacmaea quadricolor",
             taxonomicClass   = TaxonomicClass.Anthozoa,
             zoneIndex        = 0,
-            habitat          = "Shallow coral reefs (0–200 m)",
+            habitat          = "Shallow coral reefs (0–35 m)",
             characteristics  = "Numerous tentacles with rounded, bubble-like bulbous tips.",
             ecologicalRole   = "Provides shelter for clownfish and small reef invertebrates.",
             interestingFact  = "Its tentacles can morph dynamically from bulbous bubbles to flowing streamers.",
@@ -67,15 +68,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Hard,
-            minDepthFraction = 0.01f,
-            maxDepthFraction = 0.40f,
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.175f, // 35m depth
             instanceCount    = 4,
             placeholderShape = PlaceholderShape.Cylinder,
             placeholderColor = new Color(0.95f, 0.35f, 0.65f, 1f),
             placeholderScale = new Vector3(1.2f, 0.8f, 1.2f)
         }));
 
-        // 3. Fan Coral
+        // 3. Fan Coral (10–60m on reef drop-offs & walls)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "FanCoral", new SpeciesDataConfig
         {
             speciesId        = "fan_coral_001",
@@ -83,7 +84,7 @@ public static class SpeciesDataGenerator
             scientificName   = "Melithaea philippinensis",
             taxonomicClass   = TaxonomicClass.Anthozoa,
             zoneIndex        = 0,
-            habitat          = "Shallow coral reefs and reef drop-offs",
+            habitat          = "Shallow coral reefs and reef drop-offs (10–60 m)",
             characteristics  = "Branching, fan-shaped octocoral with a semi-rigid calcified skeleton.",
             ecologicalRole   = "Provides 3D structural shelter for small organisms and filter-feeds plankton.",
             interestingFact  = "Grows oriented perpendicular to water currents to maximize particle capture.",
@@ -92,15 +93,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Hard,
-            minDepthFraction = 0.05f,
-            maxDepthFraction = 0.50f,
+            minDepthFraction = 0.05f,  // 10m depth
+            maxDepthFraction = 0.30f,  // 60m depth
             instanceCount    = 6,
             placeholderShape = PlaceholderShape.Cube,
             placeholderColor = new Color(0.92f, 0.25f, 0.35f, 1f),
             placeholderScale = new Vector3(1.5f, 2.0f, 0.3f)
         }));
 
-        // 4. Pacific Blue Sea Star
+        // 4. Pacific Blue Sea Star (0–60m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "PacificBlueSeaStar", new SpeciesDataConfig
         {
             speciesId        = "blue_seastar_001",
@@ -117,15 +118,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Hard,
-            minDepthFraction = 0.01f,
-            maxDepthFraction = 0.30f,
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.30f,  // 60m depth
             instanceCount    = 4,
             placeholderShape = PlaceholderShape.Sphere,
             placeholderColor = new Color(0.12f, 0.45f, 0.95f, 1f),
             placeholderScale = new Vector3(1.0f, 0.3f, 1.0f)
         }));
 
-        // 5. Giant Clam
+        // 5. Giant Clam (0–35m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "GiantClam", new SpeciesDataConfig
         {
             speciesId        = "giant_clam_001",
@@ -142,15 +143,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Hard,
-            minDepthFraction = 0.01f,
-            maxDepthFraction = 0.18f,
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.175f, // 35m depth
             instanceCount    = 3,
             placeholderShape = PlaceholderShape.Cube,
             placeholderColor = new Color(0.10f, 0.85f, 0.75f, 1f),
             placeholderScale = new Vector3(2.0f, 1.2f, 1.5f)
         }));
 
-        // 6. Bigfin Reef Squid
+        // 6. Bigfin Reef Squid (0–100m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "BigfinReefSquid", new SpeciesDataConfig
         {
             speciesId        = "reef_squid_001",
@@ -167,8 +168,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = true,
             preferredBiome   = BiomeBand.Soft, // Seagrass
-            minDepthFraction = 0.05f,
-            maxDepthFraction = 0.45f,
+            minDepthFraction = 0.02f, // 4m depth
+            maxDepthFraction = 0.50f, // 100m depth
             instanceCount    = 3,
             wanderRadius     = 18f,
             moveSpeed        = 3.2f,
@@ -178,7 +179,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(0.8f, 1.8f, 0.8f)
         }));
 
-        // 7. Blacktip Reef Shark
+        // 7. Blacktip Reef Shark (0–75m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "BlacktipReefShark", new SpeciesDataConfig
         {
             speciesId        = "blacktip_shark_001",
@@ -195,8 +196,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = false,
             preferredBiome   = BiomeBand.OpenWater,
-            minDepthFraction = 0.05f,
-            maxDepthFraction = 0.38f,
+            minDepthFraction = 0.025f, // 5m depth
+            maxDepthFraction = 0.375f, // 75m depth
             instanceCount    = 2,
             wanderRadius     = 30f,
             moveSpeed        = 4.5f,
@@ -206,7 +207,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(1.2f, 3.5f, 1.2f)
         }));
 
-        // 8. Blue-spotted Ribbontail Ray
+        // 8. Blue-spotted Ribbontail Ray (0–20m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "BlueSpottedRibbontailRay", new SpeciesDataConfig
         {
             speciesId        = "ribbontail_ray_001",
@@ -223,8 +224,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = true,
             preferredBiome   = BiomeBand.Soft, // Sand / Seagrass
-            minDepthFraction = 0.02f,
-            maxDepthFraction = 0.12f,
+            minDepthFraction = 0.01f,  // 2m depth
+            maxDepthFraction = 0.10f,  // 20m depth
             instanceCount    = 3,
             wanderRadius     = 14f,
             moveSpeed        = 2.6f,
@@ -234,7 +235,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(1.8f, 0.2f, 1.8f)
         }));
 
-        // 9. Purple Sea Urchin
+        // 9. Purple Sea Urchin (0–160m on rock cliffs)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "PurpleSeaUrchin", new SpeciesDataConfig
         {
             speciesId        = "purple_urchin_001",
@@ -251,15 +252,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Rock,
-            minDepthFraction = 0.05f,
-            maxDepthFraction = 0.75f,
+            minDepthFraction = 0.05f, // 10m depth
+            maxDepthFraction = 0.80f, // 160m depth
             instanceCount    = 6,
             placeholderShape = PlaceholderShape.Sphere,
             placeholderColor = new Color(0.65f, 0.15f, 0.85f, 1f),
             placeholderScale = new Vector3(0.6f, 0.6f, 0.6f)
         }));
 
-        // 10. Dotted Sea Hare
+        // 10. Dotted Sea Hare (0–80m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "DottedSeaHare", new SpeciesDataConfig
         {
             speciesId        = "sea_hare_001",
@@ -276,15 +277,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = false,
             preferredBiome   = BiomeBand.Soft,
-            minDepthFraction = 0.02f,
-            maxDepthFraction = 0.40f,
+            minDepthFraction = 0.01f, // 2m depth
+            maxDepthFraction = 0.40f, // 80m depth
             instanceCount    = 4,
             placeholderShape = PlaceholderShape.Capsule,
             placeholderColor = new Color(0.45f, 0.55f, 0.20f, 1f),
             placeholderScale = new Vector3(0.6f, 1.0f, 0.6f)
         }));
 
-        // 11. Bluebottle
+        // 11. Bluebottle (0–3m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "Bluebottle", new SpeciesDataConfig
         {
             speciesId        = "bluebottle_001",
@@ -301,8 +302,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = false,
             preferredBiome   = BiomeBand.OpenWater,
-            minDepthFraction = 0.00f,
-            maxDepthFraction = 0.02f, // 0 to 4m
+            minDepthFraction = 0.00f,  // 0m depth
+            maxDepthFraction = 0.015f, // 3m depth
             instanceCount    = 3,
             wanderRadius     = 20f,
             moveSpeed        = 1.2f,
@@ -312,7 +313,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(0.8f, 0.8f, 0.8f)
         }));
 
-        // 12. Ornate Spiny Lobster
+        // 12. Ornate Spiny Lobster (1–50m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "OrnateSpinyLobster", new SpeciesDataConfig
         {
             speciesId        = "spiny_lobster_001",
@@ -329,15 +330,15 @@ public static class SpeciesDataGenerator
             isStationary     = true,
             isShy            = true,
             preferredBiome   = BiomeBand.Rock,
-            minDepthFraction = 0.02f,
-            maxDepthFraction = 0.25f,
+            minDepthFraction = 0.01f, // 2m depth
+            maxDepthFraction = 0.25f, // 50m depth
             instanceCount    = 3,
             placeholderShape = PlaceholderShape.Cube,
             placeholderColor = new Color(0.85f, 0.40f, 0.15f, 1f),
             placeholderScale = new Vector3(1.2f, 0.5f, 1.5f)
         }));
 
-        // 13. Banded Sea Krait
+        // 13. Banded Sea Krait (0–10m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "BandedSeaKrait", new SpeciesDataConfig
         {
             speciesId        = "sea_krait_001",
@@ -354,8 +355,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = true,
             preferredBiome   = BiomeBand.Hard,
-            minDepthFraction = 0.005f,
-            maxDepthFraction = 0.06f, // 1 to 12m
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.05f,  // 10m depth
             instanceCount    = 2,
             wanderRadius     = 16f,
             moveSpeed        = 3.0f,
@@ -365,7 +366,7 @@ public static class SpeciesDataGenerator
             placeholderScale = new Vector3(0.4f, 2.5f, 0.4f)
         }));
 
-        // 14. Spotted Jellyfish
+        // 14. Spotted Jellyfish (1–20m)
         createdAssets.Add(CreateOrUpdateSpecies(folder, "SpottedJellyfish", new SpeciesDataConfig
         {
             speciesId        = "spotted_jellyfish_001",
@@ -382,8 +383,8 @@ public static class SpeciesDataGenerator
             isStationary     = false,
             isShy            = false,
             preferredBiome   = BiomeBand.OpenWater,
-            minDepthFraction = 0.01f,
-            maxDepthFraction = 0.12f,
+            minDepthFraction = 0.005f, // 1m depth
+            maxDepthFraction = 0.10f,  // 20m depth
             instanceCount    = 4,
             wanderRadius     = 12f,
             moveSpeed        = 1.5f,

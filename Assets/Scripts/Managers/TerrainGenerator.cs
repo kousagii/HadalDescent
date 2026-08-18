@@ -3,17 +3,14 @@ using UnityEngine;
 /// <summary>
 /// Procedurally generates the ocean zone environment.
 ///
-/// Orchestrates two sub-systems:
-///   1. OceanFloorMeshGenerator — creates the deformable seabed mesh (fBm noise)
+/// Orchestrates three phases:
+///   1. OceanFloorMeshGenerator — creates the deformable seabed mesh (fBm noise & reef plateaus)
 ///   2. EnvPropScatterer        — scatters rock/coral/sponge prefabs on the mesh
-///
-/// Also maintains the biome map (Perlin noise → BiomeBand) used by SpeciesSpawner
-/// for ecological placement rules.
+///   3. SpeciesSpawner          — spawns marine life onto the generated seabed & reef structures
 ///
 /// Setup:
 ///   Place TerrainGenerator, OceanFloorMeshGenerator, and EnvPropScatterer
-///   on the same GameObject in each zone scene. Assign the EnvPropSet asset
-///   in the Inspector.
+///   on the same GameObject in each zone scene. Assign the EnvPropSet asset.
 ///   ZoneManager calls Generate(zoneIndex) after scene load.
 /// </summary>
 public class TerrainGenerator : MonoBehaviour
@@ -48,6 +45,9 @@ public class TerrainGenerator : MonoBehaviour
     // -----------------------------------------------------------------------
     // Public API
     // -----------------------------------------------------------------------
+
+    /// <summary>Returns true if the terrain mesh and props have finished generating.</summary>
+    public bool HasGenerated => _hasGenerated;
 
     /// <summary>
     /// Query the ocean floor height at a world (x, z) position.
@@ -128,8 +128,15 @@ public class TerrainGenerator : MonoBehaviour
         // --- Phase 2: Scatter environment props on the mesh ---
         _propScatterer.Scatter(_meshGen, envPropSet, _zoneW, _zoneL, _pcgSeed);
 
-        Debug.Log($"[TerrainGenerator] Zone {zoneIndex} generated " +
-                  $"(mesh + props, seed={_pcgSeed:0}).");
+        // --- Phase 3: Spawn species onto the generated seabed ---
+        var spawner = FindFirstObjectByType<SpeciesSpawner>();
+        if (spawner != null)
+        {
+            spawner.SpawnForZone(zoneIndex);
+        }
+
+        Debug.Log($"[TerrainGenerator] Zone {zoneIndex} fully generated " +
+                  $"(mesh + props + species, seed={_pcgSeed:0}).");
     }
 
     // -----------------------------------------------------------------------

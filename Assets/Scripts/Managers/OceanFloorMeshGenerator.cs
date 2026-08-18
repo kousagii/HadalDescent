@@ -1,18 +1,16 @@
 using UnityEngine;
 
 /// <summary>
-/// Generates a procedural ocean floor mesh using layered, smoothed noise.
+/// Generates a procedural ocean floor mesh with authentic marine geography:
+///   - Shallow Coral Reef Atolls & Plateaus (Depth 10m–30m): sunlit coral gardens & lagoons
+///   - Reef Slopes & Drop-Off Walls (Depth 30m–90m): home to sharks and deep fans
+///   - Deep Sandy Basins & Canyons (Depth 90m–180m): rolling sand dunes & boulder fields
 ///
-/// Design aesthetic (Endless Ocean Luminous style):
-///   - Broad sandy valleys and gentle rolling dunes
-///   - Elevated coral reef plateaus with smooth, swimmable slopes
-///   - Zero needle spikes or chaotic sharp cliffs
-///   - Full coverage centered at world origin (0, 0, 0)
-///
-/// Exposes SampleHeight(x,z) and SampleNormal(x,z) for prop scattering
-/// and species spawning.
-///
-/// Usage: Called by TerrainGenerator.Generate().
+/// Features:
+///   - Contrast-expanded fBm noise for true vertical dynamic range
+///   - Stepped plateau terracing for wide, walkable/swimmable reef flats
+///   - Extended perimeter mesh (35% wider than boundary walls) to hide all edges in fog
+///   - Full bilinear interpolation for height and slope normal sampling
 /// </summary>
 public class OceanFloorMeshGenerator : MonoBehaviour
 {
@@ -57,8 +55,11 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         if (_heightMap == null || _resX == 0 || _resZ == 0)
             return _baseY;
 
-        float nx = (worldX + _width  * 0.5f) / _width;
-        float nz = (worldZ + _length * 0.5f) / _length;
+        float meshW = _width  * 1.35f;
+        float meshL = _length * 1.35f;
+
+        float nx = (worldX + meshW * 0.5f) / meshW;
+        float nz = (worldZ + meshL * 0.5f) / meshL;
         nx = Mathf.Clamp01(nx);
         nz = Mathf.Clamp01(nz);
 
@@ -135,7 +136,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         _meshCollider.sharedMesh = null;
         _meshCollider.sharedMesh = _mesh;
 
-        Debug.Log($"[OceanFloor] Generated {_resX}x{_resZ} mesh across {_width}x{_length}m, " +
+        Debug.Log($"[OceanFloor] Generated {_resX}x{_resZ} mesh across {_width * 1.35f:0}x{_length * 1.35f:0}m, " +
                   $"amplitude={_amplitude}m, baseY={_baseY}m");
     }
 
@@ -215,73 +216,94 @@ public class OceanFloorMeshGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Compute height at a world position using multi-layered smooth natural synthesis.
+    /// Compute height at a world position.
+    /// Synthesizes broad shallow coral reef plateaus (Depth 10m-30m), reef slopes, and deep basins.
     /// </summary>
     private float ComputeHeight(float wx, float wz)
     {
-        // ── Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~150-250m) ────
+        // ── Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~250m) ────────
         float macro1 = SmoothNoise(wx, wz, _frequency * 0.6f, _seed, 0f);
         float macro2 = SmoothNoise(wx, wz, _frequency * 1.0f, _seed, 350f);
-        float macro = macro1 * 0.65f + macro2 * 0.35f;
+        float macro  = macro1 * 0.65f + macro2 * 0.35f;
 
-        // ── Layer 2: Reef Mounds & Terraces (Wavelength ~50-80m) ──────────────
+        // ── Layer 2: Reef Mounds & Terraces (Wavelength ~80m) ─────────────────
         float mound1 = SmoothNoise(wx, wz, _frequency * 2.2f, _seed, 700f);
         float mound2 = SmoothNoise(wx, wz, _frequency * 3.4f, _seed, 1050f);
-        float mound = mound1 * 0.6f + mound2 * 0.4f;
+        float mound  = mound1 * 0.6f + mound2 * 0.4f;
 
         // Combine macro and mounds
-        float shape = macro * 0.70f + mound * 0.30f;
+        float rawShape = macro * 0.68f + mound * 0.32f;
 
-        // ── Biome Influence (Coral/Hard areas gently elevated) ────────────────
+        // ── Biome Influence (Coral / Hard reef areas strongly elevated) ───────
         float biomeVal = Mathf.PerlinNoise(
             wx * _biomeFreq + _biomeSeed,
             wz * _biomeFreq + _biomeSeed + 50f);
-        float biomeElevation = Mathf.Lerp(-0.06f, 0.12f, biomeVal);
-        shape = Mathf.Clamp01(shape + biomeElevation);
+        float biomeElevation = Mathf.Lerp(-0.10f, 0.18f, biomeVal);
+        rawShape += biomeElevation;
 
-        // ── Smooth Plateau / Terrace Curve (Creates wide reef flats) ──────────
-        // Soft S-curve keeps valleys wide & flat, slopes gentle, and tops rounded
-        shape = Mathf.SmoothStep(0f, 1f, shape);
+        // ── Contrast Expansion (Overcome Central Limit clustering around 0.5) ─
+        float contrast = Mathf.InverseLerp(0.24f, 0.76f, rawShape);
+        contrast = Mathf.Clamp01(contrast);
 
-        // ── Layer 3: Subtle Sand Dune Ripples (Micro-scale, low amp) ─────────
-        // Only contributes 3-4% height so it never creates sharp spikes
-        float ripple = (SmoothNoise(wx, wz, _frequency * 7f, _seed, 1400f) - 0.5f) * 0.04f;
-        shape = Mathf.Clamp01(shape + ripple);
+        // ── Stepped Coral Reef Plateau & Basin Shaping ───────────────────────
+        // Creates 3 distinct zones:
+        // 1. High Coral Reef Plateaus & Atolls (contrast > 0.58) → Depth 10m to 30m
+        // 2. Reef Slopes & Drop-off Walls (0.38 < contrast < 0.58) → Depth 30m to 100m
+        // 3. Sandy Basins & Canyons (contrast < 0.38) → Depth 100m to 180m
+        float plateauShape;
+        if (contrast > 0.58f)
+        {
+            float t = Mathf.InverseLerp(0.58f, 1.0f, contrast);
+            plateauShape = Mathf.Lerp(0.72f, 0.95f, Mathf.SmoothStep(0f, 1f, t));
+        }
+        else if (contrast < 0.38f)
+        {
+            float t = Mathf.InverseLerp(0f, 0.38f, contrast);
+            plateauShape = Mathf.Lerp(0.10f, 0.32f, Mathf.SmoothStep(0f, 1f, t));
+        }
+        else
+        {
+            float t = Mathf.InverseLerp(0.38f, 0.58f, contrast);
+            plateauShape = Mathf.Lerp(0.32f, 0.72f, Mathf.SmoothStep(0f, 1f, t));
+        }
 
-        // ── Edge Falloff: Blends seamlessly to baseline at boundaries ────────
+        // ── Layer 3: Gentle Sand Ripples (Micro-scale, low amp) ───────────────
+        float ripple = (SmoothNoise(wx, wz, _frequency * 6f, _seed, 1400f) - 0.5f) * 0.03f;
+        plateauShape = Mathf.Clamp01(plateauShape + ripple);
+
+        // ── Edge Falloff: Smoothly blends perimeter to baseline ───────────────
         float edgeFade = EdgeFalloff(wx, wz);
-        shape *= edgeFade;
+        plateauShape *= edgeFade;
 
-        // ── Map normalized [0..1] to world Y coordinates ─────────────────────
-        return _baseY + shape * _amplitude;
+        // Map normalized [0..1] to world Y
+        return _baseY + plateauShape * _amplitude;
     }
 
     /// <summary>
-    /// Smooth Perlin noise using quintic curve (Ken Perlin's smootherstep) to remove harsh gradients.
+    /// Smooth Perlin noise using quintic smootherstep.
     /// </summary>
     private float SmoothNoise(float wx, float wz, float freq, float seed, float offset)
     {
         float px = wx * freq + seed + offset;
         float pz = wz * freq + seed + offset + 50f;
         float raw = Mathf.PerlinNoise(px, pz);
-        // Smootherstep: 6t^5 - 15t^4 + 10t^3
         return raw * raw * raw * (raw * (raw * 6f - 15f) + 10f);
     }
 
     /// <summary>
-    /// Smooth edge falloff so the terrain naturally levels out near the zone perimeter.
+    /// Edge falloff for the extended mesh.
     /// </summary>
     private float EdgeFalloff(float wx, float wz)
     {
-        float halfW = _width * 0.5f;
-        float halfL = _length * 0.5f;
-        float margin = Mathf.Min(halfW, halfL) * 0.18f;
+        float halfW = _width  * 1.35f * 0.5f;
+        float halfL = _length * 1.35f * 0.5f;
+        float margin = Mathf.Min(halfW, halfL) * 0.20f;
 
         float distX = halfW - Mathf.Abs(wx);
         float distZ = halfL - Mathf.Abs(wz);
 
-        float fx = Mathf.SmoothStep(0.2f, 1f, Mathf.Clamp01(distX / margin));
-        float fz = Mathf.SmoothStep(0.2f, 1f, Mathf.Clamp01(distZ / margin));
+        float fx = Mathf.SmoothStep(0.15f, 1f, Mathf.Clamp01(distX / margin));
+        float fz = Mathf.SmoothStep(0.15f, 1f, Mathf.Clamp01(distZ / margin));
 
         return fx * fz;
     }

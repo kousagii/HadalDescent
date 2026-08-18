@@ -17,7 +17,7 @@ MonoBehaviour:
   scientificName: Melithaea philippinensis
   taxonomicClass: 12
   zoneIndex: 0
-  habitat: Shallow coral reefs and reef drop-offs
+  habitat: "Shallow coral reefs and reef drop-offs (10\u201360 m)"
   characteristics: Branching, fan-shaped octocoral with a semi-rigid calcified skeleton.
   ecologicalRole: Provides 3D structural shelter for small organisms and filter-feeds
     plankton.
@@ -29,7 +29,7 @@ MonoBehaviour:
   isShy: 0
   preferredBiome: 2
   minDepthFraction: 0.05
-  maxDepthFraction: 0.5
+  maxDepthFraction: 0.3
   instanceCount: 6
   wanderRadius: 0
   moveSpeed: 0

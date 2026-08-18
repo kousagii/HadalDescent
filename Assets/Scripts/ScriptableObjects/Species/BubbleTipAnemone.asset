@@ -17,7 +17,7 @@ MonoBehaviour:
   scientificName: Entacmaea quadricolor
   taxonomicClass: 12
   zoneIndex: 0
-  habitat: "Shallow coral reefs (0\u2013200 m)"
+  habitat: "Shallow coral reefs (0\u201335 m)"
   characteristics: Numerous tentacles with rounded, bubble-like bulbous tips.
   ecologicalRole: Provides shelter for clownfish and small reef invertebrates.
   interestingFact: Its tentacles can morph dynamically from bulbous bubbles to flowing
@@ -27,8 +27,8 @@ MonoBehaviour:
   isStationary: 1
   isShy: 0
   preferredBiome: 2
-  minDepthFraction: 0.01
-  maxDepthFraction: 0.4
+  minDepthFraction: 0.005
+  maxDepthFraction: 0.175
   instanceCount: 4
   wanderRadius: 0
   moveSpeed: 0
