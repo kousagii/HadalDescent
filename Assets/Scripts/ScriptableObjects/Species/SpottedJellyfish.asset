@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: SpottedJellyfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: spotted_jellyfish_001
+  commonName: Spotted Jellyfish
+  scientificName: Mastigias papua
+  taxonomicClass: 8
+  zoneIndex: 0
+  habitat: "Sunlit shallow lagoons and marine lakes (1\u201320 m)"
+  characteristics: Golden-brown hemispherical bell speckled with uniform white crystalline
+    spots.
+  ecologicalRole: Harbors symbiotic algae that generate solar-powered nutrients in
+    clear water.
+  interestingFact: Performs daily horizontal and vertical migrations following the
+    angle of the sun.
+  rdpReward: 90
+  scanDifficulty: 1
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.01
+  maxDepthFraction: 0.12
+  instanceCount: 4
+  wanderRadius: 12
+  moveSpeed: 1.5
+  fleeSpeed: 3
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 0
+  placeholderColor: {r: 0.9, g: 0.7, b: 0.35, a: 0.9}
+  placeholderScale: {x: 1.2, y: 1.2, z: 1.2}
+  modelPrefab: {fileID: 8037235477296494089, guid: 36ef2de50d8107248bb7c4ebc86eaac3, type: 3}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}

@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BottlenoseDolphin
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: bottlenosedolphin_001
+  commonName: Indo-Pacific Bottlenose Dolphin
+  scientificName: Tursiops aduncus
+  taxonomicClass: 2
+  zoneIndex: 0
+  habitat: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000
+    m, usually 1 - 50 m)
+  characteristics: Medium-sized dolphin with a slender body and curved dorsal fin
+  ecologicalRole: Predator that helps regulate populations of fish and squid
+  interestingFact: Highly intelligent and social who often lives in groups and uses
+    echolocation to hunt
+  rdpReward: 80
+  scanDifficulty: 0
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 1
+  instanceCount: 3
+  wanderRadius: 15
+  moveSpeed: 2
+  fleeSpeed: 5
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 0
+  placeholderColor: {r: 0, g: 1, b: 1, a: 1}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  modelPrefab: {fileID: 1365621601028647452, guid: 245e4a208a0283146b209005f9400f41, type: 3}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}

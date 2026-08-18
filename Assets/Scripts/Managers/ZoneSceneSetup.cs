@@ -79,12 +79,11 @@ public class ZoneSceneSetup : MonoBehaviour
         var botTrigger = EnsureComponent<ZoneBoundaryTrigger>(bottomBoundary);
         SetPrivateField(botTrigger, "isBottomBoundary", true);
 
-        // ── Ocean Floor (visual, not trigger) ──────────────────────────────
-        oceanFloor = EnsureGameObject("OceanFloor", oceanFloor);
-        oceanFloor.transform.position = new Vector3(0f, -D, 0f);
-        var floorCollider = EnsureComponent<BoxCollider>(oceanFloor);
-        floorCollider.isTrigger = false;
-        floorCollider.size = new Vector3(W, 2f, L);
+        // ── Perimeter Side Boundaries (Invisible Colliders) ───────────────
+        EnsureSideWall("Wall_North", new Vector3(0f, -D * 0.5f,  L * 0.5f), new Vector3(W, D + 40f, thickness));
+        EnsureSideWall("Wall_South", new Vector3(0f, -D * 0.5f, -L * 0.5f), new Vector3(W, D + 40f, thickness));
+        EnsureSideWall("Wall_East",  new Vector3( W * 0.5f, -D * 0.5f, 0f), new Vector3(thickness, D + 40f, L));
+        EnsureSideWall("Wall_West",  new Vector3(-W * 0.5f, -D * 0.5f, 0f), new Vector3(thickness, D + 40f, L));
 
         // ── Spawn Points ───────────────────────────────────────────────────
         topSpawnPoint = EnsureGameObject("ZoneTopSpawn", topSpawnPoint);
@@ -99,6 +98,16 @@ public class ZoneSceneSetup : MonoBehaviour
                   $"{W}×{L}×{D} m | Top Y=0 | Bottom Y={-D}");
 
         EditorUtility.SetDirty(gameObject);
+    }
+
+    private void EnsureSideWall(string name, Vector3 pos, Vector3 size)
+    {
+        var wall = EnsureGameObject(name, null);
+        wall.transform.position = pos;
+        var col = EnsureComponent<BoxCollider>(wall);
+        col.isTrigger = false; // Solid invisible physics wall
+        col.size = size;
+        wall.layer = LayerMask.NameToLayer("Terrain") >= 0 ? LayerMask.NameToLayer("Terrain") : 0;
     }
 
     // ── Editor helpers ──────────────────────────────────────────────────────

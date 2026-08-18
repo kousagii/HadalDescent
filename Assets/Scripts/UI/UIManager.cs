@@ -29,13 +29,18 @@ public class UIManager : MonoBehaviour
     [Header("Top-Right HUD")]
     [SerializeField] private TMP_Text rdpLabel;         // "RDP  150"
 
-    [Header("Scan Prompt")]
-    [Tooltip("Optional UI element shown when a species is in scanner range. Auto-created if null.")]
-    [SerializeField] private GameObject scanPromptUI;
+    [Header("Bottom HUD Buttons")]
+    [Tooltip("SCAN button Image — tinted cyan when a species is in the reticle.")]
+    [SerializeField] private UnityEngine.UI.Image scanButtonImage;
+    [Tooltip("INTERACT button Image — tinted cyan when near a stationary species.")]
+    [SerializeField] private UnityEngine.UI.Image interactButtonImage;
 
     [Header("References (auto-found)")]
     [SerializeField] private DepthTracker   depthTracker;
     [SerializeField] private ScannerSystem  scannerSystem;
+
+    private static readonly UnityEngine.Color BtnDefault = new UnityEngine.Color(0.15f, 0.20f, 0.28f, 0.90f);
+    private static readonly UnityEngine.Color BtnActive  = new UnityEngine.Color(0.08f, 0.75f, 0.68f, 1.00f);
 
     // -----------------------------------------------------------------------
     // Unity lifecycle
@@ -122,59 +127,40 @@ public class UIManager : MonoBehaviour
 
     public void OnInteractButtonPressed()
     {
+        // Phase 4: route to ScannerSystem.TryInteract() for stationary species
+        if (scannerSystem == null) scannerSystem = FindFirstObjectByType<ScannerSystem>();
+        if (scannerSystem != null) { scannerSystem.TryInteract(); return; }
         var player = FindFirstObjectByType<PlayerMovement>();
         if (player != null) player.Interact();
     }
 
     public void OnScanButtonPressed()
     {
-        // Delegate to ScannerSystem first (Phase 3 species scanning)
         if (scannerSystem == null) scannerSystem = FindFirstObjectByType<ScannerSystem>();
         if (scannerSystem != null) { scannerSystem.TryScan(); return; }
-
-        // Fallback: original PlayerMovement.Scan() for non-species interactions
         var player = FindFirstObjectByType<PlayerMovement>();
         if (player != null) player.Scan();
     }
 
     // -----------------------------------------------------------------------
-    // Scan prompt (shown when a species is in scanner range)
+    // Button glow helpers (called by ScannerSystem each frame)
     // -----------------------------------------------------------------------
 
-    /// <summary>
-    /// Show or hide the "TAP SCAN" prompt. Called by ScannerSystem each frame a target is detected.
-    /// </summary>
-    public void ShowScanPrompt(bool visible)
+    /// <summary>Tint the SCAN button cyan when a mobile species is in the reticle.</summary>
+    public void ShowScanButton(bool active)
     {
-        if (scanPromptUI == null) EnsureScanPromptUI();
-        if (scanPromptUI != null) scanPromptUI.SetActive(visible);
+        if (scanButtonImage != null)
+            scanButtonImage.color = active ? BtnActive : BtnDefault;
     }
 
-    private void EnsureScanPromptUI()
+    /// <summary>Tint the INTERACT button cyan when near a stationary species.</summary>
+    public void ShowInteractButton(bool active)
     {
-        // Try to find an existing element tagged or named ScanPrompt
-        var existing = GameObject.Find("ScanPrompt");
-        if (existing != null) { scanPromptUI = existing; return; }
-
-        // Auto-create a minimal scan prompt text at the top of the screen
-        var canvas = GetComponentInParent<UnityEngine.Canvas>() ?? FindFirstObjectByType<UnityEngine.Canvas>();
-        if (canvas == null) return;
-
-        var go   = new GameObject("ScanPrompt", typeof(RectTransform), typeof(CanvasRenderer));
-        go.transform.SetParent(canvas.transform, false);
-        var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin        = new Vector2(0.5f, 0.85f);
-        rect.anchorMax        = new Vector2(0.5f, 0.85f);
-        rect.sizeDelta        = new Vector2(220f, 40f);
-        rect.anchoredPosition = Vector2.zero;
-
-        var tmp       = go.AddComponent<TMP_Text>();
-        tmp.text      = "<b>[ TAP SCAN ]</b>";
-        tmp.fontSize  = 18;
-        tmp.alignment = TMPro.TextAlignmentOptions.Center;
-        tmp.color     = new UnityEngine.Color(0.20f, 0.95f, 0.75f, 1f);
-
-        go.SetActive(false);
-        scanPromptUI = go;
+        if (interactButtonImage != null)
+            interactButtonImage.color = active ? BtnActive : BtnDefault;
     }
+
+    // Legacy alias so any existing ScannerSystem calls to ShowScanPrompt still compile
+    public void ShowScanPrompt(bool visible) => ShowScanButton(visible);
 }
+

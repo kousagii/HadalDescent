@@ -6,6 +6,7 @@ TagManager:
   tags:
   - ZoneTopSpawn
   - ZoneBottomSpawn
+  - Species
   layers:
   - Default
   - TransparentFX
@@ -13,8 +14,8 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - Terrain
+  - ModelPreview
   - 
   - 
   - 

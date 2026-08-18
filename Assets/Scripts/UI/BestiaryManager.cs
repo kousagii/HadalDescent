@@ -146,7 +146,6 @@ public class BestiaryManager : MonoBehaviour
             SetTextSafe(labels, 2, $"Habitat: {data.habitat}");
             SetTextSafe(labels, 3, $"Characteristics: {data.characteristics}");
             SetTextSafe(labels, 4, $"Ecological Role: {data.ecologicalRole}");
-            SetTextSafe(labels, 5, data.description);
             SetTextSafe(labels, 6, $"Did you know? {data.interestingFact}");
 
             if (images.Length > 0)
@@ -221,7 +220,6 @@ public class BestiaryManager : MonoBehaviour
                 $"<color=#88ccaa>\u25A0 Habitat:</color> {data.habitat}\n" +
                 $"<color=#88ccaa>\u25A0 Characteristics:</color> {data.characteristics}\n" +
                 $"<color=#88ccaa>\u25A0 Ecological Role:</color> {data.ecologicalRole}\n" +
-                $"<color=#dddddd>{data.description}</color>\n" +
                 $"<color=#ffdd88>\u2736 {data.interestingFact}</color>";
 
             // Wire a button click to show the 3D model preview

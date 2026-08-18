@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03b799a5a13d979489d21bcb85c9f4cf, type: 3}
+  m_Name: SunlightProps
+  m_EditorClassIdentifier: Assembly-CSharp::EnvPropSet
+  seabedMaterial: {fileID: 2100000, guid: 0d28fb6beb2f0d3419d84c4d64308264, type: 2}
+  propDensity: 1
+  globalScaleMultiplier: 4
+  props:
+  - prefab: {fileID: 7924011031027479408, guid: 233ae85e63668b741baad4c09ff16bfd, type: 3}
+    weight: 2
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 3192758430457380383, guid: d9b4b6f302d83ea4f9c91a6636606914, type: 3}
+    weight: 1
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 4710934560442573673, guid: 1e93f2459c8924745a0de28ca8fa79d9, type: 3}
+    weight: 2
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 7561907419596205141, guid: 15c083053d289984e897c40fcbec7f52, type: 3}
+    weight: 2
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 7713407569450102045, guid: 5c52e9e390e3c704eb8e4e5d2c6abfaa, type: 3}
+    weight: 1
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 6186680679023577297, guid: 82bd2a6be6a0c264c8a9aa71bc5bdfbe, type: 3}
+    weight: 0.5
+    minScale: 0.8
+    maxScale: 2
+    alignToSurface: 1
+    isObstacle: 1
+  - prefab: {fileID: 592339605672025169, guid: b3ad47579ae7c5846aa83e61d2859240, type: 3}
+    weight: 0.5
+    minScale: 0.6
+    maxScale: 1.2
+    alignToSurface: 1
+    isObstacle: 1

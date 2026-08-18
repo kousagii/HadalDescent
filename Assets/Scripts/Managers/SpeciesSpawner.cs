@@ -5,14 +5,9 @@ using UnityEngine;
 /// Reads SpeciesRegistry and spawns species into the current zone following
 /// ecological placement rules (biome band + depth fraction match).
 ///
-/// Mobile species  ? gets Rigidbody + ContextSteering + SpeciesAI.
-/// Stationary      ? gets SphereCollider trigger + ScanTarget.
+/// Mobile species  → gets Rigidbody + ContextSteering + SpeciesAI.
+/// Stationary      → gets BoxCollider trigger + ScanTarget.
 /// Both types are detected by ScannerSystem via OverlapSphere.
-///
-/// Setup:
-///   Place on a GameObject in each zone scene alongside TerrainGenerator.
-///   Assign registry + terrain references in the Inspector.
-///   ZoneManager calls SpawnForZone(zoneIndex) after TerrainGenerator.Generate().
 /// </summary>
 public class SpeciesSpawner : MonoBehaviour
 {
@@ -40,21 +35,36 @@ public class SpeciesSpawner : MonoBehaviour
     // Runtime
     // -----------------------------------------------------------------------
 
-    private ZoneDefinition      _zoneDef;
-    private List<Vector3>       _usedPositions = new List<Vector3>();
+    private ZoneDefinition _zoneDef;
+    private List<Vector3>  _usedPositions = new List<Vector3>();
+    private bool           _hasSpawned = false;
 
     // -----------------------------------------------------------------------
     // Entry point
     // -----------------------------------------------------------------------
 
+    private void Start()
+    {
+        if (!_hasSpawned) SpawnForZone(0);
+    }
+
     public void SpawnForZone(int zoneIndex)
     {
+        _hasSpawned = true;
         if (!ZoneConfig.IsValidZone(zoneIndex)) return;
         _zoneDef = ZoneConfig.Zones[zoneIndex];
         _usedPositions.Clear();
 
-        if (registry == null) { Debug.LogWarning("[SpeciesSpawner] SpeciesRegistry not assigned."); return; }
-        if (terrain  == null) { Debug.LogWarning("[SpeciesSpawner] TerrainGenerator not assigned.");  return; }
+        if (registry == null)
+        {
+            registry = Resources.Load<SpeciesRegistry>("SpeciesRegistry");
+        }
+        if (registry == null) { Debug.LogWarning("[SpeciesSpawner] SpeciesRegistry not found."); return; }
+
+        if (terrain == null)
+        {
+            terrain = FindFirstObjectByType<TerrainGenerator>();
+        }
 
         EnsureCreatureParent();
 
@@ -62,7 +72,8 @@ public class SpeciesSpawner : MonoBehaviour
         int totalSpawned = 0;
         foreach (var data in allSpecies)
         {
-            totalSpawned += SpawnSpecies(data);
+            if (data != null)
+                totalSpawned += SpawnSpecies(data);
         }
 
         Debug.Log($"[SpeciesSpawner] Zone {zoneIndex}: {totalSpawned} entities spawned " +
@@ -86,35 +97,41 @@ public class SpeciesSpawner : MonoBehaviour
             }
         }
         if (spawned < data.instanceCount)
-            Debug.LogWarning($"[SpeciesSpawner] '{data.commonName}': only placed {spawned}/{data.instanceCount}.");
+            Debug.LogWarning($"[SpeciesSpawner] '{data.commonName}': placed {spawned}/{data.instanceCount}.");
         return spawned;
     }
 
     private bool TryFindSpawnPosition(SpeciesData data, out Vector3 result)
     {
-        float W = _zoneDef.playableWidth;
-        float L = _zoneDef.playableLength;
-        float D = _zoneDef.playableDepth;
+        float W = _zoneDef != null ? _zoneDef.playableWidth : 600f;
+        float L = _zoneDef != null ? _zoneDef.playableLength : 600f;
+        float D = _zoneDef != null ? _zoneDef.playableDepth : 200f;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            float rx = Random.Range(-W * 0.5f, W * 0.5f);
-            float rz = Random.Range(-L * 0.5f, L * 0.5f);
+            float rx = Random.Range(-W * 0.45f, W * 0.45f);
+            float rz = Random.Range(-L * 0.45f, L * 0.45f);
 
-            // Check biome match
-            if (terrain.GetBiomeAt(rx, rz) != data.preferredBiome) continue;
+            // Check biome match (strict for first 15 attempts, relaxed after)
+            if (attempt < 15 && terrain != null && terrain.GetBiomeAt(rx, rz) != data.preferredBiome)
+                continue;
 
             // Compute Y position
+            float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
             float ry;
+
             if (data.isStationary)
             {
-                ry = terrain.SeabedY + Random.Range(0.5f, 2f);
+                // Sit directly on the mesh surface
+                ry = floorY + Random.Range(0.2f, 1.2f);
             }
             else
             {
-                float topY    = Mathf.Lerp(0f, -D, data.minDepthFraction);
-                float bottomY = Mathf.Lerp(0f, -D, data.maxDepthFraction);
+                // Swim in depth band, but never below the floor or above surface
+                float topY    = Mathf.Lerp(-2f, -D, data.minDepthFraction);
+                float bottomY = Mathf.Lerp(-2f, -D, data.maxDepthFraction);
                 ry = Random.Range(Mathf.Min(topY, bottomY), Mathf.Max(topY, bottomY));
+                ry = Mathf.Clamp(ry, floorY + 2.5f, -2f);
             }
 
             Vector3 candidate = new Vector3(rx, ry, rz);
@@ -123,16 +140,18 @@ public class SpeciesSpawner : MonoBehaviour
             bool tooClose = false;
             foreach (var used in _usedPositions)
             {
-                if (Vector3.Distance(candidate, used) < minSeparation) { tooClose = true; break; }
+                if (Vector3.Distance(candidate, used) < minSeparation)
+                {
+                    tooClose = true;
+                    break;
+                }
             }
             if (tooClose) continue;
-
-            // Terrain overlap check
-            if (Physics.CheckSphere(candidate, overlapRadius, overlapMask)) continue;
 
             result = candidate;
             return true;
         }
+
         result = Vector3.zero;
         return false;
     }
@@ -166,12 +185,25 @@ public class SpeciesSpawner : MonoBehaviour
         var go = GameObject.CreatePrimitive(pType);
         go.transform.SetParent(creatureParent, false);
         go.transform.position   = position;
-        go.transform.localScale = data.placeholderScale;
+        go.transform.localScale = data.placeholderScale != Vector3.zero ? data.placeholderScale : Vector3.one;
 
         var rend = go.GetComponent<Renderer>();
         if (rend != null)
         {
-            rend.material = new Material(Shader.Find("Standard")) { color = data.placeholderColor };
+            // Use URP Lit shader to avoid pink / violet rendering
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                         ?? Shader.Find("Standard")
+                         ?? Shader.Find("Diffuse");
+
+            if (shader != null)
+            {
+                var mat = new Material(shader)
+                {
+                    color = data.placeholderColor
+                };
+                rend.material = mat;
+            }
         }
 
         return go;
@@ -179,38 +211,67 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SetupStationary(GameObject go, SpeciesData data)
     {
-        // Ensure a trigger collider for scanner detection
-        var col = go.GetComponent<SphereCollider>() ?? go.AddComponent<SphereCollider>();
+        // Safe check for collider without using ?? operator on UnityEngine.Object
+        var col = go.GetComponent<Collider>();
+        if (col == null)
+        {
+            var box = go.AddComponent<BoxCollider>();
+            box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.5f : Vector3.one * 2f;
+            col = box;
+        }
         col.isTrigger = true;
-        col.radius    = 3f;
 
-        var target = go.AddComponent<ScanTarget>();
+        try { go.tag = "Species"; } catch { }
+
+        var target = go.GetComponent<ScanTarget>();
+        if (target == null) target = go.AddComponent<ScanTarget>();
         target.Initialize(data);
     }
 
     private void SetupMobile(GameObject go, SpeciesData data, Vector3 spawnCenter)
     {
-        // Rigidbody (required by ContextSteering)
-        var rb = go.GetComponent<Rigidbody>() ?? go.AddComponent<Rigidbody>();
+        // Rigidbody (required by ContextSteering) - Safe check without ?? operator
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = go.AddComponent<Rigidbody>();
+        }
         rb.useGravity     = false;
         rb.freezeRotation = true;
 
-        // Trigger collider so ScannerSystem OverlapSphere finds it
-        var col = go.GetComponent<SphereCollider>() ?? go.AddComponent<SphereCollider>();
+        // Ensure trigger collider exists for scanner
+        var col = go.GetComponent<Collider>();
+        if (col == null)
+        {
+            var box = go.AddComponent<BoxCollider>();
+            box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.3f : Vector3.one * 1.5f;
+            col = box;
+        }
         col.isTrigger = true;
-        col.radius    = 1.2f;
 
         try { go.tag = "Species"; } catch { }
 
-        go.AddComponent<ContextSteering>();
+        var cs = go.GetComponent<ContextSteering>();
+        if (cs == null) cs = go.AddComponent<ContextSteering>();
 
-        var ai = go.AddComponent<SpeciesAI>();
+        var ai = go.GetComponent<SpeciesAI>();
+        if (ai == null) ai = go.AddComponent<SpeciesAI>();
         ai.Initialize(data, spawnCenter);
     }
 
     private void EnsureCreatureParent()
     {
         if (creatureParent == null)
-            creatureParent = new GameObject("_Creatures").transform;
+        {
+            var existing = GameObject.Find("_Creatures");
+            if (existing != null)
+                creatureParent = existing.transform;
+            else
+                creatureParent = new GameObject("_Creatures").transform;
+        }
+
+        creatureParent.position   = Vector3.zero;
+        creatureParent.rotation   = Quaternion.identity;
+        creatureParent.localScale = Vector3.one;
     }
 }

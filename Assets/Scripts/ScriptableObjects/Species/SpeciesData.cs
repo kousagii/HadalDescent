@@ -54,10 +54,6 @@ public class SpeciesData : ScriptableObject
     [TextArea(2, 4)]
     [Tooltip("Role this species plays in its ecosystem (predator, filter feeder, symbiont, etc.).")]
     public string ecologicalRole;
-
-    [TextArea(2, 5)]
-    public string description;
-
     [TextArea(2, 4)]
     public string interestingFact;
 
@@ -68,6 +64,9 @@ public class SpeciesData : ScriptableObject
     [Header("Gameplay")]
     [Tooltip("RDP awarded on first successful scan.")]
     public int rdpReward = 80;
+
+    [Tooltip("Minigame difficulty override. 0 = Auto (uses zone index). 1=Easy, 2=Medium, 3=Hard, 4=Very Hard, 5=Extreme.")]
+    [Range(0, 5)] public int scanDifficulty = 0;
 
     [Tooltip("True for corals, sponges, bivalves — no AI, just collider + ScanTarget.")]
     public bool isStationary;

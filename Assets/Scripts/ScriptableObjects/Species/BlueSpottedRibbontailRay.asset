@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BlueSpottedRibbontailRay
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: ribbontail_ray_001
+  commonName: Blue-spotted Ribbontail Ray
+  scientificName: Taeniura lymma
+  taxonomicClass: 1
+  zoneIndex: 0
+  habitat: "Shallow reef sand flats and lagoons (0\u201320 m)"
+  characteristics: Distinctive oval disc patterned with electric-blue circular spots.
+  ecologicalRole: Benthic carnivore hunting molluscs, worms, and small crabs buried
+    in sand.
+  interestingFact: Armed with two venomous serrated tail spines used exclusively
+    in self-defense.
+  rdpReward: 100
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 1
+  preferredBiome: 1
+  minDepthFraction: 0.02
+  maxDepthFraction: 0.12
+  instanceCount: 3
+  wanderRadius: 14
+  moveSpeed: 2.6
+  fleeSpeed: 5.5
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 3
+  placeholderColor: {r: 0.2, g: 0.65, b: 0.9, a: 1}
+  placeholderScale: {x: 1.8, y: 0.2, z: 1.8}
+  modelPrefab: {fileID: 0}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}

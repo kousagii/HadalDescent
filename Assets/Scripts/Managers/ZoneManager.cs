@@ -197,15 +197,24 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    private void ApplyAtmosphere(ZoneDefinition zone)
+    public static void ApplyAtmosphere(ZoneDefinition zone)
     {
-        RenderSettings.fog             = true;
-        RenderSettings.fogMode         = FogMode.Exponential;
-        RenderSettings.fogColor        = zone.fogColor;
-        RenderSettings.fogDensity      = zone.fogDensity;
-        RenderSettings.ambientLight    = zone.ambientLight;
-        RenderSettings.ambientMode     = UnityEngine.Rendering.AmbientMode.Flat;
-        Camera.main.backgroundColor    = zone.fogColor;
+        RenderSettings.fog              = true;
+        RenderSettings.fogMode          = FogMode.Linear;
+        RenderSettings.fogColor         = zone.fogColor;
+        RenderSettings.fogStartDistance = zone.fogStartDistance;
+        RenderSettings.fogEndDistance   = zone.fogEndDistance;
+        RenderSettings.fogDensity       = zone.fogDensity;
+        RenderSettings.ambientLight     = zone.ambientLight;
+        RenderSettings.ambientMode      = UnityEngine.Rendering.AmbientMode.Flat;
+
+        var mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            mainCam.clearFlags      = CameraClearFlags.SolidColor;
+            mainCam.backgroundColor = zone.fogColor;
+            mainCam.farClipPlane    = Mathf.Max(zone.fogEndDistance + 20f, 120f);
+        }
     }
 
     private void FindSpawnPoints(ZoneDefinition zone)

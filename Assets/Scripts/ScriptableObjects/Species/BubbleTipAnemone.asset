@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BubbleTipAnemone
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: anemone_001
+  commonName: Bubble-tip Sea Anemone
+  scientificName: Entacmaea quadricolor
+  taxonomicClass: 12
+  zoneIndex: 0
+  habitat: "Shallow coral reefs (0\u2013200 m)"
+  characteristics: Numerous tentacles with rounded, bubble-like bulbous tips.
+  ecologicalRole: Provides shelter for clownfish and small reef invertebrates.
+  interestingFact: Its tentacles can morph dynamically from bulbous bubbles to flowing
+    streamers.
+  rdpReward: 90
+  scanDifficulty: 1
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 2
+  minDepthFraction: 0.01
+  maxDepthFraction: 0.4
+  instanceCount: 4
+  wanderRadius: 0
+  moveSpeed: 0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 3
+  placeholderColor: {r: 0.95, g: 0.35, b: 0.65, a: 1}
+  placeholderScale: {x: 1.2, y: 0.8, z: 1.2}
+  modelPrefab: {fileID: 0}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}

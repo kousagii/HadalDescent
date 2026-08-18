@@ -4,12 +4,11 @@ using UnityEngine;
 /// Single source of truth for every ocean zone's:
 ///   - Display depth range (what the HUD shows the player)
 ///   - Playable scene dimensions (horizontal X/Z and vertical Y in Unity units)
+///   - Atmospheric ocean fog (Linear fog start/end distances and color)
 ///   - Scene name for loading
 ///   - Visual identity (fog colour, ambient light)
 ///
 /// 1 Unity unit = 1 metre in this project.
-/// Horizontal sizes match the design doc. Vertical depth is scaled so that
-/// the sub takes a meaningful amount of time to cross each zone top-to-bottom.
 /// </summary>
 [System.Serializable]
 public class ZoneDefinition
@@ -29,7 +28,9 @@ public class ZoneDefinition
 
     [Header("Atmosphere")]
     public Color fogColor;
-    public float fogDensity;
+    public float fogStartDistance = 25f;
+    public float fogEndDistance   = 140f;
+    public float fogDensity       = 0.008f;
     public Color ambientLight;
 
     [Header("Gameplay")]
@@ -39,15 +40,15 @@ public class ZoneDefinition
     public float  unlockThreshold = 0.5f; // fraction of species needed to unlock next zone
 
     [Header("PCG — Perlin Noise Terrain")]
-    [Tooltip("Perlin sampling frequency. Low = large smooth features; high = small jagged features.")]
-    public float pcgFrequency   = 0.05f;
-    [Tooltip("Maximum Y displacement of terrain objects from the seabed baseline.")]
-    public float pcgAmplitude   = 8f;
+    [Tooltip("Perlin sampling frequency. Low = large smooth rolling features.")]
+    public float pcgFrequency   = 0.004f;
+    [Tooltip("Maximum Y displacement of terrain from the seabed baseline.")]
+    public float pcgAmplitude   = 175f;
 
     // Biome band Perlin thresholds — value below softBiomeThreshold = OpenWater, etc.
-    [Range(0f, 1f)] public float softBiomeThreshold    = 0.30f;
-    [Range(0f, 1f)] public float hardBiomeThreshold    = 0.52f;
-    [Range(0f, 1f)] public float rockBiomeThreshold    = 0.75f;
+    [Range(0f, 1f)] public float softBiomeThreshold    = 0.28f;
+    [Range(0f, 1f)] public float hardBiomeThreshold    = 0.50f;
+    [Range(0f, 1f)] public float rockBiomeThreshold    = 0.74f;
     [Range(0f, 1f)] public float specialBiomeThreshold = 0.92f;
 }
 
@@ -61,7 +62,7 @@ public static class ZoneConfig
     /// </summary>
     public static readonly ZoneDefinition[] Zones = new ZoneDefinition[]
     {
-        // ── Zone 0: Sunlight ───────────────────────────────────────────────
+        // ── Zone 0: Sunlight (0–200m) ──────────────────────────────────────
         new ZoneDefinition
         {
             zoneName         = "Sunlight Zone",
@@ -70,28 +71,30 @@ public static class ZoneConfig
             displayDepthMin  = 0f,
             displayDepthMax  = 200f,
 
-            playableWidth    = 300f,
-            playableLength   = 300f,
-            playableDepth    = 150f,   // vertical travel = 150 Unity units
+            playableWidth    = 600f,   // 600x600m vast exploratory ocean
+            playableLength   = 600f,
+            playableDepth    = 200f,   // 0m surface down to -200m
 
-            fogColor         = new Color(0.40f, 0.75f, 0.90f, 1f),   // bright sea-blue
-            fogDensity       = 0.005f,
-            ambientLight     = new Color(0.90f, 0.95f, 1.00f, 1f),
+            fogColor         = new Color(0.18f, 0.52f, 0.72f, 1f),   // rich tropical sea blue
+            fogStartDistance = 25f,
+            fogEndDistance   = 140f,
+            fogDensity       = 0.008f,
+            ambientLight     = new Color(0.85f, 0.92f, 1.00f, 1f),
 
             requiredHullTier = 1,
-            totalSpeciesCount = 10,
+            totalSpeciesCount = 14,
             unlockThreshold  = 0.5f,
 
-            // PCG — gentle sandy reef terrain
-            pcgFrequency          = 0.040f,
-            pcgAmplitude          = 5f,
+            // PCG — broad rolling dunes & shallow coral reef atolls (reach 15m-25m depth)
+            pcgFrequency          = 0.0035f, // wide features (~280m wavelength)
+            pcgAmplitude          = 175f,    // base at -200m, highest reef plateaus at -25m
             softBiomeThreshold    = 0.28f,
             hardBiomeThreshold    = 0.50f,
             rockBiomeThreshold    = 0.74f,
             specialBiomeThreshold = 0.92f,
         },
 
-        // ── Zone 1: Twilight ───────────────────────────────────────────────
+        // ── Zone 1: Twilight (200–1,000m) ──────────────────────────────────
         new ZoneDefinition
         {
             zoneName         = "Twilight Zone",
@@ -100,28 +103,30 @@ public static class ZoneConfig
             displayDepthMin  = 200f,
             displayDepthMax  = 1000f,
 
-            playableWidth    = 350f,
-            playableLength   = 350f,
-            playableDepth    = 175f,
+            playableWidth    = 700f,
+            playableLength   = 700f,
+            playableDepth    = 250f,
 
-            fogColor         = new Color(0.08f, 0.18f, 0.32f, 1f),   // dark teal
-            fogDensity       = 0.010f,
-            ambientLight     = new Color(0.20f, 0.28f, 0.45f, 1f),
+            fogColor         = new Color(0.04f, 0.12f, 0.22f, 1f),   // deep mesopelagic teal
+            fogStartDistance = 15f,
+            fogEndDistance   = 110f,
+            fogDensity       = 0.012f,
+            ambientLight     = new Color(0.15f, 0.22f, 0.38f, 1f),
 
             requiredHullTier = 2,
-            totalSpeciesCount = 10,
+            totalSpeciesCount = 12,
             unlockThreshold  = 0.5f,
 
-            // PCG — continental shelf, moderate features
-            pcgFrequency          = 0.050f,
-            pcgAmplitude          = 10f,
+            // PCG — continental slope, large step ledges
+            pcgFrequency          = 0.0045f,
+            pcgAmplitude          = 190f,
             softBiomeThreshold    = 0.30f,
             hardBiomeThreshold    = 0.54f,
             rockBiomeThreshold    = 0.76f,
             specialBiomeThreshold = 0.93f,
         },
 
-        // ── Zone 2: Midnight ──────────────────────────────────────────────
+        // ── Zone 2: Midnight (1,000–4,000m) ────────────────────────────────
         new ZoneDefinition
         {
             zoneName         = "Midnight Zone",
@@ -130,28 +135,30 @@ public static class ZoneConfig
             displayDepthMin  = 1000f,
             displayDepthMax  = 4000f,
 
-            playableWidth    = 450f,
-            playableLength   = 450f,
-            playableDepth    = 200f,
+            playableWidth    = 800f,
+            playableLength   = 800f,
+            playableDepth    = 300f,
 
-            fogColor         = new Color(0.02f, 0.03f, 0.07f, 1f),   // near black
-            fogDensity       = 0.020f,
-            ambientLight     = new Color(0.04f, 0.05f, 0.10f, 1f),
+            fogColor         = new Color(0.012f, 0.016f, 0.035f, 1f), // near-black bathyal water
+            fogStartDistance = 10f,
+            fogEndDistance   = 85f,
+            fogDensity       = 0.018f,
+            ambientLight     = new Color(0.03f, 0.04f, 0.08f, 1f),
 
             requiredHullTier = 3,
-            totalSpeciesCount = 10,
+            totalSpeciesCount = 12,
             unlockThreshold  = 0.5f,
 
-            // PCG — basalt fields, vent structures
-            pcgFrequency          = 0.060f,
-            pcgAmplitude          = 16f,
+            // PCG — basalt plains & hydrothermal vent mounds
+            pcgFrequency          = 0.0055f,
+            pcgAmplitude          = 220f,
             softBiomeThreshold    = 0.25f,
             hardBiomeThreshold    = 0.50f,
             rockBiomeThreshold    = 0.74f,
             specialBiomeThreshold = 0.90f,
         },
 
-        // ── Zone 3: Abyss ─────────────────────────────────────────────────
+        // ── Zone 3: Abyss (4,000–6,000m) ───────────────────────────────────
         new ZoneDefinition
         {
             zoneName         = "Abyss Zone",
@@ -160,51 +167,55 @@ public static class ZoneConfig
             displayDepthMin  = 4000f,
             displayDepthMax  = 6000f,
 
-            playableWidth    = 450f,
-            playableLength   = 450f,
-            playableDepth    = 200f,
+            playableWidth    = 850f,
+            playableLength   = 850f,
+            playableDepth    = 300f,
 
-            fogColor         = new Color(0.05f, 0.02f, 0.10f, 1f),   // dark purple
-            fogDensity       = 0.030f,
-            ambientLight     = new Color(0.03f, 0.02f, 0.06f, 1f),
+            fogColor         = new Color(0.008f, 0.006f, 0.018f, 1f), // abyssal pitch
+            fogStartDistance = 8f,
+            fogEndDistance   = 75f,
+            fogDensity       = 0.022f,
+            ambientLight     = new Color(0.02f, 0.015f, 0.04f, 1f),
 
             requiredHullTier = 4,
-            totalSpeciesCount = 10,
+            totalSpeciesCount = 8,
             unlockThreshold  = 0.5f,
 
-            // PCG — sparse abyssal mud plain with cold seeps
-            pcgFrequency          = 0.065f,
-            pcgAmplitude          = 20f,
+            // PCG — vast mud plains & cold seep hills
+            pcgFrequency          = 0.005f,
+            pcgAmplitude          = 210f,
             softBiomeThreshold    = 0.22f,
             hardBiomeThreshold    = 0.46f,
             rockBiomeThreshold    = 0.74f,
             specialBiomeThreshold = 0.88f,
         },
 
-        // ── Zone 4: Hadal ─────────────────────────────────────────────────
+        // ── Zone 4: Hadal (6,000–11,000m+) ─────────────────────────────────
         new ZoneDefinition
         {
             zoneName         = "Hadal Zone",
             sceneName        = "HadalZone",
 
             displayDepthMin  = 6000f,
-            displayDepthMax  = 8000f,
+            displayDepthMax  = 11000f,
 
-            playableWidth    = 500f,
-            playableLength   = 500f,
-            playableDepth    = 200f,
+            playableWidth    = 900f,
+            playableLength   = 900f,
+            playableDepth    = 300f,
 
-            fogColor         = new Color(0.00f, 0.00f, 0.00f, 1f),   // pitch black
-            fogDensity       = 0.040f,
-            ambientLight     = new Color(0.01f, 0.01f, 0.02f, 1f),
+            fogColor         = new Color(0.002f, 0.002f, 0.005f, 1f), // absolute darkness
+            fogStartDistance = 6f,
+            fogEndDistance   = 65f,
+            fogDensity       = 0.028f,
+            ambientLight     = new Color(0.01f, 0.01f, 0.015f, 1f),
 
             requiredHullTier = 5,
-            totalSpeciesCount = 10,
+            totalSpeciesCount = 5,
             unlockThreshold  = 0.5f,
 
-            // PCG — jagged hadal trench walls and spires
-            pcgFrequency          = 0.080f,
-            pcgAmplitude          = 28f,
+            // PCG — deep trench walls & fault terraces
+            pcgFrequency          = 0.0065f,
+            pcgAmplitude          = 230f,
             softBiomeThreshold    = 0.20f,
             hardBiomeThreshold    = 0.44f,
             rockBiomeThreshold    = 0.70f,

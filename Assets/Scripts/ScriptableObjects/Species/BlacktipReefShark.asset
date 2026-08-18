@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BlacktipReefShark
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: blacktip_shark_001
+  commonName: Blacktip Reef Shark
+  scientificName: Carcharhinus melanopterus
+  taxonomicClass: 1
+  zoneIndex: 0
+  habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
+  characteristics: Streamlined bronze-gray body with prominent black tips on all
+    fins.
+  ecologicalRole: Apex reef predator maintaining equilibrium among fish and cephalopod
+    populations.
+  interestingFact: Must remain in continuous forward motion to ventilate water over
+    its gills.
+  rdpReward: 120
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.05
+  maxDepthFraction: 0.38
+  instanceCount: 2
+  wanderRadius: 30
+  moveSpeed: 4.5
+  fleeSpeed: 7
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 1
+  placeholderColor: {r: 0.4, g: 0.45, b: 0.5, a: 1}
+  placeholderScale: {x: 1.2, y: 3.5, z: 1.2}
+  modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}

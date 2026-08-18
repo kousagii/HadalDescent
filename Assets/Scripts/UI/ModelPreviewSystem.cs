@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -16,8 +16,8 @@ using UnityEngine.UI;
 ///   2. Create a Camera child ? assign to previewCamera.
 ///      - Set Culling Mask to ONLY the "ModelPreview" layer.
 ///      - Clear Flags = Solid Colour, Background = #0A1020 (dark navy).
-///      - Position: (0, 100, -3) — far from the game world.
-///   3. Create a RenderTexture asset (256×256, 16-bit depth) ? assign to previewRT.
+///      - Position: (0, 100, -3) â€” far from the game world.
+///   3. Create a RenderTexture asset (256Ã—256, 16-bit depth) ? assign to previewRT.
 ///      - Also assign previewRT to the Preview Camera's Target Texture field.
 ///   4. In the Bestiary canvas, add a RawImage ? assign to previewRawImage.
 ///   5. Assign previewRawImage to ModelPreviewSystem in Inspector.
@@ -122,11 +122,11 @@ public class ModelPreviewSystem : MonoBehaviour
             var rend = _previewInstance.GetComponent<Renderer>();
             if (rend != null)
             {
-                rend.material = new Material(Shader.Find("Standard")) { color = data.placeholderColor };
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Universal Render Pipeline/Simple Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse"); if (shader != null) rend.material = new Material(shader) { color = data.placeholderColor };
             }
         }
 
-        // Remove any colliders — this is display-only
+        // Remove any colliders â€” this is display-only
         foreach (var col in _previewInstance.GetComponentsInChildren<Collider>())
             Destroy(col);
 
@@ -188,3 +188,4 @@ public class ModelPreviewSystem : MonoBehaviour
             SetLayerRecursive(child.gameObject, layer);
     }
 }
+

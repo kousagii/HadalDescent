@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BigfinReefSquid
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: reef_squid_001
+  commonName: Bigfin Reef Squid
+  scientificName: Sepioteuthis lessoniana
+  taxonomicClass: 4
+  zoneIndex: 0
+  habitat: "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+  characteristics: Translucent oval mantle with wide undulating fins running full
+    body length.
+  ecologicalRole: Agile midwater predator consuming small fish and crustaceans.
+  interestingFact: Possesses chromatophores allowing instantaneous full-body color
+    and pattern shifts.
+  rdpReward: 95
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 1
+  preferredBiome: 1
+  minDepthFraction: 0.05
+  maxDepthFraction: 0.45
+  instanceCount: 3
+  wanderRadius: 18
+  moveSpeed: 3.2
+  fleeSpeed: 6.5
+  fleeRange: 10
+  returnThreshold: 40
+  placeholderShape: 1
+  placeholderColor: {r: 0.85, g: 0.95, b: 1, a: 1}
+  placeholderScale: {x: 0.8, y: 1.8, z: 0.8}
+  modelPrefab: {fileID: 8681646802474497732, guid: 2ea6a00234df36f418f3b7c8c63aaba8, type: 3}
+  photo: {fileID: 0}
+  silhouette: {fileID: 0}
+  fullImage: {fileID: 0}
