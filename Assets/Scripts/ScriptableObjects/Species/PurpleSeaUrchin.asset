@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 6
   zoneIndex: 0
   habitat: "Rocky coastal areas and boulder fields (0\u2013160 m)"
+  depthRangeText: "0\u2013160 m (Rocky Cliffs & Seabed)"
+  explorationHint: Clustered in groups on rocky boulders and vertical trench walls.
+  secondaryZoneIndices: 
   characteristics: Globular test covered in dense, sharp vivid violet-purple spines.
   ecologicalRole: Herbivorous grazer regulating macroalgae and kelp forest canopy
     density.
@@ -39,6 +42,8 @@ MonoBehaviour:
   placeholderShape: 0
   placeholderColor: {r: 0.65, g: 0.15, b: 0.85, a: 1}
   placeholderScale: {x: 0.6, y: 0.6, z: 0.6}
+  silhouetteEulerAngles: {x: 20, y: 20, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

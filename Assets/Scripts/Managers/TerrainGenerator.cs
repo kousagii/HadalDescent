@@ -103,7 +103,7 @@ public class TerrainGenerator : MonoBehaviour
         _pcgFreq   = zone.pcgFrequency;
         _pcgAmp    = zone.pcgAmplitude;
         _pcgSeed   = GameManager.Instance != null
-                     ? GameManager.Instance.GetOrCreatePcgSeed(zoneIndex)
+                     ? GameManager.Instance.GetOrCreateZoneSeed(zoneIndex)
                      : Random.Range(0, 99999);
         _softT     = zone.softBiomeThreshold;
         _hardT     = zone.hardBiomeThreshold;

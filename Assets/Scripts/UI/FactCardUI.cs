@@ -1,45 +1,52 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Fact Card popup shown when the player interacts with a stationary species
-/// (coral, sponge, bivalve). Slides up from the bottom of the screen.
-/// Displays all 6 educational fields + "Added to Bestiary!" on first discovery.
+/// Fact Card popup shown when the player scans/interacts with a stationary species.
+/// Displays the exact same detailed scientific data as the Bestiary Detail Modal.
 ///
-/// Setup: Add FactCardUI to the Canvas. Singleton — auto-found at runtime.
-/// No prefab required — all UI is built from code.
-/// Called by ScannerSystem.StaticScanSequence() after the sonar pulse VFX.
+/// Features:
+///   - Matches DetailModal 1:1 (Photo, Common Name, Scientific Name, Class, Habitat,
+///     Characteristics, Ecological Role, Did you know?, Research Reward).
+///   - Supports custom UI panel designed in Canvas (just drag references into Inspector).
+///   - Automatically builds default UI if none is assigned in Inspector.
 /// </summary>
 public class FactCardUI : MonoBehaviour
 {
     public static FactCardUI Instance { get; private set; }
 
-    // -----------------------------------------------------------------------
-    // Runtime UI elements (built in code)
-    // -----------------------------------------------------------------------
+    [Header("Custom UI Panel (Optional - assign if designed in Canvas)")]
+    [Tooltip("Custom Fact Card GameObject in Canvas.")]
+    [SerializeField] private GameObject customCardPanel;
+    [SerializeField] private Image      customPhoto;
+    [SerializeField] private TMP_Text   customCommonName;
+    [SerializeField] private TMP_Text   customScientificName;
+    [SerializeField] private TMP_Text   customClass;
+    [SerializeField] private TMP_Text   customHabitat;
+    [SerializeField] private TMP_Text   customCharacteristics;
+    [SerializeField] private TMP_Text   customEcologicalRole;
+    [SerializeField] private TMP_Text   customFact;
+    [SerializeField] private TMP_Text   customReward;
+    [SerializeField] private Button     customCloseButton;
 
+    // Runtime programmatic elements (used if customCardPanel is null)
     private RectTransform _panel;
     private Image         _photo;
-    private TMP_Text      _nameText;
+    private TMP_Text      _commonNameText;
     private TMP_Text      _sciNameText;
+    private TMP_Text      _classText;
     private TMP_Text      _bodyText;
-    private TMP_Text      _rdpText;
+    private TMP_Text      _rewardText;
     private Button        _closeButton;
-    private Button        _viewButton;
 
     private bool   _isOpen;
     private Canvas _canvas;
 
-    // Panel slide animation
-    private const float PanelHeight   = 520f;
-    private const float SlideSpeed    = 10f;
-    private const float PanelWidth    = 380f;
-
-    // -----------------------------------------------------------------------
-    // Unity lifecycle
-    // -----------------------------------------------------------------------
+    private const float PanelWidth  = 380f;
+    private const float PanelHeight = 540f;
+    private const float SlideSpeed  = 12f;
 
     private void Awake()
     {
@@ -50,229 +57,168 @@ public class FactCardUI : MonoBehaviour
     private void Start()
     {
         _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
-        BuildPanel();
+
+        if (customCardPanel != null)
+        {
+            customCardPanel.SetActive(false);
+            if (customCloseButton != null)
+                customCloseButton.onClick.AddListener(Hide);
+        }
+        else
+        {
+            BuildPanel();
+        }
     }
 
     private void Update()
     {
-        if (_panel == null) return;
-
-        float targetY = _isOpen ? 0f : -PanelHeight - 20f;
-        Vector2 pos   = _panel.anchoredPosition;
-        pos.y         = Mathf.Lerp(pos.y, targetY, Time.deltaTime * SlideSpeed);
-        _panel.anchoredPosition = pos;
+        if (customCardPanel == null && _panel != null)
+        {
+            float targetY = _isOpen ? 0f : -PanelHeight - 40f;
+            Vector2 pos   = _panel.anchoredPosition;
+            pos.y         = Mathf.Lerp(pos.y, targetY, Time.deltaTime * SlideSpeed);
+            _panel.anchoredPosition = pos;
+        }
     }
-
-    // -----------------------------------------------------------------------
-    // Public API
-    // -----------------------------------------------------------------------
 
     public void Show(SpeciesData data, bool isNewDiscovery)
     {
-        if (_panel == null) BuildPanel();
-        PopulateCard(data, isNewDiscovery);
-        _isOpen = true;
+        if (data == null) return;
+
+        if (customCardPanel != null)
+        {
+            customCardPanel.SetActive(true);
+            Sprite display = data.photo != null ? data.photo : data.fullImage;
+            if (customPhoto != null)
+            {
+                customPhoto.sprite = display;
+                customPhoto.color  = display != null ? Color.white : data.placeholderColor;
+            }
+            if (customCommonName != null)       customCommonName.text       = data.commonName;
+            if (customScientificName != null)   customScientificName.text   = $"<i>{data.scientificName}</i>";
+            if (customClass != null)            customClass.text            = $"Class: {data.taxonomicClass}";
+            if (customHabitat != null)          customHabitat.text          = $"Habitat: {data.habitat}";
+            if (customCharacteristics != null)  customCharacteristics.text  = $"Characteristics: {data.characteristics}";
+            if (customEcologicalRole != null)   customEcologicalRole.text   = $"Ecological Role: {data.ecologicalRole}";
+            if (customFact != null)             customFact.text             = $"Did you know? {data.interestingFact}";
+            if (customReward != null)           customReward.text           = isNewDiscovery ? $"{data.rdpReward} RDP (Added to Bestiary!)" : $"+{data.rdpReward} RDP";
+        }
+        else
+        {
+            if (_panel == null) BuildPanel();
+            PopulateCard(data, isNewDiscovery);
+            _isOpen = true;
+        }
     }
 
     public void Hide()
     {
         _isOpen = false;
+        if (customCardPanel != null) customCardPanel.SetActive(false);
     }
-
-    // -----------------------------------------------------------------------
-    // Content population
-    // -----------------------------------------------------------------------
 
     private void PopulateCard(SpeciesData data, bool isNew)
     {
-        // Photo
-        if (_photo != null)
-        {
-            Sprite display = data.photo != null ? data.photo
-                           : (data.fullImage != null ? data.fullImage : data.silhouette);
-            _photo.sprite  = display;
-            _photo.color   = (display != null) ? Color.white : data.placeholderColor;
-        }
-
-        if (_nameText    != null) _nameText.text    = data.commonName;
-        if (_sciNameText != null) _sciNameText.text = $"<i>{data.scientificName}</i>";
+        Sprite display = data.photo != null ? data.photo : data.fullImage;
+        if (_photo != null) { _photo.sprite = display; _photo.color = display != null ? Color.white : data.placeholderColor; }
+        if (_commonNameText != null) _commonNameText.text = data.commonName;
+        if (_sciNameText != null)    _sciNameText.text    = $"<i>{data.scientificName}</i>  â€¢  Class: {data.taxonomicClass}";
 
         if (_bodyText != null)
         {
             _bodyText.text =
-                $"<color=#88ccaa>\u25A0 Habitat:</color> {data.habitat}\n\n" +
-                $"<color=#88ccaa>\u25A0 Characteristics:</color>\n{data.characteristics}\n\n" +
-                $"<color=#88ccaa>\u25A0 Ecological Role:</color>\n{data.ecologicalRole}\n\n" +
-                $"<color=#ffdd88>\u2736 {data.interestingFact}</color>";
+                $"<color=#77ddbb><b>HABITAT:</b></color> {data.habitat}\n\n" +
+                $"<color=#77ddbb><b>CHARACTERISTICS:</b></color> {data.characteristics}\n\n" +
+                $"<color=#77ddbb><b>ECOLOGICAL ROLE:</b></color> {data.ecologicalRole}\n\n" +
+                $"<color=#ffcc00><b>âœ¦ INTERESTING FACT:</b></color>\n{data.interestingFact}";
         }
 
-        if (_rdpText != null)
+        if (_rewardText != null)
         {
-            _rdpText.gameObject.SetActive(isNew);
-            if (isNew) _rdpText.text = $"\u2605 Added to Bestiary!  +{data.rdpReward} RDP";
+            _rewardText.text = isNew ? $"<color=#ffcc00>+{data.rdpReward} RDP</color>  Added to Bestiary!" : "<color=#88ccff>Specimen Observed</color>";
         }
     }
-
-    // -----------------------------------------------------------------------
-    // UI construction (all code — no prefab required)
-    // -----------------------------------------------------------------------
 
     private void BuildPanel()
     {
-        if (_canvas == null) return;
+        if (_panel != null || _canvas == null) return;
 
-        // -- Root panel ---------------------------------------------------
-        var panelGO = new GameObject("FactCard", typeof(RectTransform), typeof(Image));
-        panelGO.transform.SetParent(_canvas.transform, false);
-        _panel               = panelGO.GetComponent<RectTransform>();
-        _panel.anchorMin     = new Vector2(0.5f, 0f);
-        _panel.anchorMax     = new Vector2(0.5f, 0f);
-        _panel.pivot         = new Vector2(0.5f, 0f);
-        _panel.sizeDelta     = new Vector2(PanelWidth, PanelHeight);
-        _panel.anchoredPosition = new Vector2(0f, -PanelHeight - 20f);
+        var go = new GameObject("FactCard", typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(_canvas.transform, false);
+        _panel = go.GetComponent<RectTransform>();
+        _panel.anchorMin        = new Vector2(0.5f, 0.5f);
+        _panel.anchorMax        = new Vector2(0.5f, 0.5f);
+        _panel.pivot            = new Vector2(0.5f, 0.5f);
+        _panel.sizeDelta        = new Vector2(PanelWidth, PanelHeight);
+        _panel.anchoredPosition = new Vector2(0f, 0f);
 
-        var panelImg       = panelGO.GetComponent<Image>();
-        panelImg.color     = new Color(0.04f, 0.10f, 0.18f, 0.97f);
+        var bg = go.GetComponent<Image>();
+        bg.color = new Color(0.04f, 0.08f, 0.14f, 0.98f);
 
-        // Top accent bar
-        MakeAccentBar(_panel, new Color(0.08f, 0.75f, 0.70f, 1f));
-
-        float yPos = PanelHeight - 18f;
-
-        // Photo placeholder
+        // Photo Image
         var photoGO = new GameObject("Photo", typeof(RectTransform), typeof(Image));
-        photoGO.transform.SetParent(_panel, false);
-        var photoRect = photoGO.GetComponent<RectTransform>();
-        photoRect.anchorMin     = new Vector2(0f, 1f);
-        photoRect.anchorMax     = new Vector2(1f, 1f);
-        photoRect.pivot         = new Vector2(0.5f, 1f);
-        photoRect.anchoredPosition = new Vector2(0f, -6f);
-        photoRect.sizeDelta     = new Vector2(0f, 120f);
+        photoGO.transform.SetParent(go.transform, false);
+        var pr = photoGO.GetComponent<RectTransform>();
+        pr.anchorMin = new Vector2(0.5f, 1f); pr.anchorMax = new Vector2(0.5f, 1f);
+        pr.sizeDelta = new Vector2(340f, 150f); pr.anchoredPosition = new Vector2(0f, -90f);
         _photo = photoGO.GetComponent<Image>();
-        _photo.color            = new Color(0.08f, 0.18f, 0.28f, 1f);
-        yPos -= 126f;
 
-        // Common name
-        _nameText    = MakeText(_panel, "CommonName", 18, FontStyles.Bold,
-                               new Vector2(14f, -yPos), new Vector2(PanelWidth - 28f, 26f),
-                               new Color(0.85f, 0.95f, 1.0f, 1f));
-        yPos += 30f;
+        // Common Name
+        var nameGO = new GameObject("CommonName", typeof(RectTransform));
+        nameGO.transform.SetParent(go.transform, false);
+        var nr = nameGO.GetComponent<RectTransform>();
+        nr.anchorMin = new Vector2(0f, 1f); nr.anchorMax = new Vector2(1f, 1f);
+        nr.sizeDelta = new Vector2(-40f, 26f); nr.anchoredPosition = new Vector2(0f, -176f);
+        _commonNameText = nameGO.AddComponent<TextMeshProUGUI>();
+        _commonNameText.fontSize = 20; _commonNameText.fontStyle = FontStyles.Bold;
+        _commonNameText.alignment = TextAlignmentOptions.Center; _commonNameText.color = Color.white;
 
-        // Scientific name
-        _sciNameText = MakeText(_panel, "SciName", 13, FontStyles.Italic,
-                               new Vector2(14f, -yPos), new Vector2(PanelWidth - 28f, 22f),
-                               new Color(0.55f, 0.75f, 0.95f, 1f));
-        yPos += 26f;
+        // Scientific Name & Class
+        var sciGO = new GameObject("SciNameAndClass", typeof(RectTransform));
+        sciGO.transform.SetParent(go.transform, false);
+        var sr = sciGO.GetComponent<RectTransform>();
+        sr.anchorMin = new Vector2(0f, 1f); sr.anchorMax = new Vector2(1f, 1f);
+        sr.sizeDelta = new Vector2(-40f, 20f); sr.anchoredPosition = new Vector2(0f, -202f);
+        _sciNameText = sciGO.AddComponent<TextMeshProUGUI>();
+        _sciNameText.fontSize = 12; _sciNameText.alignment = TextAlignmentOptions.Center;
+        _sciNameText.color = new Color(0.6f, 0.8f, 1f, 1f);
 
-        // Divider
-        MakeDivider(_panel, -yPos);
-        yPos += 8f;
-
-        // Body text (all 5 info fields)
-        _bodyText = MakeText(_panel, "Body", 11, FontStyles.Normal,
-                            new Vector2(14f, -yPos), new Vector2(PanelWidth - 28f, 230f),
-                            Color.white);
+        // Body Text (Habitat, Characteristics, Ecological Role, Fact)
+        var bodyGO = new GameObject("Body", typeof(RectTransform));
+        bodyGO.transform.SetParent(go.transform, false);
+        var br = bodyGO.GetComponent<RectTransform>();
+        br.anchorMin = new Vector2(0f, 0f); br.anchorMax = new Vector2(1f, 1f);
+        br.offsetMin = new Vector2(20f, 66f); br.offsetMax = new Vector2(-20f, -228f);
+        _bodyText = bodyGO.AddComponent<TextMeshProUGUI>();
+        _bodyText.fontSize = 12; _bodyText.color = Color.white;
         _bodyText.enableWordWrapping = true;
-        _bodyText.overflowMode       = TextOverflowModes.ScrollRect;
-        yPos += 234f;
 
-        // RDP badge (shown only on first discover)
-        _rdpText = MakeText(_panel, "RDP", 13, FontStyles.Bold,
-                           new Vector2(14f, -yPos), new Vector2(PanelWidth - 28f, 24f),
-                           new Color(1f, 0.87f, 0.30f, 1f));
-        _rdpText.gameObject.SetActive(false);
-        yPos += 28f;
+        // Reward Text
+        var rdpGO = new GameObject("Reward", typeof(RectTransform));
+        rdpGO.transform.SetParent(go.transform, false);
+        var rr = rdpGO.GetComponent<RectTransform>();
+        rr.anchorMin = new Vector2(0f, 0f); rr.anchorMax = new Vector2(1f, 0f);
+        rr.sizeDelta = new Vector2(0f, 22f); rr.anchoredPosition = new Vector2(0f, 44f);
+        _rewardText = rdpGO.AddComponent<TextMeshProUGUI>();
+        _rewardText.fontSize = 12; _rewardText.fontStyle = FontStyles.Bold;
+        _rewardText.alignment = TextAlignmentOptions.Center;
 
-        // Buttons row
-        float btnY = -yPos;
-        _closeButton = MakeButton(_panel, "Close",  new Vector2(-48f, btnY), 88f, 36f,
-                                  new Color(0.15f, 0.20f, 0.28f, 1f), "Close");
-        _viewButton  = MakeButton(_panel, "View",   new Vector2( 48f, btnY), 88f, 36f,
-                                  new Color(0.08f, 0.55f, 0.52f, 1f), "View");
-
+        // Close button
+        var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+        closeGO.transform.SetParent(go.transform, false);
+        var cr = closeGO.GetComponent<RectTransform>();
+        cr.anchorMin = new Vector2(0.5f, 0f); cr.anchorMax = new Vector2(0.5f, 0f);
+        cr.sizeDelta = new Vector2(140f, 32f); cr.anchoredPosition = new Vector2(0f, 18f);
+        closeGO.GetComponent<Image>().color = new Color(0.15f, 0.45f, 0.65f, 1f);
+        _closeButton = closeGO.GetComponent<Button>();
         _closeButton.onClick.AddListener(Hide);
-        _viewButton.onClick.AddListener(() =>
-        {
-            Hide();
-            BestiaryManager.Instance?.ShowBestiary();
-        });
-    }
 
-    // ---- Helpers ------------------------------------------------------------
-
-    private static TMP_Text MakeText(RectTransform parent, string name, float size,
-                                     FontStyles style, Vector2 anchoredPos, Vector2 sizeDelta,
-                                     Color color)
-    {
-        var go   = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin        = new Vector2(0f, 1f);
-        rect.anchorMax        = new Vector2(0f, 1f);
-        rect.pivot            = new Vector2(0f, 1f);
-        rect.anchoredPosition = anchoredPos;
-        rect.sizeDelta        = sizeDelta;
-        var tmp         = go.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize    = size;
-        tmp.fontStyle   = style;
-        tmp.color       = color;
-        tmp.alignment   = TextAlignmentOptions.TopLeft;
-        return tmp;
-    }
-
-    private static void MakeAccentBar(RectTransform parent, Color color)
-    {
-        var go   = new GameObject("Accent", typeof(RectTransform), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin        = new Vector2(0f, 1f);
-        rect.anchorMax        = new Vector2(1f, 1f);
-        rect.pivot            = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta        = new Vector2(0f, 4f);
-        go.GetComponent<Image>().color = color;
-    }
-
-    private static void MakeDivider(RectTransform parent, float y)
-    {
-        var go   = new GameObject("Divider", typeof(RectTransform), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin        = new Vector2(0f, 1f);
-        rect.anchorMax        = new Vector2(1f, 1f);
-        rect.pivot            = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, y);
-        rect.sizeDelta        = new Vector2(-28f, 1f);
-        go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.12f);
-    }
-
-    private static Button MakeButton(RectTransform parent, string name,
-                                      Vector2 anchoredPos, float w, float h,
-                                      Color bgColor, string label)
-    {
-        var go   = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-        go.transform.SetParent(parent, false);
-        var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin        = new Vector2(0.5f, 1f);
-        rect.anchorMax        = new Vector2(0.5f, 1f);
-        rect.pivot            = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = anchoredPos;
-        rect.sizeDelta        = new Vector2(w, h);
-        go.GetComponent<Image>().color = bgColor;
-
-        var lblGO   = new GameObject("Label", typeof(RectTransform));
-        lblGO.transform.SetParent(go.transform, false);
-        var lblRect = lblGO.GetComponent<RectTransform>();
-        lblRect.anchorMin = Vector2.zero;
-        lblRect.anchorMax = Vector2.one;
-        lblRect.sizeDelta = Vector2.zero;
-        var tmp            = lblGO.AddComponent<TextMeshProUGUI>();
-        tmp.text           = label;
-        tmp.fontSize       = 13;
-        tmp.fontStyle      = FontStyles.Bold;
-        tmp.color          = Color.white;
-        tmp.alignment      = TextAlignmentOptions.Center;
-
-        return go.GetComponent<Button>();
+        var lblGO = new GameObject("Label", typeof(RectTransform));
+        lblGO.transform.SetParent(closeGO.transform, false);
+        var lr = lblGO.GetComponent<RectTransform>();
+        lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
+        var lbl = lblGO.AddComponent<TextMeshProUGUI>();
+        lbl.fontSize = 13; lbl.alignment = TextAlignmentOptions.Center;
+        lbl.text = "CLOSE"; lbl.color = Color.white;
     }
 }

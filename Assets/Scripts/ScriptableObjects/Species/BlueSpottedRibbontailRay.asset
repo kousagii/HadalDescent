@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 1
   zoneIndex: 0
   habitat: "Shallow reef sand flats and lagoons (0\u201320 m)"
+  depthRangeText: "0\u201320 m (Sandy Lagoon Flats)"
+  explorationHint: Glides over shallow sandy channels between coral formations.
+  secondaryZoneIndices: 
   characteristics: Distinctive oval disc patterned with electric-blue circular spots.
   ecologicalRole: Benthic carnivore hunting molluscs, worms, and small crabs buried
     in sand.
@@ -39,6 +42,8 @@ MonoBehaviour:
   placeholderShape: 3
   placeholderColor: {r: 0.2, g: 0.65, b: 0.9, a: 1}
   placeholderScale: {x: 1.8, y: 0.2, z: 1.8}
+  silhouetteEulerAngles: {x: 30, y: 40, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

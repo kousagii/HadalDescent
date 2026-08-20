@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -6,7 +6,7 @@ using TMPro;
 /// Manages all HUD elements in a zone scene.
 ///
 /// HUD Layout (matches wireframes):
-///   Top-Left  : Depth gauge label + Sonar minimap
+///   Top-Left  : Depth gauge label + Sonar map
 ///   Top-Right : RDP counter, Shop, Bestiary, Pause buttons
 ///   Bottom    : Joystick area, Scanner button, Interact button
 ///
@@ -19,20 +19,21 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     // -----------------------------------------------------------------------
-    // Inspector â€” HUD references
+    // Inspector - HUD references
     // -----------------------------------------------------------------------
 
     [Header("Top-Left HUD")]
     [SerializeField] private TMP_Text depthLabel;       // "DEPTH  100 m"
     [SerializeField] private TMP_Text zoneNameLabel;    // "SUNLIGHT ZONE"
+    [SerializeField] private SonarMapUI sonarMap;       // Fixed circular Sonar Map
 
     [Header("Top-Right HUD")]
     [SerializeField] private TMP_Text rdpLabel;         // "RDP  150"
 
     [Header("Bottom HUD Buttons")]
-    [Tooltip("SCAN button Image — tinted cyan when a species is in the reticle.")]
+    [Tooltip("SCAN button Image - tinted cyan when a species is in the reticle.")]
     [SerializeField] private UnityEngine.UI.Image scanButtonImage;
-    [Tooltip("INTERACT button Image — tinted cyan when near a stationary species.")]
+    [Tooltip("INTERACT button Image - tinted cyan when near a stationary species.")]
     [SerializeField] private UnityEngine.UI.Image interactButtonImage;
 
     [Header("References (auto-found)")]
@@ -59,6 +60,19 @@ public class UIManager : MonoBehaviour
 
         if (scannerSystem == null)
             scannerSystem = FindFirstObjectByType<ScannerSystem>();
+
+        if (sonarMap == null)
+        {
+            sonarMap = FindFirstObjectByType<SonarMapUI>();
+            if (sonarMap == null)
+            {
+                var mapGO = GameObject.Find("Map placeholder") ?? GameObject.Find("SonarMap") ?? GameObject.Find("Map");
+                if (mapGO != null)
+                {
+                    sonarMap = mapGO.AddComponent<SonarMapUI>();
+                }
+            }
+        }
 
         // Populate HUD immediately on scene load
         RefreshHUD();
@@ -163,4 +177,3 @@ public class UIManager : MonoBehaviour
     // Legacy alias so any existing ScannerSystem calls to ShowScanPrompt still compile
     public void ShowScanPrompt(bool visible) => ShowScanButton(visible);
 }
-

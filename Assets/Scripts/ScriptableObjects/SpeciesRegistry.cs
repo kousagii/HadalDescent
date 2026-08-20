@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -6,8 +6,9 @@ using UnityEngine;
 /// Central registry holding references to every SpeciesData asset.
 /// BestiaryManager, SpeciesSpawner, and ScannerSystem all read from this.
 ///
-/// Create via: Right-click in Project ? Create ? HadalDescent ? SpeciesRegistry
-/// Setup: Drag all SpeciesData .asset files into the allSpecies list.
+/// Supports multi-depth species distribution:
+///   - Primary encounter occurs in the deepest zone.
+///   - Once discovered, the species can also appear in shallower zones.
 /// </summary>
 [CreateAssetMenu(fileName = "SpeciesRegistry", menuName = "HadalDescent/SpeciesRegistry")]
 public class SpeciesRegistry : ScriptableObject
@@ -15,14 +16,45 @@ public class SpeciesRegistry : ScriptableObject
     [Tooltip("Drag every SpeciesData asset here (mobile species AND stationary corals/sponges/bivalves).")]
     public List<SpeciesData> allSpecies = new List<SpeciesData>();
 
+    /// <summary>
+    /// Returns primary species assigned to this zone (for Bestiary tab categorization).
+    /// </summary>
     public List<SpeciesData> GetSpeciesForZone(int zoneIndex) =>
         allSpecies.Where(s => s != null && s.zoneIndex == zoneIndex).ToList();
 
+    /// <summary>
+    /// Returns all primary species for this zone, PLUS any multi-depth species that have
+    /// already been discovered in deeper zones and can now spawn in this shallower zone.
+    /// </summary>
+    public List<SpeciesData> GetSpeciesAvailableForZone(int zoneIndex)
+    {
+        var list = new List<SpeciesData>();
+        foreach (var s in allSpecies)
+        {
+            if (s == null) continue;
+
+            if (s.zoneIndex == zoneIndex)
+            {
+                list.Add(s);
+            }
+            else if (s.secondaryZoneIndices != null && System.Array.IndexOf(s.secondaryZoneIndices, zoneIndex) >= 0)
+            {
+                // Multi-depth species: only spawns in shallower zones AFTER being discovered in its primary zone
+                bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(s.zoneIndex, s.speciesId);
+                if (isDiscovered)
+                {
+                    list.Add(s);
+                }
+            }
+        }
+        return list;
+    }
+
     public List<SpeciesData> GetMobileSpeciesForZone(int zoneIndex) =>
-        allSpecies.Where(s => s != null && s.zoneIndex == zoneIndex && !s.isStationary).ToList();
+        GetSpeciesAvailableForZone(zoneIndex).Where(s => !s.isStationary).ToList();
 
     public List<SpeciesData> GetStationaryForZone(int zoneIndex) =>
-        allSpecies.Where(s => s != null && s.zoneIndex == zoneIndex && s.isStationary).ToList();
+        GetSpeciesAvailableForZone(zoneIndex).Where(s => s.isStationary).ToList();
 
     public SpeciesData FindById(string id) =>
         allSpecies.FirstOrDefault(s => s != null && s.speciesId == id);
@@ -30,7 +62,7 @@ public class SpeciesRegistry : ScriptableObject
     public int TotalCount => allSpecies.Count(s => s != null);
 
 #if UNITY_EDITOR
-    [ContextMenu("Validate — Check for duplicate IDs")]
+    [ContextMenu("Validate - Check for duplicate IDs")]
     private void ValidateIds()
     {
         var ids        = allSpecies.Where(s => s != null).Select(s => s.speciesId).ToList();
@@ -45,7 +77,7 @@ public class SpeciesRegistry : ScriptableObject
             UnityEngine.Debug.Log($"[SpeciesRegistry] All {ids.Count} entries are valid.");
     }
 
-    [ContextMenu("Log — Species count per zone")]
+    [ContextMenu("Log - Species count per zone")]
     private void LogZoneCounts()
     {
         for (int z = 0; z < ZoneConfig.ZoneCount; z++)

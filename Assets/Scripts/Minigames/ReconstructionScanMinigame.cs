@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Minigame 2 — Reconstruction Scan (sliding tile puzzle).
+/// Minigame 2 ï¿½ Reconstruction Scan (sliding tile puzzle).
 ///
 /// Grid sizes: 3x3 for Sunlight/Twilight, 4x4 for Midnight/Abyss/Hadal.
 /// Tiles: numbered placeholders (1..N-1 + empty) until species photos are added.
@@ -22,7 +22,7 @@ using TMPro;
 public class ReconstructionScanMinigame : MonoBehaviour
 {
     // -----------------------------------------------------------------------
-    // Difficulty tables (indexed by zoneIndex 0–4)
+    // Difficulty tables (indexed by zoneIndex 0ï¿½4)
     // -----------------------------------------------------------------------
 
     private static readonly int[]   GridSizes = { 3, 3, 4, 4, 4 };
@@ -62,7 +62,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private GameObject    _hintOverlay;
 
     private float _timeRemaining;
-    private float _totalTime;
+    private float _totalTime;   
     private float _cellSize;
 
     // -----------------------------------------------------------------------
@@ -273,7 +273,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         titleRect.anchorMax = new Vector2(0.9f, 0.97f);
         titleRect.sizeDelta = Vector2.zero;
         var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
-        titleTmp.text = "RECONSTRUCTION SCAN — Arrange the tiles";
+        titleTmp.text = "RECONSTRUCTION SCAN ï¿½ Arrange the tiles";
         titleTmp.fontSize = 14; titleTmp.fontStyle = FontStyles.Bold;
         titleTmp.color = new Color(0.8f, 0.95f, 1f); titleTmp.alignment = TextAlignmentOptions.Center;
 

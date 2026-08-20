@@ -1,31 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 /// <summary>
-/// Renders a rotating 3D model (or coloured primitive) into a RenderTexture
-/// displayed inside the Bestiary detail panel as a RawImage.
+/// Renders an interactive 3D model into a RenderTexture displayed on UI RawImage elements.
 ///
-/// Architecture:
-///   A dedicated "Preview Camera" renders ONLY objects on the _ModelPreview layer.
-///   When ShowPreview(data) is called, a copy of the model (or placeholder) is
-///   instantiated, placed on that layer, and rotated each frame.
-///   The camera's output is assigned to a RenderTexture ? shown in a UI RawImage.
-///
-/// Setup in Unity (one time):
-///   1. Add ModelPreviewSystem to a persistent or scene GameObject.
-///   2. Create a Camera child ? assign to previewCamera.
-///      - Set Culling Mask to ONLY the "ModelPreview" layer.
-///      - Clear Flags = Solid Colour, Background = #0A1020 (dark navy).
-///      - Position: (0, 100, -3) — far from the game world.
-///   3. Create a RenderTexture asset (256×256, 16-bit depth) ? assign to previewRT.
-///      - Also assign previewRT to the Preview Camera's Target Texture field.
-///   4. In the Bestiary canvas, add a RawImage ? assign to previewRawImage.
-///   5. Assign previewRawImage to ModelPreviewSystem in Inspector.
-///   6. Call ModelPreviewSystem.Instance.ShowPreview(speciesData) from BestiaryManager.
-///
-/// Layer setup:
-///   Go to Edit ? Project Settings ? Tags and Layers.
-///   Add a layer named exactly "ModelPreview" (use any free slot, e.g. Layer 9).
+/// Features:
+///   - Discovered Mode: Full-colour PBR materials + smooth rotation + interactive drag-to-rotate.
+///   - Undiscovered Mode: Blackened unlit silhouette + smooth rotation + interactive drag-to-rotate.
+///   - Touch/Mouse Drag: Players can drag horizontally/vertically to spin the 3D model 360°.
 /// </summary>
 public class ModelPreviewSystem : MonoBehaviour
 {
@@ -36,22 +19,30 @@ public class ModelPreviewSystem : MonoBehaviour
     // -----------------------------------------------------------------------
 
     [Header("Render Target")]
-    [Tooltip("The RenderTexture the Preview Camera renders into. Assign to RawImage too.")]
+    [Tooltip("The RenderTexture the Preview Camera renders into.")]
     [SerializeField] private RenderTexture previewRT;
 
     [Header("Preview Camera")]
     [Tooltip("A dedicated Camera that only sees the ModelPreview layer.")]
     [SerializeField] private Camera previewCamera;
 
-    [Header("UI")]
-    [Tooltip("The RawImage in the Bestiary panel that displays the rotating model.")]
+    [Header("UI (Default / Main)")]
+    [Tooltip("Optional default RawImage.")]
     [SerializeField] private RawImage previewRawImage;
 
-    [Header("Preview Settings")]
-    [Tooltip("World position where the preview model is placed (should be far from gameplay).")]
+    [Header("Rotation Settings")]
+    [Tooltip("Degrees per second the model rotates automatically when idle.")]
+    [SerializeField] private float autoRotationSpeed = 35f;
+
+    [Tooltip("Mouse/Touch drag rotation sensitivity.")]
+    [SerializeField] private float dragSensitivity = 0.4f;
+
+    [Header("Silhouette Visuals")]
+    [Tooltip("Color tint used for the 3D silhouette.")]
+    [SerializeField] private Color silhouetteColor = new Color(0.04f, 0.06f, 0.09f, 1f);
+
+    [Header("Placement")]
     [SerializeField] private Vector3 previewWorldPosition = new Vector3(0f, 200f, 0f);
-    [Tooltip("Degrees per second the model rotates.")]
-    [SerializeField] private float   rotationSpeed = 45f;
 
     // -----------------------------------------------------------------------
     // State
@@ -59,6 +50,9 @@ public class ModelPreviewSystem : MonoBehaviour
 
     private GameObject _previewInstance;
     private int        _previewLayerId = -1;
+    private bool       _isDragging     = false;
+    private float      _idleTimer      = 0f;
+    private Material   _silhouetteMat;
 
     // -----------------------------------------------------------------------
     // Unity lifecycle
@@ -72,19 +66,23 @@ public class ModelPreviewSystem : MonoBehaviour
         _previewLayerId = LayerMask.NameToLayer("ModelPreview");
         if (_previewLayerId < 0)
             Debug.LogWarning("[ModelPreviewSystem] Layer 'ModelPreview' not found. " +
-                             "Add it in Edit ? Project Settings ? Tags and Layers.");
+                             "Add it in Edit → Project Settings → Tags and Layers.");
 
-        // Link render texture to camera and raw image
         if (previewCamera != null && previewRT != null)
             previewCamera.targetTexture = previewRT;
         if (previewRawImage != null && previewRT != null)
             previewRawImage.texture = previewRT;
+
+        CreateSilhouetteMaterial();
     }
 
     private void Update()
     {
-        if (_previewInstance != null)
-            _previewInstance.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
+        if (_previewInstance != null && !_isDragging)
+        {
+            _idleTimer += Time.deltaTime;
+            _previewInstance.transform.Rotate(Vector3.up, autoRotationSpeed * Time.deltaTime, Space.World);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -92,19 +90,20 @@ public class ModelPreviewSystem : MonoBehaviour
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Spawn the species model (or placeholder primitive) in the preview scene
-    /// and start rendering it to the Bestiary RawImage.
+    /// Displays the 3D creature model.
+    /// If isSilhouette is true, renders with a blackened unlit silhouette shader.
     /// </summary>
-    public void ShowPreview(SpeciesData data)
+    public void ShowPreview(SpeciesData data, bool isSilhouette = false, RawImage customRawImage = null)
     {
         ClearPreview();
-
         if (data == null) return;
 
-        // Instantiate model prefab or create placeholder primitive
+        // 1. Instantiate 3D model or placeholder primitive
         if (data.modelPrefab != null)
         {
             _previewInstance = Instantiate(data.modelPrefab, previewWorldPosition, Quaternion.identity);
+            float scaleMul = data.previewScaleMultiplier > 0f ? data.previewScaleMultiplier : 1f;
+            _previewInstance.transform.localScale *= scaleMul;
         }
         else
         {
@@ -116,31 +115,67 @@ public class ModelPreviewSystem : MonoBehaviour
                 _                         => PrimitiveType.Sphere,
             };
             _previewInstance = GameObject.CreatePrimitive(pType);
-            _previewInstance.transform.position   = previewWorldPosition;
-            _previewInstance.transform.localScale  = data.placeholderScale * 1.2f;
+            _previewInstance.transform.position = previewWorldPosition;
+
+            float scaleMul = data.previewScaleMultiplier > 0f ? data.previewScaleMultiplier : 1f;
+            _previewInstance.transform.localScale = (data.placeholderScale != Vector3.zero ? data.placeholderScale : Vector3.one) * 1.2f * scaleMul;
 
             var rend = _previewInstance.GetComponent<Renderer>();
-            if (rend != null)
+            if (rend != null && !isSilhouette)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Universal Render Pipeline/Simple Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse"); if (shader != null) rend.material = new Material(shader) { color = data.placeholderColor };
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                             ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                             ?? Shader.Find("Standard");
+                if (shader != null)
+                    rend.material = new Material(shader) { color = data.placeholderColor };
             }
         }
 
-        // Remove any colliders — this is display-only
+        // 2. If Silhouette mode: apply blackened unlit material
+        if (isSilhouette)
+        {
+            ApplySilhouetteMaterial(_previewInstance);
+        }
+
+        // 3. Remove colliders (display only)
         foreach (var col in _previewInstance.GetComponentsInChildren<Collider>())
             Destroy(col);
 
-        // Assign to ModelPreview layer so ONLY the preview camera sees it
+        // 4. Assign to ModelPreview layer
         SetLayerRecursive(_previewInstance, _previewLayerId >= 0 ? _previewLayerId : 0);
 
-        // Frame the camera nicely: position it relative to the model's bounds
+        // 5. Frame camera to fit bounds
         FrameCamera(_previewInstance);
 
-        if (previewRawImage != null) previewRawImage.gameObject.SetActive(true);
-        if (previewCamera  != null) previewCamera.gameObject.SetActive(true);
+        // 6. Assign RenderTexture to target RawImage
+        var targetImage = customRawImage != null ? customRawImage : previewRawImage;
+        if (targetImage != null)
+        {
+            targetImage.texture = previewRT;
+            targetImage.gameObject.SetActive(true);
+        }
+
+        if (previewCamera != null) previewCamera.gameObject.SetActive(true);
     }
 
-    /// <summary>Destroy the preview model and hide the RawImage.</summary>
+    /// <summary>
+    /// Interactive drag rotation called by UI drag events.
+    /// </summary>
+    public void RotateModel(Vector2 delta)
+    {
+        if (_previewInstance == null) return;
+        _isDragging = true;
+        _idleTimer  = 0f;
+
+        _previewInstance.transform.Rotate(Vector3.up, -delta.x * dragSensitivity, Space.World);
+        _previewInstance.transform.Rotate(Vector3.right, delta.y * dragSensitivity, Space.World);
+    }
+
+    public void EndDrag()
+    {
+        _isDragging = false;
+    }
+
     public void ClearPreview()
     {
         if (_previewInstance != null)
@@ -155,11 +190,40 @@ public class ModelPreviewSystem : MonoBehaviour
     // Helpers
     // -----------------------------------------------------------------------
 
+    private void CreateSilhouetteMaterial()
+    {
+        Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit")
+                          ?? Shader.Find("Unlit/Color")
+                          ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+
+        if (unlitShader != null)
+        {
+            _silhouetteMat = new Material(unlitShader)
+            {
+                color = silhouetteColor
+            };
+        }
+    }
+
+    private void ApplySilhouetteMaterial(GameObject target)
+    {
+        if (_silhouetteMat == null) CreateSilhouetteMaterial();
+        if (_silhouetteMat == null) return;
+
+        var renderers = target.GetComponentsInChildren<Renderer>();
+        foreach (var r in renderers)
+        {
+            var mats = new Material[r.sharedMaterials.Length];
+            for (int i = 0; i < mats.Length; i++)
+                mats[i] = _silhouetteMat;
+            r.materials = mats;
+        }
+    }
+
     private void FrameCamera(GameObject model)
     {
         if (previewCamera == null) return;
 
-        // Use renderer bounds to determine how far to place the camera
         var renderers = model.GetComponentsInChildren<Renderer>();
         if (renderers.Length == 0)
         {
@@ -172,10 +236,10 @@ public class ModelPreviewSystem : MonoBehaviour
 
             float size   = bounds.extents.magnitude;
             float fovRad = previewCamera.fieldOfView * Mathf.Deg2Rad;
-            float dist   = (size / Mathf.Tan(fovRad * 0.5f)) * 1.5f;
+            float dist   = (size / Mathf.Tan(fovRad * 0.5f)) * 1.55f;
 
             previewCamera.transform.position =
-                previewWorldPosition + new Vector3(0f, bounds.extents.y * 0.5f, -dist);
+                previewWorldPosition + new Vector3(0f, bounds.extents.y * 0.4f, -Mathf.Max(dist, 2f));
         }
 
         previewCamera.transform.LookAt(previewWorldPosition);
@@ -188,4 +252,3 @@ public class ModelPreviewSystem : MonoBehaviour
             SetLayerRecursive(child.gameObject, layer);
     }
 }
-

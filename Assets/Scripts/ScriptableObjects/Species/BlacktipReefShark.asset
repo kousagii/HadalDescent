@@ -18,6 +18,10 @@ MonoBehaviour:
   taxonomicClass: 1
   zoneIndex: 0
   habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
+  depthRangeText: "0\u201375 m (Reef Flats & Slopes)"
+  explorationHint: Patrols along reef edges and open drop-offs in continuous forward
+    motion.
+  secondaryZoneIndices: 
   characteristics: Streamlined bronze-gray body with prominent black tips on all
     fins.
   ecologicalRole: Apex reef predator maintaining equilibrium among fish and cephalopod
@@ -40,6 +44,8 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.4, g: 0.45, b: 0.5, a: 1}
   placeholderScale: {x: 1.2, y: 3.5, z: 1.2}
+  silhouetteEulerAngles: {x: 5, y: 60, z: 0}
+  previewScaleMultiplier: 0.8
   modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

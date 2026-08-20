@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 3
   zoneIndex: 0
   habitat: "Shallow coral reefs and coastal shallows (0\u201310 m)"
+  depthRangeText: "0\u201310 m (Shallow Reef Canopy)"
+  explorationHint: Swims gracefully through shallow coral branches near the surface.
+  secondaryZoneIndices: 
   characteristics: Striking black-and-silver banded body with a bright yellow snout
     and paddle tail.
   ecologicalRole: Specialized predator hunting moray eels in tight reef crevices.
@@ -39,6 +42,8 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.95, g: 0.85, b: 0.1, a: 1}
   placeholderScale: {x: 0.4, y: 2.5, z: 0.4}
+  silhouetteEulerAngles: {x: 10, y: 70, z: 0}
+  previewScaleMultiplier: 0.9
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

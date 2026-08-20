@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,8 +8,8 @@ using UnityEngine;
 ///   2. Biome preference match (Hard reef, Soft seagrass, Rock boulders, Open water).
 ///   3. Raycast ground/rock snapping for stationary species.
 ///
-/// Mobile species     → Rigidbody + ContextSteering + SpeciesAI (swims in depth band).
-/// Stationary species → snaps to rocks/reef structures/seabed via Raycast,
+/// Mobile species     Ã¢â€ â€™ Rigidbody + ContextSteering + SpeciesAI (swims in depth band).
+/// Stationary species Ã¢â€ â€™ snaps to rocks/reef structures/seabed via Raycast,
 ///                      aligns to surface normal, gets BoxCollider trigger + ScanTarget.
 /// </summary>
 public class SpeciesSpawner : MonoBehaviour
@@ -78,7 +78,7 @@ public class SpeciesSpawner : MonoBehaviour
         EnsureCreatureParent();
         ClearExistingCreatures();
 
-        var allSpecies = registry.GetSpeciesForZone(zoneIndex);
+        var allSpecies = registry.GetSpeciesAvailableForZone(zoneIndex);
         int totalSpawned = 0;
         foreach (var data in allSpecies)
         {
@@ -273,6 +273,9 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SetupStationary(GameObject go, SpeciesData data)
     {
+        // Align bottom of object to surface so it doesn't sink into the seabed/rocks
+        AdjustContactHeight(go);
+
         var col = go.GetComponent<Collider>();
         if (col == null)
         {
@@ -287,6 +290,11 @@ public class SpeciesSpawner : MonoBehaviour
         var target = go.GetComponent<ScanTarget>();
         if (target == null) target = go.AddComponent<ScanTarget>();
         target.Initialize(data);
+
+        var trackable = go.GetComponent<SonarTrackable>();
+        if (trackable == null) trackable = go.AddComponent<SonarTrackable>();
+        bool discovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.zoneIndex, data.speciesId);
+        trackable.Initialize(SonarTrackable.SonarTargetType.Species, data.commonName, discovered);
     }
 
     private void SetupMobile(GameObject go, SpeciesData data, Vector3 spawnCenter)
@@ -298,15 +306,17 @@ public class SpeciesSpawner : MonoBehaviour
         }
         rb.useGravity     = false;
         rb.freezeRotation = true;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         var col = go.GetComponent<Collider>();
         if (col == null)
         {
             var box = go.AddComponent<BoxCollider>();
-            box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.3f : Vector3.one * 1.5f;
+            box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.1f : Vector3.one * 1.2f;
             col = box;
         }
-        col.isTrigger = true;
+        // Solid collider so physics stops creature from passing through seabed and rocks
+        col.isTrigger = false;
 
         try { go.tag = "Species"; } catch { }
 
@@ -316,6 +326,33 @@ public class SpeciesSpawner : MonoBehaviour
         var ai = go.GetComponent<SpeciesAI>();
         if (ai == null) ai = go.AddComponent<SpeciesAI>();
         ai.Initialize(data, spawnCenter);
+
+        var trackable = go.GetComponent<SonarTrackable>();
+        if (trackable == null) trackable = go.AddComponent<SonarTrackable>();
+        bool discovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.zoneIndex, data.speciesId);
+        trackable.Initialize(SonarTrackable.SonarTargetType.Species, data.commonName, discovered);
+    }
+
+    private void AdjustContactHeight(GameObject go)
+    {
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers != null && renderers.Length > 0)
+        {
+            Bounds combinedBounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                combinedBounds.Encapsulate(renderers[i].bounds);
+
+            float bottomY = combinedBounds.min.y;
+            float pivotY  = go.transform.position.y;
+            float bottomOffset = pivotY - bottomY;
+
+            // Lift so the bottom sits flush on the surface with tiny natural embedding (5%)
+            float height = combinedBounds.size.y;
+            float sink = height * 0.05f;
+            Vector3 pos = go.transform.position;
+            pos.y = pos.y + bottomOffset - sink;
+            go.transform.position = pos;
+        }
     }
 
     private void EnsureCreatureParent()

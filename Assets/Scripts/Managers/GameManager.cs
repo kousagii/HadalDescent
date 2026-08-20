@@ -1,20 +1,34 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Singleton that stores all persistent player state.
-/// Attach to a "GameManager" GameObject in your first scene and it will
-/// survive across all scene loads.
-///
-/// For the prototype, data is kept in memory only. Hook up SaveManager later.
+/// Survives across all scene loads.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
     // -----------------------------------------------------------------------
-    // Singleton
+    // Singleton (with auto-fallback creation)
     // -----------------------------------------------------------------------
 
-    public static GameManager Instance { get; private set; }
+    private static GameManager _instance;
+    public static GameManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindFirstObjectByType<GameManager>();
+                if (_instance == null)
+                {
+                    var go = new GameObject("GameManager");
+                    _instance = go.AddComponent<GameManager>();
+                    DontDestroyOnLoad(go);
+                }
+            }
+            return _instance;
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Player stats
@@ -34,18 +48,20 @@ public class GameManager : MonoBehaviour
     public int ClamShells = 0;
 
     // -----------------------------------------------------------------------
-    // Species discovery — tracks by zone then by species ID
+    // Species discovery
     // -----------------------------------------------------------------------
+
+    // Global set of all discovered species IDs
+    private readonly HashSet<string> _allDiscoveredSpecies = new HashSet<string>();
 
     // Key: zoneIndex (0-4), Value: set of discovered species IDs in that zone
     private readonly Dictionary<int, HashSet<string>> _discoveredByZone
         = new Dictionary<int, HashSet<string>>();
 
     // -----------------------------------------------------------------------
-    // PCG seeds — one per zone, generated on first visit and then fixed
+    // PCG seeds
     // -----------------------------------------------------------------------
 
-    // Key: zoneIndex, Value: integer seed passed to TerrainGenerator
     private readonly Dictionary<int, int> _zonePcgSeeds = new Dictionary<int, int>();
 
     // -----------------------------------------------------------------------
@@ -54,27 +70,23 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (_instance != null && _instance != this) { Destroy(gameObject); return; }
+        _instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
     // -----------------------------------------------------------------------
-    // RDP
+    // Currency management
     // -----------------------------------------------------------------------
 
-    /// <summary>Add RDP and notify the HUD.</summary>
     public void AddRDP(int amount)
     {
-        RDP += Mathf.Max(0, amount);
+        RDP += amount;
         UIManager.Instance?.RefreshHUD();
-        Debug.Log($"[GameManager] +{amount} RDP → Total: {RDP}");
+        Debug.Log($"[GameManager] +{amount} RDP (total: {RDP})");
     }
 
-    /// <summary>
-    /// Spend RDP. Returns true if successful, false if insufficient funds.
-    /// </summary>
-    public bool SpendRDP(int amount)
+    public bool TrySpendRDP(int amount)
     {
         if (RDP < amount) return false;
         RDP -= amount;
@@ -87,24 +99,39 @@ public class GameManager : MonoBehaviour
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Mark a species as discovered in a zone.
-    /// Returns true if this is a new discovery (was not already recorded).
+    /// Mark a species as discovered.
+    /// Returns true if this is a new discovery.
     /// </summary>
     public bool DiscoverSpecies(int zoneIndex, string speciesId)
     {
+        if (string.IsNullOrEmpty(speciesId)) return false;
+
+        bool isGloballyNew = _allDiscoveredSpecies.Add(speciesId);
+
         if (!_discoveredByZone.ContainsKey(zoneIndex))
             _discoveredByZone[zoneIndex] = new HashSet<string>();
 
-        bool isNew = _discoveredByZone[zoneIndex].Add(speciesId);
-        if (isNew)
-            Debug.Log($"[GameManager] New species discovered! Zone {zoneIndex} | ID: {speciesId}");
-        return isNew;
+        bool isZoneNew = _discoveredByZone[zoneIndex].Add(speciesId);
+
+        if (isGloballyNew)
+            Debug.Log($"[GameManager] New species cataloged in Bestiary! ID: {speciesId} (Zone {zoneIndex})");
+
+        return isGloballyNew || isZoneNew;
     }
 
-    /// <summary>Returns true if the species has already been discovered.</summary>
+    /// <summary>Returns true if the species has already been discovered anywhere or in this zone.</summary>
     public bool IsDiscovered(int zoneIndex, string speciesId)
     {
+        if (string.IsNullOrEmpty(speciesId)) return false;
+        if (_allDiscoveredSpecies.Contains(speciesId)) return true;
         return _discoveredByZone.TryGetValue(zoneIndex, out var set) && set.Contains(speciesId);
+    }
+
+    /// <summary>Returns true if the species has been discovered anywhere.</summary>
+    public bool IsDiscovered(string speciesId)
+    {
+        if (string.IsNullOrEmpty(speciesId)) return false;
+        return _allDiscoveredSpecies.Contains(speciesId);
     }
 
     /// <summary>How many distinct species have been discovered in this zone.</summary>
@@ -113,9 +140,7 @@ public class GameManager : MonoBehaviour
         return _discoveredByZone.TryGetValue(zoneIndex, out var set) ? set.Count : 0;
     }
 
-    /// <summary>
-    /// Returns 0.0–1.0 progress for zone unlock (discovered / totalSpecies).
-    /// </summary>
+    /// <summary>Returns 0.0–1.0 progress for zone unlock (discovered / totalSpecies).</summary>
     public float GetZoneDiscoveryProgress(int zoneIndex)
     {
         int total = ZoneConfig.IsValidZone(zoneIndex)
@@ -129,65 +154,15 @@ public class GameManager : MonoBehaviour
     // PCG seed management
     // -----------------------------------------------------------------------
 
-    /// <summary>
-    /// Returns the Perlin seed for <paramref name="zoneIndex"/>.
-    /// Creates and stores a random seed the first time a zone is visited so
-    /// re-entering the zone generates the exact same terrain layout.
-    /// </summary>
     public int GetOrCreatePcgSeed(int zoneIndex)
     {
-        if (!_zonePcgSeeds.ContainsKey(zoneIndex))
-            _zonePcgSeeds[zoneIndex] = Random.Range(0, 99999);
-        return _zonePcgSeeds[zoneIndex];
+        if (!_zonePcgSeeds.TryGetValue(zoneIndex, out int seed))
+        {
+            seed = Random.Range(100000, 999999);
+            _zonePcgSeeds[zoneIndex] = seed;
+        }
+        return seed;
     }
 
-    // -----------------------------------------------------------------------
-    // Submarine upgrades
-    // -----------------------------------------------------------------------
-
-    public bool UpgradeHull()
-    {
-        if (HullTier >= 5) return false;
-        HullTier++;
-        Debug.Log($"[GameManager] Hull upgraded → Tier {HullTier}");
-        return true;
-    }
-
-    public bool UpgradeEngine()
-    {
-        if (EngineTier >= 5) return false;
-        EngineTier++;
-        return true;
-    }
-
-    public bool UpgradeSonar()
-    {
-        if (SonarTier >= 5) return false;
-        SonarTier++;
-        return true;
-    }
-
-    public bool UpgradeScanner()
-    {
-        if (ScannerTier >= 5) return false;
-        ScannerTier++;
-        return true;
-    }
-
-    public bool UpgradeLight()
-    {
-        if (LightTier >= 5) return false;
-        LightTier++;
-        return true;
-    }
-
-    // -----------------------------------------------------------------------
-    // Clam shells
-    // -----------------------------------------------------------------------
-
-    public void CollectClamShell()
-    {
-        ClamShells++;
-        Debug.Log($"[GameManager] Clam shell collected! Total: {ClamShells}");
-    }
+    public int GetOrCreateZoneSeed(int zoneIndex) => GetOrCreatePcgSeed(zoneIndex);
 }

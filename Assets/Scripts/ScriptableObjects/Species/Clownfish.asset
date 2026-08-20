@@ -18,6 +18,10 @@ MonoBehaviour:
   taxonomicClass: 0
   zoneIndex: 0
   habitat: "Shallow Indo-Pacific coral reefs (1\u201315 m)"
+  depthRangeText: "1\u201315 m (Shallow Coral Reefs)"
+  explorationHint: Search around sunny, shallow coral reef summits nestled within
+    sea anemone patches.
+  secondaryZoneIndices: 
   characteristics: Bright orange body with three black-bordered white vertical bands.
   ecologicalRole: Lives mutualistically with sea anemones, protecting them from predators.
   interestingFact: The largest male can change into a breeding female if the dominant
@@ -38,6 +42,8 @@ MonoBehaviour:
   placeholderShape: 0
   placeholderColor: {r: 1, g: 0.45, b: 0.1, a: 1}
   placeholderScale: {x: 0.5, y: 0.5, z: 0.5}
+  silhouetteEulerAngles: {x: 10, y: 45, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 7950250345750191443, guid: bfaf51a9ae3fa304ea99cf1d0b7c9a89, type: 3}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

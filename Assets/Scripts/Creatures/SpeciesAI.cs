@@ -1,13 +1,13 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
 /// Per-creature state machine that drives ContextSteering.
 /// 
 /// States:
-///   Wandering  — default; picks random targets within wanderRadius of spawn.
-///   Fleeing    — triggered when isShy and submarine enters fleeRange.
+///   Wandering  - default; picks random targets within wanderRadius of spawn.
+///   Fleeing    - triggered when isShy and submarine enters fleeRange.
 ///                ContextSteering goal is set AWAY from the threat.
-///   Returning  — after fleeing far enough, creature returns to spawn centroid.
+///   Returning  - after fleeing far enough, creature returns to spawn centroid.
 ///
 /// Attach to: any mobile creature prefab alongside ContextSteering + Rigidbody.
 /// Initialize via: speciesAI.Initialize(data, spawnCenter) called by SpeciesSpawner.
@@ -27,7 +27,7 @@ public class SpeciesAI : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private ContextSteering _steering;
-    private Transform        _playerTransform;
+    private Transform       _playerTransform;
 
     // -----------------------------------------------------------------------
     // Wander data
@@ -35,14 +35,24 @@ public class SpeciesAI : MonoBehaviour
 
     private Vector3 _spawnCenter;
     private Vector3 _wanderTarget;
-    private float   _wanderArrivalThreshold = 1.5f;
+    private float   _wanderArrivalThreshold = 2.5f;
 
     // -----------------------------------------------------------------------
     // Public state
     // -----------------------------------------------------------------------
 
     public SpeciesData Data        { get; private set; }
-    public bool        IsDiscovered { get; set; }
+    private bool _isDiscovered;
+    public bool IsDiscovered
+    {
+        get => _isDiscovered;
+        set
+        {
+            _isDiscovered = value;
+            var trackable = GetComponent<SonarTrackable>();
+            if (trackable != null) trackable.IsDiscovered = value;
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Initialization (called by SpeciesSpawner after AddComponent)
@@ -52,7 +62,10 @@ public class SpeciesAI : MonoBehaviour
     {
         Data         = data;
         _spawnCenter = spawnCenter;
-        _steering.MoveSpeed = data.moveSpeed;
+        if (_steering == null) _steering = GetComponent<ContextSteering>();
+        if (_steering != null) _steering.MoveSpeed = data.moveSpeed;
+
+        UpdateDynamicArrivalThreshold();
         PickNewWanderTarget();
     }
 
@@ -68,7 +81,7 @@ public class SpeciesAI : MonoBehaviour
     {
         if (_state == AIState.Fleeing) return;
         _state = AIState.Fleeing;
-        _steering.MoveSpeed = Data != null ? Data.fleeSpeed : 5f;
+        if (_steering != null) _steering.MoveSpeed = Data != null ? Data.fleeSpeed : 5f;
         SetFleeGoalAwayFrom(threatWorldPosition);
     }
 
@@ -84,13 +97,13 @@ public class SpeciesAI : MonoBehaviour
 
     private void Start()
     {
-        // Cache player transform (tagged "Player" — the Submarine root object)
         var playerGO = GameObject.FindGameObjectWithTag("Player");
         if (playerGO != null) _playerTransform = playerGO.transform;
 
+        UpdateDynamicArrivalThreshold();
+
         if (Data == null)
         {
-            // If not initialized by SpeciesSpawner yet, pick a wander target anyway
             PickNewWanderTarget();
         }
     }
@@ -120,7 +133,7 @@ public class SpeciesAI : MonoBehaviour
 
     private void UpdateWander()
     {
-        _steering.SetGoal(_wanderTarget);
+        if (_steering != null) _steering.SetGoal(_wanderTarget);
 
         if (Vector3.Distance(transform.position, _wanderTarget) < _wanderArrivalThreshold)
             PickNewWanderTarget();
@@ -128,7 +141,6 @@ public class SpeciesAI : MonoBehaviour
 
     private void UpdateFlee()
     {
-        // Keep updating flee direction while player is still close
         if (_playerTransform != null)
             SetFleeGoalAwayFrom(_playerTransform.position);
 
@@ -140,8 +152,8 @@ public class SpeciesAI : MonoBehaviour
 
     private void UpdateReturn()
     {
-        _steering.SetGoal(_spawnCenter);
-        if (Vector3.Distance(transform.position, _spawnCenter) < 3f)
+        if (_steering != null) _steering.SetGoal(_spawnCenter);
+        if (Vector3.Distance(transform.position, _spawnCenter) < _wanderArrivalThreshold * 1.5f)
             EnterWandering();
     }
 
@@ -149,25 +161,58 @@ public class SpeciesAI : MonoBehaviour
     // Helpers
     // -----------------------------------------------------------------------
 
+    private void UpdateDynamicArrivalThreshold()
+    {
+        float scaleMag = transform.lossyScale.magnitude;
+        _wanderArrivalThreshold = Mathf.Max(2.5f, scaleMag * 0.8f);
+    }
+
     private void PickNewWanderTarget()
     {
         float radius = Data != null ? Data.wanderRadius : 15f;
-        _wanderTarget = _spawnCenter + new Vector3(
+        radius = Mathf.Max(radius, _wanderArrivalThreshold * 2.0f);
+
+        // Pick a target that is at least a minimum distance away
+        Vector3 offset = new Vector3(
             Random.Range(-radius, radius),
             Random.Range(-3f, 3f),
             Random.Range(-radius, radius));
+
+        if (offset.sqrMagnitude < 9f)
+            offset = offset.normalized * 4f;
+
+        Vector3 candidate = _spawnCenter + offset;
+
+        // Ensure wander target is safely above the ocean floor
+        float floorY = -300f;
+        var tg = FindFirstObjectByType<TerrainGenerator>();
+        if (tg != null && tg.HasGenerated)
+        {
+            floorY = tg.SampleHeight(candidate.x, candidate.z);
+        }
+        else if (Physics.Raycast(new Vector3(candidate.x, 10f, candidate.z), Vector3.down, out RaycastHit hit, 500f))
+        {
+            floorY = hit.point.y;
+        }
+
+        float minSafeY = floorY + Mathf.Max(2.5f, _wanderArrivalThreshold);
+        candidate.y = Mathf.Max(candidate.y, minSafeY);
+        candidate.y = Mathf.Min(candidate.y, -1.5f); // Stay below water surface
+
+        _wanderTarget = candidate;
     }
 
     private void SetFleeGoalAwayFrom(Vector3 threat)
     {
         Vector3 fleeDir = (transform.position - threat).normalized;
-        _steering.SetGoal(transform.position + fleeDir * 25f);
+        if (fleeDir == Vector3.zero) fleeDir = Vector3.forward;
+        if (_steering != null) _steering.SetGoal(transform.position + fleeDir * 25f);
     }
 
     private void EnterReturning()
     {
         _state = AIState.Returning;
-        _steering.MoveSpeed = Data != null ? Data.moveSpeed : 2f;
+        if (_steering != null) _steering.MoveSpeed = Data != null ? Data.moveSpeed : 2f;
     }
 
     private void EnterWandering()

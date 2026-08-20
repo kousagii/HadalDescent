@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 7
   zoneIndex: 0
   habitat: "Shallow sunlit coral reefs (0\u201360 m)"
+  depthRangeText: "0\u201360 m (Reef Tops & Rubble)"
+  explorationHint: Resting atop sunny reef platforms and sandy coral rubble.
+  secondaryZoneIndices: 
   characteristics: Vivid cobalt-blue body with five long, cylindrical slender arms.
   ecologicalRole: Scavenges and breaks down detritus and organic material on the
     seabed.
@@ -39,6 +42,8 @@ MonoBehaviour:
   placeholderShape: 0
   placeholderColor: {r: 0.12, g: 0.45, b: 0.95, a: 1}
   placeholderScale: {x: 1, y: 0.3, z: 1}
+  silhouetteEulerAngles: {x: 45, y: 0, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

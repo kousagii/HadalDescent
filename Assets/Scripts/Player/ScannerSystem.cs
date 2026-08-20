@@ -8,13 +8,13 @@ using UnityEngine;
 ///   SphereCast from camera center forward. When a SpeciesAI enters the focus reticle:
 ///     ? SpeciesHighlighter glows on the species
 ///     ? ScanReticleUI animates to Locked state
-///     ? UIManager.ShowScanButton(true) — scan button glows
+///     ? UIManager.ShowScanButton(true) â€” scan button glows
 ///   Player presses SCAN ? MinigameManager.TriggerScanMinigame()
 ///   Win ? BestiaryDiscoveryPopup shown. Fail ? SpeciesAI.Flee().
 ///
 /// INTERACT path (stationary species):
 ///   OverlapSphere from submarine position. When a ScanTarget (isStationary) is close:
-///     ? UIManager.ShowInteractButton(true) — interact button glows
+///     ? UIManager.ShowInteractButton(true) â€” interact button glows
 ///   Player presses INTERACT ? SonarPulseVFX ? FactCardUI shown.
 ///
 /// Setup:
@@ -76,7 +76,7 @@ public class ScannerSystem : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // Detection — Mobile (SphereCast from camera centre)
+    // Detection â€” Mobile (SphereCast from camera centre)
     // -----------------------------------------------------------------------
 
     private void CheckMobileTarget()
@@ -122,7 +122,7 @@ public class ScannerSystem : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // Detection — Stationary (OverlapSphere from submarine)
+    // Detection â€” Stationary (OverlapSphere from submarine)
     // -----------------------------------------------------------------------
 
     private void CheckStationaryTarget()
@@ -147,7 +147,7 @@ public class ScannerSystem : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // Public — called by UIManager buttons
+    // Public â€” called by UIManager buttons
     // -----------------------------------------------------------------------
 
     /// <summary>Called by UIManager.OnScanButtonPressed().</summary>
@@ -155,7 +155,7 @@ public class ScannerSystem : MonoBehaviour
     {
         if (_scanTarget == null || _scanTarget.IsDiscovered)
         {
-            Debug.Log("[ScannerSystem] Scan pressed — no mobile target in focus.");
+            Debug.Log("[ScannerSystem] Scan pressed â€” no mobile target in focus.");
             return;
         }
 
@@ -176,7 +176,7 @@ public class ScannerSystem : MonoBehaviour
     {
         if (_interactTarget == null)
         {
-            Debug.Log("[ScannerSystem] Interact pressed — no stationary target in range.");
+            Debug.Log("[ScannerSystem] Interact pressed â€” no stationary target in range.");
             return;
         }
         StartCoroutine(StaticScanSequence(_interactTarget));
@@ -192,12 +192,13 @@ public class ScannerSystem : MonoBehaviour
         SpeciesData data = _scanTarget.Data;
 
         bool isNew = GameManager.Instance != null
-            ? GameManager.Instance.DiscoverSpecies(ZoneManager.CurrentZoneIndex, data.speciesId)
+            ? GameManager.Instance.DiscoverSpecies(data.zoneIndex, data.speciesId)
             : false;
 
         if (isNew) GameManager.Instance?.AddRDP(data.rdpReward);
 
         _scanTarget.IsDiscovered = true;
+        _scanTarget.GetComponent<SonarTrackable>()?.SetDiscovered(true);
 
         // Clear highlight
         if (_highlightedObject != null)
@@ -228,7 +229,7 @@ public class ScannerSystem : MonoBehaviour
         _highlightedObject = null;
         ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
         UIManager.Instance?.ShowScanButton(false);
-        Debug.Log("[ScannerSystem] Scan failed — species fleeing.");
+        Debug.Log("[ScannerSystem] Scan failed - species fleeing.");
     }
 
     // -----------------------------------------------------------------------
@@ -249,11 +250,12 @@ public class ScannerSystem : MonoBehaviour
         // 2. Record in bestiary
         SpeciesData data = target.Data;
         bool isNew = GameManager.Instance != null
-            ? GameManager.Instance.DiscoverSpecies(ZoneManager.CurrentZoneIndex, data.speciesId)
+            ? GameManager.Instance.DiscoverSpecies(data.zoneIndex, data.speciesId)
             : false;
 
         if (isNew) GameManager.Instance?.AddRDP(data.rdpReward);
         target.IsDiscovered = true;
+        target.GetComponent<SonarTrackable>()?.SetDiscovered(true);
         _interactTarget = null;
 
         // 3. Show fact card
@@ -272,7 +274,7 @@ public class ScannerSystem : MonoBehaviour
         Gizmos.color = new Color(0f, 1f, 0.5f, 0.15f);
         Gizmos.DrawWireSphere(transform.position, interactRange);
 
-        // Scan range (approximate — from camera position, forward)
+        // Scan range (approximate â€” from camera position, forward)
         if (scanCamera != null)
         {
             float range = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);

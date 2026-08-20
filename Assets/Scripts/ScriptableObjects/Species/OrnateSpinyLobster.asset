@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 5
   zoneIndex: 0
   habitat: "Shallow coral crevices and shelf sediment (1\u201350 m)"
+  depthRangeText: "1\u201350 m (Coral Crevices & Ledges)"
+  explorationHint: Hides under rocky overhangs and deep reef crevices.
+  secondaryZoneIndices: 
   characteristics: Intricately patterned carapace with long spiny antennae and banded
     legs.
   ecologicalRole: Nocturnal scavenger and benthic predator consuming bivalves and
@@ -40,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 2
   placeholderColor: {r: 0.85, g: 0.4, b: 0.15, a: 1}
   placeholderScale: {x: 1.2, y: 0.5, z: 1.5}
+  silhouetteEulerAngles: {x: 25, y: 45, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

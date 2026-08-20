@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 8
   zoneIndex: 0
   habitat: "Sunlit shallow lagoons and marine lakes (1\u201320 m)"
+  depthRangeText: "1\u201320 m (Sunlit Lagoons & Coves)"
+  explorationHint: Drifts in open sunlit water where solar rays illuminate the lagoon.
+  secondaryZoneIndices: 
   characteristics: Golden-brown hemispherical bell speckled with uniform white crystalline
     spots.
   ecologicalRole: Harbors symbiotic algae that generate solar-powered nutrients in
@@ -40,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 0
   placeholderColor: {r: 0.9, g: 0.7, b: 0.35, a: 0.9}
   placeholderScale: {x: 1.2, y: 1.2, z: 1.2}
+  silhouetteEulerAngles: {x: 15, y: 30, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 8037235477296494089, guid: 36ef2de50d8107248bb7c4ebc86eaac3, type: 3}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

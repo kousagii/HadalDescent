@@ -29,7 +29,7 @@ MonoBehaviour:
   isShy: 0
   preferredBiome: 0
   minDepthFraction: 0
-  maxDepthFraction: 1
+  maxDepthFraction: 0.3
   instanceCount: 3
   wanderRadius: 15
   moveSpeed: 2

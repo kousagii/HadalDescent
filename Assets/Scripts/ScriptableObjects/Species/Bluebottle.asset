@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 9
   zoneIndex: 0
   habitat: "Sunlit open ocean surface waters (0\u20133 m)"
+  depthRangeText: "0\u20133 m (Immediate Water Surface)"
+  explorationHint: Drifts right beneath the glistening water surface near Depth 0m.
+  secondaryZoneIndices: 
   characteristics: Translucent blue gas-filled pneumatophore float trailing long
     stinging dactylozooids.
   ecologicalRole: Surface predator snaring larval fish and pelagic zooplankton with
@@ -40,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 0
   placeholderColor: {r: 0.15, g: 0.6, b: 1, a: 0.8}
   placeholderScale: {x: 0.8, y: 0.8, z: 0.8}
+  silhouetteEulerAngles: {x: 10, y: 30, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

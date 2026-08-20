@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 10
   zoneIndex: 0
   habitat: "Shallow seaweed beds and rocky shores (0\u201380 m)"
+  depthRangeText: "0\u201380 m (Seaweed & Algae Beds)"
+  explorationHint: Crawls slowly over soft sediment and weed-covered rocks.
+  secondaryZoneIndices: 
   characteristics: Mottled olive-brown soft body with prominent ear-like sensory
     rhinophores.
   ecologicalRole: Feeds on brown and red macroalgae, cycling nutrients across the
@@ -40,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.45, g: 0.55, b: 0.2, a: 1}
   placeholderScale: {x: 0.6, y: 1, z: 0.6}
+  silhouetteEulerAngles: {x: 15, y: 45, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

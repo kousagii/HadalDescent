@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Defines a single bestiary entry — works for mobile species (fish, sharks, jellyfish)
@@ -44,8 +44,18 @@ public class SpeciesData : ScriptableObject
     // -----------------------------------------------------------------------
 
     [Header("Bestiary Info")]
-    [Tooltip("Short habitat description — shown even when undiscovered.")]
+    [Tooltip("Short habitat description — shown on cards and detail view.")]
     public string habitat;
+
+    [Tooltip("Formatted depth string displayed on HUD & Bestiary (e.g. '0–15 m', '1,960–4,700 m').")]
+    public string depthRangeText;
+
+    [Tooltip("Exploration clue shown on the undiscovered Bestiary card.")]
+    [TextArea(2, 4)]
+    public string explorationHint;
+
+    [Tooltip("Shallower zones where this species may also spawn AFTER being discovered in its primary deepest zone.")]
+    public int[] secondaryZoneIndices;
 
     [TextArea(2, 4)]
     [Tooltip("Physical traits, size, appearance, and notable adaptations.")]
@@ -54,7 +64,9 @@ public class SpeciesData : ScriptableObject
     [TextArea(2, 4)]
     [Tooltip("Role this species plays in its ecosystem (predator, filter feeder, symbiont, etc.).")]
     public string ecologicalRole;
+
     [TextArea(2, 4)]
+    [Tooltip("Interesting biological fact displayed with gold star.")]
     public string interestingFact;
 
     // -----------------------------------------------------------------------
@@ -107,42 +119,43 @@ public class SpeciesData : ScriptableObject
     public float returnThreshold = 40f;
 
     // -----------------------------------------------------------------------
-    // Placeholder visuals (used when modelPrefab is null)
+    // Visual Assets
     // -----------------------------------------------------------------------
+
+    [Header("3D Model Prefab & Visuals")]
+    [Tooltip("3D model prefab rendered on the card thumbnail.")]
+    public GameObject modelPrefab;
+
+    [Tooltip("Scale multiplier for the 3D model in preview thumbnails.")]
+    public float previewScaleMultiplier = 1.0f;
 
     [Header("Placeholder Visuals (until 3D model is ready)")]
     public PlaceholderShape placeholderShape = PlaceholderShape.Sphere;
     public Color            placeholderColor  = Color.cyan;
     public Vector3          placeholderScale  = Vector3.one;
 
-    // -----------------------------------------------------------------------
-    // Final assets (assign when Blender models are ready)
-    // -----------------------------------------------------------------------
+    [Header("Real Biological Photos (Shown in Detail Modal)")]
+    [Tooltip("Actual biological/real-life photograph of the species — shown in the Detail Modal.")]
+    public Sprite photo;
 
-    [Header("Final Assets (leave null for prototype)")]
-    [Tooltip("3D model prefab. When assigned, placeholder visuals are ignored.")]
-    public GameObject modelPrefab;
-    [Tooltip("Actual photograph of the species — shown in the Bestiary detail card.")]
-    public Sprite     photo;
-    [Tooltip("Dark silhouette sprite shown for undiscovered entries.")]
-    public Sprite     silhouette;
-    [Tooltip("Full colour illustration shown in completed bestiary entries.")]
-    public Sprite     fullImage;
+    [Tooltip("Full colour illustration or secondary photo.")]
+    public Sprite fullImage;
+
+    [Tooltip("Dark silhouette sprite (optional 2D fallback).")]
+    public Sprite silhouette;
 }
 
 // ==========================================================================
-// Enums (shared across the Species system — kept here so SpeciesData.cs
-// is the single file to import when referencing any species enum)
+// Enums
 // ==========================================================================
 
-/// <summary>Taxonomic class — drives ecological placement rules in SpeciesSpawner.</summary>
 public enum TaxonomicClass
 {
     Actinopterygii,   // Bony fish (clownfish, tuna, lanternfish …)
     Chondrichthyes,   // Sharks, rays
     Mammalia,         // Dolphins, whales, dugongs
     Reptilia,         // Sea turtles, sea kraits
-    Cephalopoda,      // Squid, octopus, nautilus
+    Cephalopoda,      // Squid, octopus, navigation
     Malacostraca,     // Crabs, lobsters, isopods, amphipods
     Echinoidea,       // Sea urchins, heart urchins
     Asteroidea,       // Sea stars / starfish
@@ -154,14 +167,8 @@ public enum TaxonomicClass
     Demospongiae,     // Sponges                        [Stationary + Scannable]
 }
 
-/// <summary>Primitive shape used when modelPrefab is null.</summary>
 public enum PlaceholderShape { Sphere, Capsule, Cube, Cylinder }
 
-/// <summary>
-/// Perlin biome band. Thresholds are defined per-zone in ZoneConfig.
-/// SpeciesSpawner queries TerrainGenerator.GetBiomeAt() to match a candidate
-/// position's biome against the species' preferredBiome before spawning.
-/// </summary>
 public enum BiomeBand
 {
     OpenWater,   // Perlin 0.0 – softThreshold       (pelagic, sandy bottom, mud plain)

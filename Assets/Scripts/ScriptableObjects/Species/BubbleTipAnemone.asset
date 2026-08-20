@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 12
   zoneIndex: 0
   habitat: "Shallow coral reefs (0\u201335 m)"
+  depthRangeText: "0\u201335 m (Reef Flats & Mounds)"
+  explorationHint: Attached firmly to the upper surfaces of sunlit coral boulders.
+  secondaryZoneIndices: 
   characteristics: Numerous tentacles with rounded, bubble-like bulbous tips.
   ecologicalRole: Provides shelter for clownfish and small reef invertebrates.
   interestingFact: Its tentacles can morph dynamically from bulbous bubbles to flowing
@@ -38,6 +41,8 @@ MonoBehaviour:
   placeholderShape: 3
   placeholderColor: {r: 0.95, g: 0.35, b: 0.65, a: 1}
   placeholderScale: {x: 1.2, y: 0.8, z: 1.2}
+  silhouetteEulerAngles: {x: 20, y: 30, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

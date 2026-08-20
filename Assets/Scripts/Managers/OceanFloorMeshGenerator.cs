@@ -1,10 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Generates a procedural ocean floor mesh with authentic marine geography:
-///   - Shallow Coral Reef Atolls & Plateaus (Depth 10m–30m): sunlit coral gardens & lagoons
-///   - Reef Slopes & Drop-Off Walls (Depth 30m–90m): home to sharks and deep fans
-///   - Deep Sandy Basins & Canyons (Depth 90m–180m): rolling sand dunes & boulder fields
+///   - Shallow Coral Reef Atolls & Plateaus (Depth 10mâ€“30m): sunlit coral gardens & lagoons
+///   - Reef Slopes & Drop-Off Walls (Depth 30mâ€“90m): home to sharks and deep fans
+///   - Deep Sandy Basins & Canyons (Depth 90mâ€“180m): rolling sand dunes & boulder fields
 ///
 /// Features:
 ///   - Contrast-expanded fBm noise for true vertical dynamic range
@@ -221,12 +221,12 @@ public class OceanFloorMeshGenerator : MonoBehaviour
     /// </summary>
     private float ComputeHeight(float wx, float wz)
     {
-        // ── Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~250m) ────────
+        // â”€â”€ Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~250m) â”€â”€â”€â”€â”€â”€â”€â”€
         float macro1 = SmoothNoise(wx, wz, _frequency * 0.6f, _seed, 0f);
         float macro2 = SmoothNoise(wx, wz, _frequency * 1.0f, _seed, 350f);
         float macro  = macro1 * 0.65f + macro2 * 0.35f;
 
-        // ── Layer 2: Reef Mounds & Terraces (Wavelength ~80m) ─────────────────
+        // â”€â”€ Layer 2: Reef Mounds & Terraces (Wavelength ~80m) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         float mound1 = SmoothNoise(wx, wz, _frequency * 2.2f, _seed, 700f);
         float mound2 = SmoothNoise(wx, wz, _frequency * 3.4f, _seed, 1050f);
         float mound  = mound1 * 0.6f + mound2 * 0.4f;
@@ -234,22 +234,22 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         // Combine macro and mounds
         float rawShape = macro * 0.68f + mound * 0.32f;
 
-        // ── Biome Influence (Coral / Hard reef areas strongly elevated) ───────
+        // â”€â”€ Biome Influence (Coral / Hard reef areas strongly elevated) â”€â”€â”€â”€â”€â”€â”€
         float biomeVal = Mathf.PerlinNoise(
             wx * _biomeFreq + _biomeSeed,
             wz * _biomeFreq + _biomeSeed + 50f);
         float biomeElevation = Mathf.Lerp(-0.10f, 0.18f, biomeVal);
         rawShape += biomeElevation;
 
-        // ── Contrast Expansion (Overcome Central Limit clustering around 0.5) ─
+        // â”€â”€ Contrast Expansion (Overcome Central Limit clustering around 0.5) â”€
         float contrast = Mathf.InverseLerp(0.24f, 0.76f, rawShape);
         contrast = Mathf.Clamp01(contrast);
 
-        // ── Stepped Coral Reef Plateau & Basin Shaping ───────────────────────
+        // â”€â”€ Stepped Coral Reef Plateau & Basin Shaping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Creates 3 distinct zones:
-        // 1. High Coral Reef Plateaus & Atolls (contrast > 0.58) → Depth 10m to 30m
-        // 2. Reef Slopes & Drop-off Walls (0.38 < contrast < 0.58) → Depth 30m to 100m
-        // 3. Sandy Basins & Canyons (contrast < 0.38) → Depth 100m to 180m
+        // 1. High Coral Reef Plateaus & Atolls (contrast > 0.58) â†’ Depth 10m to 30m
+        // 2. Reef Slopes & Drop-off Walls (0.38 < contrast < 0.58) â†’ Depth 30m to 100m
+        // 3. Sandy Basins & Canyons (contrast < 0.38) â†’ Depth 100m to 180m
         float plateauShape;
         if (contrast > 0.58f)
         {
@@ -267,11 +267,11 @@ public class OceanFloorMeshGenerator : MonoBehaviour
             plateauShape = Mathf.Lerp(0.32f, 0.72f, Mathf.SmoothStep(0f, 1f, t));
         }
 
-        // ── Layer 3: Gentle Sand Ripples (Micro-scale, low amp) ───────────────
+        // â”€â”€ Layer 3: Gentle Sand Ripples (Micro-scale, low amp) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         float ripple = (SmoothNoise(wx, wz, _frequency * 6f, _seed, 1400f) - 0.5f) * 0.03f;
         plateauShape = Mathf.Clamp01(plateauShape + ripple);
 
-        // ── Edge Falloff: Smoothly blends perimeter to baseline ───────────────
+        // â”€â”€ Edge Falloff: Smoothly blends perimeter to baseline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         float edgeFade = EdgeFalloff(wx, wz);
         plateauShape *= edgeFade;
 
@@ -320,5 +320,9 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
         _meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         _meshRenderer.receiveShadows    = true;
+
+        int terrainLayer = LayerMask.NameToLayer("Terrain");
+        if (terrainLayer >= 0)
+            gameObject.layer = terrainLayer;
     }
 }

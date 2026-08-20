@@ -18,6 +18,10 @@ MonoBehaviour:
   taxonomicClass: 4
   zoneIndex: 0
   habitat: "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+  depthRangeText: "0\u2013100 m (Seagrass & Midwater)"
+  explorationHint: Cruises gracefully over seagrass beds and midwater channels; shy
+    to approach.
+  secondaryZoneIndices: 
   characteristics: Translucent oval mantle with wide undulating fins running full
     body length.
   ecologicalRole: Agile midwater predator consuming small fish and crustaceans.
@@ -39,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.85, g: 0.95, b: 1, a: 1}
   placeholderScale: {x: 0.8, y: 1.8, z: 0.8}
+  silhouetteEulerAngles: {x: 15, y: 50, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 8681646802474497732, guid: 2ea6a00234df36f418f3b7c8c63aaba8, type: 3}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

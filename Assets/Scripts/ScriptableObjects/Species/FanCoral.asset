@@ -18,6 +18,10 @@ MonoBehaviour:
   taxonomicClass: 12
   zoneIndex: 0
   habitat: "Shallow coral reefs and reef drop-offs (10\u201360 m)"
+  depthRangeText: "10\u201360 m (Reef Slopes & Walls)"
+  explorationHint: Look along sloping reef edges and drop-off rock walls exposed
+    to steady currents.
+  secondaryZoneIndices: 
   characteristics: Branching, fan-shaped octocoral with a semi-rigid calcified skeleton.
   ecologicalRole: Provides 3D structural shelter for small organisms and filter-feeds
     plankton.
@@ -39,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 2
   placeholderColor: {r: 0.92, g: 0.25, b: 0.35, a: 1}
   placeholderScale: {x: 1.5, y: 2, z: 0.3}
+  silhouetteEulerAngles: {x: 5, y: 35, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}

@@ -18,6 +18,9 @@ MonoBehaviour:
   taxonomicClass: 11
   zoneIndex: 0
   habitat: "Shallow sunlit coral reef lagoons (0\u201335 m)"
+  depthRangeText: "0\u201335 m (Sunlit Lagoons)"
+  explorationHint: Found embedded in sandy coral lagoons where bright sunlight penetrates.
+  secondaryZoneIndices: 
   characteristics: Enormous fluted shell with iridescent blue, green, and gold mantle
     tissue.
   ecologicalRole: Hosts photosynthetic zooxanthellae and actively filters large volumes
@@ -40,6 +43,8 @@ MonoBehaviour:
   placeholderShape: 2
   placeholderColor: {r: 0.1, g: 0.85, b: 0.75, a: 1}
   placeholderScale: {x: 2, y: 1.2, z: 1.5}
+  silhouetteEulerAngles: {x: 25, y: 35, z: 0}
+  previewScaleMultiplier: 1
   modelPrefab: {fileID: 0}
   photo: {fileID: 0}
   silhouette: {fileID: 0}
