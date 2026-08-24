@@ -1,49 +1,45 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Fixed Sonar Map (Radar) for the cockpit HUD.
+/// Fixed circular Sonar Map HUD display (250x250 pixels).
 ///
 /// Features:
-///   - Fixed display in the top-left HUD (no interactive buttons, non-blocking).
-///   - Heading-Up Polar Projection: Up on the radar always matches the submarine camera direction.
-///   - Concentric distance rings & cardinal crosshairs.
-///   - Smooth 360-degree rotating radar sweep beam with trail.
-///   - Target tracking for Species (Discovered/Undiscovered), Debris, Hazards, and Collectibles.
-///   - Scales detection radius and features dynamically with GameManager.Instance.SonarTier (1 to 5).
-///   - Procedural vector-style sprite generation fallback (runs out-of-the-box with zero missing assets).
-///   - Zero-allocation blip object pooling for 60fps performance on mobile.
-///
-/// Setup:
-///   Attach to the 'Map placeholder' GameObject (or any HUD Canvas child).
-///   Assign optional custom sprites/references in the Inspector or let it auto-build.
+///   - Heading-Up polar coordinate projection relative to submarine camera yaw.
+///   - 360-degree rotating radar sweep line.
+///   - Color-coded blips for Species (cyan), Debris (amber), Hazards (red), Collectibles (gold).
+///   - Automatic object pooling for zero GC allocation during exploration.
+///   - Dynamic range rings and scale badge based on Sonar Tier (Tier 1: 50m ... Tier 5: 250m).
+///   - Procedural vector sprite generator fallback if sprite assets are unassigned.
 /// </summary>
 public class SonarMapUI : MonoBehaviour
 {
     public static SonarMapUI Instance { get; private set; }
 
     // -----------------------------------------------------------------------
-    // Inspector - Custom UI Configuration (Optional)
+    // Inspector: UI Hierarchy References
     // -----------------------------------------------------------------------
 
-    [Header("Custom UI Elements (Optional)")]
-    [Tooltip("Container where blips and grid are rendered.")]
+    [Header("UI Structure")]
+    [Tooltip("Root RectTransform containing the radar circle.")]
     [SerializeField] private RectTransform radarContainer;
-    [Tooltip("Rotating sweep line image.")]
+    [Tooltip("Transform of the rotating sweep line.")]
     [SerializeField] private RectTransform sweepLineRect;
-    [Tooltip("Center submarine icon pointer.")]
+    [Tooltip("Transform of the center player submarine indicator.")]
     [SerializeField] private RectTransform playerPointerRect;
-    [Tooltip("Label displaying current sonar range or tier.")]
+    [Tooltip("Text label displaying current sonar detection range (e.g. 'RANGE 50 m').")]
     [SerializeField] private TMP_Text rangeLabel;
 
-    [Header("Custom Sprites (Optional)")]
+    [Header("Visual Sprites (Optional - auto-generates if empty)")]
     [SerializeField] private Sprite circleFrameSprite;
-    [SerializeField] private Sprite gridRingsSprite;
     [SerializeField] private Sprite sweepBeamSprite;
+    [SerializeField] private Sprite gridRingsSprite;
     [SerializeField] private Sprite playerSubSprite;
     [SerializeField] private Sprite defaultBlipDotSprite;
+
+    [Header("Category Blip Icons (Optional)")]
     [SerializeField] private Sprite speciesIconSprite;
     [SerializeField] private Sprite debrisIconSprite;
     [SerializeField] private Sprite hazardIconSprite;
@@ -56,28 +52,29 @@ public class SonarMapUI : MonoBehaviour
     [SerializeField] private float radiusPerTier        = 50f;
     [Tooltip("Radar sweep rotation speed in degrees per second.")]
     [SerializeField] private float sweepSpeed          = 120f;
-    [Tooltip("Usable radar radius inside the bezel in UI pixels.")]
-    [SerializeField] private float radarPixelRadius     = 105f;
+    [Tooltip("Usable radar radius inside the bezel in UI pixels (for 250x250 UI).")]
+    [SerializeField] private float radarPixelRadius    = 115f;
 
-    [Header("References (Auto-found if null)")]
+    [Header("Submarine References (auto-found)")]
     [SerializeField] private Transform       submarineTransform;
     [SerializeField] private SubmarineCamera submarineCamera;
 
     // -----------------------------------------------------------------------
-    // Object Pool & Internal State
+    // Private State & Pooling
     // -----------------------------------------------------------------------
 
     private readonly List<SonarBlipUI> _blipPool = new List<SonarBlipUI>();
-    private float _currentSweepAngle;
-    private float _currentDetectionRadius;
-    private int   _lastKnownTier = -1;
+    private RectTransform _blipContainer;
+    private float _currentSweepAngle       = 0f;
+    private float _currentDetectionRadius = 50f;
+    private int   _lastKnownTier           = -1;
 
-    // Procedurally generated sprites (cached to avoid duplicate textures)
+    // Cached procedural sprites
     private static Sprite _cachedBezelSprite;
-    private static Sprite _cachedGridSprite;
-    private static Sprite _cachedDotSprite;
     private static Sprite _cachedSweepSprite;
+    private static Sprite _cachedGridSprite;
     private static Sprite _cachedSubSprite;
+    private static Sprite _cachedDotSprite;
     private static Sprite _cachedHazardSprite;
     private static Sprite _cachedDebrisSprite;
     private static Sprite _cachedFishSprite;
@@ -104,17 +101,13 @@ public class SonarMapUI : MonoBehaviour
 
     private void Update()
     {
-        // Check for Sonar Tier upgrade changes
         int currentTier = GameManager.Instance != null ? GameManager.Instance.SonarTier : 1;
         if (currentTier != _lastKnownTier)
         {
             UpdateSonarTier(false);
         }
 
-        // Animate radar sweep beam
         UpdateSweep();
-
-        // Update all blip positions
         UpdateBlips();
     }
 
@@ -130,8 +123,8 @@ public class SonarMapUI : MonoBehaviour
             if (playerGO != null) submarineTransform = playerGO.transform;
             else
             {
-                var pm = FindFirstObjectByType<PlayerMovement>();
-                if (pm != null) submarineTransform = pm.transform;
+                var playerMove = FindFirstObjectByType<PlayerMovement>();
+                if (playerMove != null) submarineTransform = playerMove.transform;
             }
         }
 
@@ -151,10 +144,7 @@ public class SonarMapUI : MonoBehaviour
         tier = Mathf.Clamp(tier, 1, 5);
         _lastKnownTier = tier;
 
-        // Tier 1: 50m, Tier 2: 100m, Tier 3: 150m, Tier 4: 200m, Tier 5: 250m
         _currentDetectionRadius = baseDetectionRadius + (tier - 1) * radiusPerTier;
-
-        // Higher tiers have slightly faster sonar sweep
         sweepSpeed = 110f + (tier - 1) * 20f;
 
         if (rangeLabel != null)
@@ -204,26 +194,19 @@ public class SonarMapUI : MonoBehaviour
             Vector3 targetPos = target.WorldPosition;
             Vector3 diff = targetPos - subPos;
 
-            // Horizontal planar distance (X/Z plane)
             float horizDist = Mathf.Sqrt(diff.x * diff.x + diff.z * diff.z);
 
-            if (horizDist > _currentDetectionRadius) continue; // Out of sonar range
+            if (horizDist > _currentDetectionRadius) continue;
 
-            // Angle in world space (0 deg = North / +Z, 90 deg = East / +X)
             float worldAngle = Mathf.Atan2(diff.x, diff.z) * Mathf.Rad2Deg;
-
-            // Relative angle to submarine camera heading (0 deg = straight ahead)
             float relativeAngle = Mathf.DeltaAngle(camYaw, worldAngle);
             float rad = relativeAngle * Mathf.Deg2Rad;
 
-            // Normalized distance (0 at center, 1 at edge)
             float normDist = Mathf.Clamp01(horizDist / _currentDetectionRadius);
 
-            // Radar UI position (Heading-Up: +Y is straight ahead, +X is right)
             float uiX = normDist * radarPixelRadius * Mathf.Sin(rad);
             float uiY = normDist * radarPixelRadius * Mathf.Cos(rad);
 
-            // Fetch and configure pooled blip
             SonarBlipUI blip = GetBlipFromPool(activeBlipCount);
             Sprite catIcon = GetCategoryIcon(target.TargetType);
 
@@ -239,7 +222,6 @@ public class SonarMapUI : MonoBehaviour
             activeBlipCount++;
         }
 
-        // Hide remaining unused pooled blips
         for (int i = activeBlipCount; i < _blipPool.Count; i++)
         {
             _blipPool[i].SetActive(false);
@@ -282,7 +264,7 @@ public class SonarMapUI : MonoBehaviour
     private SonarBlipUI CreatePooledBlip()
     {
         var go = new GameObject($"SonarBlip_{_blipPool.Count}", typeof(RectTransform));
-        go.transform.SetParent(radarContainer != null ? radarContainer : transform, false);
+        go.transform.SetParent(_blipContainer != null ? _blipContainer : (radarContainer != null ? radarContainer : transform), false);
 
         var blip = go.AddComponent<SonarBlipUI>();
 
@@ -304,7 +286,6 @@ public class SonarMapUI : MonoBehaviour
         tr.anchoredPosition = new Vector2(0f, 10f);
         tr.sizeDelta = new Vector2(16f, 14f);
 
-        // Reflection wire up
         SetPrivateField(blip, "rectTransform", go.GetComponent<RectTransform>());
         SetPrivateField(blip, "iconImage", iconImg);
         SetPrivateField(blip, "depthIndicatorText", text);
@@ -314,16 +295,22 @@ public class SonarMapUI : MonoBehaviour
         return blip;
     }
 
+    private static void SetPrivateField(object obj, string fieldName, object value)
+    {
+        var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (field != null) field.SetValue(obj, value);
+    }
+
     // -----------------------------------------------------------------------
-    // Procedural UI Construction (Fallback if no custom Canvas setup)
+    // Procedural Graphics Construction (250x250)
     // -----------------------------------------------------------------------
 
     private void BuildSonarVisuals()
     {
         var rootRect = GetComponent<RectTransform>();
         if (rootRect == null) rootRect = gameObject.AddComponent<RectTransform>();
+        rootRect.sizeDelta = new Vector2(250f, 250f);
 
-        // Remove or disable default placeholder white Image if attached
         var existingImg = GetComponent<Image>();
         if (existingImg != null)
         {
@@ -337,33 +324,37 @@ public class SonarMapUI : MonoBehaviour
             radarContainer = containerGO.GetComponent<RectTransform>();
             radarContainer.anchorMin = radarContainer.anchorMax = new Vector2(0.5f, 0.5f);
             radarContainer.pivot     = new Vector2(0.5f, 0.5f);
-            radarContainer.sizeDelta = new Vector2(radarPixelRadius * 2f + 20f, radarPixelRadius * 2f + 20f);
+            radarContainer.sizeDelta = new Vector2(250f, 250f);
             radarContainer.anchoredPosition = Vector2.zero;
         }
+        else
+        {
+            radarContainer.sizeDelta = new Vector2(250f, 250f);
+        }
 
-        // 1. Outer Bezel & Dark Ocean Background
+        // 1. Outer Bezel & Dark Ocean Background (250x250)
         var bgGO = new GameObject("SonarBackground", typeof(RectTransform), typeof(Image));
         bgGO.transform.SetParent(radarContainer, false);
         var bgRect = bgGO.GetComponent<RectTransform>();
         bgRect.anchorMin = bgRect.anchorMax = new Vector2(0.5f, 0.5f);
-        bgRect.sizeDelta = new Vector2(radarPixelRadius * 2f + 16f, radarPixelRadius * 2f + 16f);
+        bgRect.sizeDelta = new Vector2(250f, 250f);
         var bgImg = bgGO.GetComponent<Image>();
         bgImg.sprite = circleFrameSprite != null ? circleFrameSprite : _cachedBezelSprite;
         bgImg.color = new Color(0.02f, 0.08f, 0.13f, 0.92f);
         bgImg.raycastTarget = false;
 
-        // 2. Concentric Range Rings & Crosshairs
+        // 2. Concentric Range Rings & Crosshairs (230x230)
         var gridGO = new GameObject("SonarGrid", typeof(RectTransform), typeof(Image));
         gridGO.transform.SetParent(radarContainer, false);
         var gridRect = gridGO.GetComponent<RectTransform>();
         gridRect.anchorMin = gridRect.anchorMax = new Vector2(0.5f, 0.5f);
-        gridRect.sizeDelta = new Vector2(radarPixelRadius * 2f, radarPixelRadius * 2f);
+        gridRect.sizeDelta = new Vector2(230f, 230f);
         var gridImg = gridGO.GetComponent<Image>();
         gridImg.sprite = gridRingsSprite != null ? gridRingsSprite : _cachedGridSprite;
-        gridImg.color = new Color(0.00f, 0.93f, 0.85f, 0.35f); // Cyan grid lines
+        gridImg.color = new Color(0.00f, 0.93f, 0.85f, 0.35f);
         gridImg.raycastTarget = false;
 
-        // 3. Rotating Sweep Beam
+        // 3. Rotating Sweep Beam (230x230)
         if (sweepLineRect == null)
         {
             var sweepGO = new GameObject("SonarSweepBeam", typeof(RectTransform), typeof(Image));
@@ -371,7 +362,7 @@ public class SonarMapUI : MonoBehaviour
             sweepLineRect = sweepGO.GetComponent<RectTransform>();
             sweepLineRect.anchorMin = sweepLineRect.anchorMax = new Vector2(0.5f, 0.5f);
             sweepLineRect.pivot     = new Vector2(0.5f, 0.5f);
-            sweepLineRect.sizeDelta = new Vector2(radarPixelRadius * 2f, radarPixelRadius * 2f);
+            sweepLineRect.sizeDelta = new Vector2(230f, 230f);
             var sweepImg = sweepGO.GetComponent<Image>();
             sweepImg.sprite = sweepBeamSprite != null ? sweepBeamSprite : _cachedSweepSprite;
             sweepImg.color = new Color(0.00f, 0.93f, 0.85f, 0.40f);
@@ -385,14 +376,27 @@ public class SonarMapUI : MonoBehaviour
             ptrGO.transform.SetParent(radarContainer, false);
             playerPointerRect = ptrGO.GetComponent<RectTransform>();
             playerPointerRect.anchorMin = playerPointerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            playerPointerRect.sizeDelta = new Vector2(16f, 16f);
+            playerPointerRect.sizeDelta = new Vector2(20f, 20f);
             var ptrImg = ptrGO.GetComponent<Image>();
             ptrImg.sprite = playerSubSprite != null ? playerSubSprite : _cachedSubSprite;
             ptrImg.color = new Color(0.00f, 1.00f, 0.90f, 1.00f);
             ptrImg.raycastTarget = false;
         }
 
-        // 5. Range / Status Label with Sleek Pill Badge
+        // 5. Dedicated Blip Layer (Placed on top of background & sweep beam)
+        if (_blipContainer == null)
+        {
+            var blipsGO = new GameObject("BlipContainer", typeof(RectTransform));
+            blipsGO.transform.SetParent(radarContainer, false);
+            _blipContainer = blipsGO.GetComponent<RectTransform>();
+            _blipContainer.anchorMin = _blipContainer.anchorMax = new Vector2(0.5f, 0.5f);
+            _blipContainer.pivot     = new Vector2(0.5f, 0.5f);
+            _blipContainer.sizeDelta = new Vector2(230f, 230f);
+            _blipContainer.anchoredPosition = Vector2.zero;
+            _blipContainer.SetAsLastSibling();
+        }
+
+        // 6. Range / Status Label
         if (rangeLabel == null)
         {
             var badgeGO = new GameObject("RangeBadge", typeof(RectTransform), typeof(Image));
@@ -400,8 +404,8 @@ public class SonarMapUI : MonoBehaviour
             var bRect = badgeGO.GetComponent<RectTransform>();
             bRect.anchorMin = bRect.anchorMax = new Vector2(0.5f, 0f);
             bRect.pivot     = new Vector2(0.5f, 1f);
-            bRect.anchoredPosition = new Vector2(0f, -8f);
-            bRect.sizeDelta = new Vector2(160f, 32f);
+            bRect.anchoredPosition = new Vector2(0f, -10f);
+            bRect.sizeDelta = new Vector2(170f, 34f);
 
             var badgeImg = badgeGO.GetComponent<Image>();
             badgeImg.color = new Color(0.02f, 0.08f, 0.14f, 0.85f);
@@ -431,19 +435,18 @@ public class SonarMapUI : MonoBehaviour
 
     private static void EnsureSprites()
     {
-        if (_cachedBezelSprite == null) _cachedBezelSprite = GenerateBezelSprite();
-        if (_cachedGridSprite == null)  _cachedGridSprite  = GenerateGridSprite();
-        if (_cachedDotSprite == null)   _cachedDotSprite   = GenerateDotSprite();
-        if (_cachedSweepSprite == null) _cachedSweepSprite = GenerateSweepSprite();
-        if (_cachedSubSprite == null)   _cachedSubSprite   = GenerateSubmarineSprite();
-        if (_cachedFishSprite == null)  _cachedFishSprite  = GenerateFishIcon();
-        if (_cachedDebrisSprite == null)_cachedDebrisSprite= GenerateDebrisIcon();
-        if (_cachedHazardSprite == null)_cachedHazardSprite= GenerateHazardIcon();
+        if (_cachedBezelSprite == null)   _cachedBezelSprite   = GenerateBezelSprite(256);
+        if (_cachedSweepSprite == null)   _cachedSweepSprite   = GenerateSweepSprite(256);
+        if (_cachedGridSprite == null)    _cachedGridSprite    = GenerateGridSprite(256);
+        if (_cachedSubSprite == null)     _cachedSubSprite     = GenerateSubPointerSprite(64);
+        if (_cachedDotSprite == null)     _cachedDotSprite     = GenerateDotSprite(32);
+        if (_cachedHazardSprite == null)  _cachedHazardSprite  = GenerateHazardSprite(48);
+        if (_cachedDebrisSprite == null)  _cachedDebrisSprite  = GenerateDebrisSprite(48);
+        if (_cachedFishSprite == null)    _cachedFishSprite    = GenerateFishSprite(48);
     }
 
-    private static Sprite GenerateBezelSprite()
+    private static Sprite GenerateBezelSprite(int size)
     {
-        int size = 256;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         float center = size * 0.5f;
         float radius = center - 4f;
@@ -453,85 +456,16 @@ public class SonarMapUI : MonoBehaviour
             for (int x = 0; x < size; x++)
             {
                 float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                if (d <= radius - 4f)
-                {
-                    // Dark ocean body
-                    tex.SetPixel(x, y, new Color(0.03f, 0.08f, 0.14f, 0.94f));
-                }
-                else if (d <= radius)
-                {
-                    // Glowing cyan outer bezel
-                    float t = 1f - (radius - d) / 4f;
-                    tex.SetPixel(x, y, new Color(0.00f, 0.93f, 0.85f, Mathf.Lerp(0.9f, 0.4f, t)));
-                }
-                else
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-            }
-        }
-        tex.Apply();
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-    }
-
-    private static Sprite GenerateGridSprite()
-    {
-        int size = 256;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        float center = size * 0.5f;
-        float maxR = center - 6f;
-
-        // Clear transparent
-        for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Color.clear);
-
-        // 3 Concentric Rings (25%, 50%, 75%, 100%)
-        float[] ringFractions = { 0.33f, 0.66f, 0.99f };
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                if (d > maxR) continue;
-
-                // Concentric rings
-                foreach (var rf in ringFractions)
-                {
-                    float targetR = maxR * rf;
-                    if (Mathf.Abs(d - targetR) < 1.2f)
-                    {
-                        tex.SetPixel(x, y, new Color(1f, 1f, 1f, 0.55f));
-                    }
-                }
-
-                // Crosshairs
-                if (Mathf.Abs(x - center) < 1f || Mathf.Abs(y - center) < 1f)
-                {
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, 0.40f));
-                }
-            }
-        }
-        tex.Apply();
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-    }
-
-    private static Sprite GenerateDotSprite()
-    {
-        int size = 32;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        float center = size * 0.5f;
-        float radius = center - 2f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
                 if (d <= radius)
                 {
-                    float alpha = Mathf.SmoothStep(1f, 0.2f, d / radius);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                    float t = d / radius;
+                    float ringEdge = Mathf.Abs(d - radius);
+                    Color fill = Color.Lerp(new Color(0.01f, 0.05f, 0.09f, 0.95f), new Color(0.02f, 0.10f, 0.16f, 0.95f), t);
+                    if (ringEdge < 3.5f)
+                    {
+                        fill = Color.Lerp(new Color(0.00f, 0.93f, 0.85f, 0.9f), fill, ringEdge / 3.5f);
+                    }
+                    tex.SetPixel(x, y, fill);
                 }
                 else
                 {
@@ -543,12 +477,42 @@ public class SonarMapUI : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
-    private static Sprite GenerateSweepSprite()
+    private static Sprite GenerateSweepSprite(int size)
     {
-        int size = 256;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         float center = size * 0.5f;
-        float maxR = center - 6f;
+        float radius = center - 6f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 pos = new Vector2(x - center, y - center);
+                float dist = pos.magnitude;
+                if (dist <= radius && dist > 1f)
+                {
+                    float angle = Mathf.Atan2(pos.y, pos.x) * Mathf.Rad2Deg;
+                    if (angle < 0f) angle += 360f;
+
+                    if (angle >= 0f && angle <= 60f)
+                    {
+                        float alpha = Mathf.Pow(1f - (angle / 60f), 2.2f) * 0.55f;
+                        tex.SetPixel(x, y, new Color(0.00f, 0.93f, 0.85f, alpha));
+                        continue;
+                    }
+                }
+                tex.SetPixel(x, y, Color.clear);
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+    }
+
+    private static Sprite GenerateGridSprite(int size)
+    {
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        float center = size * 0.5f;
+        float maxR = center - 8f;
 
         for (int y = 0; y < size; y++)
         {
@@ -557,15 +521,16 @@ public class SonarMapUI : MonoBehaviour
                 float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
                 if (d > maxR) { tex.SetPixel(x, y, Color.clear); continue; }
 
-                float angle = Mathf.Atan2(x - center, y - center) * Mathf.Rad2Deg;
-                if (angle < 0) angle += 360f;
+                float r1 = maxR * 0.33f;
+                float r2 = maxR * 0.66f;
+                float r3 = maxR * 1.00f;
 
-                // 60-degree trailing sweep gradient
-                if (angle <= 60f)
+                bool isRing = Mathf.Abs(d - r1) < 1.2f || Mathf.Abs(d - r2) < 1.2f || Mathf.Abs(d - r3) < 1.4f;
+                bool isAxis = (Mathf.Abs(x - center) < 1.1f || Mathf.Abs(y - center) < 1.1f) && d <= maxR;
+
+                if (isRing || isAxis)
                 {
-                    float t = 1f - (angle / 60f);
-                    float alpha = t * t * 0.65f;
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                    tex.SetPixel(x, y, new Color(0.00f, 0.93f, 0.85f, isRing ? 0.30f : 0.20f));
                 }
                 else
                 {
@@ -577,112 +542,87 @@ public class SonarMapUI : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
-    private static Sprite GenerateSubmarineSprite()
+    private static Sprite GenerateSubPointerSprite(int size)
     {
-        int size = 32;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         for (int y = 0; y < size; y++)
+        {
             for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Color.clear);
+            {
+                float nx = (x - size * 0.5f) / (size * 0.5f);
+                float ny = (y - size * 0.5f) / (size * 0.5f);
+                bool inTriangle = ny >= -0.6f && ny <= 0.8f && Mathf.Abs(nx) <= (0.8f - ny) * 0.6f;
+                tex.SetPixel(x, y, inTriangle ? new Color(0.00f, 1.00f, 0.90f, 1f) : Color.clear);
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+    }
 
-        // Draw forward-facing triangle pointer
+    private static Sprite GenerateDotSprite(int size)
+    {
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         float center = size * 0.5f;
-        for (int y = 6; y <= 26; y++)
+        float r = center - 2f;
+        for (int y = 0; y < size; y++)
         {
-            float halfWidth = (y - 6) * 0.45f;
-            int minX = Mathf.RoundToInt(center - halfWidth);
-            int maxX = Mathf.RoundToInt(center + halfWidth);
-            for (int x = minX; x <= maxX; x++)
+            for (int x = 0; x < size; x++)
             {
-                tex.SetPixel(x, y, Color.white);
+                float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                tex.SetPixel(x, y, d <= r ? Color.white : Color.clear);
             }
         }
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
-    private static Sprite GenerateFishIcon()
+    private static Sprite GenerateHazardSprite(int size)
     {
-        int size = 32;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Color.clear);
-
-        // Stylized fish ellipse + tail
-        float cx = 14f, cy = 16f;
         for (int y = 0; y < size; y++)
         {
             for (int x = 0; x < size; x++)
             {
-                float dx = (x - cx) / 8f;
-                float dy = (y - cy) / 5f;
-                if (dx * dx + dy * dy <= 1f)
-                    tex.SetPixel(x, y, Color.white);
-
-                // Tail triangle
-                if (x >= 22 && x <= 28 && Mathf.Abs(y - cy) <= (x - 22) * 0.8f)
-                    tex.SetPixel(x, y, Color.white);
+                float nx = (x - size * 0.5f) / (size * 0.5f);
+                float ny = (y - size * 0.5f) / (size * 0.5f);
+                bool inTri = ny >= -0.6f && ny <= 0.7f && Mathf.Abs(nx) <= (0.7f - ny) * 0.75f;
+                tex.SetPixel(x, y, inTri ? new Color(1.00f, 0.23f, 0.20f, 1f) : Color.clear);
             }
         }
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
-    private static Sprite GenerateDebrisIcon()
+    private static Sprite GenerateDebrisSprite(int size)
     {
-        int size = 32;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Color.clear);
-
-        // Stylized square / box icon
-        for (int y = 8; y <= 24; y++)
         {
-            for (int x = 8; x <= 24; x++)
+            for (int x = 0; x < size; x++)
             {
-                if (x == 8 || x == 24 || y == 8 || y == 24 || (x >= 12 && x <= 20 && y >= 12 && y <= 20))
-                    tex.SetPixel(x, y, Color.white);
+                float nx = Mathf.Abs((x - size * 0.5f) / (size * 0.5f));
+                float ny = Mathf.Abs((y - size * 0.5f) / (size * 0.5f));
+                bool inDiamond = (nx + ny) <= 0.8f;
+                tex.SetPixel(x, y, inDiamond ? new Color(1.00f, 0.72f, 0.15f, 1f) : Color.clear);
             }
         }
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
-    private static Sprite GenerateHazardIcon()
+    private static Sprite GenerateFishSprite(int size)
     {
-        int size = 32;
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Color.clear);
-
-        // Warning triangle
         float center = size * 0.5f;
-        for (int y = 6; y <= 26; y++)
+        for (int y = 0; y < size; y++)
         {
-            float halfWidth = (26 - y) * 0.55f;
-            int minX = Mathf.RoundToInt(center - halfWidth);
-            int maxX = Mathf.RoundToInt(center + halfWidth);
-            for (int x = minX; x <= maxX; x++)
+            for (int x = 0; x < size; x++)
             {
-                if (y >= 24 || x == minX || x == maxX || (x == (int)center && y >= 12 && y <= 18) || (x == (int)center && y == 8))
-                    tex.SetPixel(x, y, Color.white);
+                float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                tex.SetPixel(x, y, d <= center - 3f ? new Color(0.00f, 0.93f, 0.85f, 1f) : Color.clear);
             }
         }
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-    }
-
-    // -----------------------------------------------------------------------
-    // Helper Reflection
-    // -----------------------------------------------------------------------
-
-    private static void SetPrivateField(object obj, string fieldName, object value)
-    {
-        var field = obj.GetType().GetField(fieldName,
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        field?.SetValue(obj, value);
     }
 }

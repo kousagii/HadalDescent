@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -33,7 +34,7 @@ public class UIManager : MonoBehaviour
     [Header("Bottom HUD Buttons")]
     [Tooltip("SCAN button Image - tinted cyan when a species is in the reticle.")]
     [SerializeField] private UnityEngine.UI.Image scanButtonImage;
-    [Tooltip("INTERACT button Image - tinted cyan when near a stationary species.")]
+    [Tooltip("INTERACT button Image - tinted cyan when near a stationary species or debris cluster.")]
     [SerializeField] private UnityEngine.UI.Image interactButtonImage;
 
     [Header("References (auto-found)")]
@@ -74,7 +75,30 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // Populate HUD immediately on scene load
+        // Auto-find Interact button if unassigned
+        if (interactButtonImage == null)
+        {
+            var btnGO = GameObject.Find("Interact") ?? GameObject.Find("InteractBtn") ?? GameObject.Find("Interact Button") ?? GameObject.Find("InteractButton");
+            if (btnGO != null)
+            {
+                interactButtonImage = btnGO.GetComponent<Image>();
+                var btn = btnGO.GetComponent<Button>();
+                if (btn != null) btn.onClick.AddListener(OnInteractButtonPressed);
+            }
+        }
+
+        // Auto-find Scan button if unassigned
+        if (scanButtonImage == null)
+        {
+            var btnGO = GameObject.Find("Scan") ?? GameObject.Find("ScanBtn") ?? GameObject.Find("Scan Button") ?? GameObject.Find("ScanButton");
+            if (btnGO != null)
+            {
+                scanButtonImage = btnGO.GetComponent<Image>();
+                var btn = btnGO.GetComponent<Button>();
+                if (btn != null) btn.onClick.AddListener(OnScanButtonPressed);
+            }
+        }
+
         RefreshHUD();
     }
 
@@ -88,49 +112,85 @@ public class UIManager : MonoBehaviour
     // Refresh methods (called every frame or on-demand)
     // -----------------------------------------------------------------------
 
-    private void RefreshDepth()
+    public void RefreshDepth()
     {
-        if (depthTracker == null)
-            depthTracker = FindFirstObjectByType<DepthTracker>();
-
-        if (depthTracker == null) return;
-
-        float depth = depthTracker.DisplayDepthMetres;
-
-        if (depthLabel != null)
-            depthLabel.text = $"DEPTH  {depth:0} m";
+        if (depthLabel == null || depthTracker == null) return;
+        depthLabel.text = $"DEPTH  {depthTracker.DisplayDepthMetres:0} m";
     }
 
-    /// <summary>Call after any RDP change to update the counter.</summary>
     public void RefreshHUD()
     {
-        int rdp = GameManager.Instance != null ? GameManager.Instance.RDP : 0;
-        if (rdpLabel != null)
-            rdpLabel.text = $"{rdp} RDP";
+        if (zoneNameLabel != null)
+        {
+            int z = ZoneManager.CurrentZoneIndex;
+            zoneNameLabel.text = ZoneConfig.IsValidZone(z)
+                ? ZoneConfig.Zones[z].zoneName.ToUpper()
+                : "SUNLIGHT ZONE";
+        }
 
-        int zone = ZoneManager.CurrentZoneIndex;
-        if (zoneNameLabel != null && ZoneConfig.IsValidZone(zone))
-            zoneNameLabel.text = ZoneConfig.Zones[zone].zoneName.ToUpper();
-        else if (zoneNameLabel != null)
-            zoneNameLabel.text = "SUNLIGHT ZONE";
+        if (rdpLabel != null && GameManager.Instance != null)
+            rdpLabel.text = $"RDP  {GameManager.Instance.RDP}";
     }
 
     // -----------------------------------------------------------------------
-    // Button callbacks (wire these to your Canvas buttons in Inspector)
+    // Exploration HUD Visibility Toggle (Used by Minigames)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Show or hide the main exploration HUD (Canvas / HUD / Sonar / Depth / Zone / Scan / Interact / Reticle / Joysticks).
+    /// Used when entering and exiting minigames.
+    /// </summary>
+    public void SetExplorationHUDVisible(bool visible)
+    {
+        var hudGO = GameObject.Find("HUD");
+        if (hudGO != null)
+        {
+            hudGO.SetActive(visible);
+        }
+
+        var canvas = GetComponentInParent<Canvas>() ?? GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            var hudTr = canvas.transform.Find("HUD");
+            if (hudTr != null) hudTr.gameObject.SetActive(visible);
+        }
+
+        if (sonarMap != null) sonarMap.gameObject.SetActive(visible);
+        if (depthLabel != null) depthLabel.gameObject.SetActive(visible);
+        if (zoneNameLabel != null) zoneNameLabel.gameObject.SetActive(visible);
+        if (rdpLabel != null) rdpLabel.gameObject.SetActive(visible);
+        if (scanButtonImage != null) scanButtonImage.gameObject.SetActive(visible);
+        if (interactButtonImage != null) interactButtonImage.gameObject.SetActive(visible);
+
+        var reticle = ScanReticleUI.Instance;
+        if (reticle != null) reticle.gameObject.SetActive(visible);
+
+        var dragZone = FindFirstObjectByType<TouchDragZone>();
+        if (dragZone != null) dragZone.gameObject.SetActive(visible);
+
+        var joystickGO = GameObject.Find("MobileControls")
+                      ?? GameObject.Find("Joystick") 
+                      ?? GameObject.Find("Fixed Joystick") 
+                      ?? GameObject.Find("Floating Joystick") 
+                      ?? GameObject.Find("Dynamic Joystick")
+                      ?? GameObject.Find("Virtual Joystick");
+        if (joystickGO != null) joystickGO.SetActive(visible);
+    }
+
+    // -----------------------------------------------------------------------
+    // Button handlers - Top Right
     // -----------------------------------------------------------------------
 
     public void OnShopButtonPressed()
     {
-        Debug.Log("[UIManager] Shop opened.");
-        // TODO: activate shop panel
+        Debug.Log("[UIManager] Shop pressed.");
     }
 
     public void OnBestiaryButtonPressed()
     {
-        if (BestiaryManager.Instance != null)
-            BestiaryManager.Instance.ToggleBestiary();
-        else
-            Debug.Log("[UIManager] Bestiary opened (BestiaryManager not in scene).");
+        Debug.Log("[UIManager] Bestiary pressed.");
+        var bm = BestiaryManager.Instance;
+        if (bm != null) bm.ToggleBestiary();
     }
 
     public void OnPauseButtonPressed()
@@ -141,8 +201,7 @@ public class UIManager : MonoBehaviour
 
     public void OnInteractButtonPressed()
     {
-        // Phase 4: route to ScannerSystem.TryInteract() for stationary species
-        if (scannerSystem == null) scannerSystem = FindFirstObjectByType<ScannerSystem>();
+        if (scannerSystem == null) scannerSystem = ScannerSystem.Instance;
         if (scannerSystem != null) { scannerSystem.TryInteract(); return; }
         var player = FindFirstObjectByType<PlayerMovement>();
         if (player != null) player.Interact();
@@ -150,14 +209,14 @@ public class UIManager : MonoBehaviour
 
     public void OnScanButtonPressed()
     {
-        if (scannerSystem == null) scannerSystem = FindFirstObjectByType<ScannerSystem>();
+        if (scannerSystem == null) scannerSystem = ScannerSystem.Instance;
         if (scannerSystem != null) { scannerSystem.TryScan(); return; }
         var player = FindFirstObjectByType<PlayerMovement>();
         if (player != null) player.Scan();
     }
 
     // -----------------------------------------------------------------------
-    // Button glow helpers (called by ScannerSystem each frame)
+    // Button glow helpers
     // -----------------------------------------------------------------------
 
     /// <summary>Tint the SCAN button cyan when a mobile species is in the reticle.</summary>
@@ -167,13 +226,12 @@ public class UIManager : MonoBehaviour
             scanButtonImage.color = active ? BtnActive : BtnDefault;
     }
 
-    /// <summary>Tint the INTERACT button cyan when near a stationary species.</summary>
+    /// <summary>Tint the INTERACT button cyan when near a stationary species or debris cluster.</summary>
     public void ShowInteractButton(bool active)
     {
         if (interactButtonImage != null)
             interactButtonImage.color = active ? BtnActive : BtnDefault;
     }
 
-    // Legacy alias so any existing ScannerSystem calls to ShowScanPrompt still compile
     public void ShowScanPrompt(bool visible) => ShowScanButton(visible);
 }

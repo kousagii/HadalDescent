@@ -3,10 +3,11 @@ using UnityEngine;
 /// <summary>
 /// Procedurally generates the ocean zone environment.
 ///
-/// Orchestrates three phases:
-///   1. OceanFloorMeshGenerator — creates the deformable seabed mesh (fBm noise & reef plateaus)
-///   2. EnvPropScatterer        — scatters rock/coral/sponge prefabs on the mesh
-///   3. SpeciesSpawner          — spawns marine life onto the generated seabed & reef structures
+/// Orchestrates four phases:
+///   1. OceanFloorMeshGenerator - creates the deformable seabed mesh (fBm noise & reef plateaus)
+///   2. EnvPropScatterer        - scatters rock/coral/sponge prefabs on the mesh
+///   3. SpeciesSpawner          - spawns marine life onto the generated seabed & reef structures
+///   4. DebrisSpawner           - scatters 3D marine debris clusters for environmental cleanup
 ///
 /// Setup:
 ///   Place TerrainGenerator, OceanFloorMeshGenerator, and EnvPropScatterer
@@ -21,7 +22,7 @@ public class TerrainGenerator : MonoBehaviour
 
     [Header("Environment Props")]
     [Tooltip("Per-zone prop configuration (seabed material + prop prefab list). " +
-             "Create via: Create → HadalDescent → EnvPropSet.")]
+             "Create via: Create -> HadalDescent -> EnvPropSet.")]
     [SerializeField] private EnvPropSet envPropSet;
 
     // -----------------------------------------------------------------------
@@ -135,8 +136,16 @@ public class TerrainGenerator : MonoBehaviour
             spawner.SpawnForZone(zoneIndex);
         }
 
+        // --- Phase 4: Spawn marine debris clusters ---
+        var debrisSpawner = FindFirstObjectByType<DebrisSpawner>();
+        if (debrisSpawner == null)
+        {
+            debrisSpawner = gameObject.AddComponent<DebrisSpawner>();
+        }
+        debrisSpawner.SpawnDebrisForZone(zoneIndex);
+
         Debug.Log($"[TerrainGenerator] Zone {zoneIndex} fully generated " +
-                  $"(mesh + props + species, seed={_pcgSeed:0}).");
+                  $"(mesh + props + species + debris, seed={_pcgSeed:0}).");
     }
 
     // -----------------------------------------------------------------------

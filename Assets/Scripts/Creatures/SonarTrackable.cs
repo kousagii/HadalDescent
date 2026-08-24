@@ -65,18 +65,33 @@ public class SonarTrackable : MonoBehaviour
     // Unity Lifecycle
     // -----------------------------------------------------------------------
 
+    private void Awake()
+    {
+        Register();
+    }
+
     private void OnEnable()
+    {
+        Register();
+    }
+
+    private void OnDisable()
+    {
+        Unregister();
+    }
+
+    private void OnDestroy()
+    {
+        Unregister();
+    }
+
+    private void Register()
     {
         if (!_allTrackables.Contains(this))
             _allTrackables.Add(this);
     }
 
-    private void OnDisable()
-    {
-        _allTrackables.Remove(this);
-    }
-
-    private void OnDestroy()
+    private void Unregister()
     {
         _allTrackables.Remove(this);
     }
@@ -90,6 +105,7 @@ public class SonarTrackable : MonoBehaviour
         targetType   = type;
         targetName   = name;
         isDiscovered = discovered;
+        Register();
     }
 
     public void SetDiscovered(bool discovered)

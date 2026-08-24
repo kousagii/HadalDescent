@@ -1,0 +1,24 @@
+fileFormatVersion: 2
+guid: 736fd823c03c7c44fae698a3c3759aaa
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - customClawPrefab: {instanceID: 0}
+  - customTrolleyPrefab: {instanceID: 0}
+  - prefabWaterBottle: {instanceID: 0}
+  - prefabPlasticBag: {instanceID: 0}
+  - prefabSixPackRings: {instanceID: 0}
+  - prefabSodaCan: {instanceID: 0}
+  - prefabMetalPipe: {instanceID: 0}
+  - prefabMetalDrum: {instanceID: 0}
+  - prefabBatterySmall: {instanceID: 0}
+  - prefabBatteryLarge: {instanceID: 0}
+  - prefabElectronicWaste: {instanceID: 0}
+  - prefabCoralObstacle: {fileID: 592339605672025169, guid: b3ad47579ae7c5846aa83e61d2859240, type: 3}
+  - prefabFishObstacle: {fileID: 7950250345750191443, guid: bfaf51a9ae3fa304ea99cf1d0b7c9a89, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

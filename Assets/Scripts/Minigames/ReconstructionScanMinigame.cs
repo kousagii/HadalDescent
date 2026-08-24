@@ -269,13 +269,15 @@ public class ReconstructionScanMinigame : MonoBehaviour
         var titleGO = new GameObject("Title", typeof(RectTransform));
         titleGO.transform.SetParent(_rootPanel, false);
         var titleRect = titleGO.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.1f, 0.88f);
-        titleRect.anchorMax = new Vector2(0.9f, 0.97f);
+        titleRect.anchorMin = new Vector2(0.0f, 0.88f);
+        titleRect.anchorMax = new Vector2(1.0f, 0.97f);
         titleRect.sizeDelta = Vector2.zero;
         var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
-        titleTmp.text = "RECONSTRUCTION SCAN � Arrange the tiles";
-        titleTmp.fontSize = 14; titleTmp.fontStyle = FontStyles.Bold;
+        titleTmp.text = "RECONSTRUCTION SCAN - Arrange the tiles";
+        titleTmp.fontSize = 36; titleTmp.fontStyle = FontStyles.Bold;
         titleTmp.color = new Color(0.8f, 0.95f, 1f); titleTmp.alignment = TextAlignmentOptions.Center;
+        titleTmp.enableWordWrapping = false;
+        titleTmp.overflowMode = TextOverflowModes.Overflow;
 
         // Timer strip
         var timerBG = new GameObject("TimerBG", typeof(RectTransform), typeof(Image));

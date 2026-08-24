@@ -347,7 +347,7 @@ public class BestiaryManager : MonoBehaviour
                 $"<b><size=16><color=#ffffff>{data.commonName}</color></size></b>   " +
                 $"<color=#88ccff><i><size=12>{data.scientificName}</size></i></color>  " +
                 $"<color=#ffcc00><size=11>[+{data.rdpReward} RDP]</size></color>\n" +
-                $"<color=#77ccee>📍 Depth:</color> {data.depthRangeText}   <color=#77ccee>■ Class:</color> {data.taxonomicClass}\n" +
+                $"<color=#77ccee>Depth:</color> {data.depthRangeText}   <color=#77ccee>■ Class:</color> {data.taxonomicClass}\n" +
                 $"<color=#aaaaaa>{data.habitat}</color>\n" +
                 $"<color=#ffdd88>✦ {data.interestingFact}</color>";
         }
@@ -357,8 +357,8 @@ public class BestiaryManager : MonoBehaviour
             tmp.text =
                 $"<b><size=15><color=#778899>??? [Uncataloged Specimen]</color></size></b>   " +
                 $"<color=#556677><size=12>Class: {data.taxonomicClass}</size></color>\n" +
-                $"<color=#667788>📍 Expected Depth:</color> {data.depthRangeText}\n" +
-                $"<color=#8899aa>🔍 Clue:</color> <color=#aaccee>{clue}</color>";
+                $"<color=#667788>Expected Depth:</color> {data.depthRangeText}\n" +
+                $"<color=#8899aa>Clue:</color> <color=#aaccee>{clue}</color>";
         }
 
         var accentGO = new GameObject("Accent", typeof(RectTransform), typeof(Image));
@@ -425,7 +425,7 @@ public class BestiaryManager : MonoBehaviour
         if (detailCharacteristics != null)  detailCharacteristics.text  = $"Characteristics: {data.characteristics}";
         if (detailEcologicalRole != null)   detailEcologicalRole.text   = $"Ecological Role: {data.ecologicalRole}";
         if (detailFact != null)             detailFact.text             = $"Did you know? {data.interestingFact}";
-        if (detailReward != null)           detailReward.text           = $"Research Reward: +{data.rdpReward} RDP";
+        if (detailReward != null)           detailReward.text           = $"+{data.rdpReward} RDP";
     }
 
     private void ShowDefaultDetailModal(SpeciesData data)
@@ -480,7 +480,7 @@ public class BestiaryManager : MonoBehaviour
             $"<color=#77ddbb><b>CHARACTERISTICS:</b></color> {data.characteristics}\n" +
             $"<color=#77ddbb><b>ECOLOGICAL ROLE:</b></color> {data.ecologicalRole}\n\n" +
             $"<color=#ffcc00><b>✦ INTERESTING FACT:</b></color>\n{data.interestingFact}\n\n" +
-            $"<size=12><color=#888888>Research Reward: +{data.rdpReward} RDP</color></size>";
+            $"<size=12><color=#888888>+{data.rdpReward} RDP</color></size>";
 
         // Close button
         var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));

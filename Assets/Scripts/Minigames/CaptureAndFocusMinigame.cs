@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -344,11 +344,13 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         var instrGO = new GameObject("Instr", typeof(RectTransform));
         instrGO.transform.SetParent(_rootPanel, false);
         var ir = instrGO.GetComponent<RectTransform>();
-        ir.anchorMin = new Vector2(0f, 0.04f); ir.anchorMax = new Vector2(0.80f, 0.12f); ir.sizeDelta = Vector2.zero;
+        ir.anchorMin = new Vector2(0f, 0.04f); ir.anchorMax = new Vector2(1.0f, 0.12f); ir.sizeDelta = Vector2.zero;
         var it = instrGO.AddComponent<TextMeshProUGUI>();
         it.text = "<b>HOLD SCREEN</b> to raise focus bar  •  Keep creature in the green";
-        it.fontSize = 13; it.color = new Color(0.85f, 0.95f, 0.85f, 0.90f);
+        it.fontSize = 36; it.color = new Color(0.85f, 0.95f, 0.85f, 0.90f);
         it.alignment = TextAlignmentOptions.Center; it.raycastTarget = false;
+        it.enableWordWrapping = false;
+        it.overflowMode = TextOverflowModes.Overflow;
 
         // Result label
         var resultGO = new GameObject("Result", typeof(RectTransform));

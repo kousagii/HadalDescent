@@ -6,9 +6,8 @@ using UnityEngine;
 /// How it works:
 ///   - Each zone scene has Y = 0 at the top (zone entrance) and Y = -playableDepth at the bottom.
 ///   - This script reads the submarine's world Y and linearly remaps it to the zone's
-///     display depth range (e.g. 1 000 m → 4 000 m for the Midnight Zone).
-///   - The remapped value is what appears on the player's HUD — the sub never needs to
-///     travel thousands of real units to display a realistic depth number.
+///     display depth range (e.g. 1 000 m -> 4 000 m for the Midnight Zone).
+///   - The remapped value is what appears on the player's HUD.
 ///
 /// Setup:
 ///   Attach to the Submarine GameObject (same object as PlayerMovement).
@@ -22,6 +21,9 @@ public class DepthTracker : MonoBehaviour
 
     /// <summary>Display depth in metres as shown on the HUD.</summary>
     public float DisplayDepthMetres { get; private set; }
+
+    /// <summary>Alias for DisplayDepthMetres.</summary>
+    public float CurrentDepth => DisplayDepthMetres;
 
     /// <summary>0.0 = zone top, 1.0 = zone bottom.</summary>
     public float ZoneProgress { get; private set; }
@@ -68,7 +70,6 @@ public class DepthTracker : MonoBehaviour
 
         ZoneDefinition zone = ZoneConfig.Zones[zoneIndex];
 
-        // t = 0 at zone top, t = 1 at zone bottom
         float t = Mathf.InverseLerp(ZoneTopY, ZoneBottomY, transform.position.y);
         t = Mathf.Clamp01(t);
 

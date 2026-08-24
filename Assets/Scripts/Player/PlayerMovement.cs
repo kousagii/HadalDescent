@@ -3,16 +3,15 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Handles submarine body movement and rotation.
+/// Fully compatible with the new Unity Input System package.
 ///
-/// Control scheme (mobile):
-///   CAMERA   — drag anywhere on the drag-zone to rotate the camera (yaw + pitch).
+/// Control scheme (mobile & desktop):
+///   CAMERA   - drag anywhere on the drag-zone to rotate the camera (yaw + pitch).
 ///              Camera rotation is handled by SubmarineCamera.cs.
-///   JOYSTICK — Left/Right  : strafes the body along its own right vector (no camera turn).
-///              Up/Down     : moves the body in the camera-forward direction, including pitch
-///                            (so if the camera looks down, the sub dives forward-and-down).
-///   BODY TURN — The body's yaw gradually slerps to match the camera's yaw so the submarine
-///               always ends up facing where the player is looking.
-///               Body pitch stays at 0 (the camera provides the visual pitch illusion).
+///   JOYSTICK - Left/Right  : strafes the body along its own right vector (no camera turn).
+///              Up/Down     : moves the body in the camera-forward direction, including pitch.
+///   KEYBOARD - WASD / Arrow keys for movement, E for Interact, F for Scan.
+///   BODY TURN - The body's yaw gradually slerps to match the camera's yaw.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
@@ -50,13 +49,20 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-
-        // Lock rotation so physics doesn't fight our manual rotation
         rb.freezeRotation = true;
 
-        moveAction     = InputSystem.actions.FindAction("Move");
-        interactAction = InputSystem.actions.FindAction("Interact");
-        scanAction     = InputSystem.actions.FindAction("Scan");
+        if (inputActionsAsset != null)
+        {
+            moveAction     = inputActionsAsset.FindAction("Move");
+            interactAction = inputActionsAsset.FindAction("Interact");
+            scanAction     = inputActionsAsset.FindAction("Scan");
+        }
+        else if (InputSystem.actions != null)
+        {
+            moveAction     = InputSystem.actions.FindAction("Move");
+            interactAction = InputSystem.actions.FindAction("Interact");
+            scanAction     = InputSystem.actions.FindAction("Scan");
+        }
     }
 
     private void OnEnable()
@@ -84,10 +90,32 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        moveInput = moveAction.ReadValue<Vector2>();
+        if (moveAction != null)
+            moveInput = moveAction.ReadValue<Vector2>();
 
-        if (interactAction.WasPressedThisFrame()) Interact();
-        if (scanAction.WasPressedThisFrame())     Scan();
+        // Keyboard fallback using the new Input System
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            if (moveInput == Vector2.zero)
+            {
+                float h = 0f;
+                float v = 0f;
+                if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    v += 1f;
+                if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  v -= 1f;
+                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  h -= 1f;
+                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) h += 1f;
+
+                if (h != 0f || v != 0f)
+                    moveInput = new Vector2(h, v).normalized;
+            }
+
+            if (kb.eKey.wasPressedThisFrame) Interact();
+            if (kb.fKey.wasPressedThisFrame) Scan();
+        }
+
+        if (interactAction != null && interactAction.WasPressedThisFrame()) Interact();
+        if (scanAction != null && scanAction.WasPressedThisFrame())         Scan();
     }
 
     private void FixedUpdate()
@@ -100,43 +128,25 @@ public class PlayerMovement : MonoBehaviour
     // Movement
     // -----------------------------------------------------------------------
 
-    /// <summary>
-    /// Moves the submarine camera-relatively:
-    ///   - Forward/Backward: along the camera's full forward vector (includes pitch).
-    ///     This lets the sub naturally dive or ascend when the camera looks up/down.
-    ///   - Left/Right: strafe along the body's own right axis (no camera rotation needed).
-    /// </summary>
     private void MoveSubmarine()
     {
-        // Camera's full forward direction (includes pitch tilt)
         Vector3 camForward = submarineCamera != null
             ? submarineCamera.transform.forward
             : transform.forward;
 
-        // Strafe uses the body's right so the sub doesn't roll when strafing sideways
         Vector3 bodyRight = transform.right;
 
         Vector3 targetVelocity =
             (camForward  * moveInput.y +
              bodyRight   * moveInput.x) * moveSpeed;
 
-        // VelocityChange gives instant, physics-friendly velocity matching
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
     }
 
-    // -----------------------------------------------------------------------
-    // Body rotation
-    // -----------------------------------------------------------------------
-
-    /// <summary>
-    /// Gradually rotates the submarine body's yaw to match the camera's yaw.
-    /// Body pitch is kept at 0 — the camera provides the visual pitch impression.
-    /// </summary>
     private void TurnBodyToCamera()
     {
         if (submarineCamera == null) return;
 
-        // Build a flat (no pitch) target quaternion from the camera's world yaw
         Quaternion targetBodyRotation = Quaternion.Euler(0f, submarineCamera.CameraYaw, 0f);
 
         rb.MoveRotation(Quaternion.Slerp(
@@ -151,11 +161,27 @@ public class PlayerMovement : MonoBehaviour
 
     public void Interact()
     {
-        Debug.Log("Interacted!");
+        var scanner = ScannerSystem.Instance;
+        if (scanner != null)
+        {
+            scanner.TryInteract();
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerMovement] ScannerSystem not found when pressing Interact.");
+        }
     }
 
     public void Scan()
     {
-        Debug.Log("Scanned!");
+        var scanner = ScannerSystem.Instance;
+        if (scanner != null)
+        {
+            scanner.TryScan();
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerMovement] ScannerSystem not found when pressing Scan.");
+        }
     }
 }

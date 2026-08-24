@@ -1,16 +1,32 @@
 using System;
 using UnityEngine;
+
 /// <summary>
-/// Singleton that orchestrates species scan minigames.
-/// Picks randomly between Minigame 1 (Capture & Focus) and Minigame 2 (Reconstruction Scan).
+/// Singleton that orchestrates species scan minigames and environmental cleanup minigames.
 /// Disables PlayerMovement + TouchDragZone while a minigame is active.
 ///
-/// Setup: Add MinigameManager to a persistent or per-scene GameObject.
-/// ScannerSystem calls TriggerScanMinigame() � no direct setup needed.
+/// Setup: Auto-creates if missing.
+/// ScannerSystem calls TriggerScanMinigame() or TriggerDebrisCleanupMinigame().
 /// </summary>
 public class MinigameManager : MonoBehaviour
 {
-    public static MinigameManager Instance { get; private set; }
+    private static MinigameManager _instance;
+    public static MinigameManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindFirstObjectByType<MinigameManager>();
+                if (_instance == null)
+                {
+                    var go = new GameObject("MinigameManager");
+                    _instance = go.AddComponent<MinigameManager>();
+                }
+            }
+            return _instance;
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Inspector
@@ -27,8 +43,9 @@ public class MinigameManager : MonoBehaviour
 
     private bool _minigameActive = false;
 
-    private CaptureAndFocusMinigame    _mg1;
-    private ReconstructionScanMinigame _mg2;
+    private CaptureAndFocusMinigame      _mg1;
+    private ReconstructionScanMinigame   _mg2;
+    private EnvironmentalCleanupMinigame _mg3;
 
     // Components to disable during minigame
     private PlayerMovement  _playerMovement;
@@ -40,8 +57,10 @@ public class MinigameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (_instance != null && _instance != this) { Destroy(gameObject); return; }
+        _instance = this;
+
+        EnsureMinigameComponents();
     }
 
     private void Start()
@@ -49,27 +68,34 @@ public class MinigameManager : MonoBehaviour
         _playerMovement = FindFirstObjectByType<PlayerMovement>();
         _touchDragZone  = FindFirstObjectByType<TouchDragZone>();
 
-        // Lazily create minigame components on this GameObject
-        _mg1 = gameObject.AddComponent<CaptureAndFocusMinigame>();
-        _mg2 = gameObject.AddComponent<ReconstructionScanMinigame>();
+        EnsureMinigameComponents();
+    }
+
+    private void EnsureMinigameComponents()
+    {
+        if (_mg1 == null) _mg1 = GetComponent<CaptureAndFocusMinigame>() ?? gameObject.AddComponent<CaptureAndFocusMinigame>();
+        if (_mg2 == null) _mg2 = GetComponent<ReconstructionScanMinigame>() ?? gameObject.AddComponent<ReconstructionScanMinigame>();
+        if (_mg3 == null) _mg3 = GetComponent<EnvironmentalCleanupMinigame>() ?? gameObject.AddComponent<EnvironmentalCleanupMinigame>();
     }
 
     // -----------------------------------------------------------------------
-    // Public API
+    // Public API - Species Scanning Minigames (MG1 & MG2)
     // -----------------------------------------------------------------------
 
     /// <summary>
     /// Launch a random scan minigame for the given species.
-    /// On win  ? <paramref name="onSuccess"/> is invoked.
-    /// On fail ? <paramref name="onFail"/> is invoked.
+    /// On win  -> onSuccess is invoked.
+    /// On fail -> onFail is invoked.
     /// </summary>
     public void TriggerScanMinigame(SpeciesData data, Action onSuccess, Action onFail)
     {
         if (_minigameActive)
         {
-            Debug.LogWarning("[MinigameManager] Minigame already active � ignoring request.");
+            Debug.LogWarning("[MinigameManager] Minigame already active - ignoring request.");
             return;
         }
+
+        EnsureMinigameComponents();
 
         _minigameActive = true;
         DisableControls();
@@ -78,7 +104,7 @@ public class MinigameManager : MonoBehaviour
         Action wrappedFail    = () => { _minigameActive = false; EnableControls(); onFail?.Invoke(); };
 
         int zone = ZoneManager.CurrentZoneIndex;
-        int pick  = ChooseMinigame(zone);
+        int pick = ChooseMinigame(zone);
 
         if (pick == 1 || forceMG1)
         {
@@ -92,6 +118,34 @@ public class MinigameManager : MonoBehaviour
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Public API - Environmental Cleanup Minigame (MG3)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Launch Mini-game 3 (Environmental Cleanup 2.5D Extraction & Sorting) for a DebrisCluster.
+    /// </summary>
+    public void TriggerDebrisCleanupMinigame(DebrisCluster cluster, Action onSuccess = null, Action onFail = null)
+    {
+        if (_minigameActive)
+        {
+            Debug.LogWarning("[MinigameManager] Minigame already active - ignoring cleanup request.");
+            return;
+        }
+
+        EnsureMinigameComponents();
+
+        _minigameActive = true;
+        DisableControls();
+
+        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); onSuccess?.Invoke(); };
+        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); onFail?.Invoke(); };
+
+        int zone = ZoneManager.CurrentZoneIndex;
+        _mg3.Initialize(cluster, zone, wrappedSuccess, wrappedFail);
+        _mg3.Show();
+    }
+
     /// <summary>
     /// Call when scene is being unloaded to cleanly abort any running minigame.
     /// </summary>
@@ -100,7 +154,6 @@ public class MinigameManager : MonoBehaviour
         if (!_minigameActive) return;
         _minigameActive = false;
         EnableControls();
-        // Minigame panels will be destroyed with the scene
     }
 
     public bool IsMinigameActive => _minigameActive;
@@ -114,7 +167,6 @@ public class MinigameManager : MonoBehaviour
         if (forceMG1) return 1;
         if (forceMG2) return 2;
 
-        // 50/50 for all zones in Phase 4 � tune later
         return UnityEngine.Random.value < 0.5f ? 1 : 2;
     }
 

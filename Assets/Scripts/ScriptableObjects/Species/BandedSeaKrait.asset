@@ -26,7 +26,7 @@ MonoBehaviour:
   ecologicalRole: Specialized predator hunting moray eels in tight reef crevices.
   interestingFact: Amphibious marine reptile that lays eggs on land and hunts cooperatively
     with trevally fish.
-  rdpReward: 125
+  rdpReward: 120
   scanDifficulty: 3
   isStationary: 0
   isShy: 1
@@ -39,12 +39,11 @@ MonoBehaviour:
   fleeSpeed: 6
   fleeRange: 10
   returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  previewScaleMultiplier: 0.9
   placeholderShape: 1
   placeholderColor: {r: 0.95, g: 0.85, b: 0.1, a: 1}
   placeholderScale: {x: 0.4, y: 2.5, z: 0.4}
-  silhouetteEulerAngles: {x: 10, y: 70, z: 0}
-  previewScaleMultiplier: 0.9
-  modelPrefab: {fileID: 0}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}
