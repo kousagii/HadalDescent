@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -38,11 +38,12 @@ public class GameManager : MonoBehaviour
     public int RDP = 0;
 
     [Header("Submarine Upgrades")]
-    [Range(1, 5)] public int HullTier    = 1;
-    [Range(1, 5)] public int EngineTier  = 1;
-    [Range(1, 5)] public int SonarTier   = 1;
-    [Range(1, 5)] public int ScannerTier = 1;
-    [Range(1, 5)] public int LightTier   = 1;
+    [Range(1, 5)] public int HullTier      = 1;
+    [Range(1, 5)] public int EngineTier    = 1;
+    [Range(1, 5)] public int SonarTier     = 1;
+    [Range(1, 5)] public int ScannerTier   = 1;
+    [Range(1, 5)] public int LightTier     = 1;
+    [Range(1, 5)] public int UtilitiesTier = 1;
 
     [Header("Collectibles")]
     public int ClamShells = 0;

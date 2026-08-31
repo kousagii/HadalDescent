@@ -17,17 +17,14 @@ MonoBehaviour:
   scientificName: Physalia utriculus
   taxonomicClass: 9
   zoneIndex: 0
-  habitat: "Sunlit open ocean surface waters (0\u20133 m)"
-  depthRangeText: "0\u20133 m (Immediate Water Surface)"
+  habitat: "Ocean surface (0\u20133 m)"
+  depthRangeText: "0\u20133 m"
   explorationHint: Drifts right beneath the glistening water surface near Depth 0m.
   secondaryZoneIndices: 
-  characteristics: Translucent blue gas-filled pneumatophore float trailing long
-    stinging dactylozooids.
-  ecologicalRole: Surface predator snaring larval fish and pelagic zooplankton with
-    nematocysts.
-  interestingFact: Not a single jellyfish, but a colonial organism composed of specialized
-    zooids.
-  rdpReward: 105
+  characteristics: Gas-filled float with long stinging structures.
+  ecologicalRole: Catches small fish and plankton.
+  interestingFact: It is a colony made of many specialized parts working together.
+  rdpReward: 50
   scanDifficulty: 2
   isStationary: 0
   isShy: 0
@@ -40,12 +37,11 @@ MonoBehaviour:
   fleeSpeed: 2
   fleeRange: 10
   returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  previewScaleMultiplier: 1
   placeholderShape: 0
   placeholderColor: {r: 0.15, g: 0.6, b: 1, a: 0.8}
   placeholderScale: {x: 0.8, y: 0.8, z: 0.8}
-  silhouetteEulerAngles: {x: 10, y: 30, z: 0}
-  previewScaleMultiplier: 1
-  modelPrefab: {fileID: 0}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

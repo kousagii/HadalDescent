@@ -82,7 +82,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.85f, 0.92f, 1.00f, 1f),
 
             requiredHullTier = 1,
-            totalSpeciesCount = 14,
+            totalSpeciesCount = 15,
             unlockThreshold  = 0.5f,
 
             // PCG — broad rolling dunes & shallow coral reef atolls (reach 15m-25m depth)
@@ -114,7 +114,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.15f, 0.22f, 0.38f, 1f),
 
             requiredHullTier = 2,
-            totalSpeciesCount = 12,
+            totalSpeciesCount = 17,
             unlockThreshold  = 0.5f,
 
             // PCG — continental slope, large step ledges
@@ -146,7 +146,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.03f, 0.04f, 0.08f, 1f),
 
             requiredHullTier = 3,
-            totalSpeciesCount = 12,
+            totalSpeciesCount = 19,
             unlockThreshold  = 0.5f,
 
             // PCG — basalt plains & hydrothermal vent mounds
@@ -178,7 +178,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.02f, 0.015f, 0.04f, 1f),
 
             requiredHullTier = 4,
-            totalSpeciesCount = 8,
+            totalSpeciesCount = 21,
             unlockThreshold  = 0.5f,
 
             // PCG — vast mud plains & cold seep hills
@@ -210,7 +210,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.01f, 0.01f, 0.015f, 1f),
 
             requiredHullTier = 5,
-            totalSpeciesCount = 5,
+            totalSpeciesCount = 23,
             unlockThreshold  = 0.5f,
 
             // PCG — deep trench walls & fault terraces

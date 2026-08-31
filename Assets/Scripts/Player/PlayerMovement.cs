@@ -128,6 +128,20 @@ public class PlayerMovement : MonoBehaviour
     // Movement
     // -----------------------------------------------------------------------
 
+    public float GetEngineSpeedMultiplier()
+    {
+        if (GameManager.Instance == null) return 1f;
+        return GameManager.Instance.EngineTier switch
+        {
+            1 => 1.00f,
+            2 => 1.20f,
+            3 => 1.40f,
+            4 => 1.65f,
+            5 => 2.00f,
+            _ => 1.00f
+        };
+    }
+
     private void MoveSubmarine()
     {
         Vector3 camForward = submarineCamera != null
@@ -136,9 +150,11 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 bodyRight = transform.right;
 
+        float effectiveSpeed = moveSpeed * GetEngineSpeedMultiplier();
+
         Vector3 targetVelocity =
             (camForward  * moveInput.y +
-             bodyRight   * moveInput.x) * moveSpeed;
+             bodyRight   * moveInput.x) * effectiveSpeed;
 
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
     }

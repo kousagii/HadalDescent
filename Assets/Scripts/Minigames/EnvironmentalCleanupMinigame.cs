@@ -207,6 +207,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _clawY       = _clawRestY;
         _joystickHorizontalInput = 0f;
 
+        // Utilities Tier 2 Perk: +25% claw drop and retrieval speed
+        int utilTier = GameManager.Instance != null ? GameManager.Instance.UtilitiesTier : 1;
+        float speedBonus = (utilTier >= 2) ? 1.25f : 1.0f;
+        _clawDropSpeed = 7.0f * speedBonus;
+        _clawReelSpeed = 8.0f * speedBonus;
+
         // Cleanly hide main exploration HUD
         UIManager.Instance?.SetExplorationHUDVisible(false);
 

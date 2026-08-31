@@ -17,22 +17,19 @@ MonoBehaviour:
   scientificName: Panulirus ornatus
   taxonomicClass: 5
   zoneIndex: 0
-  habitat: "Shallow coral crevices and shelf sediment (1\u201350 m)"
-  depthRangeText: "1\u201350 m (Coral Crevices & Ledges)"
+  habitat: "Shallow coral reefs and shelf sediments (1\u201350 m)"
+  depthRangeText: "1\u201350 m"
   explorationHint: Hides under rocky overhangs and deep reef crevices.
   secondaryZoneIndices: 
-  characteristics: Intricately patterned carapace with long spiny antennae and banded
-    legs.
-  ecologicalRole: Nocturnal scavenger and benthic predator consuming bivalves and
-    sea urchins.
-  interestingFact: Undergoes massive annual breeding migrations marching single-file
-    across the seafloor.
-  rdpReward: 115
+  characteristics: Colorful patterned body with long spiny antennae.
+  ecologicalRole: Predator and scavenger that feeds on marine animals.
+  interestingFact: Its young spend a long time drifting in the open ocean.
+  rdpReward: 50
   scanDifficulty: 2
   isStationary: 1
   isShy: 1
   preferredBiome: 3
-  minDepthFraction: 0.01
+  minDepthFraction: 0.005
   maxDepthFraction: 0.25
   instanceCount: 3
   wanderRadius: 0
@@ -40,12 +37,11 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  previewScaleMultiplier: 1
   placeholderShape: 2
   placeholderColor: {r: 0.85, g: 0.4, b: 0.15, a: 1}
   placeholderScale: {x: 1.2, y: 0.5, z: 1.5}
-  silhouetteEulerAngles: {x: 25, y: 45, z: 0}
-  previewScaleMultiplier: 1
-  modelPrefab: {fileID: 0}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

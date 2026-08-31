@@ -11,6 +11,11 @@ public class SplashScreenController : MonoBehaviour
 
     private void Start()
     {
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayMainMenuBGM();
+        }
+
         Invoke(nameof(LoadMainMenu), delay);
     }
 

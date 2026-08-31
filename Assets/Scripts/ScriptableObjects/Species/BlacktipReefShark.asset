@@ -18,22 +18,19 @@ MonoBehaviour:
   taxonomicClass: 1
   zoneIndex: 0
   habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
-  depthRangeText: "0\u201375 m (Reef Flats & Slopes)"
+  depthRangeText: "0\u201375 m"
   explorationHint: Patrols along reef edges and open drop-offs in continuous forward
     motion.
   secondaryZoneIndices: 
-  characteristics: Streamlined bronze-gray body with prominent black tips on all
-    fins.
-  ecologicalRole: Apex reef predator maintaining equilibrium among fish and cephalopod
-    populations.
-  interestingFact: Must remain in continuous forward motion to ventilate water over
-    its gills.
-  rdpReward: 120
+  characteristics: Gray-brown body with black-tipped fins.
+  ecologicalRole: Helps control reef fish and cephalopod populations.
+  interestingFact: It can keep swimming to move water over its gills.
+  rdpReward: 50
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.025
+  minDepthFraction: 0
   maxDepthFraction: 0.375
   instanceCount: 2
   wanderRadius: 30
@@ -41,12 +38,11 @@ MonoBehaviour:
   fleeSpeed: 7
   fleeRange: 10
   returnThreshold: 40
+  modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
+  previewScaleMultiplier: 0.8
   placeholderShape: 1
   placeholderColor: {r: 0.4, g: 0.45, b: 0.5, a: 1}
   placeholderScale: {x: 1.2, y: 3.5, z: 1.2}
-  silhouetteEulerAngles: {x: 5, y: 60, z: 0}
-  previewScaleMultiplier: 0.8
-  modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

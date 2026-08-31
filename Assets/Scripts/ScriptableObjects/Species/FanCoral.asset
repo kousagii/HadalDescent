@@ -18,16 +18,17 @@ MonoBehaviour:
   taxonomicClass: 12
   zoneIndex: 0
   habitat: "Shallow coral reefs and reef drop-offs (10\u201360 m)"
-  depthRangeText: "10\u201360 m (Reef Slopes & Walls)"
+  depthRangeText: "10\u201360 m"
   explorationHint: Look along sloping reef edges and drop-off rock walls exposed
     to steady currents.
   secondaryZoneIndices: 
-  characteristics: Branching, fan-shaped octocoral with a semi-rigid calcified skeleton.
-  ecologicalRole: Provides 3D structural shelter for small organisms and filter-feeds
-    plankton.
-  interestingFact: Grows oriented perpendicular to water currents to maximize particle
-    capture.
-  rdpReward: 85
+  characteristics: Branching, fan-shaped octocoral with a semi-rigid skeleton; forms
+    upright, branching colonies.
+  ecologicalRole: Provides three-dimensional habitat and shelter for small reef organisms
+    and contributes to coral-reef biodiversity.
+  interestingFact: Fan-shaped colonies grow across water currents to maximize food
+    capture; their branches also provide shelter and habitat for small reef organisms.
+  rdpReward: 50
   scanDifficulty: 1
   isStationary: 1
   isShy: 0
@@ -40,12 +41,11 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  previewScaleMultiplier: 1
   placeholderShape: 2
   placeholderColor: {r: 0.92, g: 0.25, b: 0.35, a: 1}
   placeholderScale: {x: 1.5, y: 2, z: 0.3}
-  silhouetteEulerAngles: {x: 5, y: 35, z: 0}
-  previewScaleMultiplier: 1
-  modelPrefab: {fileID: 0}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

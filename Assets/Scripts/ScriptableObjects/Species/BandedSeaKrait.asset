@@ -17,21 +17,20 @@ MonoBehaviour:
   scientificName: Laticauda colubrina
   taxonomicClass: 3
   zoneIndex: 0
-  habitat: "Shallow coral reefs and coastal shallows (0\u201310 m)"
-  depthRangeText: "0\u201310 m (Shallow Reef Canopy)"
+  habitat: "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+  depthRangeText: "0\u201310 m"
   explorationHint: Swims gracefully through shallow coral branches near the surface.
   secondaryZoneIndices: 
-  characteristics: Striking black-and-silver banded body with a bright yellow snout
-    and paddle tail.
-  ecologicalRole: Specialized predator hunting moray eels in tight reef crevices.
-  interestingFact: Amphibious marine reptile that lays eggs on land and hunts cooperatively
-    with trevally fish.
-  rdpReward: 120
+  characteristics: Black stripes and a yellow snout, with a paddle-like tail for
+    use in swimming.
+  ecologicalRole: Predator that helps control fish and eel populations.
+  interestingFact: It can hunt together with other fish.
+  rdpReward: 50
   scanDifficulty: 3
   isStationary: 0
   isShy: 1
   preferredBiome: 2
-  minDepthFraction: 0.005
+  minDepthFraction: 0
   maxDepthFraction: 0.05
   instanceCount: 2
   wanderRadius: 16

@@ -12,34 +12,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
   m_Name: BottlenoseDolphin
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
-  speciesId: bottlenosedolphin_001
+  speciesId: dolphin_001
   commonName: Indo-Pacific Bottlenose Dolphin
   scientificName: Tursiops aduncus
   taxonomicClass: 2
   zoneIndex: 0
   habitat: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000
     m, usually 1 - 50 m)
-  characteristics: Medium-sized dolphin with a slender body and curved dorsal fin
-  ecologicalRole: Predator that helps regulate populations of fish and squid
-  interestingFact: Highly intelligent and social who often lives in groups and uses
-    echolocation to hunt
-  rdpReward: 80
-  scanDifficulty: 0
+  depthRangeText: "1\u201350 m"
+  explorationHint: Swims in social pods across coastal and reef-associated surface
+    waters.
+  secondaryZoneIndices: 
+  characteristics: Slender body, long dark rostrum, and distinctive dark spots on
+    the belly/underside as adults
+  ecologicalRole: Coastal mesopredator keeping reef fish, cephalopod, and crustacean
+    populations in check
+  interestingFact: Forms resident pods in Philippine coastal areas and frequently
+    leaps out of water while social foraging
+  rdpReward: 50
+  scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0
-  maxDepthFraction: 0.3
+  minDepthFraction: 0.005
+  maxDepthFraction: 0.25
   instanceCount: 3
-  wanderRadius: 15
-  moveSpeed: 2
-  fleeSpeed: 5
+  wanderRadius: 35
+  moveSpeed: 5
+  fleeSpeed: 8
   fleeRange: 10
   returnThreshold: 40
-  placeholderShape: 0
-  placeholderColor: {r: 0, g: 1, b: 1, a: 1}
-  placeholderScale: {x: 1, y: 1, z: 1}
   modelPrefab: {fileID: 1365621601028647452, guid: 245e4a208a0283146b209005f9400f41, type: 3}
+  previewScaleMultiplier: 0.75
+  placeholderShape: 1
+  placeholderColor: {r: 0.3, g: 0.6, b: 0.85, a: 1}
+  placeholderScale: {x: 1, y: 3.2, z: 1}
   photo: {fileID: 0}
-  silhouette: {fileID: 0}
   fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

@@ -83,6 +83,7 @@ public class ZoneManager : MonoBehaviour
             if (ZoneConfig.Zones[i].sceneName == scene.name)
             {
                 isZoneScene = true;
+                CurrentZoneIndex = i;
                 break;
             }
         }
@@ -118,6 +119,10 @@ public class ZoneManager : MonoBehaviour
     /// <summary>Returns to the zone selection menu.</summary>
     public void ReturnToZoneSelect()
     {
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayMainMenuBGM();
+        }
         SceneManager.LoadScene(zoneSelectSceneName);
     }
 
@@ -194,6 +199,12 @@ public class ZoneManager : MonoBehaviour
         {
             Debug.LogWarning("[ZoneManager] No SpeciesSpawner found in scene. " +
                              "Add a GameObject with SpeciesSpawner to the zone scene.");
+        }
+
+        // 7. Play zone-specific BGM
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayZoneBGM(CurrentZoneIndex);
         }
     }
 

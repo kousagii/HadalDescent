@@ -10,27 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
-  m_Name: PacificBlueSeaStar
+  m_Name: TubularBlueSponge
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
-  speciesId: blue_seastar_001
-  commonName: Pacific Blue Sea Star
-  scientificName: Linckia laevigata
-  taxonomicClass: 7
+  speciesId: blue_sponge_001
+  commonName: Tubular Blue Sponge
+  scientificName: Haliclona fascigera
+  taxonomicClass: 13
   zoneIndex: 0
-  habitat: "Shallow reefs, rocks and rubble (0\u201360 m)"
-  depthRangeText: "0\u201360 m"
-  explorationHint: Resting atop sunny reef platforms and sandy coral rubble.
+  habitat: "Western Pacific reef habitats (20\u201330 m)"
+  depthRangeText: "20\u201330 m"
+  explorationHint: Look for vibrant blue cylindrical tubes anchored to rocky reef
+    outcrops.
   secondaryZoneIndices: 
-  characteristics: Bright blue body with five long, slender arms.
-  ecologicalRole: Helps break down organic material on the seafloor.
-  interestingFact: It can regrow an arm after losing one.
+  characteristics: Blue sponge with tubular projections and pores.
+  ecologicalRole: Filters water and provides microhabitat.
+  interestingFact: Continuously pumps seawater through its body.
   rdpReward: 50
   scanDifficulty: 1
   isStationary: 1
   isShy: 0
   preferredBiome: 2
-  minDepthFraction: 0
-  maxDepthFraction: 0.3
+  minDepthFraction: 0.1
+  maxDepthFraction: 0.15
   instanceCount: 4
   wanderRadius: 0
   moveSpeed: 0
@@ -39,9 +40,9 @@ MonoBehaviour:
   returnThreshold: 40
   modelPrefab: {fileID: 0}
   previewScaleMultiplier: 1
-  placeholderShape: 0
-  placeholderColor: {r: 0.12, g: 0.45, b: 0.95, a: 1}
-  placeholderScale: {x: 1, y: 0.3, z: 1}
+  placeholderShape: 3
+  placeholderColor: {r: 0.18, g: 0.45, b: 0.92, a: 1}
+  placeholderScale: {x: 1, y: 1.4, z: 1}
   photo: {fileID: 0}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

@@ -10,28 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
-  m_Name: GiantClam
+  m_Name: GeographyConeSnail
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
-  speciesId: giant_clam_001
-  commonName: Giant Clam
-  scientificName: Tridacna gigas
-  taxonomicClass: 11
+  speciesId: cone_snail_001
+  commonName: Geography Cone Snail
+  scientificName: Conus geographus
+  taxonomicClass: 10
   zoneIndex: 0
-  habitat: "Shallow sunlit coral reef lagoons (0\u201335 m)"
-  depthRangeText: "0\u201335 m"
-  explorationHint: Found embedded in sandy coral lagoons where bright sunlight penetrates.
+  habitat: Indo-Pacific reefs, shallow waters (6 - 17 m)
+  depthRangeText: "6\u201317 m"
+  explorationHint: Slowly moving along sandy reef floors and coral rubble channels.
   secondaryZoneIndices: 
-  characteristics: Huge shell with colorful blue, green, or brown tissue.
-  ecologicalRole: Supports coral reef ecosystems and filters seawater.
-  interestingFact: It is the largest living bivalve.
+  characteristics: Cone-shaped patterned shell.
+  ecologicalRole: Predator of fish.
+  interestingFact: Uses potent venom to immobilize prey.
   rdpReward: 50
   scanDifficulty: 2
   isStationary: 1
   isShy: 0
-  preferredBiome: 2
-  minDepthFraction: 0
-  maxDepthFraction: 0.175
-  instanceCount: 3
+  preferredBiome: 1
+  minDepthFraction: 0.03
+  maxDepthFraction: 0.085
+  instanceCount: 4
   wanderRadius: 0
   moveSpeed: 0
   fleeSpeed: 0
@@ -39,9 +39,9 @@ MonoBehaviour:
   returnThreshold: 40
   modelPrefab: {fileID: 0}
   previewScaleMultiplier: 1
-  placeholderShape: 2
-  placeholderColor: {r: 0.1, g: 0.85, b: 0.75, a: 1}
-  placeholderScale: {x: 2, y: 1.2, z: 1.5}
+  placeholderShape: 1
+  placeholderColor: {r: 0.82, g: 0.68, b: 0.48, a: 1}
+  placeholderScale: {x: 0.6, y: 1, z: 0.6}
   photo: {fileID: 0}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

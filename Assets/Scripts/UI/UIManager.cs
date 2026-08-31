@@ -98,7 +98,6 @@ public class UIManager : MonoBehaviour
                 if (btn != null) btn.onClick.AddListener(OnScanButtonPressed);
             }
         }
-
         RefreshHUD();
     }
 
@@ -184,6 +183,8 @@ public class UIManager : MonoBehaviour
     public void OnShopButtonPressed()
     {
         Debug.Log("[UIManager] Shop pressed.");
+        var sm = ShopManager.Instance;
+        if (sm != null) sm.ToggleShop();
     }
 
     public void OnBestiaryButtonPressed()
