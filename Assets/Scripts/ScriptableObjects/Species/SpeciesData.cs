@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Defines a single bestiary entry — works for mobile species (fish, sharks, jellyfish)
@@ -125,6 +125,9 @@ public class SpeciesData : ScriptableObject
     [Header("3D Model Prefab & Visuals")]
     [Tooltip("3D model prefab rendered on the card thumbnail.")]
     public GameObject modelPrefab;
+
+    [Tooltip("Model facing yaw offset in degrees (e.g. 180 if 3D model was exported facing backward in Blender).")]
+    public float modelYawOffset = 0f;
 
     [Tooltip("Scale multiplier for the 3D model in preview thumbnails.")]
     public float previewScaleMultiplier = 1.0f;

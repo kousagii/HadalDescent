@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Per-creature state machine that drives ContextSteering.
@@ -63,7 +63,11 @@ public class SpeciesAI : MonoBehaviour
         Data         = data;
         _spawnCenter = spawnCenter;
         if (_steering == null) _steering = GetComponent<ContextSteering>();
-        if (_steering != null) _steering.MoveSpeed = data.moveSpeed;
+        if (_steering != null && data != null)
+        {
+            _steering.MoveSpeed = data.moveSpeed;
+            _steering.ModelYawOffset = data.modelYawOffset;
+        }
 
         UpdateDynamicArrivalThreshold();
         PickNewWanderTarget();

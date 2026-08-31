@@ -162,7 +162,7 @@ public class UIManager : MonoBehaviour
         if (interactButtonImage != null) interactButtonImage.gameObject.SetActive(visible);
 
         var reticle = ScanReticleUI.Instance;
-        if (reticle != null) reticle.gameObject.SetActive(visible);
+        if (reticle != null) reticle.SetVisible(visible);
 
         var dragZone = FindFirstObjectByType<TouchDragZone>();
         if (dragZone != null) dragZone.gameObject.SetActive(visible);

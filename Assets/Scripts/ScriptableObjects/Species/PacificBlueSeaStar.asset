@@ -37,7 +37,8 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 6734321286834239983, guid: 4cd091e767ab24a4aa92a9a681ca5419, type: 3}
+  modelYawOffset: 0
   previewScaleMultiplier: 1
   placeholderShape: 0
   placeholderColor: {r: 0.12, g: 0.45, b: 0.95, a: 1}

@@ -3,25 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Manages both scanning (mobile species) and interact (stationary species & debris clusters) paths.
+/// Manages both scanning (mobile species) and interaction (stationary species & debris clusters).
 ///
-/// SCAN path (mobile species):
-///   SphereCast from camera center forward. When a SpeciesAI enters the focus reticle:
-///     - SpeciesHighlighter glows on the species
-///     - ScanReticleUI animates to Locked state
-///     - UIManager.ShowScanButton(true) - scan button glows
-///   Player presses SCAN -> MinigameManager.TriggerScanMinigame()
-///   Win -> BestiaryDiscoveryPopup shown. Fail -> SpeciesAI.Flee().
-///
-/// INTERACT path (stationary species & debris):
-///   Dual detection:
-///     1. Camera forward SphereCast (up to 30m) ignoring the player's own body.
-///     2. Direct distance scan against all active DebrisCluster and ScanTarget components (up to 25m).
-///   When target in focus/range:
-///     - UIManager.ShowInteractButton(true) - interact button glows
-///   Player presses INTERACT:
-///     - If DebrisCluster -> MinigameManager.TriggerDebrisCleanupMinigame()
-///     - If ScanTarget -> SonarPulseVFX -> FactCardUI shown.
+/// Precise Reticle Aiming:
+///   - Casts a center-view ray/beam directly from the camera viewport center (0.5, 0.5) forward up to detectionRange (100m).
+///   - Validates that detected targets are in front of the camera and within the center reticle viewport bounds.
+///   - Detects both mobile species (SpeciesAI), stationary species (ScanTarget), and debris (DebrisCluster).
+///   - If no valid object is within the reticle, all states immediately reset to Idle (no floating text, no glowing buttons).
 /// </summary>
 public class ScannerSystem : MonoBehaviour
 {
@@ -37,9 +25,7 @@ public class ScannerSystem : MonoBehaviour
                 {
                     var player = FindFirstObjectByType<PlayerMovement>();
                     if (player != null)
-                    {
                         _instance = player.gameObject.AddComponent<ScannerSystem>();
-                    }
                 }
             }
             return _instance;
@@ -50,21 +36,27 @@ public class ScannerSystem : MonoBehaviour
     // Inspector
     // -----------------------------------------------------------------------
 
-    [Header("Scan (Mobile)")]
-    [Tooltip("SphereCast radius from camera centre (how wide the focus reticle detects).")]
-    [SerializeField] private float reticleRadius = 2.5f;
-    [Tooltip("Base forward range of the scan SphereCast.")]
-    [SerializeField] private float baseRange     = 25f;
+    [Header("Detection Ranges")]
+    [Tooltip("Effective scan range for mobile species (minigame lock-on). Upgraded by ScannerTier.")]
+    [SerializeField] private float baseRange       = 25f;
 
-    [Header("Interact (Stationary & Debris)")]
-    [Tooltip("Detection radius around the submarine for stationary and debris interact detection.")]
-    [SerializeField] private float interactRange = 12f;
+    [Tooltip("Effective interact range for stationary species and debris clusters.")]
+    [SerializeField] private float interactRange   = 15f;
+
+    [Tooltip("Maximum detection range for aiming at distant species (shows 'Get closer to scan').")]
+    [SerializeField] private float detectionRange  = 100f;
+
+    [Tooltip("Narrow raycast beam radius (in meters) to match the center reticle frame on screen.")]
+    [SerializeField] private float reticleBeamRadius = 0.5f;
+
+    [Tooltip("Maximum viewport distance from screen center (0.5, 0.5) to count as inside the reticle.")]
+    [SerializeField] private float viewportAimThreshold = 0.12f;
 
     [Header("References")]
     [SerializeField] private Camera scanCamera;
 
     // -----------------------------------------------------------------------
-    // Targets
+    // Active Targets
     // -----------------------------------------------------------------------
 
     private SpeciesAI     _scanTarget;
@@ -96,145 +88,278 @@ public class ScannerSystem : MonoBehaviour
             {
                 var subCam = FindFirstObjectByType<SubmarineCamera>();
                 if (subCam != null) scanCamera = subCam.GetComponent<Camera>();
-                
                 if (scanCamera == null) scanCamera = FindFirstObjectByType<Camera>();
             }
         }
     }
 
+    public bool IsAnyPopupOpen()
+    {
+        if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen) return true;
+        if (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen) return true;
+        if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen) return true;
+        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
+        return false;
+    }
+
     private void Update()
     {
-        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return;
+        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+        {
+            return; // Retain active target during minigame; do not wipe or raycast
+        }
 
-        CheckMobileTarget();
-        CheckStationaryTarget();
+        if (IsAnyPopupOpen())
+        {
+            ClearAllDetection();
+            return;
+        }
+
+        PerformReticleDetection();
     }
 
     // -----------------------------------------------------------------------
-    // Detection - Mobile (SphereCast from camera centre, ignoring player body)
+    // Unified Reticle-Based Detection (Mobile + Stationary + Debris)
     // -----------------------------------------------------------------------
 
-    private void CheckMobileTarget()
+    private void PerformReticleDetection()
     {
-        FindScanCamera();
-        if (scanCamera == null) return;
-
-        float range = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);
-
-        SpeciesAI foundAI = null;
-        float bestDist = float.MaxValue;
-        
-        // SphereCast from camera center forward to detect mobile species within reticle.
-        var hits = Physics.SphereCastAll(scanCamera.transform.position, reticleRadius, scanCamera.transform.forward, range, ~0, QueryTriggerInteraction.Collide);
-        foreach (var hit in hits)
+        if (IsAnyPopupOpen())
         {
-            if (hit.collider == null) continue;
-
-            var ai = hit.collider.GetComponentInParent<SpeciesAI>();
-            if (ai != null && !ai.IsDiscovered && ai.gameObject.activeInHierarchy)
-            {
-                if (hit.distance < bestDist)
-                {
-                    bestDist = hit.distance;
-                    foundAI = ai;
-                }
-            }
+            ClearAllDetection();
+            return;
         }
 
-        if (foundAI != _scanTarget)
+        FindScanCamera();
+        if (scanCamera == null)
         {
-            if (_highlightedObject != null)
+            ClearAllDetection();
+            return;
+        }
+
+        float effectiveMobileRange = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);
+
+        Ray centerRay = scanCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        Vector3 rayStart = centerRay.origin + centerRay.direction * 0.6f; // Offset forward to avoid submarine hull clipping
+
+        // Collect all colliders hit by narrow center beam
+        var hits = Physics.SphereCastAll(rayStart, reticleBeamRadius, centerRay.direction, detectionRange, ~0, QueryTriggerInteraction.Collide);
+
+        // Also do a direct line-of-sight raycast
+        var directHits = Physics.RaycastAll(rayStart, centerRay.direction, detectionRange, ~0, QueryTriggerInteraction.Collide);
+
+        // Find the best valid target strictly inside the reticle
+        SpeciesAI     bestAI = null;
+        ScanTarget    bestStatic = null;
+        DebrisCluster bestDebris = null;
+        float         bestDist = float.MaxValue;
+
+        // Process SphereCast hits
+        foreach (var hit in hits)
+        {
+            EvaluateHit(hit.collider, hit.point, ref bestAI, ref bestStatic, ref bestDebris, ref bestDist);
+        }
+
+        // Process Direct Raycast hits (higher precision)
+        foreach (var hit in directHits)
+        {
+            EvaluateHit(hit.collider, hit.point, ref bestAI, ref bestStatic, ref bestDebris, ref bestDist);
+        }
+
+        // ── Apply Detection State ──
+
+        if (bestAI != null)
+        {
+            // Mobile Species Target
+            _debrisTarget = null;
+            _interactTarget = null;
+
+            bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestAI.Data.speciesId);
+
+            if (isDiscovered)
             {
-                SpeciesHighlighter.SetHighlight(_highlightedObject, false);
-                _highlightedObject = null;
+                // Already Cataloged
+                _scanTarget = null;
+                ClearHighlight();
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.AlreadyScanned, bestAI.Data.speciesId);
+                UIManager.Instance?.ShowScanButton(false);
+                UIManager.Instance?.ShowInteractButton(false);
             }
-
-            _scanTarget = foundAI;
-
-            if (_scanTarget != null)
+            else if (bestDist <= effectiveMobileRange)
             {
-                SpeciesHighlighter.SetHighlight(_scanTarget.gameObject, true);
-                _highlightedObject = _scanTarget.gameObject;
+                // In Scan Range → Ready to Scan
+                _scanTarget = bestAI;
+                SetHighlight(bestAI.gameObject);
                 ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Locked);
                 UIManager.Instance?.ShowScanButton(true);
+                UIManager.Instance?.ShowInteractButton(false);
             }
             else
             {
-                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
+                // Too Far → "Get closer to scan"
+                _scanTarget = null;
+                ClearHighlight();
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.TooFar);
+                UIManager.Instance?.ShowScanButton(false);
+                UIManager.Instance?.ShowInteractButton(false);
+            }
+        }
+        else if (bestStatic != null)
+        {
+            // Stationary Species Target (Coral, Sponge, Bivalve, etc.)
+            _scanTarget = null;
+            _debrisTarget = null;
+
+            bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestStatic.Data.speciesId);
+
+            if (isDiscovered)
+            {
+                // Already Cataloged
+                _interactTarget = null;
+                ClearHighlight();
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.AlreadyScanned, bestStatic.Data.speciesId);
+                UIManager.Instance?.ShowScanButton(false);
+                UIManager.Instance?.ShowInteractButton(false);
+            }
+            else if (bestDist <= interactRange)
+            {
+                // In Interact Range → Ready to Interact
+                _interactTarget = bestStatic;
+                SetHighlight(bestStatic.gameObject);
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Locked);
+                UIManager.Instance?.ShowInteractButton(true);
                 UIManager.Instance?.ShowScanButton(false);
             }
+            else
+            {
+                // Too Far → "Get closer to scan"
+                _interactTarget = null;
+                ClearHighlight();
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.TooFar);
+                UIManager.Instance?.ShowScanButton(false);
+                UIManager.Instance?.ShowInteractButton(false);
+            }
+        }
+        else if (bestDebris != null)
+        {
+            // Debris Cluster Target
+            _scanTarget = null;
+            _interactTarget = null;
+
+            if (bestDist <= interactRange)
+            {
+                // In Range → Ready to Clean
+                _debrisTarget = bestDebris;
+                SetHighlight(bestDebris.gameObject);
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Locked);
+                UIManager.Instance?.ShowInteractButton(true);
+                UIManager.Instance?.ShowScanButton(false);
+            }
+            else
+            {
+                // Too Far
+                _debrisTarget = null;
+                ClearHighlight();
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.TooFar);
+                UIManager.Instance?.ShowScanButton(false);
+                UIManager.Instance?.ShowInteractButton(false);
+            }
+        }
+        else
+        {
+            // Nothing in Reticle → Immediate Idle Reset
+            ClearAllDetection();
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Detection - Stationary & Debris (Direct distance scan + Camera Aiming)
-    // -----------------------------------------------------------------------
-
-    private void CheckStationaryTarget()
+    private void EvaluateHit(Collider col, Vector3 hitPoint, ref SpeciesAI bestAI, ref ScanTarget bestStatic, ref DebrisCluster bestDebris, ref float bestDist)
     {
-        ScanTarget    foundStatic = null;
-        DebrisCluster foundDebris = null;
-        float         bestDistStatic = float.MaxValue;
-        float         bestDistDebris = float.MaxValue;
+        if (col == null || !col.gameObject.activeInHierarchy) return;
 
-        FindScanCamera();
-        GameObject raycastTargetObj = null;
+        // Skip player submarine colliders
+        if (col.GetComponentInParent<PlayerMovement>() != null) return;
 
-        if (scanCamera != null)
+        // Screen-space confirmation: ensure target collider is actually in front of the camera and within the center reticle
+        Vector3 targetPos = col.bounds.center;
+        Vector3 vp = scanCamera.WorldToViewportPoint(targetPos);
+        if (vp.z <= 0.2f) return; // Behind camera or too close to lens
+
+        float vpDistFromCenter = Vector2.Distance(new Vector2(vp.x, vp.y), new Vector2(0.5f, 0.5f));
+        if (vpDistFromCenter > viewportAimThreshold) return; // Outside reticle viewport threshold
+
+        float dist = Vector3.Distance(scanCamera.transform.position, targetPos);
+        if (dist > detectionRange) return;
+
+        // 1. Mobile Species
+        var ai = col.GetComponentInParent<SpeciesAI>();
+        if (ai != null && ai.gameObject.activeInHierarchy && ai.Data != null)
         {
-            // Use reticleRadius and interactRange to strictly require aiming at the object to interact
-            var hits = Physics.SphereCastAll(scanCamera.transform.position, reticleRadius, scanCamera.transform.forward, interactRange, ~0, QueryTriggerInteraction.Collide);
-            foreach (var hit in hits)
+            if (dist < bestDist)
             {
-                if (hit.collider == null) continue;
-
-                var dc = hit.collider.GetComponentInParent<DebrisCluster>();
-                if (dc != null && !dc.IsCleaned && dc.gameObject.activeInHierarchy)
-                {
-                    if (hit.distance < bestDistDebris)
-                    {
-                        foundDebris = dc;
-                        bestDistDebris = hit.distance;
-                        raycastTargetObj = dc.gameObject; // Restore cyan glow for debris
-                    }
-                }
-
-                var st = hit.collider.GetComponentInParent<ScanTarget>();
-                if (st != null && !st.IsDiscovered && st.gameObject.activeInHierarchy)
-                {
-                    if (hit.distance < bestDistStatic)
-                    {
-                        foundStatic = st;
-                        bestDistStatic = hit.distance;
-                        raycastTargetObj = st.gameObject; // Static species DO glow cyan
-                    }
-                }
+                bestDist = dist;
+                bestAI = ai;
+                bestStatic = null;
+                bestDebris = null;
             }
+            return;
         }
 
-        // Handle highlighting for static targets if we don't have a mobile target
-        if (_scanTarget == null)
+        // 2. Stationary Species
+        var st = col.GetComponentInParent<ScanTarget>();
+        if (st != null && st.gameObject.activeInHierarchy && st.Data != null)
         {
-            if (raycastTargetObj != null && _highlightedObject != raycastTargetObj)
+            if (dist < bestDist)
             {
-                if (_highlightedObject != null) SpeciesHighlighter.SetHighlight(_highlightedObject, false);
-                SpeciesHighlighter.SetHighlight(raycastTargetObj, true);
-                _highlightedObject = raycastTargetObj;
-                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Locked);
+                bestDist = dist;
+                bestStatic = st;
+                bestAI = null;
+                bestDebris = null;
             }
-            else if (raycastTargetObj == null && _highlightedObject != null)
-            {
-                SpeciesHighlighter.SetHighlight(_highlightedObject, false);
-                _highlightedObject = null;
-                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
-            }
+            return;
         }
 
-        _interactTarget = foundStatic;
-        _debrisTarget   = foundDebris;
+        // 3. Debris Cluster
+        var dc = col.GetComponentInParent<DebrisCluster>();
+        if (dc != null && dc.gameObject.activeInHierarchy && !dc.IsCleaned)
+        {
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestDebris = dc;
+                bestAI = null;
+                bestStatic = null;
+            }
+            return;
+        }
+    }
 
-        bool hasInteractable = (_interactTarget != null) || (_debrisTarget != null);
-        UIManager.Instance?.ShowInteractButton(hasInteractable);
+    private void SetHighlight(GameObject target)
+    {
+        if (_highlightedObject == target) return;
+        ClearHighlight();
+        _highlightedObject = target;
+        SpeciesHighlighter.SetHighlight(target, true);
+    }
+
+    private void ClearHighlight()
+    {
+        if (_highlightedObject != null)
+        {
+            SpeciesHighlighter.SetHighlight(_highlightedObject, false);
+            _highlightedObject = null;
+        }
+    }
+
+    private void ClearAllDetection()
+    {
+        _scanTarget = null;
+        _interactTarget = null;
+        _debrisTarget = null;
+        ClearHighlight();
+
+        ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
+        UIManager.Instance?.ShowScanButton(false);
+        UIManager.Instance?.ShowInteractButton(false);
     }
 
     // -----------------------------------------------------------------------
@@ -243,16 +368,26 @@ public class ScannerSystem : MonoBehaviour
 
     public void TryScan()
     {
-        if (_scanTarget == null || _scanTarget.IsDiscovered)
+        if (_scanTarget == null || _scanTarget.Data == null)
         {
             Debug.Log("[ScannerSystem] Scan pressed - no mobile target in focus.");
             return;
         }
 
+        SpeciesData data = _scanTarget.Data;
+        SpeciesAI targetAI = _scanTarget;
+
+        // Per-species check: if already discovered globally, reject
+        if (GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.speciesId))
+        {
+            Debug.Log($"[ScannerSystem] Scan pressed - species '{data.commonName}' already cataloged.");
+            return;
+        }
+
         MinigameManager.Instance.TriggerScanMinigame(
-            _scanTarget.Data,
-            OnScanSuccess,
-            OnScanFailed);
+            data,
+            () => OnScanSuccess(data, targetAI),
+            () => OnScanFailed(targetAI));
     }
 
     public void TryInteract()
@@ -302,10 +437,9 @@ public class ScannerSystem : MonoBehaviour
     // Scan outcomes (mobile)
     // -----------------------------------------------------------------------
 
-    private void OnScanSuccess()
+    private void OnScanSuccess(SpeciesData data, SpeciesAI targetAI)
     {
-        if (_scanTarget == null) return;
-        SpeciesData data = _scanTarget.Data;
+        if (data == null) return;
 
         bool isNew = GameManager.Instance != null
             ? GameManager.Instance.DiscoverSpecies(data.zoneIndex, data.speciesId)
@@ -313,36 +447,36 @@ public class ScannerSystem : MonoBehaviour
 
         if (isNew) GameManager.Instance?.AddRDP(data.rdpReward);
 
-        _scanTarget.IsDiscovered = true;
-        _scanTarget.GetComponent<SonarTrackable>()?.SetDiscovered(true);
-
-        if (_highlightedObject != null)
+        // Mark ALL instances of this species as discovered (per-species, not per-instance)
+        foreach (var otherAI in FindObjectsByType<SpeciesAI>(FindObjectsSortMode.None))
         {
-            SpeciesHighlighter.SetHighlight(_highlightedObject, false);
-            _highlightedObject = null;
+            if (otherAI != null && otherAI.Data != null && otherAI.Data.speciesId == data.speciesId)
+            {
+                otherAI.IsDiscovered = true;
+                otherAI.GetComponent<SonarTrackable>()?.SetDiscovered(true);
+            }
         }
 
-        ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
-        UIManager.Instance?.ShowScanButton(false);
+        if (targetAI != null)
+        {
+            targetAI.IsDiscovered = true;
+            targetAI.GetComponent<SonarTrackable>()?.SetDiscovered(true);
+        }
+
+        ClearAllDetection();
 
         BestiaryDiscoveryPopup.Instance?.Show(data, isNew);
-
-        _scanTarget = null;
         Debug.Log($"[ScannerSystem] Scan success: {data.commonName} (new={isNew})");
     }
 
-    public void OnScanFailed()
+    public void OnScanFailed(SpeciesAI targetAI)
     {
-        if (_scanTarget != null)
+        if (targetAI != null)
         {
-            _scanTarget.Flee(transform.position);
-            SpeciesHighlighter.SetHighlight(_scanTarget.gameObject, false);
+            targetAI.Flee(transform.position);
         }
 
-        _scanTarget        = null;
-        _highlightedObject = null;
-        ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
-        UIManager.Instance?.ShowScanButton(false);
+        ClearAllDetection();
         Debug.Log("[ScannerSystem] Scan failed - species fleeing.");
     }
 
@@ -365,12 +499,20 @@ public class ScannerSystem : MonoBehaviour
             : false;
 
         if (isNew) GameManager.Instance?.AddRDP(data.rdpReward);
-        target.IsDiscovered = true;
-        target.GetComponent<SonarTrackable>()?.SetDiscovered(true);
-        _interactTarget = null;
+
+        // Mark ALL instances of this stationary species as discovered
+        foreach (var otherST in FindObjectsByType<ScanTarget>(FindObjectsSortMode.None))
+        {
+            if (otherST != null && otherST.Data != null && otherST.Data.speciesId == data.speciesId)
+            {
+                otherST.IsDiscovered = true;
+                otherST.GetComponent<SonarTrackable>()?.SetDiscovered(true);
+            }
+        }
+
+        ClearAllDetection();
 
         FactCardUI.Instance?.Show(data, isNew);
-
         Debug.Log($"[ScannerSystem] Interact: {data.commonName} (new={isNew})");
     }
 
@@ -385,10 +527,12 @@ public class ScannerSystem : MonoBehaviour
 
         if (scanCamera != null)
         {
-            float range = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);
-            Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.15f);
-            Gizmos.DrawRay(scanCamera.transform.position,
-                           scanCamera.transform.forward * range);
+            float effectiveMobileRange = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);
+            Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.25f);
+            Gizmos.DrawRay(scanCamera.transform.position, scanCamera.transform.forward * effectiveMobileRange);
+
+            Gizmos.color = new Color(1f, 0.8f, 0.2f, 0.12f);
+            Gizmos.DrawRay(scanCamera.transform.position, scanCamera.transform.forward * detectionRange);
         }
     }
 }

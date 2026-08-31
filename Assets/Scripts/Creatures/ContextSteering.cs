@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -36,6 +36,9 @@ public class ContextSteering : MonoBehaviour
     [Tooltip("How quickly velocity accelerates and decelerates.")]
     [SerializeField] private float acceleration = 4.0f;
 
+    [Tooltip("Model facing yaw offset in degrees (set to 180 if model was exported facing backward in Blender).")]
+    [SerializeField] private float modelYawOffset = 0f;
+
     // -----------------------------------------------------------------------
     // Internal state
     // -----------------------------------------------------------------------
@@ -61,6 +64,13 @@ public class ContextSteering : MonoBehaviour
     {
         get => moveSpeed;
         set => moveSpeed = Mathf.Max(0.1f, value);
+    }
+
+    /// <summary>Model facing yaw offset in degrees (e.g. 180 if 3D model was exported facing backward).</summary>
+    public float ModelYawOffset
+    {
+        get => modelYawOffset;
+        set => modelYawOffset = value;
     }
 
     /// <summary>Expose current smoothed movement direction.</summary>
@@ -143,11 +153,11 @@ public class ContextSteering : MonoBehaviour
 
             _rb.MovePosition(_rb.position + moveDelta);
 
-            // Smooth horizontal turning (no roll jitter)
+            // Smooth horizontal turning (no roll jitter) with customizable model yaw offset
             Vector3 flatDir = new Vector3(_currentVelocity.x, 0f, _currentVelocity.z);
             if (flatDir.sqrMagnitude > 0.01f)
             {
-                Quaternion targetRot = Quaternion.LookRotation(flatDir.normalized, Vector3.up);
+                Quaternion targetRot = Quaternion.LookRotation(flatDir.normalized, Vector3.up) * Quaternion.Euler(0f, modelYawOffset, 0f);
                 _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime));
             }
         }

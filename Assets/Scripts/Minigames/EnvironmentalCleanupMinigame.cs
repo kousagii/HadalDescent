@@ -525,6 +525,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             coralGO.name = "Obstacle_Coral";
             coralGO.transform.localPosition = new Vector3(cx, -2.1f, 0f);
             coralGO.transform.localScale    = Vector3.one * 1.6f;
+
+            // Make sure colliders are triggers so they don't push physics bodies
+            foreach (var col in coralGO.GetComponentsInChildren<Collider>())
+                col.isTrigger = true;
+
             _spawnedObstacles.Add(coralGO);
         }
 
@@ -539,6 +544,17 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             float fx = i == 0 ? -6.5f : 6.5f;
             fishGO.transform.localPosition = new Vector3(fx, fy, 0f);
             fishGO.transform.localScale    = Vector3.one * 1.4f;
+
+            // Lock all physics constraints so claw hits cannot displace fish forward or backward in Z
+            foreach (var col in fishGO.GetComponentsInChildren<Collider>())
+                col.isTrigger = true;
+
+            var rbs = fishGO.GetComponentsInChildren<Rigidbody>();
+            foreach (var rb in rbs)
+            {
+                rb.isKinematic = true;
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+            }
 
             StartCoroutine(FishSwimRoutine(fishGO, i == 0 ? 1f : -1f, fy));
             _spawnedObstacles.Add(fishGO);
@@ -563,8 +579,14 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             }
 
             pos.y = fixedY + Mathf.Sin(Time.time * 2.8f + pos.x) * 0.25f;
+            pos.z = 0f; // Strictly lock Z so fish never moves forward or backward in 3D depth
+
             fish.transform.localPosition = pos;
-            fish.transform.localRotation = Quaternion.Euler(0f, direction > 0 ? 90f : -90f, 0f);
+
+            // Flip yaw 180 degrees so the fish faces forward into its movement direction (head-first)
+            float yaw = direction > 0 ? -90f : 90f;
+            fish.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+
             yield return null;
         }
     }
@@ -1299,10 +1321,36 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static GameObject CreateProceduralFish()
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        go.transform.localScale = new Vector3(0.4f, 0.7f, 0.3f);
-        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        go.GetComponent<Renderer>().material = CreateMaterial(new Color(1f, 0.5f, 0f));
-        return go;
+        var root = new GameObject("ProceduralFish");
+
+        // Body: horizontal capsule pointing forward along Z
+        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        body.name = "Body";
+        body.transform.SetParent(root.transform, false);
+        body.transform.localScale = new Vector3(0.35f, 0.60f, 0.25f);
+        body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        body.GetComponent<Renderer>().material = CreateMaterial(new Color(1f, 0.55f, 0.1f));
+
+        // Tail fin: back at -Z
+        var tail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        tail.name = "TailFin";
+        tail.transform.SetParent(root.transform, false);
+        tail.transform.localPosition = new Vector3(0f, 0f, -0.45f);
+        tail.transform.localScale = new Vector3(0.06f, 0.35f, 0.22f);
+        tail.GetComponent<Renderer>().material = CreateMaterial(new Color(1f, 0.35f, 0.05f));
+
+        // Eye marker: front at +Z
+        var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        eye.name = "Eye";
+        eye.transform.SetParent(root.transform, false);
+        eye.transform.localPosition = new Vector3(0f, 0.06f, 0.30f);
+        eye.transform.localScale = new Vector3(0.12f, 0.12f, 0.12f);
+        eye.GetComponent<Renderer>().material = CreateMaterial(new Color(0.1f, 0.1f, 0.1f));
+
+        // Set colliders as triggers
+        foreach (var col in root.GetComponentsInChildren<Collider>())
+            col.isTrigger = true;
+
+        return root;
     }
 }

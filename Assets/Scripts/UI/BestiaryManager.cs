@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,7 +43,10 @@ public class BestiaryManager : MonoBehaviour
     [Tooltip("Overall progress text (e.g. '18 / 50 Discovered (36%)').")]
     [SerializeField] private TMP_Text overallProgressText;
 
-    [Header("Custom Card Prefabs (Assign your UI Prefabs here)")]
+    [Header("Custom Card & Header Prefabs (Assign your UI Prefabs here)")]
+    [Tooltip("Custom Zone Header prefab (attach ZoneHeaderUI to it for custom layout & typography).")]
+    [SerializeField] private GameObject customZoneHeaderPrefab;
+
     [Tooltip("Prefab for discovered species (3D model thumbnail, cyan accent).")]
     [SerializeField] private GameObject discoveredCardPrefab;
 
@@ -51,6 +55,10 @@ public class BestiaryManager : MonoBehaviour
 
     [Tooltip("Fallback single prefab if you only want one unified card prefab.")]
     [SerializeField] private GameObject entryCardPrefab;
+
+    [Header("3D Model Inspection Modal")]
+    [Tooltip("Custom 3D Model Inspection prefab (attach ModelInspectionModalUI). If null, a default programmatic modal is created.")]
+    [SerializeField] private GameObject customModelInspectionPrefab;
 
     [Header("Detail Modal (Popup on Discovered Card Click)")]
     [Tooltip("Custom Detail Modal GameObject (opened ONLY for discovered species).")]
@@ -69,12 +77,20 @@ public class BestiaryManager : MonoBehaviour
     [SerializeField] private TMP_Text detailReward;
     [SerializeField] private Button   detailCloseButton;
 
+    [Header("Scroll")]
+    [Tooltip("ScrollRect containing the entry list. Auto-found if null.")]
+    [SerializeField] private ScrollRect scrollRect;
+
     // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
 
     private int  _activeFilter = -1; // -1 = All Depths (Continuous Descent)
     private bool _isOpen       = false;
+    public bool IsOpen => _isOpen || (bestiaryPanel != null && bestiaryPanel.activeSelf) || (detailModal != null && detailModal.activeSelf);
+
+    // Maps speciesId -> the instantiated card RectTransform for scroll-to
+    private readonly Dictionary<string, RectTransform> _cardMap = new Dictionary<string, RectTransform>();
 
     // -----------------------------------------------------------------------
     // Unity Lifecycle
@@ -116,6 +132,8 @@ public class BestiaryManager : MonoBehaviour
     {
         _isOpen = true;
         if (bestiaryPanel != null) bestiaryPanel.SetActive(true);
+        if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
+        if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
         RefreshBestiary();
     }
 
@@ -123,7 +141,10 @@ public class BestiaryManager : MonoBehaviour
     {
         _isOpen = false;
         if (bestiaryPanel != null) bestiaryPanel.SetActive(false);
+        if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(true);
+        if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
         CloseDetailModal();
+        CloseModelInspectionModal();
     }
 
     public void ToggleBestiary()
@@ -136,6 +157,220 @@ public class BestiaryManager : MonoBehaviour
     {
         _activeFilter = filterIndex;
         RefreshBestiary();
+    }
+
+    /// <summary>
+    /// Opens the dedicated 3D Model Inspection Modal in the center of the screen
+    /// with interactive 360° touch/mouse drag rotation.
+    /// Works for both discovered species (full color) and undiscovered species (3D silhouette).
+    /// </summary>
+    public void OpenModelInspectionModal(SpeciesData data, bool isDiscovered)
+    {
+        if (data == null) return;
+        CloseDetailModal();
+        CloseModelInspectionModal();
+
+        var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+        if (canvas == null) return;
+
+        // ── Custom Prefab Path ──
+        if (customModelInspectionPrefab != null)
+        {
+            var modalGO = Instantiate(customModelInspectionPrefab, canvas.transform);
+            modalGO.name = "_3DModelInspectionModal";
+            var modalUI = modalGO.GetComponent<ModelInspectionModalUI>()
+                       ?? modalGO.AddComponent<ModelInspectionModalUI>();
+            modalUI.Setup(data, isDiscovered);
+            return;
+        }
+
+        // ── Default Programmatic Path ──
+        var defaultModalGO = new GameObject("_3DModelInspectionModal", typeof(RectTransform), typeof(Image));
+        defaultModalGO.transform.SetParent(canvas.transform, false);
+
+        var rect = defaultModalGO.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        // Semi-transparent dark ocean backdrop
+        var bgImg = defaultModalGO.GetComponent<Image>();
+        bgImg.color = new Color(0.02f, 0.04f, 0.08f, 0.92f);
+
+        // Center card container
+        var cardGO = new GameObject("InspectionCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(defaultModalGO.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot     = new Vector2(0.5f, 0.5f);
+        cardRect.sizeDelta = new Vector2(440f, 420f);
+
+        var cardImg = cardGO.GetComponent<Image>();
+        cardImg.color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+
+        // Top Header Title
+        var titleGO = new GameObject("Title", typeof(RectTransform));
+        titleGO.transform.SetParent(cardGO.transform, false);
+        var titleRect = titleGO.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(1f, 1f);
+        titleRect.pivot     = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -14f);
+        titleRect.sizeDelta = new Vector2(-30f, 54f);
+
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = Color.white;
+        titleTMP.fontSize = 17;
+        titleTMP.fontStyle = FontStyles.Bold;
+
+        if (isDiscovered)
+        {
+            titleTMP.text = $"<size=19><b>{data.commonName.ToUpper()}</b></size>\n<size=13><color=#88ccff><i>{data.scientificName}</i></color>  •  <color=#a0d8ef>Depth: {data.depthRangeText}</color></size>";
+        }
+        else
+        {
+            titleTMP.text = $"<size=18><b><color=#8899aa>??? UNCATALOGED SPECIMEN</color></b></size>\n<size=13><color=#667788>Class: {data.taxonomicClass}</color>  •  <color=#88aacc>Depth: {data.depthRangeText}</color></size>";
+        }
+
+        // Center 3D Viewport Box
+        var viewGO = new GameObject("ViewportBox", typeof(RectTransform), typeof(Image));
+        viewGO.transform.SetParent(cardGO.transform, false);
+        var viewRect = viewGO.GetComponent<RectTransform>();
+        viewRect.anchorMin = new Vector2(0.5f, 0.5f);
+        viewRect.anchorMax = new Vector2(0.5f, 0.5f);
+        viewRect.pivot     = new Vector2(0.5f, 0.5f);
+        viewRect.sizeDelta = new Vector2(270f, 250f);
+        viewRect.anchoredPosition = new Vector2(0f, 8f);
+
+        var viewImg = viewGO.GetComponent<Image>();
+        viewImg.color = new Color(0.02f, 0.04f, 0.08f, 0.85f);
+
+        // RawImage for live 3D rotating model
+        var rawGO = new GameObject("PreviewRaw", typeof(RectTransform), typeof(RawImage));
+        rawGO.transform.SetParent(viewGO.transform, false);
+        var rawRect = rawGO.GetComponent<RectTransform>();
+        rawRect.anchorMin = Vector2.zero;
+        rawRect.anchorMax = Vector2.one;
+        rawRect.sizeDelta = Vector2.zero;
+
+        var rawImg = rawGO.GetComponent<RawImage>();
+        if (ModelPreviewSystem.Instance != null)
+        {
+            ModelPreviewSystem.Instance.ShowPreview(data, isSilhouette: !isDiscovered, rawImg);
+            rawGO.AddComponent<ThumbnailDragRotator>();
+        }
+
+        // Subtitle / Instruction Hint
+        var hintGO = new GameObject("HintText", typeof(RectTransform));
+        hintGO.transform.SetParent(cardGO.transform, false);
+        var hintRect = hintGO.GetComponent<RectTransform>();
+        hintRect.anchorMin = new Vector2(0f, 0f);
+        hintRect.anchorMax = new Vector2(1f, 0f);
+        hintRect.pivot     = new Vector2(0.5f, 0f);
+        hintRect.anchoredPosition = new Vector2(0f, 52f);
+        hintRect.sizeDelta = new Vector2(-30f, 22f);
+
+        var hintTMP = hintGO.AddComponent<TextMeshProUGUI>();
+        hintTMP.alignment = TextAlignmentOptions.Center;
+        hintTMP.fontSize = 12;
+        hintTMP.color = new Color(0.5f, 0.8f, 1f, 0.85f);
+        hintTMP.text = "✦ Touch and drag to spin 360°";
+
+        // Close Button
+        var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+        closeGO.transform.SetParent(cardGO.transform, false);
+        var closeRect = closeGO.GetComponent<RectTransform>();
+        closeRect.anchorMin = new Vector2(0.5f, 0f);
+        closeRect.anchorMax = new Vector2(0.5f, 0f);
+        closeRect.pivot     = new Vector2(0.5f, 0f);
+        closeRect.sizeDelta = new Vector2(140f, 36f);
+        closeRect.anchoredPosition = new Vector2(0f, 12f);
+
+        closeGO.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.55f, 1f);
+        closeGO.GetComponent<Button>().onClick.AddListener(CloseModelInspectionModal);
+
+        var lblGO = new GameObject("Label", typeof(RectTransform));
+        lblGO.transform.SetParent(closeGO.transform, false);
+        var lblRect = lblGO.GetComponent<RectTransform>();
+        lblRect.anchorMin = Vector2.zero;
+        lblRect.anchorMax = Vector2.one;
+        var lblTmp = lblGO.AddComponent<TextMeshProUGUI>();
+        lblTmp.fontSize = 14;
+        lblTmp.fontStyle = FontStyles.Bold;
+        lblTmp.alignment = TextAlignmentOptions.Center;
+        lblTmp.color = Color.white;
+        lblTmp.text = "CLOSE";
+    }
+
+    public void CloseModelInspectionModal()
+    {
+        if (ModelPreviewSystem.Instance != null)
+            ModelPreviewSystem.Instance.ClearPreview();
+
+        var modal = GameObject.Find("_3DModelInspectionModal");
+        if (modal != null) Destroy(modal);
+    }
+
+    // -----------------------------------------------------------------------
+    // Bestiary Scroll-To-Species
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Opens the Bestiary and auto-scrolls to the card matching the given speciesId.
+    /// Used by BestiaryDiscoveryPopup "View in Bestiary" and ScanReticleUI "View in Bestiary".
+    /// </summary>
+    public void ShowBestiaryAndScrollTo(string speciesId)
+    {
+        ShowBestiary();
+        StartCoroutine(ScrollToSpeciesNextFrame(speciesId));
+    }
+
+    private IEnumerator ScrollToSpeciesNextFrame(string speciesId)
+    {
+        // Wait one frame for layout to rebuild after RefreshBestiary
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+
+        if (scrollRect == null)
+            scrollRect = entryContainer?.GetComponentInParent<ScrollRect>();
+
+        if (scrollRect == null || string.IsNullOrEmpty(speciesId)) yield break;
+
+        if (!_cardMap.TryGetValue(speciesId, out RectTransform cardRect) || cardRect == null)
+            yield break;
+
+        // Calculate normalized scroll position
+        RectTransform content = scrollRect.content ?? entryContainer as RectTransform;
+        RectTransform viewport = scrollRect.viewport ?? scrollRect.GetComponent<RectTransform>();
+
+        if (content == null || viewport == null) yield break;
+
+        float contentHeight  = content.rect.height;
+        float viewportHeight = viewport.rect.height;
+
+        if (contentHeight <= viewportHeight) yield break; // No scrolling needed
+
+        // Get the card's Y position within the content
+        float cardLocalY = -cardRect.anchoredPosition.y;
+
+        // Walk up the hierarchy to accumulate Y offsets if the card is nested
+        Transform current = cardRect.parent;
+        while (current != null && current != content.transform)
+        {
+            var rt = current as RectTransform;
+            if (rt != null) cardLocalY -= rt.anchoredPosition.y;
+            current = current.parent;
+        }
+
+        // Center the card in the viewport
+        float scrollableRange = contentHeight - viewportHeight;
+        float targetScroll = cardLocalY - (viewportHeight * 0.35f);
+        float normalizedY = 1f - Mathf.Clamp01(targetScroll / scrollableRange);
+
+        scrollRect.verticalNormalizedPosition = normalizedY;
     }
 
     /// <summary>
@@ -175,6 +410,7 @@ public class BestiaryManager : MonoBehaviour
     {
         if (entryContainer == null) return;
         ClearEntries();
+        _cardMap.Clear();
 
         if (registry == null)
             registry = Resources.Load<SpeciesRegistry>("SpeciesRegistry");
@@ -265,6 +501,10 @@ public class BestiaryManager : MonoBehaviour
                 }
                 PopulateGenericPrefabLabels(card, data, discovered);
             }
+
+            // Register card for scroll-to-species
+            if (data != null && !string.IsNullOrEmpty(data.speciesId))
+                _cardMap[data.speciesId] = card.GetComponent<RectTransform>();
         }
         else
         {
@@ -276,6 +516,7 @@ public class BestiaryManager : MonoBehaviour
     {
         var labels = card.GetComponentsInChildren<TMP_Text>();
         var images = card.GetComponentsInChildren<Image>();
+        var rawImages = card.GetComponentsInChildren<RawImage>();
 
         if (discovered)
         {
@@ -283,9 +524,6 @@ public class BestiaryManager : MonoBehaviour
             SetTextSafe(labels, 1, $"<i>{data.scientificName}</i>");
             SetTextSafe(labels, 2, $"Habitat: {data.habitat}");
             SetTextSafe(labels, 3, $"Depth: {data.depthRangeText}");
-
-            if (images.Length > 0 && data.photo != null)
-                images[0].sprite = data.photo;
         }
         else
         {
@@ -293,12 +531,45 @@ public class BestiaryManager : MonoBehaviour
             SetTextSafe(labels, 1, $"Class: {data.taxonomicClass}");
             SetTextSafe(labels, 2, $"Habitat Hint: {data.habitat}");
             SetTextSafe(labels, 3, !string.IsNullOrEmpty(data.explorationHint) ? data.explorationHint : "Scan to unlock.");
+        }
 
-            if (images.Length > 0 && data.silhouette != null)
+        Sprite thumb = ModelPreviewSystem.Instance != null
+            ? ModelPreviewSystem.Instance.GetOrRenderThumbnail(data, isSilhouette: !discovered)
+            : (discovered ? data.photo : data.silhouette);
+
+        // Find child thumbnail Image (skipping the root card background Image!)
+        Image thumbImg = null;
+        foreach (var img in images)
+        {
+            if (img.gameObject == card) continue; // Skip root background
+            string n = img.gameObject.name.ToLower();
+            if (n.Contains("thumb") || n.Contains("photo") || n.Contains("icon") || n.Contains("image") || n.Contains("preview"))
             {
-                images[0].sprite = data.silhouette;
-                images[0].color = new Color(0.1f, 0.1f, 0.15f, 0.9f);
+                thumbImg = img;
+                break;
             }
+        }
+        if (thumbImg == null && images.Length > 1) thumbImg = images[1];
+
+        if (thumbImg != null)
+        {
+            if (thumb != null)
+            {
+                thumbImg.sprite = thumb;
+                thumbImg.color  = Color.white;
+            }
+            else if (data.photo != null)
+            {
+                thumbImg.sprite = discovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
+                thumbImg.color  = discovered ? Color.white : new Color(0.12f, 0.15f, 0.20f, 1f);
+            }
+        }
+
+        // Also populate any child RawImage thumbnail
+        if (rawImages.Length > 0 && thumb != null)
+        {
+            rawImages[0].texture = thumb.texture;
+            rawImages[0].color   = Color.white;
         }
     }
 
@@ -308,7 +579,7 @@ public class BestiaryManager : MonoBehaviour
         cardGO.transform.SetParent(entryContainer, false);
 
         var rect = cardGO.GetComponent<RectTransform>();
-        rect.sizeDelta = discovered ? new Vector2(0f, 120f) : new Vector2(0f, 95f);
+        rect.sizeDelta = new Vector2(0f, 125f);
         StretchHorizontal(rect);
 
         var bg = cardGO.GetComponent<Image>();
@@ -328,12 +599,71 @@ public class BestiaryManager : MonoBehaviour
             btn.interactable = false;
         }
 
+        // Register card for scroll-to-species
+        if (!string.IsNullOrEmpty(data.speciesId))
+            _cardMap[data.speciesId] = rect;
+
+        // Left Accent Strip
+        var accentGO = new GameObject("Accent", typeof(RectTransform), typeof(Image));
+        accentGO.transform.SetParent(cardGO.transform, false);
+        var accentRect = accentGO.GetComponent<RectTransform>();
+        accentRect.anchorMin = new Vector2(0f, 0f);
+        accentRect.anchorMax = new Vector2(0f, 1f);
+        accentRect.sizeDelta = new Vector2(6f, 0f);
+        accentRect.anchoredPosition = new Vector2(3f, 0f);
+        accentGO.GetComponent<Image>().color = discovered
+            ? new Color(0.0f, 0.9f, 1.0f, 1f)
+            : new Color(0.25f, 0.30f, 0.35f, 0.8f);
+
+        // 3D Model Thumbnail Box on Left
+        var thumbBoxGO = new GameObject("ThumbnailBox", typeof(RectTransform), typeof(Image));
+        thumbBoxGO.transform.SetParent(cardGO.transform, false);
+        var thumbBoxRect = thumbBoxGO.GetComponent<RectTransform>();
+        thumbBoxRect.anchorMin = new Vector2(0f, 0.5f);
+        thumbBoxRect.anchorMax = new Vector2(0f, 0.5f);
+        thumbBoxRect.pivot     = new Vector2(0f, 0.5f);
+        thumbBoxRect.sizeDelta = new Vector2(105f, 105f);
+        thumbBoxRect.anchoredPosition = new Vector2(16f, 0f);
+        thumbBoxGO.GetComponent<Image>().color = new Color(0.02f, 0.05f, 0.09f, 0.8f);
+
+        // Thumbnail Image for 3D model render
+        var thumbImgGO = new GameObject("ThumbnailImage", typeof(RectTransform), typeof(Image));
+        thumbImgGO.transform.SetParent(thumbBoxGO.transform, false);
+        var thumbImgRect = thumbImgGO.GetComponent<RectTransform>();
+        thumbImgRect.anchorMin = Vector2.zero;
+        thumbImgRect.anchorMax = Vector2.one;
+        thumbImgRect.offsetMin = Vector2.zero;
+        thumbImgRect.offsetMax = Vector2.zero;
+
+        var thumbImg = thumbImgGO.GetComponent<Image>();
+        thumbImg.preserveAspect = true;
+
+        Sprite thumb = ModelPreviewSystem.Instance != null
+            ? ModelPreviewSystem.Instance.GetOrRenderThumbnail(data, isSilhouette: !discovered)
+            : (discovered ? data.photo : data.silhouette);
+
+        if (thumb != null)
+        {
+            thumbImg.sprite = thumb;
+            thumbImg.color  = Color.white;
+        }
+        else if (data.photo != null)
+        {
+            thumbImg.sprite = discovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
+            thumbImg.color  = discovered ? Color.white : new Color(0.1f, 0.1f, 0.15f, 0.9f);
+        }
+
+        // Make 3D thumbnail clickable on all cards to open interactive 3D inspection modal
+        var thumbBtn = thumbBoxGO.AddComponent<Button>();
+        thumbBtn.onClick.AddListener(() => OpenModelInspectionModal(captured, discovered));
+
+        // Text details (offset to the right of thumbnail box)
         var textGO = new GameObject("Text", typeof(RectTransform));
         textGO.transform.SetParent(cardGO.transform, false);
         var textRect = textGO.GetComponent<RectTransform>();
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(16f, 8f);
+        textRect.offsetMin = new Vector2(132f, 8f);
         textRect.offsetMax = new Vector2(-16f, -8f);
 
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
@@ -344,66 +674,93 @@ public class BestiaryManager : MonoBehaviour
         if (discovered)
         {
             tmp.text =
-                $"<b><size=16><color=#ffffff>{data.commonName}</color></size></b>   " +
-                $"<color=#88ccff><i><size=12>{data.scientificName}</size></i></color>  " +
-                $"<color=#ffcc00><size=11>[+{data.rdpReward} RDP]</size></color>\n" +
+                $"<b><size=17><color=#ffffff>{data.commonName}</color></size></b>   " +
+                $"<color=#88ccff><i><size=13>{data.scientificName}</size></i></color>  " +
+                $"<color=#ffcc00><size=12>[+{data.rdpReward} RDP]</size></color>\n" +
                 $"<color=#77ccee>Depth:</color> {data.depthRangeText}   <color=#77ccee>■ Class:</color> {data.taxonomicClass}\n" +
-                $"<color=#aaaaaa>{data.habitat}</color>\n" +
+                $"<color=#bbbbbb>{data.habitat}</color>\n" +
                 $"<color=#ffdd88>✦ {data.interestingFact}</color>";
         }
         else
         {
             string clue = !string.IsNullOrEmpty(data.explorationHint) ? data.explorationHint : data.habitat;
             tmp.text =
-                $"<b><size=15><color=#778899>??? [Uncataloged Specimen]</color></size></b>   " +
-                $"<color=#556677><size=12>Class: {data.taxonomicClass}</size></color>\n" +
-                $"<color=#667788>Expected Depth:</color> {data.depthRangeText}\n" +
+                $"<b><size=16><color=#8899aa>??? [Uncataloged Specimen]</color></size></b>   " +
+                $"<color=#667788><size=13>Class: {data.taxonomicClass}</size></color>\n" +
+                $"<color=#778899>Expected Depth:</color> {data.depthRangeText}\n" +
                 $"<color=#8899aa>Clue:</color> <color=#aaccee>{clue}</color>";
         }
-
-        var accentGO = new GameObject("Accent", typeof(RectTransform), typeof(Image));
-        accentGO.transform.SetParent(cardGO.transform, false);
-        var accentRect = accentGO.GetComponent<RectTransform>();
-        accentRect.anchorMin = new Vector2(0f, 0f);
-        accentRect.anchorMax = new Vector2(0f, 1f);
-        accentRect.sizeDelta = new Vector2(5f, 0f);
-        accentRect.anchoredPosition = new Vector2(2.5f, 0f);
-        accentGO.GetComponent<Image>().color = discovered
-            ? new Color(0.20f, 0.85f, 0.95f, 1f)
-            : new Color(0.25f, 0.30f, 0.35f, 0.8f);
     }
 
     private void CreateZoneHeader(ZoneDefinition zone, int zoneIndex, int discovered, int total)
     {
-        var headerGO = new GameObject($"Header_Zone_{zoneIndex}", typeof(RectTransform), typeof(Image));
-        headerGO.transform.SetParent(entryContainer, false);
+        if (customZoneHeaderPrefab != null)
+        {
+            var headerGO = Instantiate(customZoneHeaderPrefab, entryContainer);
+            headerGO.name = $"Header_Zone_{zoneIndex}";
+            var zoneUI = headerGO.GetComponent<ZoneHeaderUI>() ?? headerGO.AddComponent<ZoneHeaderUI>();
+            zoneUI.Setup(zone, discovered, total);
+            return;
+        }
 
-        var rect = headerGO.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0f, 48f);
+        // Fallback programmatic zone header with large, highly-readable typography
+        var defaultHeaderGO = new GameObject($"Header_Zone_{zoneIndex}", typeof(RectTransform), typeof(Image));
+        defaultHeaderGO.transform.SetParent(entryContainer, false);
+
+        var rect = defaultHeaderGO.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(0f, 72f);
         StretchHorizontal(rect);
 
-        var img = headerGO.GetComponent<Image>();
-        img.color = new Color(zone.fogColor.r * 0.4f, zone.fogColor.g * 0.4f, zone.fogColor.b * 0.4f, 0.95f);
+        var img = defaultHeaderGO.GetComponent<Image>();
+        img.color = new Color(zone.fogColor.r * 0.35f, zone.fogColor.g * 0.35f, zone.fogColor.b * 0.35f, 0.95f);
 
-        var textGO = new GameObject("Title", typeof(RectTransform));
-        textGO.transform.SetParent(headerGO.transform, false);
-        var textRect = textGO.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(16f, 0f);
-        textRect.offsetMax = new Vector2(-16f, 0f);
+        // Left accent strip
+        var accentGO = new GameObject("Accent", typeof(RectTransform), typeof(Image));
+        accentGO.transform.SetParent(defaultHeaderGO.transform, false);
+        var accRect = accentGO.GetComponent<RectTransform>();
+        accRect.anchorMin = new Vector2(0f, 0f);
+        accRect.anchorMax = new Vector2(0f, 1f);
+        accRect.sizeDelta = new Vector2(8f, 0f);
+        accRect.anchoredPosition = new Vector2(4f, 0f);
+        accentGO.GetComponent<Image>().color = zone.fogColor;
 
-        var tmp = textGO.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize = 15;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.alignment = TextAlignmentOptions.MidlineLeft;
-        tmp.color = Color.white;
+        // Top Row: Zone Title + Depth
+        var titleGO = new GameObject("ZoneTitle", typeof(RectTransform));
+        titleGO.transform.SetParent(defaultHeaderGO.transform, false);
+        var titleRect = titleGO.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0f, 0.5f);
+        titleRect.anchorMax = new Vector2(1f, 1f);
+        titleRect.offsetMin = new Vector2(24f, 0f);
+        titleRect.offsetMax = new Vector2(-20f, -6f);
+
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        titleTMP.fontSize = 20;
+        titleTMP.fontStyle = FontStyles.Bold;
+        titleTMP.alignment = TextAlignmentOptions.MidlineLeft;
+        titleTMP.color = Color.white;
+        titleTMP.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=15><color=#a0d8ef>({zone.displayDepthMin:0} – {zone.displayDepthMax:0} m)</color></size>";
+
+        // Bottom Row: Progress + Large Unlock Badge
+        var subGO = new GameObject("ProgressSubtitle", typeof(RectTransform));
+        subGO.transform.SetParent(defaultHeaderGO.transform, false);
+        var subRect = subGO.GetComponent<RectTransform>();
+        subRect.anchorMin = new Vector2(0f, 0f);
+        subRect.anchorMax = new Vector2(1f, 0.5f);
+        subRect.offsetMin = new Vector2(24f, 6f);
+        subRect.offsetMax = new Vector2(-20f, 0f);
+
+        var subTMP = subGO.AddComponent<TextMeshProUGUI>();
+        subTMP.fontSize = 15;
+        subTMP.alignment = TextAlignmentOptions.MidlineLeft;
+        subTMP.color = Color.white;
 
         float pct = total > 0 ? (float)discovered / total * 100f : 0f;
-        string unlockBadge = pct >= 50f ? "<color=#88ffaa>✓ 50% Met</color>" : $"<color=#ffcc66>{50 - (int)pct}% needed</color>";
+        int needed = Mathf.Max(0, 50 - Mathf.RoundToInt(pct));
+        string badge = pct >= 50f
+            ? "<color=#66ffbb><b>[ ✓ 50% UNLOCKED ]</b></color>"
+            : $"<color=#ffcc44><b>[ {needed}% MORE NEEDED TO UNLOCK NEXT ZONE ]</b></color>";
 
-        tmp.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=12><color=#a0d8ef>({zone.displayDepthMin:0}–{zone.displayDepthMax:0} m)</color></size>  " +
-                   $"<size=12>• {discovered}/{total} ({pct:0}%)  {unlockBadge}</size>";
+        subTMP.text = $"<color=#e0e0e0><b>{discovered} / {total}</b> Discovered ({pct:0}%)</color>   {badge}";
     }
 
     private void PopulateCustomDetailModal(SpeciesData data)

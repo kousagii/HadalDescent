@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -75,12 +75,6 @@ public class BestiaryCardUI : MonoBehaviour
 
             if (accentImage != null)
                 accentImage.color = new Color(0.0f, 0.9f, 1.0f, 1f); // Vibrant Cyan
-
-            if (thumbnailImage != null && data.photo != null)
-            {
-                thumbnailImage.sprite = data.photo;
-                thumbnailImage.color  = Color.white;
-            }
         }
         else
         {
@@ -99,22 +93,54 @@ public class BestiaryCardUI : MonoBehaviour
 
             if (accentImage != null)
                 accentImage.color = new Color(0.35f, 0.40f, 0.45f, 1f); // Slate / Gray
+        }
 
-            if (thumbnailImage != null && data.silhouette != null)
+        // 3D Model Thumbnail Rendering
+        Sprite thumb = ModelPreviewSystem.Instance != null
+            ? ModelPreviewSystem.Instance.GetOrRenderThumbnail(data, isSilhouette: !isDiscovered)
+            : (isDiscovered ? data.photo : data.silhouette);
+
+        if (thumbnailImage != null)
+        {
+            if (thumb != null)
             {
-                thumbnailImage.sprite = data.silhouette;
-                thumbnailImage.color  = new Color(0.12f, 0.15f, 0.20f, 1f);
+                thumbnailImage.sprite = thumb;
+                thumbnailImage.color = Color.white;
+                thumbnailImage.gameObject.SetActive(true);
+            }
+            else if (data.photo != null)
+            {
+                thumbnailImage.sprite = isDiscovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
+                thumbnailImage.color = isDiscovered ? Color.white : new Color(0.12f, 0.15f, 0.20f, 1f);
+                thumbnailImage.gameObject.SetActive(true);
             }
         }
 
-        // Render the 3D model into the RawImage thumbnail
-        if (thumbnailRawImage != null && ModelPreviewSystem.Instance != null)
+        if (thumbnailRawImage != null)
         {
-            ModelPreviewSystem.Instance.ShowPreview(data, isSilhouette: !isDiscovered, thumbnailRawImage);
+            if (thumb != null)
+            {
+                thumbnailRawImage.texture = thumb.texture;
+                thumbnailRawImage.color = Color.white;
+                thumbnailRawImage.gameObject.SetActive(true);
+            }
+        }
 
-            // Ensure ThumbnailDragRotator is attached ONLY to the thumbnail box
-            var rotator = thumbnailRawImage.GetComponent<ThumbnailDragRotator>();
-            if (rotator == null) rotator = thumbnailRawImage.gameObject.AddComponent<ThumbnailDragRotator>();
+        // Tap on 3D thumbnail to open full-screen 3D Model Inspection modal
+        Button thumbBtn = null;
+        if (thumbnailImage != null)
+            thumbBtn = thumbnailImage.GetComponent<Button>() ?? thumbnailImage.gameObject.AddComponent<Button>();
+        else if (thumbnailRawImage != null)
+            thumbBtn = thumbnailRawImage.GetComponent<Button>() ?? thumbnailRawImage.gameObject.AddComponent<Button>();
+
+        if (thumbBtn != null)
+        {
+            thumbBtn.onClick.RemoveAllListeners();
+            thumbBtn.onClick.AddListener(() =>
+            {
+                if (BestiaryManager.Instance != null)
+                    BestiaryManager.Instance.OpenModelInspectionModal(data, isDiscovered);
+            });
         }
     }
 }

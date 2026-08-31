@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -42,6 +42,7 @@ public class FactCardUI : MonoBehaviour
     private Button        _closeButton;
 
     private bool   _isOpen;
+    public bool IsOpen => _isOpen || (customCardPanel != null && customCardPanel.activeSelf);
     private Canvas _canvas;
 
     private const float PanelWidth  = 380f;

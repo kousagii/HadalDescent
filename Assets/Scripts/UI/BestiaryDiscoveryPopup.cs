@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -32,7 +32,9 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     private Button        _closeBtn;
 
     private bool   _isOpen;
+    public bool IsOpen => _isOpen || (customPopupPanel != null && customPopupPanel.activeSelf);
     private Canvas _canvas;
+    private string _lastSpeciesId;
 
     private const float PanelW     = 300f;
     private const float PanelH     = 160f;
@@ -57,7 +59,10 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
                 customViewButton.onClick.AddListener(() =>
                 {
                     Hide();
-                    BestiaryManager.Instance?.ShowBestiary();
+                    if (!string.IsNullOrEmpty(_lastSpeciesId))
+                        BestiaryManager.Instance?.ShowBestiaryAndScrollTo(_lastSpeciesId);
+                    else
+                        BestiaryManager.Instance?.ShowBestiary();
                 });
         }
         else
@@ -77,9 +82,14 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         }
     }
 
+    private Coroutine _autoCloseCoroutine;
+
     public void Show(SpeciesData data, bool isNew)
     {
         if (data == null) return;
+        _lastSpeciesId = data.speciesId;
+
+        if (_autoCloseCoroutine != null) StopCoroutine(_autoCloseCoroutine);
 
         if (customPopupPanel != null)
         {
@@ -100,10 +110,24 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
             if (isNew) StartCoroutine(AnimateRDP(data.rdpReward, _rdpText));
             else if (_rdpText != null) _rdpText.text = "";
         }
+
+        // Automatically dismiss discovery popup after 5 seconds
+        _autoCloseCoroutine = StartCoroutine(AutoCloseCountdown(5f));
+    }
+
+    private IEnumerator AutoCloseCountdown(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        Hide();
     }
 
     public void Hide()
     {
+        if (_autoCloseCoroutine != null)
+        {
+            StopCoroutine(_autoCloseCoroutine);
+            _autoCloseCoroutine = null;
+        }
         _isOpen = false;
         if (customPopupPanel != null) customPopupPanel.SetActive(false);
     }

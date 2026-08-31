@@ -95,13 +95,24 @@ public class MinigameManager : MonoBehaviour
             return;
         }
 
-        EnsureMinigameComponents();
-
         _minigameActive = true;
         DisableControls();
+        Time.timeScale = 0f;
 
-        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); onSuccess?.Invoke(); };
-        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); onFail?.Invoke(); };
+        Action wrappedSuccess = () =>
+        {
+            Time.timeScale = 1f;
+            _minigameActive = false;
+            EnableControls();
+            onSuccess?.Invoke();
+        };
+        Action wrappedFail = () =>
+        {
+            Time.timeScale = 1f;
+            _minigameActive = false;
+            EnableControls();
+            onFail?.Invoke();
+        };
 
         int zone = ZoneManager.CurrentZoneIndex;
         int pick = ChooseMinigame(zone);
@@ -152,6 +163,7 @@ public class MinigameManager : MonoBehaviour
     public void AbortCurrentMinigame()
     {
         if (!_minigameActive) return;
+        Time.timeScale = 1f;
         _minigameActive = false;
         EnableControls();
     }

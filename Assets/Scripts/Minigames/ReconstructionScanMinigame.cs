@@ -79,6 +79,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
     public void Show()
     {
+        StopAllCoroutines();
         _n             = GridSizes[_zoneIndex];
         _totalTime     = Timers[_zoneIndex];
         _timeRemaining = _totalTime;
@@ -87,6 +88,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
         BuildUI();
         InitPuzzle();
+        if (_resultText != null) _resultText.gameObject.SetActive(false);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(true);
     }
 
@@ -98,7 +100,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         if (_finished || _rootPanel == null || !_rootPanel.gameObject.activeSelf) return;
 
-        _timeRemaining -= Time.deltaTime;
+        _timeRemaining -= Time.unscaledDeltaTime;
 
         // Update timer UI
         if (_timerText != null) _timerText.text = Mathf.CeilToInt(Mathf.Max(0f, _timeRemaining)).ToString();
@@ -190,7 +192,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private IEnumerator ShowHint()
     {
         if (_hintOverlay != null) _hintOverlay.SetActive(true);
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSecondsRealtime(2f);
         if (_hintOverlay != null) _hintOverlay.SetActive(false);
     }
 
@@ -217,7 +219,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
     private IEnumerator DelayedClose(bool success)
     {
-        yield return new WaitForSeconds(1.3f);
+        yield return new WaitForSecondsRealtime(1.3f);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
         if (success) _onSuccess?.Invoke();
         else         _onFail?.Invoke();

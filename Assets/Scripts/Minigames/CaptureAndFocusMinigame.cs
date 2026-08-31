@@ -88,6 +88,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     public void Show()
     {
+        StopAllCoroutines();
         BuildUI();
         int tier = GetScannerTier();
         float zoneSize = GetScannerFocusWidth(tier);
@@ -112,6 +113,27 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     public void SetHolding(bool isHolding)
     {
         _holding = isHolding;
+    }
+
+    private bool IsHoldInputActive()
+    {
+        if (_holding) return true;
+
+        // Unity New Input System check (Touchscreen, Mouse, Pointer, Keyboard)
+        if (Touchscreen.current != null)
+        {
+            var touches = Touchscreen.current.touches;
+            for (int i = 0; i < touches.Count; i++)
+            {
+                if (touches[i].press.isPressed) return true;
+            }
+        }
+
+        if (Mouse.current != null && Mouse.current.leftButton.isPressed) return true;
+        if (Pointer.current != null && Pointer.current.press.isPressed) return true;
+        if (Keyboard.current != null && (Keyboard.current.spaceKey.isPressed || Keyboard.current.fKey.isPressed)) return true;
+
+        return false;
     }
 
     private int GetScannerTier()
@@ -145,7 +167,8 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     {
         if (_finished || _rootPanel == null || !_rootPanel.gameObject.activeSelf) return;
 
-        float dt   = Time.deltaTime;
+        float dt   = Time.unscaledDeltaTime;
+        if (dt <= 0f || dt > 0.1f) dt = 0.016f; // Unscaled delta time safety clamp
         int   d    = _difficulty;
         int   tier = GetScannerTier();
 
@@ -153,12 +176,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
             _startGraceTimer -= dt;
 
         // 1. Universal input checking (New Input System, Pointer, Touchscreen, Mouse, Keyboard)
-        bool pointerPress = Pointer.current != null && Pointer.current.press.isPressed;
-        bool touchPress   = Touchscreen.current != null && Touchscreen.current.touches.Any(t => t.press.isPressed);
-        bool mousePress   = Mouse.current != null && Mouse.current.leftButton.isPressed;
-        bool keyPress     = Keyboard.current != null && (Keyboard.current.spaceKey.isPressed || Keyboard.current.fKey.isPressed);
-
-        bool holding = _holding || pointerPress || touchPress || mousePress || keyPress;
+        bool holding = IsHoldInputActive();
 
         // 2. Focus bar dimensions & strict boundary clamping
         float zoneSize = GetScannerFocusWidth(tier);
@@ -279,7 +297,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
                 {
                     _meniscusLineRect.gameObject.SetActive(true);
                     float yPos = (_meter - 0.5f) * _barH;
-                    float waveOffset = inZone ? Mathf.Sin(Time.time * 8f) * 1.5f : 0f;
+                    float waveOffset = inZone ? Mathf.Sin(Time.unscaledTime * 8f) * 1.5f : 0f;
                     _meniscusLineRect.anchoredPosition = new Vector2(0f, yPos + waveOffset);
 
                     // Slightly brighter highlight tint for the surface meniscus
@@ -296,7 +314,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         // Red disturbance warning flash when meter is low
         if (_redFlash != null)
         {
-            float a = _meter < 0.25f ? Mathf.PingPong(Time.time * 4f, 1f) * 0.28f : 0f;
+            float a = _meter < 0.25f ? Mathf.PingPong(Time.unscaledTime * 4f, 1f) * 0.28f : 0f;
             _redFlash.color = new Color(1f, 0.08f, 0.08f, a);
         }
     }
@@ -318,7 +336,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     private IEnumerator DelayedClose(bool success)
     {
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSecondsRealtime(1.2f);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
 
         if (success) _onSuccess?.Invoke();
@@ -338,7 +356,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
         // Fullscreen touch capture panel
         var rootGO = new GameObject("CaptureMinigame",
-            typeof(RectTransform), typeof(Image), typeof(GraphicRaycaster));
+            typeof(RectTransform), typeof(Image));
         rootGO.transform.SetParent(canvas.transform, false);
         _rootPanel = rootGO.GetComponent<RectTransform>();
         _rootPanel.anchorMin = Vector2.zero; _rootPanel.anchorMax = Vector2.one; _rootPanel.sizeDelta = Vector2.zero;
@@ -550,6 +568,11 @@ public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPoint
     }
 
     public void OnPointerUp(PointerEventData eventData)
+    {
+        if (_minigame != null) _minigame.SetHolding(false);
+    }
+
+    private void OnDisable()
     {
         if (_minigame != null) _minigame.SetHolding(false);
     }
