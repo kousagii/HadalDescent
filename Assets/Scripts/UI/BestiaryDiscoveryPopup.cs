@@ -36,8 +36,8 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     private Canvas _canvas;
     private string _lastSpeciesId;
 
-    private const float PanelW     = 300f;
-    private const float PanelH     = 160f;
+    private const float PanelW     = 460f;
+    private const float PanelH     = 280f;
     private const float SlideSpeed = 12f;
 
     private void Awake()
@@ -56,19 +56,21 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
             if (customCloseButton != null)
                 customCloseButton.onClick.AddListener(Hide);
             if (customViewButton != null)
-                customViewButton.onClick.AddListener(() =>
-                {
-                    Hide();
-                    if (!string.IsNullOrEmpty(_lastSpeciesId))
-                        BestiaryManager.Instance?.ShowBestiaryAndScrollTo(_lastSpeciesId);
-                    else
-                        BestiaryManager.Instance?.ShowBestiary();
-                });
+                customViewButton.onClick.AddListener(OnViewInBestiaryClicked);
         }
         else
         {
             BuildPanel();
         }
+    }
+
+    private void OnViewInBestiaryClicked()
+    {
+        Hide();
+        if (!string.IsNullOrEmpty(_lastSpeciesId))
+            BestiaryManager.Instance?.ShowBestiaryAndScrollTo(_lastSpeciesId);
+        else
+            BestiaryManager.Instance?.ShowBestiary();
     }
 
     private void Update()
@@ -151,6 +153,10 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     {
         if (_panel != null || _canvas == null) return;
 
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         var go = new GameObject("DiscoveryPopup", typeof(RectTransform), typeof(Image));
         go.transform.SetParent(_canvas.transform, false);
         _panel = go.GetComponent<RectTransform>();
@@ -168,10 +174,11 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         titleGO.transform.SetParent(go.transform, false);
         var tr = titleGO.GetComponent<RectTransform>();
         tr.anchorMin = new Vector2(0f, 1f); tr.anchorMax = new Vector2(1f, 1f);
-        tr.pivot = new Vector2(0.5f, 1f); tr.sizeDelta = new Vector2(0f, 28f);
-        tr.anchoredPosition = new Vector2(0f, -10f);
+        tr.pivot = new Vector2(0.5f, 1f); tr.sizeDelta = new Vector2(0f, 44f);
+        tr.anchoredPosition = new Vector2(0f, -12f);
         _titleText = titleGO.AddComponent<TextMeshProUGUI>();
-        _titleText.fontSize = 13; _titleText.fontStyle = FontStyles.Bold;
+        if (font != null) _titleText.font = font;
+        _titleText.fontSize = 36; _titleText.fontStyle = FontStyles.Bold;
         _titleText.alignment = TextAlignmentOptions.Center;
         _titleText.color = new Color(0.12f, 0.90f, 0.50f, 1f);
         _titleText.text = "Added to Bestiary!";
@@ -181,10 +188,11 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         nameGO.transform.SetParent(go.transform, false);
         var nr = nameGO.GetComponent<RectTransform>();
         nr.anchorMin = new Vector2(0f, 1f); nr.anchorMax = new Vector2(1f, 1f);
-        nr.pivot = new Vector2(0.5f, 1f); nr.sizeDelta = new Vector2(0f, 32f);
-        nr.anchoredPosition = new Vector2(0f, -38f);
+        nr.pivot = new Vector2(0.5f, 1f); nr.sizeDelta = new Vector2(0f, 48f);
+        nr.anchoredPosition = new Vector2(0f, -60f);
         _nameText = nameGO.AddComponent<TextMeshProUGUI>();
-        _nameText.fontSize = 19; _nameText.fontStyle = FontStyles.Bold;
+        if (font != null) _nameText.font = font;
+        _nameText.fontSize = 36; _nameText.fontStyle = FontStyles.Bold;
         _nameText.alignment = TextAlignmentOptions.Center;
         _nameText.color = Color.white;
 
@@ -193,19 +201,20 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         rdpGO.transform.SetParent(go.transform, false);
         var rr = rdpGO.GetComponent<RectTransform>();
         rr.anchorMin = new Vector2(0f, 0f); rr.anchorMax = new Vector2(1f, 0f);
-        rr.pivot = new Vector2(0.5f, 0f); rr.sizeDelta = new Vector2(0f, 26f);
-        rr.anchoredPosition = new Vector2(0f, 52f);
+        rr.pivot = new Vector2(0.5f, 0f); rr.sizeDelta = new Vector2(0f, 46f);
+        rr.anchoredPosition = new Vector2(0f, 80f);
         _rdpText = rdpGO.AddComponent<TextMeshProUGUI>();
-        _rdpText.fontSize = 15; _rdpText.fontStyle = FontStyles.Bold;
+        if (font != null) _rdpText.font = font;
+        _rdpText.fontSize = 36; _rdpText.fontStyle = FontStyles.Bold;
         _rdpText.alignment = TextAlignmentOptions.Center;
         _rdpText.color = new Color(1f, 0.85f, 0.15f, 1f);
 
-        // Close Button
+        // Continue Button
         var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         closeGO.transform.SetParent(go.transform, false);
         var cr = closeGO.GetComponent<RectTransform>();
         cr.anchorMin = new Vector2(0.5f, 0f); cr.anchorMax = new Vector2(0.5f, 0f);
-        cr.sizeDelta = new Vector2(110f, 28f); cr.anchoredPosition = new Vector2(0f, 14f);
+        cr.sizeDelta = new Vector2(220f, 54f); cr.anchoredPosition = new Vector2(0f, 16f);
         closeGO.GetComponent<Image>().color = new Color(0.15f, 0.45f, 0.65f, 1f);
         _closeBtn = closeGO.GetComponent<Button>();
         _closeBtn.onClick.AddListener(Hide);
@@ -215,7 +224,9 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         var lr = lblGO.GetComponent<RectTransform>();
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
         var lbl = lblGO.AddComponent<TextMeshProUGUI>();
-        lbl.fontSize = 11; lbl.alignment = TextAlignmentOptions.Center;
+        if (font != null) lbl.font = font;
+        lbl.fontSize = 36; lbl.alignment = TextAlignmentOptions.Center;
+        lbl.fontStyle = FontStyles.Bold;
         lbl.text = "CONTINUE"; lbl.color = Color.white;
     }
 }

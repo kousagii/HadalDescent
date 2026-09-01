@@ -198,41 +198,46 @@ public class BestiaryManager : MonoBehaviour
         var bgImg = defaultModalGO.GetComponent<Image>();
         bgImg.color = new Color(0.02f, 0.04f, 0.08f, 0.92f);
 
-        // Center card container
-        var cardGO = new GameObject("InspectionCard", typeof(RectTransform), typeof(Image));
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
+        var cardGO = new GameObject("InspectionModalCard", typeof(RectTransform), typeof(Image));
         cardGO.transform.SetParent(defaultModalGO.transform, false);
         var cardRect = cardGO.GetComponent<RectTransform>();
         cardRect.anchorMin = new Vector2(0.5f, 0.5f);
         cardRect.anchorMax = new Vector2(0.5f, 0.5f);
         cardRect.pivot     = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(440f, 420f);
+        cardRect.sizeDelta = new Vector2(560f, 560f);
+        cardRect.anchoredPosition = Vector2.zero;
 
-        var cardImg = cardGO.GetComponent<Image>();
-        cardImg.color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+        var bg = cardGO.GetComponent<Image>();
+        bg.color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
 
-        // Top Header Title
-        var titleGO = new GameObject("Title", typeof(RectTransform));
+        // Header Title (Discovered Common Name or Undiscovered Class)
+        var titleGO = new GameObject("ModalTitle", typeof(RectTransform));
         titleGO.transform.SetParent(cardGO.transform, false);
         var titleRect = titleGO.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 1f);
         titleRect.anchorMax = new Vector2(1f, 1f);
         titleRect.pivot     = new Vector2(0.5f, 1f);
         titleRect.anchoredPosition = new Vector2(0f, -14f);
-        titleRect.sizeDelta = new Vector2(-30f, 54f);
+        titleRect.sizeDelta = new Vector2(-40f, 80f);
 
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) titleTMP.font = font;
         titleTMP.alignment = TextAlignmentOptions.Center;
         titleTMP.color = Color.white;
-        titleTMP.fontSize = 17;
+        titleTMP.fontSize = 36;
         titleTMP.fontStyle = FontStyles.Bold;
 
         if (isDiscovered)
         {
-            titleTMP.text = $"<size=19><b>{data.commonName.ToUpper()}</b></size>\n<size=13><color=#88ccff><i>{data.scientificName}</i></color>  •  <color=#a0d8ef>Depth: {data.depthRangeText}</color></size>";
+            titleTMP.text = $"<b>{data.commonName.ToUpper()}</b>\n<size=22><color=#88ccff><i>{data.scientificName}</i></color>  •  <color=#a0d8ef>Depth: {data.depthRangeText}</color></size>";
         }
         else
         {
-            titleTMP.text = $"<size=18><b><color=#8899aa>??? UNCATALOGED SPECIMEN</color></b></size>\n<size=13><color=#667788>Class: {data.taxonomicClass}</color>  •  <color=#88aacc>Depth: {data.depthRangeText}</color></size>";
+            titleTMP.text = $"<b><color=#8899aa>??? UNCATALOGED</color></b>\n<size=22><color=#667788>Class: {data.taxonomicClass}</color>  •  <color=#88aacc>Depth: {data.depthRangeText}</color></size>";
         }
 
         // Center 3D Viewport Box
@@ -242,8 +247,8 @@ public class BestiaryManager : MonoBehaviour
         viewRect.anchorMin = new Vector2(0.5f, 0.5f);
         viewRect.anchorMax = new Vector2(0.5f, 0.5f);
         viewRect.pivot     = new Vector2(0.5f, 0.5f);
-        viewRect.sizeDelta = new Vector2(270f, 250f);
-        viewRect.anchoredPosition = new Vector2(0f, 8f);
+        viewRect.sizeDelta = new Vector2(380f, 320f);
+        viewRect.anchoredPosition = new Vector2(0f, 6f);
 
         var viewImg = viewGO.GetComponent<Image>();
         viewImg.color = new Color(0.02f, 0.04f, 0.08f, 0.85f);
@@ -270,12 +275,13 @@ public class BestiaryManager : MonoBehaviour
         hintRect.anchorMin = new Vector2(0f, 0f);
         hintRect.anchorMax = new Vector2(1f, 0f);
         hintRect.pivot     = new Vector2(0.5f, 0f);
-        hintRect.anchoredPosition = new Vector2(0f, 52f);
-        hintRect.sizeDelta = new Vector2(-30f, 22f);
+        hintRect.anchoredPosition = new Vector2(0f, 76f);
+        hintRect.sizeDelta = new Vector2(-40f, 36f);
 
         var hintTMP = hintGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) hintTMP.font = font;
         hintTMP.alignment = TextAlignmentOptions.Center;
-        hintTMP.fontSize = 12;
+        hintTMP.fontSize = 24;
         hintTMP.color = new Color(0.5f, 0.8f, 1f, 0.85f);
         hintTMP.text = "✦ Touch and drag to spin 360°";
 
@@ -284,10 +290,10 @@ public class BestiaryManager : MonoBehaviour
         closeGO.transform.SetParent(cardGO.transform, false);
         var closeRect = closeGO.GetComponent<RectTransform>();
         closeRect.anchorMin = new Vector2(0.5f, 0f);
-        closeRect.anchorMax = new Vector2(0.5f, 0f);
+        closeRect.anchorMax = new Vector2(0.5f, 0.5f);
         closeRect.pivot     = new Vector2(0.5f, 0f);
-        closeRect.sizeDelta = new Vector2(140f, 36f);
-        closeRect.anchoredPosition = new Vector2(0f, 12f);
+        closeRect.sizeDelta = new Vector2(220f, 54f);
+        closeRect.anchoredPosition = new Vector2(0f, 16f);
 
         closeGO.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.55f, 1f);
         closeGO.GetComponent<Button>().onClick.AddListener(CloseModelInspectionModal);
@@ -298,7 +304,8 @@ public class BestiaryManager : MonoBehaviour
         lblRect.anchorMin = Vector2.zero;
         lblRect.anchorMax = Vector2.one;
         var lblTmp = lblGO.AddComponent<TextMeshProUGUI>();
-        lblTmp.fontSize = 14;
+        if (font != null) lblTmp.font = font;
+        lblTmp.fontSize = 36;
         lblTmp.fontStyle = FontStyles.Bold;
         lblTmp.alignment = TextAlignmentOptions.Center;
         lblTmp.color = Color.white;

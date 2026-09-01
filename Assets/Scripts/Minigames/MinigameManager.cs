@@ -46,6 +46,7 @@ public class MinigameManager : MonoBehaviour
     private CaptureAndFocusMinigame      _mg1;
     private ReconstructionScanMinigame   _mg2;
     private EnvironmentalCleanupMinigame _mg3;
+    private HazardDodgeMinigame          _mg4;
 
     // Components to disable during minigame
     private PlayerMovement  _playerMovement;
@@ -76,6 +77,7 @@ public class MinigameManager : MonoBehaviour
         if (_mg1 == null) _mg1 = GetComponent<CaptureAndFocusMinigame>() ?? gameObject.AddComponent<CaptureAndFocusMinigame>();
         if (_mg2 == null) _mg2 = GetComponent<ReconstructionScanMinigame>() ?? gameObject.AddComponent<ReconstructionScanMinigame>();
         if (_mg3 == null) _mg3 = GetComponent<EnvironmentalCleanupMinigame>() ?? gameObject.AddComponent<EnvironmentalCleanupMinigame>();
+        if (_mg4 == null) _mg4 = GetComponent<HazardDodgeMinigame>() ?? gameObject.AddComponent<HazardDodgeMinigame>();
     }
 
     // -----------------------------------------------------------------------
@@ -155,6 +157,44 @@ public class MinigameManager : MonoBehaviour
         int zone = ZoneManager.CurrentZoneIndex;
         _mg3.Initialize(cluster, zone, wrappedSuccess, wrappedFail);
         _mg3.Show();
+    }
+
+    // -----------------------------------------------------------------------
+    // Public API - Hazard Dodge Minigame (MG4)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Launch Mini-game 4 (Hazard Dodge 2.5D Top-Perspective 3-Lane Emergency Runner).
+    /// </summary>
+    public void TriggerHazardDodgeMinigame(int zoneIndex, Action<int> onSuccess = null, Action onFail = null)
+    {
+        if (_minigameActive)
+        {
+            Debug.LogWarning("[MinigameManager] Minigame already active - ignoring hazard request.");
+            return;
+        }
+
+        EnsureMinigameComponents();
+
+        _minigameActive = true;
+        DisableControls();
+
+        Action<int> wrappedSuccess = (reward) =>
+        {
+            _minigameActive = false;
+            EnableControls();
+            onSuccess?.Invoke(reward);
+        };
+
+        Action wrappedFail = () =>
+        {
+            _minigameActive = false;
+            EnableControls();
+            onFail?.Invoke();
+        };
+
+        _mg4.Initialize(zoneIndex, wrappedSuccess, wrappedFail);
+        _mg4.Show();
     }
 
     /// <summary>

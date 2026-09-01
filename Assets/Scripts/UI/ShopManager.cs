@@ -438,30 +438,37 @@ public class ShopManager : MonoBehaviour
         bImg.color = new Color(0.12f, 0.65f, 0.75f, 0.35f);
         bImg.raycastTarget = false;
 
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         // Title Header
         var titleGO = new GameObject("TitleText", typeof(RectTransform));
         titleGO.transform.SetParent(winRect, false);
         var tr = titleGO.GetComponent<RectTransform>();
-        tr.anchorMin = new Vector2(0.04f, 0.88f); tr.anchorMax = new Vector2(0.60f, 0.98f); tr.sizeDelta = Vector2.zero;
+        tr.anchorMin = new Vector2(0.04f, 0.86f); tr.anchorMax = new Vector2(0.55f, 0.98f); tr.sizeDelta = Vector2.zero;
         var tt = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) tt.font = font;
         tt.text = "<b>SUBMARINE UPGRADE BAY</b>";
-        tt.fontSize = 24; tt.color = new Color(0.20f, 0.92f, 0.82f, 1f);
+        tt.fontSize = 36; tt.color = new Color(0.20f, 0.92f, 0.82f, 1f);
         tt.alignment = TextAlignmentOptions.Left;
 
         // RDP Display Text
         var rdpGO = new GameObject("RdpText", typeof(RectTransform));
         rdpGO.transform.SetParent(winRect, false);
         var rr = rdpGO.GetComponent<RectTransform>();
-        rr.anchorMin = new Vector2(0.40f, 0.88f); rr.anchorMax = new Vector2(0.85f, 0.98f); rr.sizeDelta = Vector2.zero;
+        rr.anchorMin = new Vector2(0.55f, 0.86f); rr.anchorMax = new Vector2(0.88f, 0.98f); rr.sizeDelta = Vector2.zero;
         currentRdpText = rdpGO.AddComponent<TextMeshProUGUI>();
-        currentRdpText.fontSize = 18; currentRdpText.color = Color.white;
+        if (font != null) currentRdpText.font = font;
+        currentRdpText.fontSize = 36; currentRdpText.color = Color.white;
+        currentRdpText.fontStyle = FontStyles.Bold;
         currentRdpText.alignment = TextAlignmentOptions.Right;
 
         // Close Button [X]
         var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         closeGO.transform.SetParent(winRect, false);
         var cr = closeGO.GetComponent<RectTransform>();
-        cr.anchorMin = new Vector2(0.92f, 0.90f); cr.anchorMax = new Vector2(0.98f, 0.97f); cr.sizeDelta = Vector2.zero;
+        cr.anchorMin = new Vector2(0.91f, 0.88f); cr.anchorMax = new Vector2(0.98f, 0.97f); cr.sizeDelta = Vector2.zero;
         closeGO.GetComponent<Image>().color = new Color(0.85f, 0.20f, 0.20f, 0.85f);
         closeButton = closeGO.GetComponent<Button>();
         closeButton.onClick.AddListener(HideShop);
@@ -471,7 +478,8 @@ public class ShopManager : MonoBehaviour
         var ctr = closeTxtGO.GetComponent<RectTransform>();
         ctr.anchorMin = Vector2.zero; ctr.anchorMax = Vector2.one; ctr.sizeDelta = Vector2.zero;
         var ctxt = closeTxtGO.AddComponent<TextMeshProUGUI>();
-        ctxt.text = "✕"; ctxt.fontSize = 18; ctxt.alignment = TextAlignmentOptions.Center; ctxt.color = Color.white;
+        if (font != null) ctxt.font = font;
+        ctxt.text = "✕"; ctxt.fontSize = 36; ctxt.alignment = TextAlignmentOptions.Center; ctxt.color = Color.white;
 
         // Scroll Area for Upgrade Rows
         var scrollGO = new GameObject("ShopScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image), typeof(Mask));

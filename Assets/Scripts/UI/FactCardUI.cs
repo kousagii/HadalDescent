@@ -45,8 +45,8 @@ public class FactCardUI : MonoBehaviour
     public bool IsOpen => _isOpen || (customCardPanel != null && customCardPanel.activeSelf);
     private Canvas _canvas;
 
-    private const float PanelWidth  = 380f;
-    private const float PanelHeight = 540f;
+    private const float PanelWidth  = 560f;
+    private const float PanelHeight = 840f;
     private const float SlideSpeed  = 12f;
 
     private void Awake()
@@ -144,6 +144,10 @@ public class FactCardUI : MonoBehaviour
     {
         if (_panel != null || _canvas == null) return;
 
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         var go = new GameObject("FactCard", typeof(RectTransform), typeof(Image));
         go.transform.SetParent(_canvas.transform, false);
         _panel = go.GetComponent<RectTransform>();
@@ -161,7 +165,7 @@ public class FactCardUI : MonoBehaviour
         photoGO.transform.SetParent(go.transform, false);
         var pr = photoGO.GetComponent<RectTransform>();
         pr.anchorMin = new Vector2(0.5f, 1f); pr.anchorMax = new Vector2(0.5f, 1f);
-        pr.sizeDelta = new Vector2(340f, 150f); pr.anchoredPosition = new Vector2(0f, -90f);
+        pr.sizeDelta = new Vector2(480f, 200f); pr.anchoredPosition = new Vector2(0f, -120f);
         _photo = photoGO.GetComponent<Image>();
 
         // Common Name
@@ -169,9 +173,10 @@ public class FactCardUI : MonoBehaviour
         nameGO.transform.SetParent(go.transform, false);
         var nr = nameGO.GetComponent<RectTransform>();
         nr.anchorMin = new Vector2(0f, 1f); nr.anchorMax = new Vector2(1f, 1f);
-        nr.sizeDelta = new Vector2(-40f, 26f); nr.anchoredPosition = new Vector2(0f, -176f);
+        nr.sizeDelta = new Vector2(-40f, 48f); nr.anchoredPosition = new Vector2(0f, -245f);
         _commonNameText = nameGO.AddComponent<TextMeshProUGUI>();
-        _commonNameText.fontSize = 20; _commonNameText.fontStyle = FontStyles.Bold;
+        if (font != null) _commonNameText.font = font;
+        _commonNameText.fontSize = 36; _commonNameText.fontStyle = FontStyles.Bold;
         _commonNameText.alignment = TextAlignmentOptions.Center; _commonNameText.color = Color.white;
 
         // Scientific Name & Class
@@ -179,9 +184,10 @@ public class FactCardUI : MonoBehaviour
         sciGO.transform.SetParent(go.transform, false);
         var sr = sciGO.GetComponent<RectTransform>();
         sr.anchorMin = new Vector2(0f, 1f); sr.anchorMax = new Vector2(1f, 1f);
-        sr.sizeDelta = new Vector2(-40f, 20f); sr.anchoredPosition = new Vector2(0f, -202f);
+        sr.sizeDelta = new Vector2(-40f, 36f); sr.anchoredPosition = new Vector2(0f, -295f);
         _sciNameText = sciGO.AddComponent<TextMeshProUGUI>();
-        _sciNameText.fontSize = 12; _sciNameText.alignment = TextAlignmentOptions.Center;
+        if (font != null) _sciNameText.font = font;
+        _sciNameText.fontSize = 24; _sciNameText.alignment = TextAlignmentOptions.Center;
         _sciNameText.color = new Color(0.6f, 0.8f, 1f, 1f);
 
         // Body Text (Habitat, Characteristics, Ecological Role, Fact)
@@ -189,9 +195,10 @@ public class FactCardUI : MonoBehaviour
         bodyGO.transform.SetParent(go.transform, false);
         var br = bodyGO.GetComponent<RectTransform>();
         br.anchorMin = new Vector2(0f, 0f); br.anchorMax = new Vector2(1f, 1f);
-        br.offsetMin = new Vector2(20f, 66f); br.offsetMax = new Vector2(-20f, -228f);
+        br.offsetMin = new Vector2(28f, 110f); br.offsetMax = new Vector2(-28f, -340f);
         _bodyText = bodyGO.AddComponent<TextMeshProUGUI>();
-        _bodyText.fontSize = 12; _bodyText.color = Color.white;
+        if (font != null) _bodyText.font = font;
+        _bodyText.fontSize = 22; _bodyText.color = Color.white;
         _bodyText.enableWordWrapping = true;
 
         // Reward Text
@@ -199,9 +206,10 @@ public class FactCardUI : MonoBehaviour
         rdpGO.transform.SetParent(go.transform, false);
         var rr = rdpGO.GetComponent<RectTransform>();
         rr.anchorMin = new Vector2(0f, 0f); rr.anchorMax = new Vector2(1f, 0f);
-        rr.sizeDelta = new Vector2(0f, 22f); rr.anchoredPosition = new Vector2(0f, 44f);
+        rr.sizeDelta = new Vector2(0f, 44f); rr.anchoredPosition = new Vector2(0f, 72f);
         _rewardText = rdpGO.AddComponent<TextMeshProUGUI>();
-        _rewardText.fontSize = 12; _rewardText.fontStyle = FontStyles.Bold;
+        if (font != null) _rewardText.font = font;
+        _rewardText.fontSize = 36; _rewardText.fontStyle = FontStyles.Bold;
         _rewardText.alignment = TextAlignmentOptions.Center;
 
         // Close button
@@ -209,7 +217,7 @@ public class FactCardUI : MonoBehaviour
         closeGO.transform.SetParent(go.transform, false);
         var cr = closeGO.GetComponent<RectTransform>();
         cr.anchorMin = new Vector2(0.5f, 0f); cr.anchorMax = new Vector2(0.5f, 0f);
-        cr.sizeDelta = new Vector2(140f, 32f); cr.anchoredPosition = new Vector2(0f, 18f);
+        cr.sizeDelta = new Vector2(220f, 54f); cr.anchoredPosition = new Vector2(0f, 16f);
         closeGO.GetComponent<Image>().color = new Color(0.15f, 0.45f, 0.65f, 1f);
         _closeButton = closeGO.GetComponent<Button>();
         _closeButton.onClick.AddListener(Hide);
@@ -219,7 +227,9 @@ public class FactCardUI : MonoBehaviour
         var lr = lblGO.GetComponent<RectTransform>();
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
         var lbl = lblGO.AddComponent<TextMeshProUGUI>();
-        lbl.fontSize = 13; lbl.alignment = TextAlignmentOptions.Center;
+        if (font != null) lbl.font = font;
+        lbl.fontSize = 36; lbl.alignment = TextAlignmentOptions.Center;
+        lbl.fontStyle = FontStyles.Bold;
         lbl.text = "CLOSE"; lbl.color = Color.white;
     }
 }

@@ -1266,15 +1266,20 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static TMP_Text CreateUIText(Transform parent, string name, string text, float fontSize, Vector2 anchorPos, TextAlignmentOptions align, Color col)
     {
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
         go.transform.SetParent(parent, false);
         var r = go.GetComponent<RectTransform>();
         r.anchorMin = r.anchorMax = anchorPos;
         r.anchoredPosition = Vector2.zero;
-        r.sizeDelta = new Vector2(650f, 150f);
+        r.sizeDelta = new Vector2(720f, 150f);
         var tmp = go.GetComponent<TextMeshProUGUI>();
+        if (font != null) tmp.font = font;
         tmp.text = text;
-        tmp.fontSize = fontSize;
+        tmp.fontSize = fontSize > 0 ? fontSize : 36f;
         tmp.alignment = align;
         tmp.color = col;
         return tmp;
@@ -1282,6 +1287,10 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static Button CreateUIButton(Transform parent, string name, string label, Vector2 anchorPos, Vector2 size, Action onClick, Color? btnColor = null)
     {
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         var r = go.GetComponent<RectTransform>();
@@ -1302,8 +1311,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         tr.anchorMax = Vector2.one;
         tr.sizeDelta = Vector2.zero;
         var tmp = textGO.GetComponent<TextMeshProUGUI>();
+        if (font != null) tmp.font = font;
         tmp.text = label;
-        tmp.fontSize = 20;
+        tmp.fontSize = 36;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;

@@ -79,7 +79,11 @@ public class ScanReticleUI : MonoBehaviour
 
     private void Update()
     {
-        bool hideReticle = (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen);
+        bool hideReticle = (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen)
+                        || (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+                        || (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+                        || (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen);
+
         if (hideReticle)
         {
             if (_rootRect != null && _rootRect.gameObject.activeSelf)
@@ -211,11 +215,10 @@ public class ScanReticleUI : MonoBehaviour
 
         _statusLabel = statusGO.AddComponent<TextMeshProUGUI>();
         if (reticleFont != null) _statusLabel.font = reticleFont;
-        _statusLabel.fontSize = 36f;
+        _statusLabel.fontSize = 50f;
         _statusLabel.fontStyle = FontStyles.Bold;
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.color = TooFarColor;
-        _statusLabel.outlineWidth = 0.22f;
         _statusLabel.outlineColor = new Color32(0, 0, 0, 230);
         _statusLabel.text = "";
         _statusLabel.raycastTarget = false;

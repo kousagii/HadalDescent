@@ -267,14 +267,19 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _rootPanel.sizeDelta = Vector2.zero;
         rootGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.70f);
 
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         // Title
         var titleGO = new GameObject("Title", typeof(RectTransform));
         titleGO.transform.SetParent(_rootPanel, false);
         var titleRect = titleGO.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0.0f, 0.88f);
-        titleRect.anchorMax = new Vector2(1.0f, 0.97f);
+        titleRect.anchorMax = new Vector2(1.0f, 0.98f);
         titleRect.sizeDelta = Vector2.zero;
         var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) titleTmp.font = font;
         titleTmp.text = "RECONSTRUCTION SCAN - Arrange the tiles";
         titleTmp.fontSize = 36; titleTmp.fontStyle = FontStyles.Bold;
         titleTmp.color = new Color(0.8f, 0.95f, 1f); titleTmp.alignment = TextAlignmentOptions.Center;
@@ -285,7 +290,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         var timerBG = new GameObject("TimerBG", typeof(RectTransform), typeof(Image));
         timerBG.transform.SetParent(_rootPanel, false);
         var tbrect = timerBG.GetComponent<RectTransform>();
-        tbrect.anchorMin = new Vector2(0.1f, 0.83f); tbrect.anchorMax = new Vector2(0.9f, 0.88f); tbrect.sizeDelta = Vector2.zero;
+        tbrect.anchorMin = new Vector2(0.1f, 0.81f); tbrect.anchorMax = new Vector2(0.9f, 0.87f); tbrect.sizeDelta = Vector2.zero;
         timerBG.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.12f, 0.95f);
 
         var timerFillGO = new GameObject("Fill", typeof(RectTransform), typeof(Image));
@@ -301,7 +306,8 @@ public class ReconstructionScanMinigame : MonoBehaviour
         var tlrect = timerLblGO.GetComponent<RectTransform>();
         tlrect.anchorMin = Vector2.zero; tlrect.anchorMax = Vector2.one; tlrect.sizeDelta = Vector2.zero;
         _timerText = timerLblGO.AddComponent<TextMeshProUGUI>();
-        _timerText.text = _totalTime.ToString("0"); _timerText.fontSize = 13;
+        if (font != null) _timerText.font = font;
+        _timerText.text = _totalTime.ToString("0"); _timerText.fontSize = 24;
         _timerText.color = Color.white; _timerText.alignment = TextAlignmentOptions.Center;
         _timerText.fontStyle = FontStyles.Bold;
 
@@ -349,6 +355,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
             var nr = numGO.GetComponent<RectTransform>();
             nr.anchorMin = Vector2.zero; nr.anchorMax = Vector2.one; nr.sizeDelta = Vector2.zero;
             _tileTMP[i]           = numGO.AddComponent<TextMeshProUGUI>();
+            if (font != null) _tileTMP[i].font = font;
             _tileTMP[i].fontSize  = sz * 0.38f;
             _tileTMP[i].fontStyle = FontStyles.Bold;
             _tileTMP[i].color     = new Color(0.80f, 0.92f, 1f);
@@ -369,7 +376,8 @@ public class ReconstructionScanMinigame : MonoBehaviour
         hintTmp.transform.SetParent(hintGO.transform, false);
         ((RectTransform)hintTmp.transform).anchorMin = Vector2.zero;
         ((RectTransform)hintTmp.transform).anchorMax = Vector2.one;
-        hintTmp.text = "HINT"; hintTmp.fontSize = 26; hintTmp.fontStyle = FontStyles.Bold;
+        if (font != null) hintTmp.font = font;
+        hintTmp.text = "HINT"; hintTmp.fontSize = 36; hintTmp.fontStyle = FontStyles.Bold;
         hintTmp.color = new Color(1f, 0.88f, 0.30f); hintTmp.alignment = TextAlignmentOptions.Center;
         _hintOverlay = hintGO;
         hintGO.SetActive(false);
@@ -380,7 +388,9 @@ public class ReconstructionScanMinigame : MonoBehaviour
         var rr = resultGO.GetComponent<RectTransform>();
         rr.anchorMin = new Vector2(0.1f, 0.45f); rr.anchorMax = new Vector2(0.9f, 0.58f); rr.sizeDelta = Vector2.zero;
         _resultText = resultGO.AddComponent<TextMeshProUGUI>();
-        _resultText.fontSize = 22; _resultText.alignment = TextAlignmentOptions.Center;
+        if (font != null) _resultText.font = font;
+        _resultText.fontSize = 36; _resultText.fontStyle = FontStyles.Bold;
+        _resultText.alignment = TextAlignmentOptions.Center;
         _resultText.gameObject.SetActive(false);
 
         _rootPanel.gameObject.SetActive(false);

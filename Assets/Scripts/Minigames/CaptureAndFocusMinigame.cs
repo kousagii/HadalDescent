@@ -501,12 +501,17 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         sheenImg.color = new Color(1f, 1f, 1f, 0.10f);
         sheenImg.raycastTarget = false;
 
+        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
+                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
+                ?? TMP_Settings.defaultFontAsset;
+
         // Instruction label
         var instrGO = new GameObject("Instr", typeof(RectTransform));
         instrGO.transform.SetParent(_rootPanel, false);
         var ir = instrGO.GetComponent<RectTransform>();
-        ir.anchorMin = new Vector2(0f, 0.04f); ir.anchorMax = new Vector2(1.0f, 0.12f); ir.sizeDelta = Vector2.zero;
+        ir.anchorMin = new Vector2(0f, 0.03f); ir.anchorMax = new Vector2(1.0f, 0.13f); ir.sizeDelta = Vector2.zero;
         var it = instrGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) it.font = font;
         it.text = "<b>HOLD SCREEN</b> to raise focus bar  •  Keep creature in the green";
         it.fontSize = 36; it.color = new Color(0.85f, 0.95f, 0.85f, 0.90f);
         it.alignment = TextAlignmentOptions.Center; it.raycastTarget = false;
@@ -517,9 +522,11 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         var resultGO = new GameObject("Result", typeof(RectTransform));
         resultGO.transform.SetParent(_rootPanel, false);
         var rr = resultGO.GetComponent<RectTransform>();
-        rr.anchorMin = new Vector2(0.1f, 0.44f); rr.anchorMax = new Vector2(0.80f, 0.58f); rr.sizeDelta = Vector2.zero;
+        rr.anchorMin = new Vector2(0.1f, 0.44f); rr.anchorMax = new Vector2(0.90f, 0.60f); rr.sizeDelta = Vector2.zero;
         _resultText = resultGO.AddComponent<TextMeshProUGUI>();
-        _resultText.fontSize = 24; _resultText.alignment = TextAlignmentOptions.Center;
+        if (font != null) _resultText.font = font;
+        _resultText.fontSize = 36; _resultText.fontStyle = FontStyles.Bold;
+        _resultText.alignment = TextAlignmentOptions.Center;
         _resultText.raycastTarget = false;
         _resultText.gameObject.SetActive(false);
 

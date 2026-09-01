@@ -95,6 +95,17 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Deducts RDP with strict non-negative clamping (cannot drop below 0).
+    /// Used for hazard minigame penalties.
+    /// </summary>
+    public void DeductRDP(int amount)
+    {
+        RDP = Mathf.Max(0, RDP - amount);
+        UIManager.Instance?.RefreshHUD();
+        Debug.Log($"[GameManager] -{amount} RDP (total: {RDP})");
+    }
+
     // -----------------------------------------------------------------------
     // Species discovery
     // -----------------------------------------------------------------------
