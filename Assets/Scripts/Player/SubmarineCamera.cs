@@ -29,6 +29,10 @@ public class SubmarineCamera : MonoBehaviour
     [Header("References")]
     [SerializeField] private TouchDragZone dragZone;
 
+    // Global Settings
+    public static float LookSensitivityMultiplier = 1.0f;
+    public static bool  InvertPitch               = false;
+
     // Accumulated angles (world-space yaw, local-space pitch)
     private float _yaw;
     private float _pitch;
@@ -45,6 +49,9 @@ public class SubmarineCamera : MonoBehaviour
 
     private void Awake()
     {
+        LookSensitivityMultiplier = PlayerPrefs.GetFloat("Settings_LookSensitivity", 1.0f);
+        InvertPitch = PlayerPrefs.GetInt("Settings_InvertPitch", 0) == 1;
+
         // Initialise from the body's current world rotation so there is no snap on start.
         Vector3 euler = transform.parent != null
             ? transform.parent.eulerAngles
@@ -67,9 +74,12 @@ public class SubmarineCamera : MonoBehaviour
         // --- 1. Read drag delta from the UI touch zone ---
         Vector2 drag = dragZone != null ? dragZone.TouchDelta : Vector2.zero;
 
-        // Accumulate angles
-        _yaw   += drag.x * yawSensitivity;
-        _pitch -= drag.y * pitchSensitivity;           // negative: drag down -> look up
+        // Apply sensitivity and pitch direction settings
+        float sens = LookSensitivityMultiplier;
+        float pitchSign = InvertPitch ? 1f : -1f; // Invert: drag up -> look up / drag down -> look down
+
+        _yaw   += drag.x * yawSensitivity * sens;
+        _pitch += drag.y * pitchSensitivity * sens * pitchSign;
         _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
 
         // --- 2. Smooth towards target ---
@@ -94,5 +104,12 @@ public class SubmarineCamera : MonoBehaviour
             _yaw = transform.eulerAngles.y;
 
         _smoothYaw = _yaw;
+    }
+
+    /// <summary>Explicitly set the camera yaw angle.</summary>
+    public void SetYaw(float yaw)
+    {
+        _yaw = yaw;
+        _smoothYaw = yaw;
     }
 }

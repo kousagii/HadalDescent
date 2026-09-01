@@ -111,6 +111,7 @@ public class ZoneManager : MonoBehaviour
 
         CurrentZoneIndex  = targetZoneIndex;
         EnteredFromAbove  = enteredFromAbove;
+        PlayerPrefs.SetInt("Save_HasPosition", 0);
 
         string sceneName = ZoneConfig.Zones[targetZoneIndex].sceneName;
         SceneManager.LoadScene(sceneName);
@@ -151,26 +152,54 @@ public class ZoneManager : MonoBehaviour
             depthTracker.ZoneBottomY = _bottomSpawn != null ? _bottomSpawn.position.y : -zone.playableDepth;
         }
 
-        // 4. Move submarine to correct spawn position
-        GameObject sub = GameObject.FindGameObjectWithTag("Player");
+        // 4. Move submarine to correct spawn position (or restore saved position on Continue)
+        GameObject sub = GameObject.FindGameObjectWithTag("Player") ?? FindFirstObjectByType<PlayerMovement>()?.gameObject;
         if (sub != null)
         {
-            Transform spawnPoint = EnteredFromAbove ? _topSpawn : _bottomSpawn;
-            if (spawnPoint != null)
+            if (PlayerPrefs.GetInt("Save_HasPosition", 0) == 1)
             {
-                sub.transform.position = spawnPoint.position;
-                sub.transform.rotation = spawnPoint.rotation;
+                float x = PlayerPrefs.GetFloat("Save_PosX", 0f);
+                float y = PlayerPrefs.GetFloat("Save_PosY", 0f);
+                float z = PlayerPrefs.GetFloat("Save_PosZ", 0f);
+                float rotY = PlayerPrefs.GetFloat("Save_RotY", 0f);
+
+                sub.transform.position = new Vector3(x, y, z);
+                sub.transform.rotation = Quaternion.Euler(0f, rotY, 0f);
+
+                var rb = sub.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.position = new Vector3(x, y, z);
+                    rb.linearVelocity = Vector3.zero;
+                }
+
+                var camCtrl = sub.GetComponentInChildren<SubmarineCamera>();
+                if (camCtrl != null)
+                {
+                    camCtrl.SnapYawToBody();
+                }
+
+                Debug.Log($"[ZoneManager] Restored saved player position: ({x:F1}, {y:F1}, {z:F1})");
             }
             else
             {
-                // Fallback: top-centre or bottom-centre of zone
-                float spawnY = EnteredFromAbove ? 0f : -zone.playableDepth + 10f;
-                sub.transform.position = new Vector3(0f, spawnY, 0f);
-            }
+                Transform spawnPoint = EnteredFromAbove ? _topSpawn : _bottomSpawn;
+                if (spawnPoint != null)
+                {
+                    sub.transform.position = spawnPoint.position;
+                    sub.transform.rotation = spawnPoint.rotation;
+                }
+                else
+                {
+                    // Fallback: top-centre or bottom-centre of zone
+                    float spawnY = EnteredFromAbove ? 0f : -zone.playableDepth + 10f;
+                    sub.transform.position = new Vector3(0f, spawnY, 0f);
+                }
 
-            // Snap camera yaw so there's no jarring snap
-            var camCtrl = sub.GetComponentInChildren<SubmarineCamera>();
-            camCtrl?.SnapYawToBody();
+                // Snap camera yaw so there's no jarring snap
+                var camCtrl = sub.GetComponentInChildren<SubmarineCamera>();
+                camCtrl?.SnapYawToBody();
+            }
         }
 
         Debug.Log($"[ZoneManager] Loaded '{zone.zoneName}' | " +

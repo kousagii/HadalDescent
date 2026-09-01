@@ -177,4 +177,147 @@ public class GameManager : MonoBehaviour
     }
 
     public int GetOrCreateZoneSeed(int zoneIndex) => GetOrCreatePcgSeed(zoneIndex);
+
+    // -----------------------------------------------------------------------
+    // Save & Load System
+    // -----------------------------------------------------------------------
+
+    public void SaveGame()
+    {
+        PlayerPrefs.SetInt("Save_RDP", RDP);
+        PlayerPrefs.SetInt("Save_HullTier", HullTier);
+        PlayerPrefs.SetInt("Save_EngineTier", EngineTier);
+        PlayerPrefs.SetInt("Save_SonarTier", SonarTier);
+        PlayerPrefs.SetInt("Save_ScannerTier", ScannerTier);
+        PlayerPrefs.SetInt("Save_LightTier", LightTier);
+        PlayerPrefs.SetInt("Save_UtilitiesTier", UtilitiesTier);
+        PlayerPrefs.SetInt("Save_ClamShells", ClamShells);
+        PlayerPrefs.SetInt("Save_CurrentZone", ZoneManager.CurrentZoneIndex);
+
+        // Save Discovered Species
+        string speciesData = string.Join(";", _allDiscoveredSpecies);
+        PlayerPrefs.SetString("Save_DiscoveredSpecies", speciesData);
+
+        // Save Player Position & Rotation
+        var player = FindFirstObjectByType<PlayerMovement>();
+        GameObject playerGO = player != null ? player.gameObject : GameObject.FindGameObjectWithTag("Player");
+
+        if (playerGO != null)
+        {
+            Vector3 pos = playerGO.transform.position;
+            float rotY = playerGO.transform.eulerAngles.y;
+            PlayerPrefs.SetFloat("Save_PosX", pos.x);
+            PlayerPrefs.SetFloat("Save_PosY", pos.y);
+            PlayerPrefs.SetFloat("Save_PosZ", pos.z);
+            PlayerPrefs.SetFloat("Save_RotY", rotY);
+            PlayerPrefs.SetInt("Save_HasPosition", 1);
+            Debug.Log($"[GameManager] Saved player position: ({pos.x:F1}, {pos.y:F1}, {pos.z:F1}), rotY: {rotY:F1}");
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] Could not find player GameObject or PlayerMovement to save position!");
+        }
+
+        PlayerPrefs.Save();
+        Debug.Log("[GameManager] Game Saved Successfully!");
+    }
+
+    public bool LoadGame()
+    {
+        if (!HasSaveData()) return false;
+
+        RDP           = PlayerPrefs.GetInt("Save_RDP", 0);
+        HullTier      = PlayerPrefs.GetInt("Save_HullTier", 1);
+        EngineTier    = PlayerPrefs.GetInt("Save_EngineTier", 1);
+        SonarTier     = PlayerPrefs.GetInt("Save_SonarTier", 1);
+        ScannerTier   = PlayerPrefs.GetInt("Save_ScannerTier", 1);
+        LightTier     = PlayerPrefs.GetInt("Save_LightTier", 1);
+        UtilitiesTier = PlayerPrefs.GetInt("Save_UtilitiesTier", 1);
+        ClamShells    = PlayerPrefs.GetInt("Save_ClamShells", 0);
+
+        string speciesData = PlayerPrefs.GetString("Save_DiscoveredSpecies", "");
+        _allDiscoveredSpecies.Clear();
+        _discoveredByZone.Clear();
+
+        if (!string.IsNullOrEmpty(speciesData))
+        {
+            string[] ids = speciesData.Split(';');
+            foreach (string id in ids)
+            {
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    _allDiscoveredSpecies.Add(id);
+                }
+            }
+        }
+
+        UIManager.Instance?.RefreshHUD();
+        Debug.Log("[GameManager] Game Loaded Successfully!");
+        return true;
+    }
+
+    /// <summary>
+    /// Call after the zone scene has loaded to teleport the player to the saved position.
+    /// </summary>
+    public void ApplySavedPosition()
+    {
+        if (PlayerPrefs.GetInt("Save_HasPosition", 0) != 1) return;
+
+        var player = FindFirstObjectByType<PlayerMovement>();
+        if (player == null)
+        {
+            Debug.LogWarning("[GameManager] ApplySavedPosition: PlayerMovement not found.");
+            return;
+        }
+
+        float x = PlayerPrefs.GetFloat("Save_PosX", 0f);
+        float y = PlayerPrefs.GetFloat("Save_PosY", 0f);
+        float z = PlayerPrefs.GetFloat("Save_PosZ", 0f);
+        float rotY = PlayerPrefs.GetFloat("Save_RotY", 0f);
+
+        player.transform.position = new Vector3(x, y, z);
+        player.transform.rotation = Quaternion.Euler(0f, rotY, 0f);
+        Debug.Log($"[GameManager] Restored position: ({x}, {y}, {z}), rotY: {rotY}");
+    }
+
+    public static bool HasSaveData()
+    {
+        return PlayerPrefs.HasKey("Save_RDP");
+    }
+
+    public static void DeleteSaveData()
+    {
+        PlayerPrefs.DeleteKey("Save_RDP");
+        PlayerPrefs.DeleteKey("Save_HullTier");
+        PlayerPrefs.DeleteKey("Save_EngineTier");
+        PlayerPrefs.DeleteKey("Save_SonarTier");
+        PlayerPrefs.DeleteKey("Save_ScannerTier");
+        PlayerPrefs.DeleteKey("Save_LightTier");
+        PlayerPrefs.DeleteKey("Save_UtilitiesTier");
+        PlayerPrefs.DeleteKey("Save_ClamShells");
+        PlayerPrefs.DeleteKey("Save_CurrentZone");
+        PlayerPrefs.DeleteKey("Save_DiscoveredSpecies");
+        PlayerPrefs.DeleteKey("Save_PosX");
+        PlayerPrefs.DeleteKey("Save_PosY");
+        PlayerPrefs.DeleteKey("Save_PosZ");
+        PlayerPrefs.DeleteKey("Save_RotY");
+        PlayerPrefs.DeleteKey("Save_HasPosition");
+        PlayerPrefs.Save();
+        Debug.Log("[GameManager] Saved game deleted.");
+    }
+
+    public void ResetState()
+    {
+        RDP           = 0;
+        HullTier      = 1;
+        EngineTier    = 1;
+        SonarTier     = 1;
+        ScannerTier   = 1;
+        LightTier     = 1;
+        UtilitiesTier = 1;
+        ClamShells    = 0;
+        _allDiscoveredSpecies.Clear();
+        _discoveredByZone.Clear();
+        UIManager.Instance?.RefreshHUD();
+    }
 }

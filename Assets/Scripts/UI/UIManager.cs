@@ -196,8 +196,17 @@ public class UIManager : MonoBehaviour
 
     public void OnPauseButtonPressed()
     {
-        Debug.Log("[UIManager] Paused.");
-        Time.timeScale = Time.timeScale == 0f ? 1f : 0f;
+        Debug.Log("[UIManager] Pause button clicked.");
+        if (PauseMenuUI.Instance != null)
+        {
+            PauseMenuUI.Instance.TogglePause();
+        }
+        else
+        {
+            var pauseGO = new GameObject("PauseMenuUI");
+            var pm = pauseGO.AddComponent<PauseMenuUI>();
+            pm.TogglePause();
+        }
     }
 
     public void OnInteractButtonPressed()

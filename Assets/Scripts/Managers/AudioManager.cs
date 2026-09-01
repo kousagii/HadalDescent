@@ -73,6 +73,7 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
+        LoadAudioPreferences();
 
         // Auto-play music for currently active scene if not already playing
         if (bgmSource != null && !bgmSource.isPlaying)
@@ -139,9 +140,59 @@ public class AudioManager : MonoBehaviour
     }
 
     // ── Volume Control (Slider-ready: 0.0001 - 1.0) ───────────────
-    public void SetMasterVolume(float value) => SetMixerVolume(MasterVolumeParam, value);
-    public void SetBGMVolume(float value) => SetMixerVolume(BGMVolumeParam, value);
-    public void SetSFXVolume(float value) => SetMixerVolume(SFXVolumeParam, value);
+    public bool  IsMuted      { get; private set; }
+    public float MasterVolume { get; private set; } = 1.0f;
+    public float BGMVolume    { get; private set; } = 1.0f;
+    public float SFXVolume    { get; private set; } = 1.0f;
+
+    public void LoadAudioPreferences()
+    {
+        MasterVolume = PlayerPrefs.GetFloat("Settings_MasterVol", 1.0f);
+        BGMVolume    = PlayerPrefs.GetFloat("Settings_MusicVol", 1.0f);
+        SFXVolume    = PlayerPrefs.GetFloat("Settings_SFXVol", 1.0f);
+        IsMuted      = PlayerPrefs.GetInt("Settings_Muted", 0) == 1;
+
+        SetMasterVolume(MasterVolume, false);
+        SetBGMVolume(BGMVolume, false);
+        SetSFXVolume(SFXVolume, false);
+        SetMute(IsMuted, false);
+    }
+
+    public void SetMasterVolume(float value) => SetMasterVolume(value, true);
+    public void SetMasterVolume(float value, bool save)
+    {
+        MasterVolume = Mathf.Clamp(value, 0.0001f, 1f);
+        SetMixerVolume(MasterVolumeParam, MasterVolume);
+        if (!IsMuted) AudioListener.volume = MasterVolume;
+        if (save) { PlayerPrefs.SetFloat("Settings_MasterVol", MasterVolume); PlayerPrefs.Save(); }
+    }
+
+    public void SetBGMVolume(float value) => SetBGMVolume(value, true);
+    public void SetBGMVolume(float value, bool save)
+    {
+        BGMVolume = Mathf.Clamp(value, 0.0001f, 1f);
+        SetMixerVolume(BGMVolumeParam, BGMVolume);
+        if (bgmSource != null && audioMixer == null) bgmSource.volume = BGMVolume;
+        if (save) { PlayerPrefs.SetFloat("Settings_MusicVol", BGMVolume); PlayerPrefs.Save(); }
+    }
+
+    public void SetSFXVolume(float value) => SetSFXVolume(value, true);
+    public void SetSFXVolume(float value, bool save)
+    {
+        SFXVolume = Mathf.Clamp(value, 0.0001f, 1f);
+        SetMixerVolume(SFXVolumeParam, SFXVolume);
+        if (sfxSource != null && audioMixer == null) sfxSource.volume = SFXVolume;
+        if (save) { PlayerPrefs.SetFloat("Settings_SFXVol", SFXVolume); PlayerPrefs.Save(); }
+    }
+
+    public void SetMute(bool mute) => SetMute(mute, true);
+    public void SetMute(bool mute, bool save)
+    {
+        IsMuted = mute;
+        AudioListener.volume = mute ? 0f : MasterVolume;
+        AudioListener.pause = mute;
+        if (save) { PlayerPrefs.SetInt("Settings_Muted", mute ? 1 : 0); PlayerPrefs.Save(); }
+    }
 
     private void SetMixerVolume(string paramName, float linearValue)
     {

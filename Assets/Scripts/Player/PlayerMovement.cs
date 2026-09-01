@@ -65,6 +65,37 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        if (submarineCamera == null)
+            submarineCamera = GetComponentInChildren<SubmarineCamera>();
+
+        if (PlayerPrefs.GetInt("Save_HasPosition", 0) == 1)
+        {
+            float x = PlayerPrefs.GetFloat("Save_PosX", 0f);
+            float y = PlayerPrefs.GetFloat("Save_PosY", 0f);
+            float z = PlayerPrefs.GetFloat("Save_PosZ", 0f);
+            float rotY = PlayerPrefs.GetFloat("Save_RotY", 0f);
+
+            transform.position = new Vector3(x, y, z);
+            transform.rotation = Quaternion.Euler(0f, rotY, 0f);
+
+            if (rb != null)
+            {
+                rb.position = new Vector3(x, y, z);
+                rb.linearVelocity = Vector3.zero;
+            }
+
+            if (submarineCamera != null)
+            {
+                submarineCamera.SetYaw(rotY);
+                submarineCamera.SnapYawToBody();
+            }
+
+            Debug.Log($"[PlayerMovement] Restored saved submarine position: ({x:F1}, {y:F1}, {z:F1}), rotY: {rotY:F1}");
+        }
+    }
+
     private void OnEnable()
     {
         if (inputActionsAsset != null)
