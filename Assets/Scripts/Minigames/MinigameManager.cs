@@ -43,10 +43,11 @@ public class MinigameManager : MonoBehaviour
 
     private bool _minigameActive = false;
 
-    private CaptureAndFocusMinigame      _mg1;
-    private ReconstructionScanMinigame   _mg2;
-    private EnvironmentalCleanupMinigame _mg3;
-    private HazardDodgeMinigame          _mg4;
+    [Header("Minigame Component References (Auto-found if unassigned)")]
+    [SerializeField] private CaptureAndFocusMinigame      _mg1;
+    [SerializeField] private ReconstructionScanMinigame   _mg2;
+    [SerializeField] private EnvironmentalCleanupMinigame _mg3;
+    [SerializeField] private HazardDodgeMinigame          _mg4;
 
     // Components to disable during minigame
     private PlayerMovement  _playerMovement;
@@ -74,10 +75,51 @@ public class MinigameManager : MonoBehaviour
 
     private void EnsureMinigameComponents()
     {
-        if (_mg1 == null) _mg1 = GetComponent<CaptureAndFocusMinigame>() ?? gameObject.AddComponent<CaptureAndFocusMinigame>();
-        if (_mg2 == null) _mg2 = GetComponent<ReconstructionScanMinigame>() ?? gameObject.AddComponent<ReconstructionScanMinigame>();
-        if (_mg3 == null) _mg3 = GetComponent<EnvironmentalCleanupMinigame>() ?? gameObject.AddComponent<EnvironmentalCleanupMinigame>();
-        if (_mg4 == null) _mg4 = GetComponent<HazardDodgeMinigame>() ?? gameObject.AddComponent<HazardDodgeMinigame>();
+        if (_mg1 == null)
+        {
+            _mg1 = GetComponent<CaptureAndFocusMinigame>()
+                ?? FindFirstObjectByType<CaptureAndFocusMinigame>(FindObjectsInactive.Include)
+                ?? gameObject.AddComponent<CaptureAndFocusMinigame>();
+        }
+
+        if (_mg2 == null)
+        {
+            _mg2 = GetComponent<ReconstructionScanMinigame>()
+                ?? FindFirstObjectByType<ReconstructionScanMinigame>(FindObjectsInactive.Include)
+                ?? gameObject.AddComponent<ReconstructionScanMinigame>();
+        }
+
+        if (_mg3 == null)
+        {
+            _mg3 = FindBestMG3();
+        }
+
+        if (_mg4 == null)
+        {
+            _mg4 = FindBestMG4();
+        }
+    }
+
+    private EnvironmentalCleanupMinigame FindBestMG3()
+    {
+        var all = FindObjectsByType<EnvironmentalCleanupMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var candidate in all)
+        {
+            if (candidate.gameObject.name.Contains("Minigame3") || candidate.customUIRoot != null)
+                return candidate;
+        }
+        return all.Length > 0 ? all[0] : (GetComponent<EnvironmentalCleanupMinigame>() ?? gameObject.AddComponent<EnvironmentalCleanupMinigame>());
+    }
+
+    private HazardDodgeMinigame FindBestMG4()
+    {
+        var all = FindObjectsByType<HazardDodgeMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var candidate in all)
+        {
+            if (candidate.gameObject.name.Contains("Minigame4") || candidate.customUIRoot != null)
+                return candidate;
+        }
+        return all.Length > 0 ? all[0] : (GetComponent<HazardDodgeMinigame>() ?? gameObject.AddComponent<HazardDodgeMinigame>());
     }
 
     // -----------------------------------------------------------------------

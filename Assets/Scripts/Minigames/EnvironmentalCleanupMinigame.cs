@@ -660,6 +660,19 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customTimerText == null) customTimerText = FindDeepChild<TMP_Text>(customUIRoot, "Timer", "TimerText", "Time");
             if (customTimerTextLegacy == null && customTimerText == null) customTimerTextLegacy = FindDeepChild<Text>(customUIRoot, "Timer", "TimerText", "Time");
 
+            // Ensure timer text is correctly anchored & pivoted so it is never cut off on wide aspect ratios
+            if (customTimerText != null)
+            {
+                var tRect = customTimerText.GetComponent<RectTransform>();
+                if (tRect != null && tRect.anchorMin.x >= 0.8f)
+                {
+                    tRect.pivot = new Vector2(1f, tRect.pivot.y);
+                    if (tRect.anchoredPosition.x > -50f)
+                        tRect.anchoredPosition = new Vector2(-50f, tRect.anchoredPosition.y);
+                    customTimerText.alignment = TextAlignmentOptions.Right;
+                }
+            }
+
             if (customScoreText == null) customScoreText = FindDeepChild<TMP_Text>(customUIRoot, "Score", "ScoreText", "Collect");
             if (customScoreTextLegacy == null && customScoreText == null) customScoreTextLegacy = FindDeepChild<Text>(customUIRoot, "Score", "ScoreText", "Collect");
 

@@ -162,6 +162,84 @@ public class GameManager : MonoBehaviour
         return (float)GetDiscoveredCountInZone(zoneIndex) / total;
     }
 
+    /// <summary>
+    /// Checks if a zone is unlocked according to the progression rules:
+    ///   - Zone 0 (Sunlight) is always unlocked.
+    ///   - Zone N requires >= 50% species discovered in Zone N-1 AND HullTier >= requiredHullTier.
+    /// </summary>
+    public bool IsZoneUnlocked(int zoneIndex)
+    {
+        if (zoneIndex == 0) return true;
+        if (!ZoneConfig.IsValidZone(zoneIndex)) return false;
+
+        int prevZone = zoneIndex - 1;
+        int discovered = GetDiscoveredCountInZone(prevZone);
+        int total = ZoneConfig.Zones[prevZone].totalSpeciesCount;
+        float threshold = ZoneConfig.Zones[prevZone].unlockThreshold;
+        bool hasSpecies = (float)discovered / Mathf.Max(1, total) >= threshold;
+        bool hasHull = HullTier >= ZoneConfig.Zones[zoneIndex].requiredHullTier;
+
+        return hasSpecies && hasHull;
+    }
+
+    /// <summary>
+    /// Returns detailed unlock status criteria for a zone.
+    /// </summary>
+    public ZoneUnlockDetails GetZoneUnlockDetails(int zoneIndex)
+    {
+        ZoneUnlockDetails details = new ZoneUnlockDetails();
+
+        if (zoneIndex == 0)
+        {
+            details.isUnlocked = true;
+            details.hasSpecies = true;
+            details.hasHull = true;
+            details.reqHull = 1;
+            details.reqSpecies = 0;
+            details.currentSpecies = 0;
+            details.prevZoneName = "";
+            return details;
+        }
+
+        if (!ZoneConfig.IsValidZone(zoneIndex))
+            return details;
+
+        int prevZone = zoneIndex - 1;
+        details.currentSpecies = GetDiscoveredCountInZone(prevZone);
+        int total = ZoneConfig.Zones[prevZone].totalSpeciesCount;
+        details.reqSpecies = Mathf.CeilToInt(total * ZoneConfig.Zones[prevZone].unlockThreshold);
+        details.reqHull = ZoneConfig.Zones[zoneIndex].requiredHullTier;
+
+        details.hasSpecies = details.currentSpecies >= details.reqSpecies;
+        details.hasHull = HullTier >= details.reqHull;
+        details.isUnlocked = details.hasSpecies && details.hasHull;
+        details.prevZoneName = ZoneConfig.Zones[prevZone].zoneName;
+
+        return details;
+    }
+
+    public struct ZoneUnlockDetails
+    {
+        public bool isUnlocked;
+        public bool hasSpecies;
+        public bool hasHull;
+        public int reqHull;
+        public int reqSpecies;
+        public int currentSpecies;
+        public string prevZoneName;
+    }
+
+    public static bool IsTutorialCompleted()
+    {
+        return PlayerPrefs.GetInt("Tutorial_Complete", 0) == 1;
+    }
+
+    public static void SetTutorialCompleted(bool complete)
+    {
+        PlayerPrefs.SetInt("Tutorial_Complete", complete ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
     // -----------------------------------------------------------------------
     // PCG seed management
     // -----------------------------------------------------------------------
@@ -170,7 +248,14 @@ public class GameManager : MonoBehaviour
     {
         if (!_zonePcgSeeds.TryGetValue(zoneIndex, out int seed))
         {
-            seed = Random.Range(100000, 999999);
+            if (PlayerPrefs.HasKey($"Save_ZoneSeed_{zoneIndex}"))
+            {
+                seed = PlayerPrefs.GetInt($"Save_ZoneSeed_{zoneIndex}");
+            }
+            else
+            {
+                seed = Random.Range(100000, 999999);
+            }
             _zonePcgSeeds[zoneIndex] = seed;
         }
         return seed;
@@ -194,9 +279,26 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("Save_ClamShells", ClamShells);
         PlayerPrefs.SetInt("Save_CurrentZone", ZoneManager.CurrentZoneIndex);
 
-        // Save Discovered Species
+        // Save Discovered Species (Global and Per Zone)
         string speciesData = string.Join(";", _allDiscoveredSpecies);
         PlayerPrefs.SetString("Save_DiscoveredSpecies", speciesData);
+
+        for (int z = 0; z < 5; z++)
+        {
+            if (_discoveredByZone.TryGetValue(z, out var set))
+            {
+                PlayerPrefs.SetString($"Save_DiscoveredByZone_{z}", string.Join(";", set));
+            }
+        }
+
+        // Save PCG Seeds so terrain stays identical on continue
+        for (int i = 0; i < 5; i++)
+        {
+            if (_zonePcgSeeds.TryGetValue(i, out int s))
+            {
+                PlayerPrefs.SetInt($"Save_ZoneSeed_{i}", s);
+            }
+        }
 
         // Save Player Position & Rotation
         var player = FindFirstObjectByType<PlayerMovement>();
@@ -235,18 +337,64 @@ public class GameManager : MonoBehaviour
         UtilitiesTier = PlayerPrefs.GetInt("Save_UtilitiesTier", 1);
         ClamShells    = PlayerPrefs.GetInt("Save_ClamShells", 0);
 
-        string speciesData = PlayerPrefs.GetString("Save_DiscoveredSpecies", "");
+        // Load PCG Seeds
+        _zonePcgSeeds.Clear();
+        for (int i = 0; i < 5; i++)
+        {
+            if (PlayerPrefs.HasKey($"Save_ZoneSeed_{i}"))
+            {
+                _zonePcgSeeds[i] = PlayerPrefs.GetInt($"Save_ZoneSeed_{i}");
+            }
+        }
+
+        // Load Discovered Species by Zone
         _allDiscoveredSpecies.Clear();
         _discoveredByZone.Clear();
 
-        if (!string.IsNullOrEmpty(speciesData))
+        for (int z = 0; z < 5; z++)
+        {
+            _discoveredByZone[z] = new HashSet<string>();
+            string zKey = $"Save_DiscoveredByZone_{z}";
+            if (PlayerPrefs.HasKey(zKey))
+            {
+                string raw = PlayerPrefs.GetString(zKey, "");
+                if (!string.IsNullOrEmpty(raw))
+                {
+                    foreach (var id in raw.Split(';'))
+                    {
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _discoveredByZone[z].Add(id);
+                            _allDiscoveredSpecies.Add(id);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback for older saves that only had Save_DiscoveredSpecies
+        string speciesData = PlayerPrefs.GetString("Save_DiscoveredSpecies", "");
+        if (!string.IsNullOrEmpty(speciesData) && _allDiscoveredSpecies.Count == 0)
         {
             string[] ids = speciesData.Split(';');
+            var allSpecies = Resources.LoadAll<SpeciesData>("");
+            var map = new Dictionary<string, int>();
+            foreach (var s in allSpecies)
+            {
+                if (s != null && !string.IsNullOrEmpty(s.speciesId))
+                    map[s.speciesId] = s.zoneIndex;
+            }
+
             foreach (string id in ids)
             {
                 if (!string.IsNullOrWhiteSpace(id))
                 {
                     _allDiscoveredSpecies.Add(id);
+                    if (map.TryGetValue(id, out int z))
+                    {
+                        if (!_discoveredByZone.ContainsKey(z)) _discoveredByZone[z] = new HashSet<string>();
+                        _discoveredByZone[z].Add(id);
+                    }
                 }
             }
         }
@@ -302,6 +450,13 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.DeleteKey("Save_PosZ");
         PlayerPrefs.DeleteKey("Save_RotY");
         PlayerPrefs.DeleteKey("Save_HasPosition");
+
+        for (int i = 0; i < 5; i++)
+        {
+            PlayerPrefs.DeleteKey($"Save_ZoneSeed_{i}");
+            PlayerPrefs.DeleteKey($"Save_DiscoveredByZone_{i}");
+        }
+
         PlayerPrefs.Save();
         Debug.Log("[GameManager] Saved game deleted.");
     }
@@ -318,6 +473,14 @@ public class GameManager : MonoBehaviour
         ClamShells    = 0;
         _allDiscoveredSpecies.Clear();
         _discoveredByZone.Clear();
+        _zonePcgSeeds.Clear();
+
+        for (int i = 0; i < 5; i++)
+        {
+            PlayerPrefs.DeleteKey($"Save_ZoneSeed_{i}");
+            PlayerPrefs.DeleteKey($"Save_DiscoveredByZone_{i}");
+        }
+
         UIManager.Instance?.RefreshHUD();
     }
 }

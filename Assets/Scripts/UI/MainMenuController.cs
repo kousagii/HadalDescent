@@ -171,6 +171,11 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    [Header("Zone Selection Navigation (Figure 2)")]
+    [Tooltip("If true, clicking Continue opens the Zone Selection screen. If false, loads saved zone directly.")]
+    [SerializeField] private bool continueOpensZoneSelection = true;
+    [SerializeField] private ZoneSelectionUI customZoneSelectionUI;
+
     public void OnContinueClicked()
     {
         if (!GameManager.HasSaveData())
@@ -180,8 +185,43 @@ public class MainMenuController : MonoBehaviour
         }
 
         AudioManager.Instance?.PlayButtonClick();
-
         GameManager.Instance.LoadGame();
+
+        if (continueOpensZoneSelection)
+        {
+            if (customZoneSelectionUI != null)
+            {
+                customZoneSelectionUI.OpenZoneSelection();
+            }
+            else if (ZoneSelectionUI.Instance != null)
+            {
+                ZoneSelectionUI.Instance.OpenZoneSelection();
+            }
+            else if (UIManager.Instance != null)
+            {
+                UIManager.Instance.OpenZoneSelection();
+            }
+            else
+            {
+                var prefab = Resources.Load<GameObject>("UI/ZoneSelectionUI")
+                          ?? Resources.Load<GameObject>("UI/ZoneSelectionCanvas");
+                if (prefab != null)
+                {
+                    var spawned = Instantiate(prefab);
+                    var ui = spawned.GetComponent<ZoneSelectionUI>() ?? spawned.GetComponentInChildren<ZoneSelectionUI>();
+                    if (ui != null)
+                    {
+                        ui.OpenZoneSelection();
+                        return;
+                    }
+                }
+
+                var zsGO = new GameObject("ZoneSelectionUI");
+                var zs = zsGO.AddComponent<ZoneSelectionUI>();
+                zs.OpenZoneSelection();
+            }
+            return;
+        }
 
         int savedZone = PlayerPrefs.GetInt("Save_CurrentZone", 0);
         string zoneScene = savedZone switch
@@ -213,6 +253,14 @@ public class MainMenuController : MonoBehaviour
         GameManager.Instance?.ApplySavedPosition();
     }
 
+    private void StartFreshNewGame()
+    {
+        GameManager.DeleteSaveData();
+        GameManager.Instance?.ResetState();
+        GameManager.SetTutorialCompleted(false);
+        SceneManager.LoadScene(startingZoneSceneName);
+    }
+
     public void OnSettingsClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
@@ -240,13 +288,6 @@ public class MainMenuController : MonoBehaviour
     // -----------------------------------------------------------------------
     // New Game & Overwrite Confirmation
     // -----------------------------------------------------------------------
-
-    private void StartFreshNewGame()
-    {
-        GameManager.DeleteSaveData();
-        GameManager.Instance?.ResetState();
-        SceneManager.LoadScene(startingZoneSceneName);
-    }
 
     private void ShowOverwriteConfirmation()
     {

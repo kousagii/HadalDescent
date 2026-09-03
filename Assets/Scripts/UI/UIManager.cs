@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
@@ -19,6 +20,21 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void BootstrapUI()
+    {
+        if (Instance != null) return;
+        // Auto-load master UI prefab from Resources (supports PersistentUICanvas or Canvas)
+        var prefab = Resources.Load<GameObject>("UI/PersistentUICanvas")
+                  ?? Resources.Load<GameObject>("UI/Canvas");
+        if (prefab != null)
+        {
+            var go = Instantiate(prefab);
+            go.name = "PersistentUICanvas";
+            DontDestroyOnLoad(go);
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Inspector - HUD references
     // -----------------------------------------------------------------------
@@ -26,7 +42,11 @@ public class UIManager : MonoBehaviour
     [Header("Top-Left HUD")]
     [SerializeField] private TMP_Text depthLabel;       // "DEPTH  100 m"
     [SerializeField] private TMP_Text zoneNameLabel;    // "SUNLIGHT ZONE"
-    [SerializeField] private SonarMapUI sonarMap;       // Fixed circular Sonar Map
+
+
+    [Tooltip("Assign your Sonar Map Image directly here.")]
+    [SerializeField] private Image sonarMapImage;
+    private SonarMapUI sonarMap;
 
     [Header("Top-Right HUD")]
     [SerializeField] private TMP_Text rdpLabel;         // "RDP  150"
@@ -50,8 +70,52 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(transform.root.gameObject != gameObject ? gameObject : gameObject);
+            return;
+        }
         Instance = this;
+
+        if (transform.parent == null)
+            DontDestroyOnLoad(gameObject);
+        else
+            DontDestroyOnLoad(transform.root.gameObject);
+
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 1. Is this a menu scene or an exploration zone?
+        bool isMenu = scene.name == "MainMenu" || scene.name == "SplashScreen" || scene.name == "ZoneSelect";
+        SetExplorationHUDVisible(!isMenu);
+
+        if (isMenu)
+        {
+            // Close any open modals
+            ShopManager.Instance?.HideShop();
+            BestiaryManager.Instance?.HideBestiary();
+            ZoneSelectionUI.Instance?.CloseZoneSelection();
+            PauseMenuUI.Instance?.ResumeGame();
+            return;
+        }
+
+        // 2. Re-bind to the new scene's player, camera, and sensors
+        depthTracker = FindFirstObjectByType<DepthTracker>();
+        scannerSystem = FindFirstObjectByType<ScannerSystem>() ?? ScannerSystem.Instance;
+
+        EnsureSonarMap();
+
+        // 3. Update Zone Header ("TWILIGHT ZONE", "ABYSS ZONE", etc.)
+        RefreshHUD();
+        RefreshDepth();
     }
 
     private void Start()
@@ -60,20 +124,9 @@ public class UIManager : MonoBehaviour
             depthTracker = FindFirstObjectByType<DepthTracker>();
 
         if (scannerSystem == null)
-            scannerSystem = FindFirstObjectByType<ScannerSystem>();
+            scannerSystem = FindFirstObjectByType<ScannerSystem>() ?? ScannerSystem.Instance;
 
-        if (sonarMap == null)
-        {
-            sonarMap = FindFirstObjectByType<SonarMapUI>();
-            if (sonarMap == null)
-            {
-                var mapGO = GameObject.Find("Map placeholder") ?? GameObject.Find("SonarMap") ?? GameObject.Find("Map");
-                if (mapGO != null)
-                {
-                    sonarMap = mapGO.AddComponent<SonarMapUI>();
-                }
-            }
-        }
+        EnsureSonarMap();
 
         // Auto-find Interact button if unassigned
         if (interactButtonImage == null)
@@ -99,6 +152,27 @@ public class UIManager : MonoBehaviour
             }
         }
         RefreshHUD();
+    }
+
+    private void EnsureSonarMap()
+    {
+        if (sonarMap == null)
+        {
+            if (sonarMapImage != null)
+                sonarMap = sonarMapImage.GetComponent<SonarMapUI>() ?? sonarMapImage.gameObject.AddComponent<SonarMapUI>();
+            else
+            {
+                sonarMap = FindFirstObjectByType<SonarMapUI>();
+                if (sonarMap == null)
+                {
+                    var mapGO = GameObject.Find("Map placeholder") ?? GameObject.Find("SonarMap") ?? GameObject.Find("Map");
+                    if (mapGO != null)
+                    {
+                        sonarMap = mapGO.GetComponent<SonarMapUI>() ?? mapGO.AddComponent<SonarMapUI>();
+                    }
+                }
+            }
+        }
     }
 
     private void Update()
@@ -206,6 +280,49 @@ public class UIManager : MonoBehaviour
             var pauseGO = new GameObject("PauseMenuUI");
             var pm = pauseGO.AddComponent<PauseMenuUI>();
             pm.TogglePause();
+        }
+    }
+
+    public void OpenZoneSelection()
+    {
+        if (ZoneSelectionUI.Instance != null)
+        {
+            ZoneSelectionUI.Instance.OpenZoneSelection();
+        }
+        else
+        {
+            var prefab = Resources.Load<GameObject>("UI/ZoneSelectionUI")
+                      ?? Resources.Load<GameObject>("Prefabs/UI/ZoneSelectionUI")
+                      ?? Resources.Load<GameObject>("UI/ZoneSelectionCanvas");
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab);
+                if (go.transform.parent == null) DontDestroyOnLoad(go);
+                var ui = go.GetComponent<ZoneSelectionUI>() ?? go.GetComponentInChildren<ZoneSelectionUI>();
+                if (ui != null)
+                {
+                    ui.OpenZoneSelection();
+                    return;
+                }
+            }
+
+            var zsGO = new GameObject("ZoneSelectionUI");
+            var zs = zsGO.AddComponent<ZoneSelectionUI>();
+            zs.OpenZoneSelection();
+        }
+    }
+
+    public void OpenTutorial()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.StartTutorial();
+        }
+        else
+        {
+            var tutGO = new GameObject("TutorialManager");
+            var tm = tutGO.AddComponent<TutorialManager>();
+            tm.StartTutorial();
         }
     }
 

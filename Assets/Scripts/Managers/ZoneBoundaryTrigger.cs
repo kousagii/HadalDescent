@@ -261,6 +261,18 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private void ShowBoundaryPopup(string message, System.Action confirmAction)
     {
+        if (ZoneBoundaryPopupUI.Instance != null)
+        {
+            _popupActive = true;
+            ZoneBoundaryPopupUI.Instance.ShowPrompt(message, () => {
+                _popupActive = false;
+                confirmAction?.Invoke();
+            }, () => {
+                _popupActive = false;
+            });
+            return;
+        }
+
         EnsureFallbackPopups();
         _popupActive   = true;
         _confirmAction = confirmAction;
@@ -275,15 +287,22 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     private void ShowHullWarning(ZoneDefinition zone,
                                  bool hullMet = false, bool speciesNotMet = false)
     {
-        EnsureFallbackPopups();
-        _popupActive = true;
-
         string msg = speciesNotMet
             ? $"Discover at least {Mathf.CeilToInt(zone.unlockThreshold * 100f)}% of " +
               $"{zone.zoneName} species before descending."
             : $"Warning: Pressure Threshold Exceeded!\n" +
               $"Hull Tier {zone.requiredHullTier} required.\n" +
               $"Upgrade your Hull in the Shop.";
+
+        if (ZoneBoundaryPopupUI.Instance != null)
+        {
+            _popupActive = true;
+            ZoneBoundaryPopupUI.Instance.ShowWarning(msg);
+            return;
+        }
+
+        EnsureFallbackPopups();
+        _popupActive = true;
 
         if (hullWarningMessage != null) hullWarningMessage.text = msg;
         if (hullWarningUI      != null) hullWarningUI.SetActive(true);
@@ -293,6 +312,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     private void DismissAllPopups()
     {
         _popupActive = false;
+        if (ZoneBoundaryPopupUI.Instance != null) ZoneBoundaryPopupUI.Instance.HideAll();
         if (boundaryPopupUI != null) boundaryPopupUI.SetActive(false);
         if (hullWarningUI   != null) hullWarningUI.SetActive(false);
         PausePlayerInput(false);

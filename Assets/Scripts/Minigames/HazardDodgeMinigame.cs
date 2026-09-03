@@ -51,7 +51,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     [Header("Custom UI Canvas (Optional — procedural UI used if null)")]
     [Tooltip("Custom parent UI Panel in your Canvas.")]
-    [SerializeField] private GameObject customUIRoot;
+    public GameObject customUIRoot;
     [Tooltip("Custom RawImage where the 2.5D ocean stage renders.")]
     [SerializeField] private RawImage   customViewportRawImage;
     [Tooltip("Custom red flash border Image.")]
@@ -977,6 +977,70 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void BuildUI()
     {
+        // 1. Auto-discover custom UI panel in Canvas if unassigned
+        if (customUIRoot == null)
+        {
+            var found = GameObject.Find("Minigame4HUD") ?? GameObject.Find("Minigame4_HUD") ?? GameObject.Find("Minigame4");
+            if (found == null)
+            {
+                var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                foreach (var c in allCanvases)
+                {
+                    for (int i = 0; i < c.transform.childCount; i++)
+                    {
+                        var child = c.transform.GetChild(i);
+                        if (child.name.Equals("Minigame4HUD", StringComparison.OrdinalIgnoreCase) ||
+                            child.name.Equals("Minigame4", StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = child.gameObject;
+                            break;
+                        }
+                    }
+                    if (found != null) break;
+                }
+            }
+            if (found != null)
+            {
+                customUIRoot = found;
+                if (customViewportRawImage == null) customViewportRawImage = customUIRoot.GetComponentInChildren<RawImage>(true);
+                if (customDistanceText == null) customDistanceText = customUIRoot.transform.Find("DistanceText")?.GetComponent<TMP_Text>() ?? customUIRoot.transform.Find("Distance")?.GetComponent<TMP_Text>();
+                if (customRdpBonusText == null) customRdpBonusText = customUIRoot.transform.Find("RdpText")?.GetComponent<TMP_Text>() ?? customUIRoot.transform.Find("RDP")?.GetComponent<TMP_Text>();
+                if (customRedVignette == null)
+                {
+                    var redTransform = customUIRoot.transform.Find("RedImage") ?? customUIRoot.transform.Find("RedVignette");
+                    if (redTransform != null) customRedVignette = redTransform.GetComponent<Image>();
+                }
+            }
+        }
+
+        if (customUIRoot != null)
+        {
+            if (customViewportRawImage == null)
+                customViewportRawImage = customUIRoot.GetComponentInChildren<RawImage>(true);
+
+            if (customViewportRawImage != null)
+            {
+                customViewportRawImage.texture = _stageRT;
+            }
+
+            if (customRedVignette == null)
+            {
+                var redTransform = customUIRoot.transform.Find("RedImage") ?? customUIRoot.transform.Find("RedVignette");
+                if (redTransform != null) customRedVignette = redTransform.GetComponent<Image>();
+            }
+
+            if (customRedVignette != null)
+            {
+                customRedVignette.color = new Color(1f, 0.05f, 0.05f, 0f);
+            }
+
+            if (customWarningBanner != null)
+            {
+                customWarningBanner.SetActive(false);
+            }
+
+            return;
+        }
         if (_rootUI != null) return;
 
         Canvas canvas = FindFirstObjectByType<Canvas>();

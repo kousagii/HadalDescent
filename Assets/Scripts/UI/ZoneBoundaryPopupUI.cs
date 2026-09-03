@@ -1,0 +1,200 @@
+using System;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+/// <summary>
+/// Manages the Zone Boundary Confirmation & Pressure Warning Popups in the Persistent UI.
+/// 
+/// Setup:
+///   1. Attach this component to 'BoundaryPopupPanel' under Canvas (or to Canvas itself).
+///   2. Wire up your custom panel, buttons, and message texts in the Inspector.
+///   3. Triggers across all scenes automatically call ZoneBoundaryPopupUI.Instance.ShowPrompt().
+/// </summary>
+public class ZoneBoundaryPopupUI : MonoBehaviour
+{
+    public static ZoneBoundaryPopupUI Instance { get; private set; }
+
+    [Header("Confirmation Prompt Panel")]
+    [Tooltip("Panel containing the transition prompt (e.g. 'Proceed to Twilight Zone?').")]
+    [SerializeField] private GameObject promptPanel;
+    [SerializeField] private TMP_Text   promptMessageText;
+    [SerializeField] private Button     confirmButton;
+    [SerializeField] private Button     cancelButton;
+
+    [Header("Warning Panel (Hull Tier / Species Progress)")]
+    [Tooltip("Optional warning panel when requirements are not met.")]
+    [SerializeField] private GameObject warningPanel;
+    [SerializeField] private TMP_Text   warningMessageText;
+    [SerializeField] private Button     warningCloseButton;
+    [SerializeField] private Button     warningShopButton;
+
+    private Action _onConfirm;
+    private Action _onCancel;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        AutoWireComponents();
+        HideAll();
+    }
+
+    private void Start()
+    {
+        AutoWireComponents();
+        HideAll();
+    }
+
+    private void AutoWireComponents()
+    {
+        if (promptPanel == null)
+            promptPanel = gameObject;
+
+        // Auto-find text if unassigned
+        if (promptMessageText == null && promptPanel != null)
+            promptMessageText = promptPanel.GetComponentInChildren<TMP_Text>(true);
+
+        // Auto-find buttons if unassigned
+        if (confirmButton == null && promptPanel != null)
+        {
+            var btnTr = promptPanel.transform.Find("ConfirmBtn") 
+                     ?? promptPanel.transform.Find("YesButton") 
+                     ?? promptPanel.transform.Find("Yes") 
+                     ?? promptPanel.transform.Find("Confirm")
+                     ?? promptPanel.transform.Find("Button (Confirm)");
+            if (btnTr == null)
+            {
+                var buttons = promptPanel.GetComponentsInChildren<Button>(true);
+                if (buttons.Length > 0) confirmButton = buttons[0];
+            }
+            else
+            {
+                confirmButton = btnTr.GetComponent<Button>();
+            }
+        }
+
+        if (cancelButton == null && promptPanel != null)
+        {
+            var btnTr = promptPanel.transform.Find("CancelBtn") 
+                     ?? promptPanel.transform.Find("NoButton") 
+                     ?? promptPanel.transform.Find("No") 
+                     ?? promptPanel.transform.Find("Cancel")
+                     ?? promptPanel.transform.Find("Button (Cancel)");
+            if (btnTr == null)
+            {
+                var buttons = promptPanel.GetComponentsInChildren<Button>(true);
+                if (buttons.Length > 1) cancelButton = buttons[1];
+            }
+            else
+            {
+                cancelButton = btnTr.GetComponent<Button>();
+            }
+        }
+
+        if (confirmButton != null)
+        {
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(OnConfirmClicked);
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(OnCancelClicked);
+        }
+
+        if (warningCloseButton != null)
+        {
+            warningCloseButton.onClick.RemoveAllListeners();
+            warningCloseButton.onClick.AddListener(HideAll);
+        }
+
+        if (warningShopButton != null)
+        {
+            warningShopButton.onClick.RemoveAllListeners();
+            warningShopButton.onClick.AddListener(OnShopClicked);
+        }
+    }
+
+    /// <summary>
+    /// Displays the zone transition confirmation prompt with Yes/No callbacks.
+    /// </summary>
+    public void ShowPrompt(string message, Action onConfirm, Action onCancel = null)
+    {
+        _onConfirm = onConfirm;
+        _onCancel  = onCancel;
+
+        AutoWireComponents();
+
+        if (promptMessageText != null)
+            promptMessageText.text = message;
+
+        if (promptPanel != null)
+            promptPanel.SetActive(true);
+
+        if (warningPanel != null)
+            warningPanel.SetActive(false);
+
+        Time.timeScale = 0f; // Pause gameplay while deciding
+    }
+
+    /// <summary>
+    /// Displays warning when hull tier or species requirement is not met.
+    /// </summary>
+    public void ShowWarning(string warningMessage, Action onShop = null)
+    {
+        AutoWireComponents();
+
+        if (warningPanel != null)
+        {
+            if (warningMessageText != null) warningMessageText.text = warningMessage;
+            warningPanel.SetActive(true);
+            if (promptPanel != null && promptPanel != gameObject) promptPanel.SetActive(false);
+        }
+        else if (promptPanel != null)
+        {
+            // Fallback to prompt panel if no separate warning panel exists
+            if (promptMessageText != null) promptMessageText.text = warningMessage;
+            promptPanel.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
+    }
+
+    public void HideAll()
+    {
+        if (promptPanel != null && promptPanel != gameObject)
+            promptPanel.SetActive(false);
+        else if (promptPanel == gameObject)
+            gameObject.SetActive(false);
+
+        if (warningPanel != null)
+            warningPanel.SetActive(false);
+
+        Time.timeScale = 1f;
+    }
+
+    private void OnConfirmClicked()
+    {
+        HideAll();
+        _onConfirm?.Invoke();
+    }
+
+    private void OnCancelClicked()
+    {
+        HideAll();
+        _onCancel?.Invoke();
+    }
+
+    private void OnShopClicked()
+    {
+        HideAll();
+        ShopManager.Instance?.ShowShop();
+    }
+}
