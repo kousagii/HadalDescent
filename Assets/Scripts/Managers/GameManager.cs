@@ -450,6 +450,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.DeleteKey("Save_PosZ");
         PlayerPrefs.DeleteKey("Save_RotY");
         PlayerPrefs.DeleteKey("Save_HasPosition");
+        PlayerPrefs.DeleteKey("Tutorial_Complete");
 
         for (int i = 0; i < 5; i++)
         {
@@ -474,6 +475,7 @@ public class GameManager : MonoBehaviour
         _allDiscoveredSpecies.Clear();
         _discoveredByZone.Clear();
         _zonePcgSeeds.Clear();
+        SetTutorialCompleted(false);
 
         for (int i = 0; i < 5; i++)
         {

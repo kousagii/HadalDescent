@@ -105,7 +105,11 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         _finished        = false;
 
         if (_resultText != null) _resultText.gameObject.SetActive(false);
-        if (_rootPanel != null)  _rootPanel.gameObject.SetActive(true);
+        if (_rootPanel != null)
+        {
+            _rootPanel.SetAsLastSibling();
+            _rootPanel.gameObject.SetActive(true);
+        }
 
         UpdateVisuals(halfZone, true);
     }
@@ -117,23 +121,18 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     private bool IsHoldInputActive()
     {
-        if (_holding) return true;
+        // Direct hardware input check
+        bool touchPress = Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed;
+        bool mousePress = Mouse.current != null && Mouse.current.leftButton.isPressed;
+        bool keyPress   = Keyboard.current != null && (Keyboard.current.spaceKey.isPressed || Keyboard.current.fKey.isPressed);
 
-        // Unity New Input System check (Touchscreen, Mouse, Pointer, Keyboard)
-        if (Touchscreen.current != null)
+        // If no physical input is active, clear _holding safety flag so it never sticks
+        if (!touchPress && !mousePress && !keyPress)
         {
-            var touches = Touchscreen.current.touches;
-            for (int i = 0; i < touches.Count; i++)
-            {
-                if (touches[i].press.isPressed) return true;
-            }
+            _holding = false;
         }
 
-        if (Mouse.current != null && Mouse.current.leftButton.isPressed) return true;
-        if (Pointer.current != null && Pointer.current.press.isPressed) return true;
-        if (Keyboard.current != null && (Keyboard.current.spaceKey.isPressed || Keyboard.current.fKey.isPressed)) return true;
-
-        return false;
+        return _holding || touchPress || mousePress || keyPress;
     }
 
     private int GetScannerTier()
@@ -560,7 +559,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 /// <summary>
 /// Touch receiver attached to the fullscreen capture panel.
 /// </summary>
-public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
 {
     private CaptureAndFocusMinigame _minigame;
 
@@ -575,6 +574,11 @@ public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPoint
     }
 
     public void OnPointerUp(PointerEventData eventData)
+    {
+        if (_minigame != null) _minigame.SetHolding(false);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
     {
         if (_minigame != null) _minigame.SetHolding(false);
     }

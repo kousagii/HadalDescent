@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,13 +25,14 @@ public class UIManager : MonoBehaviour
     private static void BootstrapUI()
     {
         if (Instance != null) return;
-        // Auto-load master UI prefab from Resources (supports PersistentUICanvas or Canvas)
-        var prefab = Resources.Load<GameObject>("UI/PersistentUICanvas")
+        // Auto-load master UI prefab from Resources (checks PersistentCanvasUI, PersistentUICanvas, or Canvas)
+        var prefab = Resources.Load<GameObject>("UI/PersistentCanvasUI")
+                  ?? Resources.Load<GameObject>("UI/PersistentUICanvas")
                   ?? Resources.Load<GameObject>("UI/Canvas");
         if (prefab != null)
         {
             var go = Instantiate(prefab);
-            go.name = "PersistentUICanvas";
+            go.name = "PersistentCanvasUI";
             DontDestroyOnLoad(go);
         }
     }
@@ -84,6 +86,8 @@ public class UIManager : MonoBehaviour
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        HideMinigamesAndModals();
     }
 
     private void OnDestroy()
@@ -93,9 +97,13 @@ public class UIManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Time.timeScale = 1f;
+
         // 1. Is this a menu scene or an exploration zone?
         bool isMenu = scene.name == "MainMenu" || scene.name == "SplashScreen" || scene.name == "ZoneSelect";
         SetExplorationHUDVisible(!isMenu);
+
+        HideMinigamesAndModals();
 
         if (isMenu)
         {
@@ -116,6 +124,7 @@ public class UIManager : MonoBehaviour
         // 3. Update Zone Header ("TWILIGHT ZONE", "ABYSS ZONE", etc.)
         RefreshHUD();
         RefreshDepth();
+        BindHUDButtons();
     }
 
     private void Start()
@@ -127,30 +136,7 @@ public class UIManager : MonoBehaviour
             scannerSystem = FindFirstObjectByType<ScannerSystem>() ?? ScannerSystem.Instance;
 
         EnsureSonarMap();
-
-        // Auto-find Interact button if unassigned
-        if (interactButtonImage == null)
-        {
-            var btnGO = GameObject.Find("Interact") ?? GameObject.Find("InteractBtn") ?? GameObject.Find("Interact Button") ?? GameObject.Find("InteractButton");
-            if (btnGO != null)
-            {
-                interactButtonImage = btnGO.GetComponent<Image>();
-                var btn = btnGO.GetComponent<Button>();
-                if (btn != null) btn.onClick.AddListener(OnInteractButtonPressed);
-            }
-        }
-
-        // Auto-find Scan button if unassigned
-        if (scanButtonImage == null)
-        {
-            var btnGO = GameObject.Find("Scan") ?? GameObject.Find("ScanBtn") ?? GameObject.Find("Scan Button") ?? GameObject.Find("ScanButton");
-            if (btnGO != null)
-            {
-                scanButtonImage = btnGO.GetComponent<Image>();
-                var btn = btnGO.GetComponent<Button>();
-                if (btn != null) btn.onClick.AddListener(OnScanButtonPressed);
-            }
-        }
+        BindHUDButtons();
         RefreshHUD();
     }
 
@@ -159,17 +145,19 @@ public class UIManager : MonoBehaviour
         if (sonarMap == null)
         {
             if (sonarMapImage != null)
+            {
                 sonarMap = sonarMapImage.GetComponent<SonarMapUI>() ?? sonarMapImage.gameObject.AddComponent<SonarMapUI>();
+            }
             else
             {
-                sonarMap = FindFirstObjectByType<SonarMapUI>();
-                if (sonarMap == null)
+                var mapGO = GameObject.Find("SonarMap") ?? GameObject.Find("Map placeholder") ?? GameObject.Find("Map");
+                if (mapGO != null)
                 {
-                    var mapGO = GameObject.Find("Map placeholder") ?? GameObject.Find("SonarMap") ?? GameObject.Find("Map");
-                    if (mapGO != null)
-                    {
-                        sonarMap = mapGO.GetComponent<SonarMapUI>() ?? mapGO.AddComponent<SonarMapUI>();
-                    }
+                    sonarMap = mapGO.GetComponent<SonarMapUI>() ?? mapGO.AddComponent<SonarMapUI>();
+                }
+                else
+                {
+                    sonarMap = SonarMapUI.Instance ?? FindFirstObjectByType<SonarMapUI>();
                 }
             }
         }
@@ -221,7 +209,8 @@ public class UIManager : MonoBehaviour
             hudGO.SetActive(visible);
         }
 
-        var canvas = GetComponentInParent<Canvas>() ?? GetComponent<Canvas>();
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) canvas = GetComponent<Canvas>();
         if (canvas != null)
         {
             var hudTr = canvas.transform.Find("HUD");
@@ -254,32 +243,50 @@ public class UIManager : MonoBehaviour
     // Button handlers - Top Right
     // -----------------------------------------------------------------------
 
+    private float _lastShopToggleTime = -1f;
     public void OnShopButtonPressed()
     {
+        if (Time.unscaledTime - _lastShopToggleTime < 0.25f) return;
+        _lastShopToggleTime = Time.unscaledTime;
+
         Debug.Log("[UIManager] Shop pressed.");
-        var sm = ShopManager.Instance;
-        if (sm != null) sm.ToggleShop();
+        var sm = ShopManager.Instance ?? FindFirstObjectByType<ShopManager>(FindObjectsInactive.Include);
+        if (sm != null)
+        {
+            sm.gameObject.SetActive(true);
+            sm.ToggleShop();
+        }
     }
 
+    private float _lastBestiaryToggleTime = -1f;
     public void OnBestiaryButtonPressed()
     {
+        if (Time.unscaledTime - _lastBestiaryToggleTime < 0.25f) return;
+        _lastBestiaryToggleTime = Time.unscaledTime;
+
         Debug.Log("[UIManager] Bestiary pressed.");
-        var bm = BestiaryManager.Instance;
-        if (bm != null) bm.ToggleBestiary();
+        var bm = BestiaryManager.Instance ?? FindFirstObjectByType<BestiaryManager>(FindObjectsInactive.Include);
+        if (bm != null)
+        {
+            bm.gameObject.SetActive(true);
+            bm.ToggleBestiary();
+        }
     }
 
     public void OnPauseButtonPressed()
     {
         Debug.Log("[UIManager] Pause button clicked.");
-        if (PauseMenuUI.Instance != null)
+        var pm = PauseMenuUI.Instance ?? FindFirstObjectByType<PauseMenuUI>(FindObjectsInactive.Include);
+        if (pm != null)
         {
-            PauseMenuUI.Instance.TogglePause();
+            pm.gameObject.SetActive(true);
+            pm.TogglePause();
         }
         else
         {
             var pauseGO = new GameObject("PauseMenuUI");
-            var pm = pauseGO.AddComponent<PauseMenuUI>();
-            pm.TogglePause();
+            var newPm = pauseGO.AddComponent<PauseMenuUI>();
+            newPm.TogglePause();
         }
     }
 
@@ -361,4 +368,146 @@ public class UIManager : MonoBehaviour
     }
 
     public void ShowScanPrompt(bool visible) => ShowScanButton(visible);
+
+    /// <summary>
+    /// Deactivates any minigame HUDs or modal popups that may have been left active in the prefab,
+    /// ensuring only the main exploration HUD is visible during standard gameplay.
+    /// </summary>
+    public void HideMinigamesAndModals()
+    {
+        // 1. Minigame 3 (Environmental Cleanup)
+        var mg3s = FindObjectsByType<EnvironmentalCleanupMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var mg in mg3s)
+        {
+            if (mg.customUIRoot != null) mg.customUIRoot.SetActive(false);
+            mg.gameObject.SetActive(false);
+        }
+
+        // 2. Minigame 4 (Hazard Dodge)
+        var mg4s = FindObjectsByType<HazardDodgeMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var mg in mg4s)
+        {
+            if (mg.customUIRoot != null) mg.customUIRoot.SetActive(false);
+            mg.gameObject.SetActive(false);
+        }
+
+        // 3. Close open modals via their managers (leaving the manager GameObjects active)
+        ShopManager.Instance?.HideShop();
+        BestiaryManager.Instance?.HideBestiary();
+        PauseMenuUI.Instance?.ResumeGame();
+        ZoneSelectionUI.Instance?.CloseZoneSelection();
+        ZoneBoundaryPopupUI.Instance?.HideAll();
+        if (FactCardUI.Instance != null) FactCardUI.Instance.Hide();
+
+        // 4. Ensure inner popup panels are deactivated on startup
+        var root = transform.root;
+        string[] innerPanels = { "ShopPanel", "DetailModal", "BestiaryPanel", "ZoneSelectionPanel", "PausePanel", "CardPanel", "FactCardPanel" };
+        foreach (var name in innerPanels)
+        {
+            var t = FindChildRecursive(root, name);
+            if (t != null && t.gameObject != gameObject)
+            {
+                t.gameObject.SetActive(false);
+            }
+        }
+
+        // 5. Clean up any stray MainMenu overwrite modals that could have attached to PersistentCanvasUI
+        var orphanModal = FindChildRecursive(root, "OverwriteConfirmModal");
+        if (orphanModal != null)
+        {
+            Destroy(orphanModal.gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Explicitly binds click listeners for all HUD buttons to guarantee clickability,
+    /// even if prefabs had their inspector UnityEvent references severed.
+    /// </summary>
+    public void BindHUDButtons()
+    {
+        // 1. Scan Button
+        Button scanBtn = null;
+        if (scanButtonImage != null) scanBtn = scanButtonImage.GetComponent<Button>();
+        if (scanBtn == null)
+        {
+            var btnGO = GameObject.Find("ScanButton") ?? GameObject.Find("Scan") ?? GameObject.Find("ScanBtn");
+            if (btnGO != null)
+            {
+                scanButtonImage = btnGO.GetComponent<Image>();
+                scanBtn = btnGO.GetComponent<Button>();
+            }
+        }
+        if (scanBtn != null)
+        {
+            scanBtn.onClick.RemoveListener(OnScanButtonPressed);
+            scanBtn.onClick.AddListener(OnScanButtonPressed);
+        }
+
+        // 2. Interact Button
+        Button interactBtn = null;
+        if (interactButtonImage != null) interactBtn = interactButtonImage.GetComponent<Button>();
+        if (interactBtn == null)
+        {
+            var btnGO = GameObject.Find("InteractOuterRing") ?? GameObject.Find("Interact") ?? GameObject.Find("InteractBtn");
+            if (btnGO != null)
+            {
+                interactButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
+                interactBtn = btnGO.GetComponent<Button>() ?? btnGO.GetComponentInChildren<Button>();
+            }
+        }
+        if (interactBtn != null)
+        {
+            interactBtn.onClick.RemoveListener(OnInteractButtonPressed);
+            interactBtn.onClick.AddListener(OnInteractButtonPressed);
+        }
+
+        // 3. Top-Right: Shop
+        var shopGO = GameObject.Find("Shop") ?? GameObject.Find("ShopButton") ?? GameObject.Find("BtnShop");
+        if (shopGO != null)
+        {
+            var btn = shopGO.GetComponent<Button>() ?? shopGO.GetComponentInChildren<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveListener(OnShopButtonPressed);
+                btn.onClick.AddListener(OnShopButtonPressed);
+            }
+        }
+
+        // 4. Top-Right: Bestiary
+        var bestiaryGO = GameObject.Find("Bestiary") ?? GameObject.Find("BestiaryButton") ?? GameObject.Find("BtnBestiary");
+        if (bestiaryGO != null)
+        {
+            var btn = bestiaryGO.GetComponent<Button>() ?? bestiaryGO.GetComponentInChildren<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveListener(OnBestiaryButtonPressed);
+                btn.onClick.AddListener(OnBestiaryButtonPressed);
+            }
+        }
+
+        // 5. Top-Right: Pause
+        var pauseGO = GameObject.Find("Pause") ?? GameObject.Find("PauseButton") ?? GameObject.Find("BtnPause");
+        if (pauseGO != null)
+        {
+            var btn = pauseGO.GetComponent<Button>() ?? pauseGO.GetComponentInChildren<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveListener(OnPauseButtonPressed);
+                btn.onClick.AddListener(OnPauseButtonPressed);
+            }
+        }
+    }
+
+    private Transform FindChildRecursive(Transform parent, string name)
+    {
+        if (parent == null) return null;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            var child = parent.GetChild(i);
+            if (child.name.Equals(name, StringComparison.OrdinalIgnoreCase)) return child;
+            var deep = FindChildRecursive(child, name);
+            if (deep != null) return deep;
+        }
+        return null;
+    }
 }

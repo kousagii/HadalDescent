@@ -183,6 +183,22 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static readonly Vector3 StageOrigin = new Vector3(0f, 1500f, 0f);
 
+    private void Awake()
+    {
+        if (customUIRoot != null)
+            customUIRoot.SetActive(false);
+        else
+            gameObject.SetActive(false);
+    }
+
+    private void Start()
+    {
+        if (customUIRoot != null)
+            customUIRoot.SetActive(false);
+        else
+            gameObject.SetActive(false);
+    }
+
     // -----------------------------------------------------------------------
     // Entry Point
     // -----------------------------------------------------------------------

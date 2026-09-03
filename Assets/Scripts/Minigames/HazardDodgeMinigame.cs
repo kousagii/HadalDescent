@@ -135,12 +135,16 @@ public class HazardDodgeMinigame : MonoBehaviour
     {
         if (customUIRoot != null)
             customUIRoot.SetActive(false);
+        else
+            gameObject.SetActive(false);
     }
 
     private void Start()
     {
         if (customUIRoot != null)
             customUIRoot.SetActive(false);
+        else
+            gameObject.SetActive(false);
     }
 
     // -----------------------------------------------------------------------

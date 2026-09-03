@@ -55,6 +55,8 @@ public class ZoneSelectionUI : MonoBehaviour
     private TMP_Text   _proceduralWarningDesc;
     private TMP_Text   _proceduralRdpText;
     private TMP_Text   _proceduralHullText;
+    private Button     _proceduralBackBtn;
+    private TMP_Text   _proceduralBackBtnText;
 
     private int _selectedLockedZone = -1;
 
@@ -149,7 +151,30 @@ public class ZoneSelectionUI : MonoBehaviour
             if (_proceduralRoot != null) _proceduralRoot.SetActive(true);
         }
 
+        string curScene = SceneManager.GetActiveScene().name;
+        bool isMenu = curScene == "MainMenu" || curScene == "ZoneSelect";
+
+        if (customBackButton != null)
+        {
+            customBackButton.gameObject.SetActive(isMenu);
+        }
+
+        if (_proceduralBackBtn != null)
+        {
+            if (isMenu)
+            {
+                _proceduralBackBtn.gameObject.SetActive(true);
+                if (_proceduralBackBtnText != null) _proceduralBackBtnText.text = "◀ BACK";
+            }
+            else
+            {
+                // Remove / hide the back button completely after tutorial or during exploration
+                _proceduralBackBtn.gameObject.SetActive(false);
+            }
+        }
+
         RefreshAllZoneCards();
+        Time.timeScale = 0f;
     }
 
     public void CloseZoneSelection()
@@ -158,6 +183,17 @@ public class ZoneSelectionUI : MonoBehaviour
         if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
         if (customWarningModal != null) customWarningModal.SetActive(false);
         if (_proceduralWarningModal != null) _proceduralWarningModal.SetActive(false);
+        Time.timeScale = 1f;
+    }
+
+    private void OnDisable()
+    {
+        Time.timeScale = 1f;
+    }
+
+    private void OnDestroy()
+    {
+        Time.timeScale = 1f;
     }
 
     // -----------------------------------------------------------------------
@@ -238,8 +274,13 @@ public class ZoneSelectionUI : MonoBehaviour
         string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
         Debug.Log($"[ZoneSelectionUI] Entering Zone {zoneIndex} ('{sceneName}')...");
 
+        Time.timeScale = 1f;
         CloseZoneSelection();
-        SceneManager.LoadScene(sceneName);
+
+        if (SceneManager.GetActiveScene().name != sceneName)
+        {
+            SceneManager.LoadScene(sceneName);
+        }
     }
 
     private void ShowPressureWarningModal(int zoneIndex)
@@ -275,6 +316,8 @@ public class ZoneSelectionUI : MonoBehaviour
         }
     }
 
+    public bool IsOpen => (customRoot != null && customRoot.activeInHierarchy) || (_proceduralRoot != null && _proceduralRoot.activeInHierarchy);
+
     public void OnWarningShopClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
@@ -282,16 +325,32 @@ public class ZoneSelectionUI : MonoBehaviour
         if (customWarningModal != null) customWarningModal.SetActive(false);
         if (_proceduralWarningModal != null) _proceduralWarningModal.SetActive(false);
 
-        // Open Shop
-        if (ShopManager.Instance != null)
+        // Open Shop and bring it to the front
+        var sm = ShopManager.Instance ?? FindFirstObjectByType<ShopManager>(FindObjectsInactive.Include);
+        if (sm == null)
         {
-            ShopManager.Instance.ShowShop();
+            var pCanvas = Resources.Load<GameObject>("UI/PersistentCanvasUI");
+            if (pCanvas != null)
+            {
+                var go = Instantiate(pCanvas);
+                go.name = "PersistentCanvasUI";
+                DontDestroyOnLoad(go);
+                sm = go.GetComponentInChildren<ShopManager>(true);
+            }
+        }
+
+        if (sm != null)
+        {
+            sm.gameObject.SetActive(true);
+            sm.transform.SetAsLastSibling();
+            sm.ShowShop();
         }
         else
         {
             var shopGO = new GameObject("ShopManager");
-            var sm = shopGO.AddComponent<ShopManager>();
-            sm.ShowShop();
+            var newSm = shopGO.AddComponent<ShopManager>();
+            newSm.transform.SetAsLastSibling();
+            newSm.ShowShop();
         }
     }
 
@@ -305,6 +364,7 @@ public class ZoneSelectionUI : MonoBehaviour
     public void OnBackClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
+        Time.timeScale = 1f;
         CloseZoneSelection();
 
         // If in a dedicated standalone menu scene like ZoneSelect, return to MainMenu
@@ -378,8 +438,11 @@ public class ZoneSelectionUI : MonoBehaviour
         headR.sizeDelta = new Vector2(0f, 90f);
         headerGO.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
 
-        // Back Button
-        CreateButton("BackBtn", "◀ MAIN MENU", new Vector2(30f, -45f), new Vector2(200f, 50f), new Color(0.12f, 0.22f, 0.35f), OnBackClicked, headerGO.transform, font, 20);
+        // Back Button (hidden during exploration / after tutorial, visible in menu scenes)
+        _proceduralBackBtn = CreateButton("BackBtn", "◀ BACK", new Vector2(30f, -45f), new Vector2(200f, 50f), new Color(0.12f, 0.22f, 0.35f), OnBackClicked, headerGO.transform, font, 20, out _proceduralBackBtnText);
+        string activeScene = SceneManager.GetActiveScene().name;
+        bool isMenuScene = activeScene == "MainMenu" || activeScene == "ZoneSelect";
+        _proceduralBackBtn.gameObject.SetActive(isMenuScene);
 
         // Title
         CreateText("Title", "OCEAN ZONE SELECTION", new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(600f, 50f), 36, FontStyles.Bold, Color.white, headerGO.transform, font);
@@ -694,6 +757,13 @@ public class ZoneSelectionUI : MonoBehaviour
         tmp.color = Color.white;
         tmp.text = label;
 
+        return btn;
+    }
+
+    private Button CreateButton(string name, string label, Vector2 pos, Vector2 size, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, float fontSize, out TMP_Text labelText, Vector2? anchor = null)
+    {
+        var btn = CreateButton(name, label, pos, size, color, action, parent, font, fontSize, anchor);
+        labelText = btn.GetComponentInChildren<TMP_Text>();
         return btn;
     }
 }

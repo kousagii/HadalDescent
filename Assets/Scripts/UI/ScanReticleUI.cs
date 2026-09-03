@@ -82,12 +82,18 @@ public class ScanReticleUI : MonoBehaviour
         bool hideReticle = (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen)
                         || (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
                         || (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
-                        || (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen);
+                        || (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen)
+                        || (ShopManager.Instance != null && ShopManager.Instance.IsOpen)
+                        || (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen)
+                        || (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused);
 
         if (hideReticle)
         {
             if (_rootRect != null && _rootRect.gameObject.activeSelf)
                 _rootRect.gameObject.SetActive(false);
+            if (_statusLabel != null) _statusLabel.text = "";
+            if (_viewBestiaryBtn != null && _viewBestiaryBtn.gameObject.activeSelf)
+                _viewBestiaryBtn.gameObject.SetActive(false);
             return;
         }
         else
@@ -149,6 +155,11 @@ public class ScanReticleUI : MonoBehaviour
     {
         if (_rootRect != null)
             _rootRect.gameObject.SetActive(visible);
+        if (!visible)
+        {
+            if (_statusLabel != null) _statusLabel.text = "";
+            if (_viewBestiaryBtn != null) _viewBestiaryBtn.gameObject.SetActive(false);
+        }
     }
 
     private void OnEnable()
@@ -263,8 +274,12 @@ public class ScanReticleUI : MonoBehaviour
 
     private void OnViewBestiaryPressed()
     {
-        if (BestiaryManager.Instance != null && !string.IsNullOrEmpty(_currentSpeciesId))
-            BestiaryManager.Instance.ShowBestiaryAndScrollTo(_currentSpeciesId);
+        var bm = BestiaryManager.Instance ?? FindFirstObjectByType<BestiaryManager>(FindObjectsInactive.Include);
+        if (bm != null && !string.IsNullOrEmpty(_currentSpeciesId))
+        {
+            bm.gameObject.SetActive(true);
+            bm.ShowBestiaryAndScrollTo(_currentSpeciesId);
+        }
     }
 
     private Image CreateArmImage(Transform parent, string name)

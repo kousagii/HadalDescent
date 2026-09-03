@@ -540,7 +540,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1307377766219246709}
-  - component: {fileID: 5905688281245918962}
   - component: {fileID: 4553577286924066381}
   m_Layer: 5
   m_Name: HUD
@@ -580,7 +579,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2433321228177980611}
+  m_GameObject: {fileID: 2715863633342814071}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d81a898b44405543ab42656712f2e9c, type: 3}
@@ -634,6 +633,7 @@ GameObject:
   - component: {fileID: 6341230498455138606}
   - component: {fileID: 2532829306034615977}
   - component: {fileID: 5342460187325309079}
+  - component: {fileID: 5905688281245918962}
   m_Layer: 5
   m_Name: SonarMap
   m_TagString: Untagged

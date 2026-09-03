@@ -185,6 +185,8 @@ public class MainMenuController : MonoBehaviour
         }
 
         AudioManager.Instance?.PlayButtonClick();
+        if (customConfirmPopupRoot != null) customConfirmPopupRoot.SetActive(false);
+        if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
         GameManager.Instance.LoadGame();
 
         if (continueOpensZoneSelection)
@@ -293,6 +295,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (customConfirmPopupRoot != null)
         {
+            customConfirmPopupRoot.transform.SetAsLastSibling();
             customConfirmPopupRoot.SetActive(true);
             return;
         }
@@ -304,6 +307,7 @@ public class MainMenuController : MonoBehaviour
 
         if (_proceduralConfirmModal != null)
         {
+            _proceduralConfirmModal.transform.SetAsLastSibling();
             _proceduralConfirmModal.SetActive(true);
         }
     }
@@ -326,13 +330,47 @@ public class MainMenuController : MonoBehaviour
         if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
     }
 
+    private void OnDestroy()
+    {
+        if (_proceduralConfirmModal != null)
+        {
+            Destroy(_proceduralConfirmModal);
+            _proceduralConfirmModal = null;
+        }
+    }
+
+    private Canvas GetMainMenuCanvas()
+    {
+        // 1. Prefer the canvas holding our MainMenu buttons (guaranteed to be the active MainMenu scene canvas)
+        if (newGameButton != null)
+        {
+            var c = newGameButton.GetComponentInParent<Canvas>();
+            if (c != null) return c;
+        }
+
+        if (continueButton != null)
+        {
+            var c = continueButton.GetComponentInParent<Canvas>();
+            if (c != null) return c;
+        }
+
+        // 2. Search for any canvas belonging to this GameObject's scene (excluding DontDestroyOnLoad canvases)
+        foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+        {
+            if (c.gameObject.scene == gameObject.scene)
+                return c;
+        }
+
+        return FindFirstObjectByType<Canvas>();
+    }
+
     // -----------------------------------------------------------------------
     // Procedural Confirmation Modal Fallback (Non-overlapping 36pt layout)
     // -----------------------------------------------------------------------
 
     private void BuildProceduralConfirmModal()
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = GetMainMenuCanvas();
         if (canvas == null) return;
 
         var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")

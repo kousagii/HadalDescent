@@ -104,7 +104,7 @@ public class BestiaryManager : MonoBehaviour
 
     private void Start()
     {
-        if (bestiaryPanel != null) bestiaryPanel.SetActive(false);
+        if (!_isOpen && bestiaryPanel != null) bestiaryPanel.SetActive(false);
         if (detailModal != null)   detailModal.SetActive(false);
 
         if (bestiaryCloseButton != null)
@@ -130,8 +130,14 @@ public class BestiaryManager : MonoBehaviour
 
     public void ShowBestiary()
     {
+        gameObject.SetActive(true);
+        transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
         _isOpen = true;
-        if (bestiaryPanel != null) bestiaryPanel.SetActive(true);
+        if (bestiaryPanel != null)
+        {
+            bestiaryPanel.SetActive(true);
+            bestiaryPanel.transform.localPosition = new Vector3(bestiaryPanel.transform.localPosition.x, bestiaryPanel.transform.localPosition.y, 0f);
+        }
         if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
         if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
         RefreshBestiary();
@@ -149,8 +155,9 @@ public class BestiaryManager : MonoBehaviour
 
     public void ToggleBestiary()
     {
-        if (_isOpen) HideBestiary();
-        else         ShowBestiary();
+        bool isActuallyOpen = _isOpen && bestiaryPanel != null && bestiaryPanel.activeInHierarchy;
+        if (isActuallyOpen) HideBestiary();
+        else                ShowBestiary();
     }
 
     public void SelectTab(int filterIndex)

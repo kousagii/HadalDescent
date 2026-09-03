@@ -113,7 +113,7 @@ public class ShopManager : MonoBehaviour
 
     private void Start()
     {
-        if (shopPanel != null)
+        if (!_isOpen && shopPanel != null)
             shopPanel.SetActive(false);
 
         if (closeButton != null)
@@ -228,13 +228,46 @@ public class ShopManager : MonoBehaviour
 
     public void ShowShop()
     {
+        gameObject.SetActive(true);
+        transform.SetAsLastSibling();
+        transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
         if (shopPanel == null)
         {
             BuildProceduralShopUI();
         }
 
         _isOpen = true;
-        if (shopPanel != null) shopPanel.SetActive(true);
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(true);
+            shopPanel.transform.SetAsLastSibling();
+            shopPanel.transform.localPosition = new Vector3(shopPanel.transform.localPosition.x, shopPanel.transform.localPosition.y, 0f);
+
+            // Ensure shop panel renders above all other canvases (e.g. ZoneSelectionUI canvas at 9998)
+            var canvas = shopPanel.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = shopPanel.AddComponent<Canvas>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9999;
+
+            var raycaster = shopPanel.GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                shopPanel.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveListener(HideShop);
+            closeButton.onClick.AddListener(HideShop);
+        }
+
+        if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
+        if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
+
         RefreshShopUI();
     }
 
@@ -242,12 +275,22 @@ public class ShopManager : MonoBehaviour
     {
         _isOpen = false;
         if (shopPanel != null) shopPanel.SetActive(false);
+
+        if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(true);
+        if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+
+        if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen)
+        {
+            ZoneSelectionUI.Instance.RefreshAllZoneCards();
+            ZoneSelectionUI.Instance.transform.SetAsLastSibling();
+        }
     }
 
     public void ToggleShop()
     {
-        if (_isOpen) HideShop();
-        else         ShowShop();
+        bool isActuallyOpen = _isOpen && shopPanel != null && shopPanel.activeInHierarchy;
+        if (isActuallyOpen) HideShop();
+        else                ShowShop();
     }
 
     public int GetCurrentTier(UpgradeCategory category)
@@ -318,6 +361,7 @@ public class ShopManager : MonoBehaviour
 
         OnUpgradePurchased?.Invoke(category, newTier);
         RefreshShopUI();
+        ZoneSelectionUI.Instance?.RefreshAllZoneCards();
         return true;
     }
 
@@ -410,6 +454,10 @@ public class ShopManager : MonoBehaviour
         // Dark dim backdrop
         var rootGO = new GameObject("ShopModalRoot", typeof(RectTransform), typeof(Image), typeof(GraphicRaycaster));
         rootGO.transform.SetParent(canvas.transform, false);
+        var rootCanvas = rootGO.AddComponent<Canvas>();
+        rootCanvas.overrideSorting = true;
+        rootCanvas.sortingOrder = 9999;
+
         var rootRect = rootGO.GetComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero; rootRect.anchorMax = Vector2.one; rootRect.sizeDelta = Vector2.zero;
         var bg = rootGO.GetComponent<Image>();

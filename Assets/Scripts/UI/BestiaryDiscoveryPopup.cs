@@ -89,6 +89,8 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     public void Show(SpeciesData data, bool isNew)
     {
         if (data == null) return;
+        gameObject.SetActive(true);
+        transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
         _lastSpeciesId = data.speciesId;
 
         if (_autoCloseCoroutine != null) StopCoroutine(_autoCloseCoroutine);

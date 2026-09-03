@@ -86,6 +86,8 @@ public class FactCardUI : MonoBehaviour
     {
         if (data == null) return;
 
+        gameObject.SetActive(true);
+
         if (customCardPanel != null)
         {
             customCardPanel.SetActive(true);

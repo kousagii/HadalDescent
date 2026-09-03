@@ -1234,7 +1234,7 @@ MonoBehaviour:
   zoneIndex: 0
   triggerRadius: 14
   triggerCooldown: 180
-  testTriggerOnStart: 1
+  testTriggerOnStart: 0
   initialTestDelay: 4
   enablePeriodicSurge: 1
 --- !u!135 &1302282772

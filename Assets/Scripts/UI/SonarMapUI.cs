@@ -85,7 +85,20 @@ public class SonarMapUI : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        // Safety: If attached to HUD root instead of SonarMap child, redirect and self-remove
+        if (gameObject.name == "HUD")
+        {
+            var mapChild = transform.Find("SonarMap") ?? transform.Find("Map placeholder") ?? transform.Find("Map");
+            if (mapChild != null)
+            {
+                var existing = mapChild.GetComponent<SonarMapUI>();
+                if (existing == null) mapChild.gameObject.AddComponent<SonarMapUI>();
+            }
+            Destroy(this);
+            return;
+        }
+
+        if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
 
         EnsureSprites();
@@ -309,7 +322,12 @@ public class SonarMapUI : MonoBehaviour
     {
         var rootRect = GetComponent<RectTransform>();
         if (rootRect == null) rootRect = gameObject.AddComponent<RectTransform>();
-        rootRect.sizeDelta = new Vector2(250f, 250f);
+
+        // Only set rootRect sizeDelta if it's not a stretched full-screen rect
+        if (rootRect.anchorMin == rootRect.anchorMax)
+        {
+            rootRect.sizeDelta = new Vector2(250f, 250f);
+        }
 
         var existingImg = GetComponent<Image>();
         if (existingImg != null)

@@ -138,6 +138,42 @@ public class TutorialManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        bool isMenu = scene.name == "MainMenu" || scene.name == "SplashScreen" || scene.name == "ZoneSelect";
+        if (isMenu)
+        {
+            HideAllTutorialModals();
+            return;
+        }
+
+        if (scene.name == "SunlightZone" && !GameManager.IsTutorialCompleted())
+        {
+            StartCoroutine(PromptTutorialAfterSceneReady());
+        }
+    }
+
+    public void HideAllTutorialModals()
+    {
+        if (customTutorialRoot != null) customTutorialRoot.SetActive(false);
+        if (customPromptModal != null) customPromptModal.SetActive(false);
+        if (customCompletionModal != null) customCompletionModal.SetActive(false);
+
+        if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
+        if (_proceduralStepCard != null) _proceduralStepCard.SetActive(false);
+        if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
+    }
+
     private void Start()
     {
         if (customTutorialRoot != null)
@@ -155,7 +191,10 @@ public class TutorialManager : MonoBehaviour
     private IEnumerator PromptTutorialAfterSceneReady()
     {
         yield return new WaitForSeconds(0.5f);
-        ShowTutorialPrompt();
+        if (!GameManager.IsTutorialCompleted() && SceneManager.GetActiveScene().name == "SunlightZone")
+        {
+            ShowTutorialPrompt();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -177,6 +216,7 @@ public class TutorialManager : MonoBehaviour
 
         if (_proceduralPromptModal != null)
         {
+            _proceduralPromptModal.transform.SetAsLastSibling();
             _proceduralPromptModal.SetActive(true);
         }
     }
@@ -199,7 +239,16 @@ public class TutorialManager : MonoBehaviour
         if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
 
         GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped by player.");
+        Debug.Log("[TutorialManager] Tutorial skipped by player — opening Zone Selection.");
+
+        if (ZoneSelectionUI.Instance != null)
+        {
+            ZoneSelectionUI.Instance.OpenZoneSelection();
+        }
+        else if (UIManager.Instance != null)
+        {
+            UIManager.Instance.OpenZoneSelection();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -275,7 +324,16 @@ public class TutorialManager : MonoBehaviour
 
         _isTutorialActive = false;
         GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped.");
+        Debug.Log("[TutorialManager] Tutorial skipped — opening Zone Selection.");
+
+        if (ZoneSelectionUI.Instance != null)
+        {
+            ZoneSelectionUI.Instance.OpenZoneSelection();
+        }
+        else if (UIManager.Instance != null)
+        {
+            UIManager.Instance.OpenZoneSelection();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -391,6 +449,7 @@ public class TutorialManager : MonoBehaviour
                 ?? TMP_Settings.defaultFontAsset;
 
         _proceduralCanvasGO = new GameObject("Tutorial_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        DontDestroyOnLoad(_proceduralCanvasGO);
         var canvas = _proceduralCanvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 9997;
