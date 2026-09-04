@@ -401,7 +401,7 @@ public class UIManager : MonoBehaviour
 
         // 4. Ensure inner popup panels are deactivated on startup
         var root = transform.root;
-        string[] innerPanels = { "ShopPanel", "DetailModal", "BestiaryPanel", "ZoneSelectionPanel", "PausePanel", "CardPanel", "FactCardPanel" };
+        string[] innerPanels = { "ShopPanel", "DetailModal", "BestiaryPanel", "ZoneSelectionPanel", "PausePanel", "CardPanel", "FactCardPanel", "BoundaryPopupPanel", "HullWarningPanel" };
         foreach (var name in innerPanels)
         {
             var t = FindChildRecursive(root, name);
@@ -411,11 +411,21 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // 5. Clean up any stray MainMenu overwrite modals that could have attached to PersistentCanvasUI
+        // 5. Clean up any stray MainMenu overwrite modals or boundary popups that could have attached to PersistentCanvasUI
         var orphanModal = FindChildRecursive(root, "OverwriteConfirmModal");
         if (orphanModal != null)
         {
             Destroy(orphanModal.gameObject);
+        }
+        var orphanBoundary = FindChildRecursive(root, "BoundaryPopup_Auto");
+        if (orphanBoundary != null)
+        {
+            Destroy(orphanBoundary.gameObject);
+        }
+        var orphanHull = FindChildRecursive(root, "HullWarning_Auto");
+        if (orphanHull != null)
+        {
+            Destroy(orphanHull.gameObject);
         }
     }
 

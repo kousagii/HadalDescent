@@ -53,6 +53,8 @@ public class ZoneSelectionUI : MonoBehaviour
     private GameObject _proceduralWarningModal;
     private TMP_Text   _proceduralWarningTitle;
     private TMP_Text   _proceduralWarningDesc;
+    private Button     _proceduralWarningShopBtn;
+    private TMP_Text   _proceduralWarningShopBtnText;
     private TMP_Text   _proceduralRdpText;
     private TMP_Text   _proceduralHullText;
     private Button     _proceduralBackBtn;
@@ -151,26 +153,15 @@ public class ZoneSelectionUI : MonoBehaviour
             if (_proceduralRoot != null) _proceduralRoot.SetActive(true);
         }
 
-        string curScene = SceneManager.GetActiveScene().name;
-        bool isMenu = curScene == "MainMenu" || curScene == "ZoneSelect";
-
         if (customBackButton != null)
         {
-            customBackButton.gameObject.SetActive(isMenu);
+            customBackButton.gameObject.SetActive(true);
         }
 
         if (_proceduralBackBtn != null)
         {
-            if (isMenu)
-            {
-                _proceduralBackBtn.gameObject.SetActive(true);
-                if (_proceduralBackBtnText != null) _proceduralBackBtnText.text = "◀ BACK";
-            }
-            else
-            {
-                // Remove / hide the back button completely after tutorial or during exploration
-                _proceduralBackBtn.gameObject.SetActive(false);
-            }
+            _proceduralBackBtn.gameObject.SetActive(true);
+            if (_proceduralBackBtnText != null) _proceduralBackBtnText.text = "◀ MAIN MENU";
         }
 
         RefreshAllZoneCards();
@@ -240,6 +231,14 @@ public class ZoneSelectionUI : MonoBehaviour
             if (custom.lockOverlay != null) custom.lockOverlay.SetActive(!isUnlocked);
             if (custom.enterButton != null)
             {
+                string curScene = SceneManager.GetActiveScene().name;
+                bool isCurZone = curScene == zone.sceneName;
+                var btnTxt = custom.enterButton.GetComponentInChildren<TMP_Text>();
+                if (btnTxt != null)
+                {
+                    btnTxt.text = isCurZone ? "◀ GO BACK" : (isUnlocked ? "ENTER ZONE" : "LOCKED 🔒");
+                }
+
                 custom.enterButton.onClick.RemoveAllListeners();
                 int idx = zoneIndex;
                 custom.enterButton.onClick.AddListener(() => OnZoneCardClicked(idx));
@@ -254,6 +253,18 @@ public class ZoneSelectionUI : MonoBehaviour
     public void OnZoneCardClicked(int zoneIndex)
     {
         AudioManager.Instance?.PlayButtonClick();
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (ZoneConfig.IsValidZone(zoneIndex) && currentScene == ZoneConfig.Zones[zoneIndex].sceneName)
+        {
+            // Player chose "GO BACK" to resume current dive
+            Time.timeScale = 1f;
+            CloseZoneSelection();
+
+            // Push back the player safely and dismiss any boundary popups
+            ZoneBoundaryTrigger.PushPlayerFromActiveBoundary();
+            return;
+        }
 
         bool isUnlocked = GameManager.Instance != null && GameManager.Instance.IsZoneUnlocked(zoneIndex);
 
@@ -276,6 +287,7 @@ public class ZoneSelectionUI : MonoBehaviour
 
         Time.timeScale = 1f;
         CloseZoneSelection();
+        ZoneBoundaryTrigger.PushPlayerFromActiveBoundary();
 
         if (SceneManager.GetActiveScene().name != sceneName)
         {
@@ -293,17 +305,46 @@ public class ZoneSelectionUI : MonoBehaviour
         ZoneDefinition zone = ZoneConfig.Zones[zoneIndex];
         int currentHull = GameManager.Instance != null ? GameManager.Instance.HullTier : 1;
 
-        string title = "⚠️ PRESSURE THRESHOLD EXCEEDED";
-        string desc = $"Your submarine cannot withstand the deep-sea pressure of <b>{zone.zoneName}</b> ({zone.displayDepthMin:F0}m – {zone.displayDepthMax:F0}m).\n\n" +
-                      $"<color=#ffcc00><b>Unlock Requirements:</b></color>\n" +
-                      $"• Hull Resistance: <b>Tier {details.reqHull}</b> required (Current: Tier {currentHull})\n" +
-                      $"• Research Progress: Document at least <b>50% species</b> in {details.prevZoneName} ({details.currentSpecies}/{details.reqSpecies} found)\n\n" +
-                      $"Upgrade your Hull in the <b>Shop</b> to proceed.";
+        bool hullMet = currentHull >= details.reqHull;
+        bool speciesMet = details.currentSpecies >= details.reqSpecies;
+        bool onlySpeciesMissing = hullMet && !speciesMet;
+
+        string title = onlySpeciesMissing ? "🔍 SPECIES DISCOVERY REQUIRED" : "⚠️ PRESSURE THRESHOLD EXCEEDED";
+        string desc = onlySpeciesMissing
+            ? $"To access <b>{zone.zoneName}</b>, you must document at least 50% of the species in {details.prevZoneName}.\n\n" +
+              $"<color=#ffcc00><b>Research Progress:</b></color>\n" +
+              $"• {details.prevZoneName}: <b>{details.currentSpecies} / {details.reqSpecies} species documented</b>\n\n" +
+              $"Consult your <b>Bestiary</b> to track and locate missing species."
+            : $"Your submarine cannot withstand the deep-sea pressure of <b>{zone.zoneName}</b> ({zone.displayDepthMin:F0}m – {zone.displayDepthMax:F0}m).\n\n" +
+              $"<color=#ffcc00><b>Unlock Requirements:</b></color>\n" +
+              $"• Hull Resistance: <b>Tier {details.reqHull}</b> required (Current: Tier {currentHull})\n" +
+              $"• Research Progress: Document at least <b>50% species</b> in {details.prevZoneName} ({details.currentSpecies}/{details.reqSpecies} found)\n\n" +
+              $"Upgrade your Hull in the <b>Shop</b> to proceed.";
 
         if (customWarningModal != null)
         {
             if (customWarningTitleText != null) customWarningTitleText.text = title;
             if (customWarningDescText != null) customWarningDescText.text = desc;
+            if (customWarningShopButton != null)
+            {
+                var lbl = customWarningShopButton.GetComponentInChildren<TMP_Text>(true);
+                if (lbl != null) lbl.text = onlySpeciesMissing ? "BESTIARY 📖" : "GO TO SHOP 🛠️";
+                var leg = customWarningShopButton.GetComponentInChildren<Text>(true);
+                if (leg != null) leg.text = onlySpeciesMissing ? "BESTIARY" : "GO TO SHOP";
+
+                customWarningShopButton.onClick.RemoveAllListeners();
+                if (onlySpeciesMissing)
+                {
+                    customWarningShopButton.onClick.AddListener(() => {
+                        OnWarningCloseClicked();
+                        BestiaryManager.OpenBestiary();
+                    });
+                }
+                else
+                {
+                    customWarningShopButton.onClick.AddListener(OnWarningShopClicked);
+                }
+            }
             customWarningModal.SetActive(true);
             return;
         }
@@ -312,6 +353,24 @@ public class ZoneSelectionUI : MonoBehaviour
         {
             if (_proceduralWarningTitle != null) _proceduralWarningTitle.text = title;
             if (_proceduralWarningDesc != null) _proceduralWarningDesc.text = desc;
+            if (_proceduralWarningShopBtn != null)
+            {
+                if (_proceduralWarningShopBtnText != null)
+                    _proceduralWarningShopBtnText.text = onlySpeciesMissing ? "BESTIARY 📖" : "GO TO SHOP 🛠️";
+
+                _proceduralWarningShopBtn.onClick.RemoveAllListeners();
+                if (onlySpeciesMissing)
+                {
+                    _proceduralWarningShopBtn.onClick.AddListener(() => {
+                        OnWarningCloseClicked();
+                        BestiaryManager.OpenBestiary();
+                    });
+                }
+                else
+                {
+                    _proceduralWarningShopBtn.onClick.AddListener(OnWarningShopClicked);
+                }
+            }
             _proceduralWarningModal.SetActive(true);
         }
     }
@@ -367,9 +426,8 @@ public class ZoneSelectionUI : MonoBehaviour
         Time.timeScale = 1f;
         CloseZoneSelection();
 
-        // If in a dedicated standalone menu scene like ZoneSelect, return to MainMenu
         string curScene = SceneManager.GetActiveScene().name;
-        if (curScene == "ZoneSelect")
+        if (curScene != "MainMenu")
         {
             SceneManager.LoadScene("MainMenu");
         }
@@ -571,9 +629,28 @@ public class ZoneSelectionUI : MonoBehaviour
 
         CreateText("SpeciesLbl", $"Species Cataloged: {discovered} / {total}", new Vector2(0.5f, 1f), new Vector2(0f, -370f), new Vector2(280f, 30f), 18, FontStyles.Bold, Color.white, cardGO.transform, font);
 
-        // Enter / Locked Action Button
-        string btnText = isUnlocked ? "ENTER ZONE" : "LOCKED 🔒";
-        Color btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
+        // Enter / Locked / Current Zone Action Button
+        string currentScene = SceneManager.GetActiveScene().name;
+        bool isCurrentZone = (currentScene == zone.sceneName);
+
+        string btnText;
+        Color btnColor;
+
+        if (isCurrentZone)
+        {
+            btnText = "◀ GO BACK";
+            btnColor = new Color(0.12f, 0.48f, 0.70f);
+        }
+        else if (isUnlocked)
+        {
+            btnText = "ENTER ZONE";
+            btnColor = new Color(0.08f, 0.65f, 0.55f);
+        }
+        else
+        {
+            btnText = "LOCKED 🔒";
+            btnColor = new Color(0.25f, 0.28f, 0.32f);
+        }
 
         int idx = zoneIndex;
         CreateButton("ActionBtn", btnText, new Vector2(0f, 40f), new Vector2(260f, 54f), btnColor, () => OnZoneCardClicked(idx), cardGO.transform, font, 22, new Vector2(0.5f, 0f));
@@ -641,7 +718,7 @@ public class ZoneSelectionUI : MonoBehaviour
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        CreateButton("ShopBtn", "GO TO SHOP 🛠️", Vector2.zero, new Vector2(250f, 54f), new Color(0.08f, 0.65f, 0.55f), OnWarningShopClicked, btnRow.transform, font, 22);
+        _proceduralWarningShopBtn = CreateButton("ShopBtn", "GO TO SHOP", Vector2.zero, new Vector2(250f, 54f), new Color(0.08f, 0.65f, 0.55f), OnWarningShopClicked, btnRow.transform, font, 22, out _proceduralWarningShopBtnText);
         CreateButton("CloseBtn", "CANCEL", Vector2.zero, new Vector2(250f, 54f), new Color(0.18f, 0.25f, 0.35f), OnWarningCloseClicked, btnRow.transform, font, 22);
 
         _proceduralWarningModal.SetActive(false);

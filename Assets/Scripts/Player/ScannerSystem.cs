@@ -465,8 +465,7 @@ public class ScannerSystem : MonoBehaviour
 
         ClearAllDetection();
 
-        var discoveryPopup = BestiaryDiscoveryPopup.Instance ?? FindFirstObjectByType<BestiaryDiscoveryPopup>(FindObjectsInactive.Include);
-        discoveryPopup?.Show(data, isNew);
+        BestiaryDiscoveryPopup.ShowPopup(data, isNew);
         Debug.Log($"[ScannerSystem] Scan success: {data.commonName} (new={isNew})");
     }
 
@@ -513,8 +512,7 @@ public class ScannerSystem : MonoBehaviour
 
         ClearAllDetection();
 
-        var fc = FactCardUI.Instance ?? FindFirstObjectByType<FactCardUI>(FindObjectsInactive.Include);
-        if (fc != null) fc.Show(data, isNew);
+        FactCardUI.ShowFactCard(data, isNew);
         Debug.Log($"[ScannerSystem] Interact: {data.commonName} (new={isNew})");
     }
 

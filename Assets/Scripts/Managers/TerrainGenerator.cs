@@ -65,6 +65,9 @@ public class TerrainGenerator : MonoBehaviour
     /// <summary>Y coordinate of the zone seabed baseline (world space). Used as fallback.</summary>
     public float SeabedY => _seabedY;
 
+    /// <summary>Random seed used to generate the PCG terrain mesh and biomes.</summary>
+    public float PcgSeed => _pcgSeed;
+
     /// <summary>
     /// Query the BiomeBand at a world (x, z) position.
     /// Used by SpeciesSpawner to validate candidate spawn positions.

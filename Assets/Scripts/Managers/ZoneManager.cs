@@ -17,9 +17,25 @@ public class ZoneManager : MonoBehaviour
 {
     // -----------------------------------------------------------------------
     // Singleton
-    // -----------------------------------------------------------------------
-
-    public static ZoneManager Instance { get; private set; }
+    private static ZoneManager _instance;
+    public static ZoneManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindFirstObjectByType<ZoneManager>();
+                if (_instance == null)
+                {
+                    var go = new GameObject("ZoneManager");
+                    _instance = go.AddComponent<ZoneManager>();
+                    DontDestroyOnLoad(go);
+                }
+            }
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     // -----------------------------------------------------------------------
     // Zone state (static so DepthTracker can read without a reference)
@@ -124,7 +140,23 @@ public class ZoneManager : MonoBehaviour
         {
             AudioManager.Instance.PlayMainMenuBGM();
         }
-        SceneManager.LoadScene(zoneSelectSceneName);
+
+        if (ZoneSelectionUI.Instance != null)
+        {
+            ZoneSelectionUI.Instance.OpenZoneSelection();
+        }
+        else if (UIManager.Instance != null)
+        {
+            UIManager.Instance.OpenZoneSelection();
+        }
+        else if (Application.CanStreamedLevelBeLoaded(zoneSelectSceneName))
+        {
+            SceneManager.LoadScene(zoneSelectSceneName);
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -184,16 +216,30 @@ public class ZoneManager : MonoBehaviour
             else
             {
                 Transform spawnPoint = EnteredFromAbove ? _topSpawn : _bottomSpawn;
+                Vector3 spawnPos;
+                Quaternion spawnRot = Quaternion.identity;
                 if (spawnPoint != null)
                 {
-                    sub.transform.position = spawnPoint.position;
-                    sub.transform.rotation = spawnPoint.rotation;
+                    // If entered from above, spawn slightly below surface (Depth ~8m)
+                    // so the player does not instantly touch the surface boundary on frame 1
+                    Vector3 offset = EnteredFromAbove ? new Vector3(0f, -5f, 0f) : new Vector3(0f, 6f, 0f);
+                    spawnPos = spawnPoint.position + offset;
+                    spawnRot = spawnPoint.rotation;
                 }
                 else
                 {
                     // Fallback: top-centre or bottom-centre of zone
-                    float spawnY = EnteredFromAbove ? 0f : -zone.playableDepth + 10f;
-                    sub.transform.position = new Vector3(0f, spawnY, 0f);
+                    float spawnY = EnteredFromAbove ? -6f : -zone.playableDepth + 10f;
+                    spawnPos = new Vector3(0f, spawnY, 0f);
+                }
+
+                sub.transform.position = spawnPos;
+                sub.transform.rotation = spawnRot;
+                var subRb = sub.GetComponent<Rigidbody>();
+                if (subRb != null)
+                {
+                    subRb.position = spawnPos;
+                    subRb.linearVelocity = Vector3.zero;
                 }
 
                 // Snap camera yaw so there's no jarring snap

@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 
@@ -53,26 +54,45 @@ public class FactCardUI : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (customCloseButton != null)
+        {
+            customCloseButton.onClick.RemoveListener(Hide);
+            customCloseButton.onClick.AddListener(Hide);
+        }
     }
 
     private void Start()
     {
         _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
 
+        if (customCloseButton != null)
+        {
+            customCloseButton.onClick.RemoveListener(Hide);
+            customCloseButton.onClick.AddListener(Hide);
+        }
+
         if (customCardPanel != null)
         {
-            customCardPanel.SetActive(false);
-            if (customCloseButton != null)
-                customCloseButton.onClick.AddListener(Hide);
+            if (!_isOpen)
+                customCardPanel.SetActive(false);
         }
         else
         {
-            BuildPanel();
+            if (!_isOpen)
+                BuildPanel();
         }
     }
 
     private void Update()
     {
+        bool escapePressed = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+        if (_isOpen && escapePressed)
+        {
+            Hide();
+            return;
+        }
+
         if (customCardPanel == null && _panel != null)
         {
             float targetY = _isOpen ? 0f : -PanelHeight - 40f;
@@ -82,15 +102,64 @@ public class FactCardUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Safely finds or instantiates FactCardUI and displays the species fact card.
+    /// </summary>
+    public static FactCardUI ShowFactCard(SpeciesData data, bool isNewDiscovery)
+    {
+        var fc = Instance ?? FindFirstObjectByType<FactCardUI>(FindObjectsInactive.Include);
+        if (fc == null)
+        {
+            var pCanvas = FindFirstObjectByType<Canvas>();
+            var prefab = Resources.Load<GameObject>("UI/FactCardUI")
+                      ?? Resources.Load<GameObject>("Prefabs/UI/FactCardUI");
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab, pCanvas != null ? pCanvas.transform : null);
+                go.name = "FactCardUI";
+                fc = go.GetComponentInChildren<FactCardUI>(true);
+            }
+        }
+
+        if (fc != null)
+        {
+            fc.gameObject.SetActive(true);
+            fc.Show(data, isNewDiscovery);
+        }
+        else
+        {
+            Debug.LogError("[FactCardUI] Failed to locate or load FactCardUI!");
+        }
+        return fc;
+    }
+
     public void Show(SpeciesData data, bool isNewDiscovery)
     {
         if (data == null) return;
 
         gameObject.SetActive(true);
+        _isOpen = true;
 
         if (customCardPanel != null)
         {
             customCardPanel.SetActive(true);
+            customCardPanel.transform.SetAsLastSibling();
+            customCardPanel.transform.localPosition = new Vector3(customCardPanel.transform.localPosition.x, customCardPanel.transform.localPosition.y, 0f);
+
+            var canvas = customCardPanel.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = customCardPanel.AddComponent<Canvas>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9999;
+
+            var raycaster = customCardPanel.GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                customCardPanel.AddComponent<GraphicRaycaster>();
+            }
+
             Sprite display = data.photo != null ? data.photo : data.fullImage;
             if (customPhoto != null)
             {
@@ -108,16 +177,32 @@ public class FactCardUI : MonoBehaviour
         }
         else
         {
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
             if (_panel == null) BuildPanel();
+            if (_panel != null)
+            {
+                _panel.gameObject.SetActive(true);
+                _panel.SetAsLastSibling();
+            }
             PopulateCard(data, isNewDiscovery);
-            _isOpen = true;
         }
     }
 
     public void Hide()
     {
         _isOpen = false;
-        if (customCardPanel != null) customCardPanel.SetActive(false);
+        if (customCardPanel != null)
+        {
+            customCardPanel.SetActive(false);
+        }
+        if (_panel != null)
+        {
+            _panel.gameObject.SetActive(false);
+        }
+        if (customCardPanel == gameObject)
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void PopulateCard(SpeciesData data, bool isNew)

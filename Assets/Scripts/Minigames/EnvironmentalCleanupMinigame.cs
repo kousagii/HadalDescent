@@ -185,18 +185,24 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void Awake()
     {
-        if (customUIRoot != null)
-            customUIRoot.SetActive(false);
-        else
-            gameObject.SetActive(false);
+        if (!_isActive)
+        {
+            if (customUIRoot != null)
+                customUIRoot.SetActive(false);
+            else
+                gameObject.SetActive(false);
+        }
     }
 
     private void Start()
     {
-        if (customUIRoot != null)
-            customUIRoot.SetActive(false);
-        else
-            gameObject.SetActive(false);
+        if (!_isActive)
+        {
+            if (customUIRoot != null)
+                customUIRoot.SetActive(false);
+            else
+                gameObject.SetActive(false);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -214,6 +220,41 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     public void Show()
     {
         _isActive = true;
+        gameObject.SetActive(true);
+        StopAllCoroutines();
+
+        if (customUIRoot == null && (gameObject.name.Contains("Minigame3") || GetComponent<RectTransform>() != null))
+        {
+            customUIRoot = gameObject;
+        }
+
+        if (_resultsPanel != null) { Destroy(_resultsPanel); _resultsPanel = null; }
+        if (_sortingPanel != null) { Destroy(_sortingPanel); _sortingPanel = null; }
+        if (_dedicatedCanvasGO != null) { Destroy(_dedicatedCanvasGO); _dedicatedCanvasGO = null; }
+        if (_stageRoot != null) { Destroy(_stageRoot); _stageRoot = null; }
+
+        if (customUIRoot != null)
+        {
+            for (int i = customUIRoot.transform.childCount - 1; i >= 0; i--)
+            {
+                var child = customUIRoot.transform.GetChild(i);
+                if (child.name.StartsWith("ResultsPanel_Auto") || child.name.StartsWith("SortingPanel_Auto") || child.name.StartsWith("StatusBanner_Auto") || child.name.StartsWith("TimerText_Auto") || child.name.StartsWith("ScoreText_Auto"))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+
+        // Thoroughly purge any leftover procedural panels across all canvases in the scene
+        var allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTransforms)
+        {
+            if (t != null && (t.name.StartsWith("ResultsPanel_Auto") || t.name.StartsWith("SortingPanel_Auto")))
+            {
+                Destroy(t.gameObject);
+            }
+        }
+
         _collectedDebris.Clear();
         _spawnedDebris.Clear();
         _spawnedObstacles.Clear();
@@ -237,6 +278,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         BuildUI();
         SpawnDebrisAndObstacles();
 
+        gameObject.SetActive(true);
         StartCoroutine(ExtractionPhaseRoutine());
     }
 
@@ -285,21 +327,29 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         _minigameCam = camGO.GetComponent<Camera>();
         _minigameCam.clearFlags      = CameraClearFlags.SolidColor;
-        _minigameCam.backgroundColor = new Color(0.02f, 0.12f, 0.22f, 1f);
+        _minigameCam.backgroundColor = new Color(0.08f, 0.35f, 0.52f, 1f);
         _minigameCam.fieldOfView     = 46f;
         _minigameCam.nearClipPlane   = 0.3f;
         _minigameCam.farClipPlane    = 50f;
         _minigameCam.depth           = 100;
 
-        // 2. Underwater Lighting
+        // 2. Underwater Lighting (Key Light + Fill Light to prevent dark murky scenes)
         var lightGO = new GameObject("StageLight", typeof(Light));
         lightGO.transform.SetParent(_stageRoot.transform, false);
         lightGO.transform.localPosition = new Vector3(0f, 6f, -4f);
         var l = lightGO.GetComponent<Light>();
         l.type      = LightType.Directional;
-        l.color     = new Color(0.4f, 0.90f, 1.0f);
-        l.intensity = 2.0f;
-        lightGO.transform.localRotation = Quaternion.Euler(45f, 0f, 0f);
+        l.color     = new Color(0.85f, 0.95f, 1.0f);
+        l.intensity = 0.3f;
+        lightGO.transform.localRotation = Quaternion.Euler(50f, -15f, 0f);
+
+        var fillGO = new GameObject("StageFillLight", typeof(Light));
+        fillGO.transform.SetParent(_stageRoot.transform, false);
+        var fill = fillGO.GetComponent<Light>();
+        fill.type      = LightType.Directional;
+        fill.color     = new Color(0.35f, 0.65f, 0.85f);
+        fill.intensity = 0.5f;
+        fillGO.transform.localRotation = Quaternion.Euler(-35f, 165f, 0f);
 
         // 3. Seabed Sand Floor
         var floorGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -307,7 +357,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         floorGO.transform.SetParent(_stageRoot.transform, false);
         floorGO.transform.localPosition = new Vector3(0f, -3.2f, 0f);
         floorGO.transform.localScale    = new Vector3(22f, 1.2f, 8f);
-        floorGO.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.48f, 0.38f));
+        floorGO.GetComponent<Renderer>().material = CreateMaterial(new Color(0.72f, 0.65f, 0.48f));
 
         // 4. Overhead Gantry Track
         var trackGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -616,37 +666,41 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         // 1. Auto-discover custom UI panel in Canvas if unassigned
         if (customUIRoot == null)
         {
-            var found = GameObject.Find("Minigame3HUD") ?? GameObject.Find("Minigame3_HUD") ?? GameObject.Find("Minigame3");
-            if (found == null)
+            if (gameObject.name.IndexOf("Minigame3", StringComparison.OrdinalIgnoreCase) >= 0 || GetComponent<RectTransform>() != null)
             {
-                var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                foreach (var c in allCanvases)
-                {
-                    for (int i = 0; i < c.transform.childCount; i++)
-                    {
-                        var child = c.transform.GetChild(i);
-                        if (child.name.Equals("Minigame3HUD", StringComparison.OrdinalIgnoreCase) ||
-                            child.name.Equals("Minigame3", StringComparison.OrdinalIgnoreCase))
-                        {
-                            found = child.gameObject;
-                            break;
-                        }
-                    }
-                    if (found != null) break;
-                }
+                customUIRoot = gameObject;
             }
-            if (found != null) customUIRoot = found;
+            else
+            {
+                var found = GameObject.Find("Minigame3HUD") ?? GameObject.Find("Minigame3_HUD") ?? GameObject.Find("Minigame3");
+                if (found == null)
+                {
+                    var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                    foreach (var c in allCanvases)
+                    {
+                        for (int i = 0; i < c.transform.childCount; i++)
+                        {
+                            var child = c.transform.GetChild(i);
+                            if (child.name.IndexOf("Minigame3", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                found = child.gameObject;
+                                break;
+                            }
+                        }
+                        if (found != null) break;
+                    }
+                }
+                if (found != null) customUIRoot = found;
+            }
         }
 
         // 2. Setup Dedicated Canvas for Minigame
         if (_dedicatedCanvasGO != null) Destroy(_dedicatedCanvasGO);
 
         _dedicatedCanvasGO = new GameObject("Minigame3_DedicatedCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        _dedicatedCanvasGO.layer = LayerMask.NameToLayer("UI");
         _parentCanvas = _dedicatedCanvasGO.GetComponent<Canvas>();
-        _parentCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-        _parentCanvas.worldCamera = _minigameCam;
-        _parentCanvas.planeDistance = 5f; // Ensures it renders right in front of the camera
-        _parentCanvas.sortingLayerName = "UI";
+        _parentCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         _parentCanvas.sortingOrder = 100;
 
         var scaler = _dedicatedCanvasGO.GetComponent<CanvasScaler>();
@@ -672,6 +726,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
             customUIRoot.SetActive(true);
 
+            // Disable the full-screen 78% black tint on Minigame3HUD so the 3D underwater scene is bright and not darkened
+            var rootImg = customUIRoot.GetComponent<Image>();
+            if (rootImg != null)
+            {
+                rootImg.enabled = false;
+                rootImg.color = new Color(0f, 0f, 0f, 0f);
+                rootImg.raycastTarget = false;
+            }
+
             // Auto-wire Header
             if (customTimerText == null) customTimerText = FindDeepChild<TMP_Text>(customUIRoot, "Timer", "TimerText", "Time");
             if (customTimerTextLegacy == null && customTimerText == null) customTimerTextLegacy = FindDeepChild<Text>(customUIRoot, "Timer", "TimerText", "Time");
@@ -692,8 +755,23 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customScoreText == null) customScoreText = FindDeepChild<TMP_Text>(customUIRoot, "Score", "ScoreText", "Collect");
             if (customScoreTextLegacy == null && customScoreText == null) customScoreTextLegacy = FindDeepChild<Text>(customUIRoot, "Score", "ScoreText", "Collect");
 
+            // Fallbacks in case HUD does not contain Timer/Score
+            if (customTimerText == null && customTimerTextLegacy == null)
+            {
+                customTimerText = CreateUIText(_dedicatedCanvasGO.transform, "TimerText_Auto", "Time: 0:25", 28, new Vector2(0.85f, 0.94f), TextAlignmentOptions.Right, Color.white);
+            }
+            if (customScoreText == null && customScoreTextLegacy == null)
+            {
+                customScoreText = CreateUIText(_dedicatedCanvasGO.transform, "ScoreText_Auto", "COLLECT: 0", 28, new Vector2(0.55f, 0.94f), TextAlignmentOptions.Right, new Color(1f, 0.85f, 0.2f));
+            }
+
             if (customStatusText == null) customStatusText = FindDeepChild<TMP_Text>(customUIRoot, "Status", "StatusText", "Banner");
             if (customStatusTextLegacy == null && customStatusText == null) customStatusTextLegacy = FindDeepChild<Text>(customUIRoot, "Status", "StatusText", "Banner");
+            if (customStatusText == null && customStatusTextLegacy == null)
+            {
+                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.88f), new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(720f, 45f), new Color(0f, 0f, 0f, 0.65f));
+                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 19, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white);
+            }
 
             // Auto-wire Phase 1 Controls
             if (customDropClawButton == null) customDropClawButton = FindDeepChild<Button>(customUIRoot, "DropButton", "DropClaw", "Drop", "BtnDrop");
@@ -727,6 +805,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 var img = customJoystickBackground.GetComponent<Image>();
                 if (img != null) img.raycastTarget = true;
                 WireJoystickEvents(customJoystickBackground.gameObject);
+            }
+            if (customJoystickHandle != null)
+            {
+                var hImg = customJoystickHandle.GetComponent<Image>();
+                if (hImg != null) hImg.raycastTarget = false;
             }
 
             // Hide Phase 2 & 3 elements on start
@@ -1061,7 +1144,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         }
 
         // 2. Safe Fallback: Auto-generate the 3 sorting buttons right on the active panel
-        Transform parentTransform = customUIRoot != null ? customUIRoot.transform : (_dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : transform);
+        Transform parentTransform = _dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : (customUIRoot != null ? customUIRoot.transform : transform);
 
         if (_sortingPanel == null)
         {
@@ -1168,27 +1251,28 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             return;
         }
 
-        // 2. Safe Fallback: Auto-generate results panel
-        Transform parentTransform = customUIRoot != null ? customUIRoot.transform : (_dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : transform);
-        _resultsPanel = CreateUIPanel(parentTransform, "ResultsPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800f, 500f), new Color(0.02f, 0.08f, 0.14f, 0.98f));
+        // 2. Safe Fallback: Auto-generate results panel strictly on dedicated canvas
+        Transform parentTransform = _dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : transform;
+        _resultsPanel = CreateUIPanel(parentTransform, "ResultsPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 480f), new Color(0.03f, 0.08f, 0.15f, 0.98f));
 
-        CreateUIText(_resultsPanel.transform, "Title", "🌿 ECOSYSTEM RESTORED 🌿", 32, new Vector2(0.5f, 0.85f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.7f));
+        CreateUIText(_resultsPanel.transform, "Title", "ECOSYSTEM RESTORED", 30, new Vector2(0.5f, 0.84f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.75f));
 
         string richSummary =
             $"<b>Debris Retrieved:</b> {totalCleaned} items\n" +
             $"<b>Sorting Accuracy:</b> {accuracy}%\n" +
             $"<b>Research Points Earned:</b> <color=#ffdd00>+{rdpReward} RDP</color>\n\n" +
             $"<color=#00e0ff><b>✦ OBJECTIVES COMPLETE</b></color>\n" +
-            $"<size=20><b>Increased spawn rate by 20%</b>\nTime left: 45s</size>";
+            $"Increased species spawn rate by 20% (45s)";
 
-        CreateUIText(_resultsPanel.transform, "Summary", richSummary, 20, new Vector2(0.5f, 0.50f), TextAlignmentOptions.Center, Color.white);
+        CreateUIText(_resultsPanel.transform, "Summary", richSummary, 20, new Vector2(0.5f, 0.50f), TextAlignmentOptions.Center, Color.white, new Vector2(680f, 220f));
 
-        CreateUIButton(_resultsPanel.transform, "BtnReturn", "RETURN TO EXPLORATION", new Vector2(0.5f, 0.15f), new Vector2(320f, 70f), OnFinishMinigame, new Color(0f, 0.75f, 0.65f));
+        CreateUIButton(_resultsPanel.transform, "BtnReturn", "RETURN TO EXPLORATION", new Vector2(0.5f, 0.15f), new Vector2(340f, 65f), OnFinishMinigame, new Color(0f, 0.75f, 0.65f));
     }
 
     private void OnFinishMinigame()
     {
         _isActive = false;
+        StopAllCoroutines();
 
         if (_targetCluster != null)
         {
@@ -1213,6 +1297,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         if (_resultsPanel != null) Destroy(_resultsPanel);
         if (_stageRoot != null) Destroy(_stageRoot);
         if (_dedicatedCanvasGO != null) Destroy(_dedicatedCanvasGO);
+
+        var allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTransforms)
+        {
+            if (t != null && (t.name.StartsWith("ResultsPanel_Auto") || t.name.StartsWith("SortingPanel_Auto")))
+            {
+                Destroy(t.gameObject);
+            }
+        }
 
         RestoreSceneCamera();
 
@@ -1293,7 +1386,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         return go;
     }
 
-    private static TMP_Text CreateUIText(Transform parent, string name, string text, float fontSize, Vector2 anchorPos, TextAlignmentOptions align, Color col)
+    private static TMP_Text CreateUIText(Transform parent, string name, string text, float fontSize, Vector2 anchorPos, TextAlignmentOptions align, Color col, Vector2? size = null)
     {
         var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
                 ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
@@ -1304,13 +1397,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var r = go.GetComponent<RectTransform>();
         r.anchorMin = r.anchorMax = anchorPos;
         r.anchoredPosition = Vector2.zero;
-        r.sizeDelta = new Vector2(720f, 150f);
+        r.sizeDelta = size ?? new Vector2(720f, 150f);
         var tmp = go.GetComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.text = text;
         tmp.fontSize = fontSize > 0 ? fontSize : 36f;
         tmp.alignment = align;
         tmp.color = col;
+        tmp.richText = true;
+        tmp.enableWordWrapping = true;
         return tmp;
     }
 
@@ -1342,10 +1437,14 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var tmp = textGO.GetComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.text = label;
-        tmp.fontSize = 36;
+        tmp.fontSize = 20;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
+        tmp.enableAutoSizing = true;
+        tmp.fontSizeMin = 14;
+        tmp.fontSizeMax = 24;
+        tmp.raycastTarget = false;
 
         return btn;
     }

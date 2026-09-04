@@ -60,7 +60,16 @@ public class DebrisSpawner : MonoBehaviour
 
             float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -d;
 
-            Vector3 spawnPos = new Vector3(rx, floorY, rz);
+            Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
+            Vector3 spawnPos;
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                spawnPos = hit.point;
+            }
+            else
+            {
+                spawnPos = new Vector3(rx, floorY, rz);
+            }
             SpawnSingleCluster(spawnPos, i);
         }
 

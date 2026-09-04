@@ -131,20 +131,28 @@ public class HazardDodgeMinigame : MonoBehaviour
     private Image[]       _hullPipImages;
     private TMP_Text      _resultBanner;
 
+    private bool         _isActive       = false;
+
     private void Awake()
     {
-        if (customUIRoot != null)
-            customUIRoot.SetActive(false);
-        else
-            gameObject.SetActive(false);
+        if (!_isActive)
+        {
+            if (customUIRoot != null)
+                customUIRoot.SetActive(false);
+            else
+                gameObject.SetActive(false);
+        }
     }
 
     private void Start()
     {
-        if (customUIRoot != null)
-            customUIRoot.SetActive(false);
-        else
-            gameObject.SetActive(false);
+        if (!_isActive)
+        {
+            if (customUIRoot != null)
+                customUIRoot.SetActive(false);
+            else
+                gameObject.SetActive(false);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -188,16 +196,25 @@ public class HazardDodgeMinigame : MonoBehaviour
         _isRunning     = false;
         _isFinished    = false;
         _touchActive   = false;
+        _isActive      = true;
+
+        gameObject.SetActive(true);
 
         BuildStage();
         BuildUI();
 
-        // Ensure Minigame HUD is hidden at the start of Show()
-        if (customUIRoot != null) customUIRoot.SetActive(false);
-        if (_rootUI != null)      _rootUI.gameObject.SetActive(false);
-
-        // Begin Phase 1 Alert Sequence
         StartCoroutine(Phase1AlertSequence());
+    }
+
+    private CanvasGroup GetCanvasGroup()
+    {
+        if (customUIRoot == null) return null;
+        var cg = customUIRoot.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = customUIRoot.AddComponent<CanvasGroup>();
+        }
+        return cg;
     }
 
     private void EnsureExplorationVignette()
@@ -228,12 +245,27 @@ public class HazardDodgeMinigame : MonoBehaviour
         EnsureExplorationVignette();
 
         // Keep Minigame HUD / 2.5D viewport hidden during first-person exploration alert
-        if (customUIRoot != null) customUIRoot.SetActive(false);
-        if (_rootUI != null)      _rootUI.gameObject.SetActive(false);
+        if (customUIRoot != null)
+        {
+            if (customUIRoot == gameObject)
+            {
+                var cg = GetCanvasGroup();
+                if (cg != null)
+                {
+                    cg.alpha = 0f;
+                    cg.blocksRaycasts = false;
+                }
+            }
+            else
+            {
+                customUIRoot.SetActive(false);
+            }
+        }
+        if (_rootUI != null)              _rootUI.gameObject.SetActive(false);
         if (_warningBanner != null)       _warningBanner.SetActive(false);
-        if (customWarningBanner != null) customWarningBanner.SetActive(false);
-        if (_resultBanner != null)       _resultBanner.gameObject.SetActive(false);
-        if (customResultBanner != null)  customResultBanner.gameObject.SetActive(false);
+        if (customWarningBanner != null)  customWarningBanner.SetActive(false);
+        if (_resultBanner != null)        _resultBanner.gameObject.SetActive(false);
+        if (customResultBanner != null)   customResultBanner.gameObject.SetActive(false);
 
         // 1. Red flashing light on exploration screen (First-Person view) for 1.5 seconds
         float elapsed = 0f;
@@ -251,6 +283,12 @@ public class HazardDodgeMinigame : MonoBehaviour
         if (customUIRoot != null)
         {
             customUIRoot.SetActive(true);
+            var cg = GetCanvasGroup();
+            if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = true;
+            }
             if (customViewportRawImage != null)
             {
                 customViewportRawImage.texture = _stageRT;
@@ -683,6 +721,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         if (_resultBanner != null) _resultBanner.gameObject.SetActive(false);
         if (customResultBanner != null) customResultBanner.gameObject.SetActive(false);
 
+        _isActive = false;
         if (success) _onSuccess?.Invoke(totalReward);
         else         _onFail?.Invoke();
     }

@@ -187,7 +187,23 @@ public class PlayerMovement : MonoBehaviour
             (camForward  * moveInput.y +
              bodyRight   * moveInput.x) * effectiveSpeed;
 
+        // Prevent submarine from moving above ocean surface (Y > 0)
+        if (rb.position.y >= 0f && targetVelocity.y > 0f)
+        {
+            targetVelocity.y = 0f;
+        }
+
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
+
+        // Clamp position to water surface ceiling
+        if (rb.position.y > 0f)
+        {
+            rb.position = new Vector3(rb.position.x, 0f, rb.position.z);
+            if (rb.linearVelocity.y > 0f)
+            {
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            }
+        }
     }
 
     private void TurnBodyToCamera()

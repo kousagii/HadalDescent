@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -41,15 +42,75 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     // Private state
     // -----------------------------------------------------------------------
 
+    public static float _globalCooldownTimer = 3.0f; // Startup grace period preventing frame-1 popup
     private bool _popupActive = false;
+    private GameObject _playerSub;
 
     // -----------------------------------------------------------------------
     // Unity lifecycle
     // -----------------------------------------------------------------------
 
+    private void Awake()
+    {
+        _globalCooldownTimer = 4.0f;
+        _popupActive = false;
+    }
+
+    private void OnDestroy()
+    {
+        DismissAllPopups();
+        if (boundaryPopupUI != null && boundaryPopupUI.name.Contains("_Auto"))
+        {
+            Destroy(boundaryPopupUI);
+        }
+        if (hullWarningUI != null && hullWarningUI.name.Contains("_Auto"))
+        {
+            Destroy(hullWarningUI);
+        }
+    }
+
     private void Start()
     {
-        GetComponent<Collider>().isTrigger = true;
+        _globalCooldownTimer = 4.0f;
+        _popupActive = false;
+
+        var canvas = FindFirstObjectByType<Canvas>();
+        if (canvas != null)
+        {
+            var strayB = canvas.transform.Find("BoundaryPopup_Auto");
+            if (strayB != null) Destroy(strayB.gameObject);
+            var strayH = canvas.transform.Find("HullWarning_Auto");
+            if (strayH != null) Destroy(strayH.gameObject);
+        }
+
+        var col = GetComponent<BoxCollider>();
+        if (col != null)
+        {
+            col.isTrigger = true;
+            int zoneIdx = ZoneManager.CurrentZoneIndex;
+            if (ZoneConfig.IsValidZone(zoneIdx))
+            {
+                ZoneDefinition zone = ZoneConfig.Zones[zoneIdx];
+                float w = Mathf.Max(zone.playableWidth * 2f, 1500f);
+                float l = Mathf.Max(zone.playableLength * 2f, 1500f);
+
+                if (isBottomBoundary)
+                {
+                    var tracker = FindFirstObjectByType<DepthTracker>();
+                    float floorY = tracker != null ? tracker.ZoneBottomY : -145f;
+                    transform.position = new Vector3(0f, floorY, 0f);
+                    col.size = new Vector3(w, 35f, l);
+                    col.center = Vector3.zero;
+                }
+                else
+                {
+                    // Strictly at or above surface Y >= 0 (thickness 4m, centered at Y=2)
+                    transform.position = new Vector3(0f, 0f, 0f);
+                    col.size = new Vector3(w, 4f, l);
+                    col.center = new Vector3(0f, 2f, 0f);
+                }
+            }
+        }
 
         if (boundaryPopupUI == null)
         {
@@ -70,13 +131,77 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    private void Update()
+    {
+        if (_globalCooldownTimer > 0f)
+        {
+            _globalCooldownTimer -= Time.unscaledDeltaTime;
+            return;
+        }
+
+        if (_popupActive) return;
+
+        if (_playerSub == null)
+        {
+            var pm = FindFirstObjectByType<PlayerMovement>();
+            if (pm != null) _playerSub = pm.gameObject;
+        }
+
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        if (tracker != null)
+        {
+            int currentZone = ZoneManager.CurrentZoneIndex;
+            if (ZoneConfig.IsValidZone(currentZone))
+            {
+                ZoneDefinition zone = ZoneConfig.Zones[currentZone];
+
+                if (isBottomBoundary)
+                {
+                    // STRICT 3m difference: only trigger if depth is within 3m of the bottom
+                    if (tracker.CurrentDepth >= zone.displayDepthMax - 3f)
+                    {
+                        HandleDescentBoundary();
+                    }
+                }
+                else
+                {
+                    // STRICT 3m difference: only trigger if depth is within 3m of the surface
+                    if (tracker.CurrentDepth <= 3f)
+                    {
+                        HandleAscentBoundary();
+                    }
+                }
+            }
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
-        if (_popupActive) return;
+        if (_playerSub == null) _playerSub = other.gameObject;
+        if (_popupActive || _globalCooldownTimer > 0f) return;
 
-        if (isBottomBoundary) HandleDescentBoundary();
-        else                  HandleAscentBoundary();
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        if (tracker == null) return;
+
+        int currentZone = ZoneManager.CurrentZoneIndex;
+        if (!ZoneConfig.IsValidZone(currentZone)) return;
+        ZoneDefinition zone = ZoneConfig.Zones[currentZone];
+
+        if (isBottomBoundary)
+        {
+            if (tracker.CurrentDepth >= zone.displayDepthMax - 3f)
+            {
+                HandleDescentBoundary();
+            }
+        }
+        else
+        {
+            if (tracker.CurrentDepth <= 3f)
+            {
+                HandleAscentBoundary();
+            }
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -91,8 +216,16 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private void HandleDescentBoundary()
     {
+        if (_popupActive || _globalCooldownTimer > 0f) return;
+
         int currentZone = ZoneManager.CurrentZoneIndex;
-        int nextZone    = currentZone + 1;
+        if (!ZoneConfig.IsValidZone(currentZone)) return;
+        ZoneDefinition curZone = ZoneConfig.Zones[currentZone];
+
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        if (tracker != null && tracker.CurrentDepth < curZone.displayDepthMax - 3f) return;
+
+        int nextZone = currentZone + 1;
 
         if (!ZoneConfig.IsValidZone(nextZone))
         {
@@ -128,21 +261,51 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         // --- All requirements met — show descent prompt ---
         ShowBoundaryPopup(
             $"Proceed to {next.zoneName}?",
-            confirmAction: () => ZoneManager.Instance.LoadZone(nextZone, enteredFromAbove: true)
+            confirmAction: () =>
+            {
+                if (ZoneManager.Instance != null)
+                {
+                    ZoneManager.Instance.LoadZone(nextZone, enteredFromAbove: true);
+                }
+                else
+                {
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(next.sceneName);
+                }
+            }
         );
     }
 
     private void HandleAscentBoundary()
     {
+        if (_popupActive || _globalCooldownTimer > 0f) return;
+
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        // STRICT 3m difference: only trigger if depth is within 3m of the surface (depth <= 3m)
+        if (tracker != null && tracker.CurrentDepth > 3f) return;
+
         int currentZone   = ZoneManager.CurrentZoneIndex;
         int previousZone  = currentZone - 1;
 
         if (!ZoneConfig.IsValidZone(previousZone))
         {
-            // Already in shallowest zone — could load zone select instead
+            // Already in shallowest zone (Sunlight Zone surface) — open Zone Selection UI!
             ShowBoundaryPopup(
                 "Return to Zone Selection?",
-                confirmAction: () => ZoneManager.Instance.ReturnToZoneSelect()
+                confirmAction: () =>
+                {
+                    if (ZoneSelectionUI.Instance != null)
+                    {
+                        ZoneSelectionUI.Instance.OpenZoneSelection();
+                    }
+                    else if (UIManager.Instance != null)
+                    {
+                        UIManager.Instance.OpenZoneSelection();
+                    }
+                    else if (ZoneManager.Instance != null)
+                    {
+                        ZoneManager.Instance.ReturnToZoneSelect();
+                    }
+                }
             );
             return;
         }
@@ -150,7 +313,17 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         ZoneDefinition prev = ZoneConfig.Zones[previousZone];
         ShowBoundaryPopup(
             $"Return to {prev.zoneName}?",
-            confirmAction: () => ZoneManager.Instance.LoadZone(previousZone, enteredFromAbove: false)
+            confirmAction: () =>
+            {
+                if (ZoneManager.Instance != null)
+                {
+                    ZoneManager.Instance.LoadZone(previousZone, enteredFromAbove: false);
+                }
+                else
+                {
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(prev.sceneName);
+                }
+            }
         );
     }
 
@@ -169,16 +342,20 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
         if (boundaryPopupUI == null)
         {
-            boundaryPopupUI = CreateSimplePopupPanel(canvas.transform, "BoundaryPopup_Auto", out boundaryPopupMessage, showCancel: true);
+            var existing = canvas.transform.Find("BoundaryPopup_Auto");
+            if (existing != null) Destroy(existing.gameObject);
+            boundaryPopupUI = CreateSimplePopupPanel(canvas.transform, "BoundaryPopup_Auto", out boundaryPopupMessage, isWarning: false);
         }
 
         if (hullWarningUI == null)
         {
-            hullWarningUI = CreateSimplePopupPanel(canvas.transform, "HullWarning_Auto", out hullWarningMessage, showCancel: false);
+            var existingH = canvas.transform.Find("HullWarning_Auto");
+            if (existingH != null) Destroy(existingH.gameObject);
+            hullWarningUI = CreateSimplePopupPanel(canvas.transform, "HullWarning_Auto", out hullWarningMessage, isWarning: true);
         }
     }
 
-    private GameObject CreateSimplePopupPanel(Transform canvasTransform, string panelName, out TMP_Text textComponent, bool showCancel)
+    private GameObject CreateSimplePopupPanel(Transform canvasTransform, string panelName, out TMP_Text textComponent, bool isWarning)
     {
         var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
                 ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
@@ -186,43 +363,48 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
         GameObject panel = new GameObject(panelName, typeof(RectTransform), typeof(UnityEngine.UI.Image));
         panel.transform.SetParent(canvasTransform, false);
+        panel.transform.SetAsLastSibling();
 
         RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(560, 320);
+        rect.sizeDelta = new Vector2(620, 360);
         rect.anchoredPosition = Vector2.zero;
 
         UnityEngine.UI.Image img = panel.GetComponent<UnityEngine.UI.Image>();
-        img.color = new Color(0.08f, 0.12f, 0.20f, 0.96f);
+        img.color = new Color(0.04f, 0.08f, 0.16f, 0.98f);
 
         GameObject textGO = new GameObject("MessageText", typeof(RectTransform));
         textGO.transform.SetParent(panel.transform, false);
 
         RectTransform textRect = textGO.GetComponent<RectTransform>();
-        textRect.anchorMin = new Vector2(0.06f, 0.32f);
-        textRect.anchorMax = new Vector2(0.94f, 0.95f);
+        textRect.anchorMin = new Vector2(0.05f, 0.30f);
+        textRect.anchorMax = new Vector2(0.95f, 0.95f);
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
 
         TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 36;
+        tmp.fontSize = 28;
         tmp.fontStyle = FontStyles.Bold;
         tmp.color = Color.white;
         textComponent = tmp;
 
-        CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(showCancel ? -100f : 0f, -85f), () => OnConfirm());
-
-        if (showCancel)
+        if (isWarning)
         {
-            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(100f, -85f), () => OnCancel());
+            CreateButton(panel.transform, "ShopBtn", "GO TO SHOP 🛠️", new Vector2(-125f, -100f), () => OnWarningShopClicked(), 220f);
+            CreateButton(panel.transform, "CancelBtn", "CANCEL", new Vector2(145f, -100f), () => OnCancel(), 160f);
+        }
+        else
+        {
+            CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(-110f, -100f), () => OnConfirm(), 160f);
+            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(110f, -100f), () => OnCancel(), 160f);
         }
 
         panel.SetActive(false);
         return panel;
     }
 
-    private void CreateButton(Transform parent, string name, string labelText, Vector2 position, UnityEngine.Events.UnityAction onClick)
+    private void CreateButton(Transform parent, string name, string labelText, Vector2 position, UnityEngine.Events.UnityAction onClick, float width = 160f)
     {
         var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
                 ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
@@ -232,11 +414,11 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         btnGO.transform.SetParent(parent, false);
 
         RectTransform rect = btnGO.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(160, 54);
+        rect.sizeDelta = new Vector2(width, 54);
         rect.anchoredPosition = position;
 
         UnityEngine.UI.Image img = btnGO.GetComponent<UnityEngine.UI.Image>();
-        img.color = new Color(0.2f, 0.45f, 0.7f, 1f);
+        img.color = new Color(0.12f, 0.45f, 0.7f, 1f);
 
         UnityEngine.UI.Button btn = btnGO.GetComponent<UnityEngine.UI.Button>();
         btn.onClick.AddListener(onClick);
@@ -254,9 +436,84 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         if (font != null) txt.font = font;
         txt.text = labelText;
         txt.alignment = TextAlignmentOptions.Center;
-        txt.fontSize = 36;
+        txt.fontSize = 24;
         txt.fontStyle = FontStyles.Bold;
         txt.color = Color.white;
+        txt.raycastTarget = false;
+    }
+
+    public void PushPlayerAway()
+    {
+        PushPlayerFromActiveBoundary();
+    }
+
+    public static void PushPlayerFromActiveBoundary()
+    {
+        _globalCooldownTimer = 3.5f;
+
+        var triggers = FindObjectsByType<ZoneBoundaryTrigger>(FindObjectsSortMode.None);
+        foreach (var t in triggers)
+        {
+            t.DismissAllPopups();
+        }
+
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        var pm = FindFirstObjectByType<PlayerMovement>();
+        if (pm == null) return;
+        var sub = pm.gameObject;
+        var rb = sub.GetComponent<Rigidbody>();
+
+        float topY = tracker != null ? tracker.ZoneTopY : 0f;
+        float bottomY = tracker != null ? tracker.ZoneBottomY : -145f;
+        float currentDepth = tracker != null ? tracker.CurrentDepth : 10f;
+
+        int currentZone = ZoneManager.CurrentZoneIndex;
+        float maxDepth = ZoneConfig.IsValidZone(currentZone) ? ZoneConfig.Zones[currentZone].displayDepthMax : 200f;
+
+        if (currentDepth >= maxDepth - 10f)
+        {
+            // Push player upwards off the floor to safe depth (~185m, safely outside 3m threshold)
+            float safeY = bottomY + 8f;
+            sub.transform.position = new Vector3(sub.transform.position.x, safeY, sub.transform.position.z);
+            if (rb != null)
+            {
+                rb.position = sub.transform.position;
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(3f, rb.linearVelocity.y), rb.linearVelocity.z);
+            }
+        }
+        else
+        {
+            // Push player downwards below the surface to safe depth (~8-10m, safely outside 3m threshold)
+            float safeY = topY - 5f;
+            sub.transform.position = new Vector3(sub.transform.position.x, safeY, sub.transform.position.z);
+            if (rb != null)
+            {
+                rb.position = sub.transform.position;
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Min(-3f, rb.linearVelocity.y), rb.linearVelocity.z);
+            }
+        }
+    }
+
+    public void OnWarningShopClicked()
+    {
+        DismissAllPopups();
+        PushPlayerAway();
+        if (ShopManager.Instance != null)
+        {
+            ShopManager.Instance.ShowShop();
+        }
+        else
+        {
+            var sm = FindFirstObjectByType<ShopManager>(FindObjectsInactive.Include);
+            sm?.ShowShop();
+        }
+    }
+
+    public void OnWarningBestiaryClicked()
+    {
+        DismissAllPopups();
+        PushPlayerAway();
+        BestiaryManager.OpenBestiary();
     }
 
     private void ShowBoundaryPopup(string message, System.Action confirmAction)
@@ -269,6 +526,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
                 confirmAction?.Invoke();
             }, () => {
                 _popupActive = false;
+                PushPlayerAway();
             });
             return;
         }
@@ -278,7 +536,11 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         _confirmAction = confirmAction;
 
         if (boundaryPopupMessage != null) boundaryPopupMessage.text = message;
-        if (boundaryPopupUI     != null) boundaryPopupUI.SetActive(true);
+        if (boundaryPopupUI     != null)
+        {
+            boundaryPopupUI.transform.SetAsLastSibling();
+            boundaryPopupUI.SetActive(true);
+        }
 
         Debug.Log($"[ZoneBoundary] Popup: {message}");
         PausePlayerInput(true);
@@ -297,7 +559,22 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         if (ZoneBoundaryPopupUI.Instance != null)
         {
             _popupActive = true;
-            ZoneBoundaryPopupUI.Instance.ShowWarning(msg);
+            if (speciesNotMet)
+            {
+                ZoneBoundaryPopupUI.Instance.ShowWarning(msg, () => {
+                    _popupActive = false;
+                    PushPlayerAway();
+                    BestiaryManager.OpenBestiary();
+                }, isSpeciesWarning: true);
+            }
+            else
+            {
+                ZoneBoundaryPopupUI.Instance.ShowWarning(msg, () => {
+                    _popupActive = false;
+                    PushPlayerAway();
+                    ShopManager.Instance?.ShowShop();
+                });
+            }
             return;
         }
 
@@ -305,16 +582,66 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         _popupActive = true;
 
         if (hullWarningMessage != null) hullWarningMessage.text = msg;
-        if (hullWarningUI      != null) hullWarningUI.SetActive(true);
+        if (hullWarningUI      != null)
+        {
+            // Dynamically update the ShopBtn label and action based on warning type
+            Transform shopBtnTr = hullWarningUI.transform.Find("ShopBtn");
+            Button shopBtn = shopBtnTr != null ? shopBtnTr.GetComponent<Button>() : null;
+            if (shopBtn == null)
+            {
+                var allBtns = hullWarningUI.GetComponentsInChildren<Button>(true);
+                foreach (var b in allBtns)
+                {
+                    if (b.name.Contains("Shop") || b.name.Contains("Confirm") || !b.name.Contains("Cancel"))
+                    {
+                        shopBtn = b;
+                        break;
+                    }
+                }
+            }
+
+            if (shopBtn != null)
+            {
+                var shopLabel = shopBtn.GetComponentInChildren<TMP_Text>(true);
+                var legacyLabel = shopBtn.GetComponentInChildren<UnityEngine.UI.Text>(true);
+                shopBtn.onClick.RemoveAllListeners();
+                if (speciesNotMet)
+                {
+                    if (shopLabel != null) shopLabel.text = "GO TO BESTIARY";
+                    if (legacyLabel != null) legacyLabel.text = "BESTIARY";
+                    shopBtn.onClick.AddListener(() => OnWarningBestiaryClicked());
+                }
+                else
+                {
+                    if (shopLabel != null) shopLabel.text = "GO TO SHOP";
+                    if (legacyLabel != null) legacyLabel.text = "GO TO SHOP";
+                    shopBtn.onClick.AddListener(() => OnWarningShopClicked());
+                }
+            }
+
+            hullWarningUI.transform.SetAsLastSibling();
+            hullWarningUI.SetActive(true);
+        }
         Debug.Log($"[ZoneBoundary] Warning: {msg}");
+        PausePlayerInput(true);
     }
 
-    private void DismissAllPopups()
+    public void DismissAllPopups()
     {
         _popupActive = false;
         if (ZoneBoundaryPopupUI.Instance != null) ZoneBoundaryPopupUI.Instance.HideAll();
         if (boundaryPopupUI != null) boundaryPopupUI.SetActive(false);
         if (hullWarningUI   != null) hullWarningUI.SetActive(false);
+
+        var canvas = FindFirstObjectByType<Canvas>();
+        if (canvas != null)
+        {
+            var autoB = canvas.transform.Find("BoundaryPopup_Auto");
+            if (autoB != null) autoB.gameObject.SetActive(false);
+            var autoH = canvas.transform.Find("HullWarning_Auto");
+            if (autoH != null) autoH.gameObject.SetActive(false);
+        }
+
         PausePlayerInput(false);
     }
 
@@ -334,6 +661,8 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     {
         PausePlayerInput(false);
         DismissAllPopups();
+        PushPlayerAway();
+        _globalCooldownTimer = 4.0f;
         _confirmAction?.Invoke();
     }
 
@@ -341,5 +670,6 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     public void OnCancel()
     {
         DismissAllPopups();
+        PushPlayerAway();
     }
 }

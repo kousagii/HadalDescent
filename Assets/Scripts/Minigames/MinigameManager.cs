@@ -190,6 +190,11 @@ public class MinigameManager : MonoBehaviour
 
         EnsureMinigameComponents();
 
+        if (_mg3 != null && !_mg3.gameObject.activeSelf)
+        {
+            _mg3.gameObject.SetActive(true);
+        }
+
         _minigameActive = true;
         DisableControls();
 
@@ -217,6 +222,11 @@ public class MinigameManager : MonoBehaviour
         }
 
         EnsureMinigameComponents();
+
+        if (_mg4 != null && !_mg4.gameObject.activeSelf)
+        {
+            _mg4.gameObject.SetActive(true);
+        }
 
         _minigameActive = true;
         DisableControls();

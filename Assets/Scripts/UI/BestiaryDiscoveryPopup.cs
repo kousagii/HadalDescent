@@ -44,33 +44,51 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (customCloseButton != null)
+        {
+            customCloseButton.onClick.RemoveListener(Hide);
+            customCloseButton.onClick.AddListener(Hide);
+        }
+        if (customViewButton != null)
+        {
+            customViewButton.onClick.RemoveListener(OnViewInBestiaryClicked);
+            customViewButton.onClick.AddListener(OnViewInBestiaryClicked);
+        }
     }
 
     private void Start()
     {
         _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
 
+        if (customCloseButton != null)
+        {
+            customCloseButton.onClick.RemoveListener(Hide);
+            customCloseButton.onClick.AddListener(Hide);
+        }
+        if (customViewButton != null)
+        {
+            customViewButton.onClick.RemoveListener(OnViewInBestiaryClicked);
+            customViewButton.onClick.AddListener(OnViewInBestiaryClicked);
+        }
+
         if (customPopupPanel != null)
         {
-            customPopupPanel.SetActive(false);
-            if (customCloseButton != null)
-                customCloseButton.onClick.AddListener(Hide);
-            if (customViewButton != null)
-                customViewButton.onClick.AddListener(OnViewInBestiaryClicked);
+            if (!_isOpen)
+                customPopupPanel.SetActive(false);
         }
         else
         {
-            BuildPanel();
+            if (!_isOpen)
+                BuildPanel();
         }
     }
 
     private void OnViewInBestiaryClicked()
     {
+        string speciesToView = _lastSpeciesId;
         Hide();
-        if (!string.IsNullOrEmpty(_lastSpeciesId))
-            BestiaryManager.Instance?.ShowBestiaryAndScrollTo(_lastSpeciesId);
-        else
-            BestiaryManager.Instance?.ShowBestiary();
+        BestiaryManager.OpenBestiary(speciesToView);
     }
 
     private void Update()
@@ -86,11 +104,44 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
 
     private Coroutine _autoCloseCoroutine;
 
+    /// <summary>
+    /// Safely finds or instantiates BestiaryDiscoveryPopup and displays it.
+    /// </summary>
+    public static BestiaryDiscoveryPopup ShowPopup(SpeciesData data, bool isNew)
+    {
+        var popup = Instance ?? FindFirstObjectByType<BestiaryDiscoveryPopup>(FindObjectsInactive.Include);
+        if (popup == null)
+        {
+            var pCanvas = FindFirstObjectByType<Canvas>();
+            var prefab = Resources.Load<GameObject>("UI/DiscoveryPopup")
+                      ?? Resources.Load<GameObject>("Prefabs/UI/DiscoveryPopup");
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab, pCanvas != null ? pCanvas.transform : null);
+                go.name = "DiscoveryPopup";
+                popup = go.GetComponentInChildren<BestiaryDiscoveryPopup>(true);
+            }
+        }
+
+        if (popup != null)
+        {
+            popup.gameObject.SetActive(true);
+            popup.Show(data, isNew);
+        }
+        else
+        {
+            Debug.LogError("[BestiaryDiscoveryPopup] Failed to locate or load BestiaryDiscoveryPopup!");
+        }
+        return popup;
+    }
+
     public void Show(SpeciesData data, bool isNew)
     {
         if (data == null) return;
         gameObject.SetActive(true);
         transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
+        transform.SetAsLastSibling();
+        _isOpen = true;
         _lastSpeciesId = data.speciesId;
 
         if (_autoCloseCoroutine != null) StopCoroutine(_autoCloseCoroutine);
@@ -98,6 +149,23 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         if (customPopupPanel != null)
         {
             customPopupPanel.SetActive(true);
+            customPopupPanel.transform.SetAsLastSibling();
+            customPopupPanel.transform.localPosition = new Vector3(customPopupPanel.transform.localPosition.x, customPopupPanel.transform.localPosition.y, 0f);
+
+            var canvas = customPopupPanel.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = customPopupPanel.AddComponent<Canvas>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9998;
+
+            var raycaster = customPopupPanel.GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                customPopupPanel.AddComponent<GraphicRaycaster>();
+            }
+
             if (customNameText != null)  customNameText.text  = data.commonName;
             if (customTitleText != null) customTitleText.text = isNew ? "Added to Bestiary!" : "Species Observed";
             if (isNew) StartCoroutine(AnimateRDP(data.rdpReward, customRdpText));
@@ -105,12 +173,17 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
         }
         else
         {
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
             if (_panel == null) BuildPanel();
+            if (_panel != null)
+            {
+                _panel.gameObject.SetActive(true);
+                _panel.SetAsLastSibling();
+            }
 
             if (_nameText  != null) _nameText.text  = data.commonName;
             if (_titleText != null) _titleText.text = isNew ? "Added to Bestiary!" : "Species Observed";
 
-            _isOpen = true;
             if (isNew) StartCoroutine(AnimateRDP(data.rdpReward, _rdpText));
             else if (_rdpText != null) _rdpText.text = "";
         }
@@ -133,7 +206,18 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
             _autoCloseCoroutine = null;
         }
         _isOpen = false;
-        if (customPopupPanel != null) customPopupPanel.SetActive(false);
+        if (customPopupPanel != null)
+        {
+            customPopupPanel.SetActive(false);
+        }
+        if (_panel != null)
+        {
+            _panel.gameObject.SetActive(false);
+        }
+        if (customPopupPanel == gameObject)
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private IEnumerator AnimateRDP(int target, TMP_Text label)

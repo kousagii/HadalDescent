@@ -31,6 +31,7 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
 
     private Action _onConfirm;
     private Action _onCancel;
+    private Action _onShop;
 
     private void Awake()
     {
@@ -112,7 +113,7 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         if (warningCloseButton != null)
         {
             warningCloseButton.onClick.RemoveAllListeners();
-            warningCloseButton.onClick.AddListener(HideAll);
+            warningCloseButton.onClick.AddListener(OnWarningCloseClicked);
         }
 
         if (warningShopButton != null)
@@ -147,9 +148,21 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
     /// <summary>
     /// Displays warning when hull tier or species requirement is not met.
     /// </summary>
-    public void ShowWarning(string warningMessage, Action onShop = null)
+    public void ShowWarning(string warningMessage, Action onShop = null, bool isSpeciesWarning = false)
     {
+        _onShop = onShop;
         AutoWireComponents();
+
+        // Update action button label based on warning type
+        string actionLabel = isSpeciesWarning ? "GO TO BESTIARY" : "GO TO SHOP";
+        UpdateButtonLabel(warningShopButton, actionLabel);
+        // Also update confirmButton label and click handler as fallback path
+        if (warningPanel == null && confirmButton != null)
+        {
+            UpdateButtonLabel(confirmButton, actionLabel);
+            confirmButton.onClick.RemoveAllListeners();
+            confirmButton.onClick.AddListener(OnShopClicked);
+        }
 
         if (warningPanel != null)
         {
@@ -165,6 +178,15 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         }
 
         Time.timeScale = 0f;
+    }
+
+    private static void UpdateButtonLabel(Button btn, string label)
+    {
+        if (btn == null) return;
+        var tmp = btn.GetComponentInChildren<TMP_Text>(true);
+        if (tmp != null) { tmp.text = label; return; }
+        var legacy = btn.GetComponentInChildren<Text>(true);
+        if (legacy != null) legacy.text = label;
     }
 
     public void HideAll()
@@ -192,9 +214,25 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         _onCancel?.Invoke();
     }
 
+    private void OnWarningCloseClicked()
+    {
+        HideAll();
+        var triggers = FindObjectsByType<ZoneBoundaryTrigger>(FindObjectsSortMode.None);
+        foreach (var t in triggers) t.PushPlayerAway();
+    }
+
     private void OnShopClicked()
     {
         HideAll();
-        ShopManager.Instance?.ShowShop();
+        if (_onShop != null)
+        {
+            _onShop.Invoke();
+        }
+        else
+        {
+            var triggers = FindObjectsByType<ZoneBoundaryTrigger>(FindObjectsSortMode.None);
+            foreach (var t in triggers) t.PushPlayerAway();
+            ShopManager.Instance?.ShowShop();
+        }
     }
 }

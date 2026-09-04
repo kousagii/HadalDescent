@@ -128,16 +128,85 @@ public class BestiaryManager : MonoBehaviour
     // Public API
     // -----------------------------------------------------------------------
 
+    /// <summary>
+    /// Safely finds or instantiates BestiaryManager and opens the Bestiary modal.
+    /// Handles inactive GameObjects and missing instances cleanly.
+    /// If speciesId is provided, scrolls directly to that species card.
+    /// </summary>
+    public static BestiaryManager OpenBestiary(string speciesId = null)
+    {
+        var bm = Instance ?? FindFirstObjectByType<BestiaryManager>(FindObjectsInactive.Include);
+        if (bm == null)
+        {
+            var pCanvas = FindFirstObjectByType<Canvas>();
+            var prefab = Resources.Load<GameObject>("UI/BestiaryUI")
+                      ?? Resources.Load<GameObject>("Prefabs/UI/BestiaryUI");
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab, pCanvas != null ? pCanvas.transform : null);
+                go.name = "BestiaryUI";
+                bm = go.GetComponentInChildren<BestiaryManager>(true);
+            }
+        }
+
+        if (bm != null)
+        {
+            bm.gameObject.SetActive(true);
+            if (!string.IsNullOrEmpty(speciesId))
+                bm.ShowBestiaryAndScrollTo(speciesId);
+            else
+                bm.ShowBestiary();
+        }
+        else
+        {
+            Debug.LogError("[BestiaryManager] Failed to locate or load BestiaryManager / BestiaryUI!");
+        }
+        return bm;
+    }
+
     public void ShowBestiary()
     {
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
         transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
         _isOpen = true;
         if (bestiaryPanel != null)
         {
             bestiaryPanel.SetActive(true);
+            bestiaryPanel.transform.SetAsLastSibling();
             bestiaryPanel.transform.localPosition = new Vector3(bestiaryPanel.transform.localPosition.x, bestiaryPanel.transform.localPosition.y, 0f);
+
+            var canvas = bestiaryPanel.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = bestiaryPanel.AddComponent<Canvas>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9999;
+
+            var raycaster = bestiaryPanel.GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                bestiaryPanel.AddComponent<GraphicRaycaster>();
+            }
         }
+        else
+        {
+            var canvas = GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = gameObject.AddComponent<Canvas>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9999;
+
+            var raycaster = GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+
         if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
         if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
         RefreshBestiary();
@@ -338,6 +407,7 @@ public class BestiaryManager : MonoBehaviour
     /// </summary>
     public void ShowBestiaryAndScrollTo(string speciesId)
     {
+        _activeFilter = -1;
         ShowBestiary();
         StartCoroutine(ScrollToSpeciesNextFrame(speciesId));
     }

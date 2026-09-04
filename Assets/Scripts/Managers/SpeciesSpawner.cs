@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -75,6 +75,13 @@ public class SpeciesSpawner : MonoBehaviour
             terrain = FindFirstObjectByType<TerrainGenerator>();
         }
 
+        // Deterministic seeding based on generated map seed & zone
+        if (terrain != null)
+        {
+            int seedVal = Mathf.RoundToInt(terrain.PcgSeed * 1337f + zoneIndex * 7919f);
+            Random.InitState(seedVal);
+        }
+
         EnsureCreatureParent();
         ClearExistingCreatures();
 
@@ -125,88 +132,154 @@ public class SpeciesSpawner : MonoBehaviour
 
         // Depth bounds in world Y coordinates:
         // minDepthFraction = 0 (surface Y=0m), maxDepthFraction = 1 (floor Y=-Dm)
-        float depthMinY = Mathf.Lerp(0f, -D, data.minDepthFraction);
-        float depthMaxY = Mathf.Lerp(0f, -D, data.maxDepthFraction);
-        float upperDepthLimit = Mathf.Max(depthMinY, depthMaxY);
-        float lowerDepthLimit = Mathf.Min(depthMinY, depthMaxY);
+        float upperDepthLimit = -Mathf.Min(data.minDepthFraction, data.maxDepthFraction) * D;
+        float lowerDepthLimit = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * D;
+
+        float halfW = W * 0.44f;
+        float halfL = L * 0.44f;
 
         Vector3 bestCandidatePos = Vector3.zero;
         Quaternion bestCandidateRot = Quaternion.identity;
-        float bestDepthDiff = float.MaxValue;
+        float bestScore = float.MinValue;
 
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        // ── Phase 1: Random Search (Strict Habitat + Depth Band + Separation) ──
+        int attempts = Mathf.Max(maxAttempts, 80);
+        for (int attempt = 0; attempt < attempts; attempt++)
         {
-            float rx = Random.Range(-W * 0.44f, W * 0.44f);
-            float rz = Random.Range(-L * 0.44f, L * 0.44f);
+            float rx = Random.Range(-halfW, halfW);
+            float rz = Random.Range(-halfL, halfL);
 
+            BiomeBand biome = terrain != null ? terrain.GetBiomeAt(rx, rz) : data.preferredBiome;
             float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
+
             Vector3 candidatePos;
-            Quaternion candidateRot = Quaternion.identity;
+            Quaternion candidateRot;
 
             if (data.isStationary)
             {
-                // Raycast downward to snap onto rocks, reef props, or the seabed floor
-                Vector3 rayOrigin = new Vector3(rx, 5f, rz);
-                if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, D + 50f, terrainLayerMask))
+                // Benthic / stationary species MUST be planted on the ocean floor or reef structures.
+                Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
+                if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
                     candidatePos = hit.point;
                     Quaternion surfaceAlign = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                    Quaternion randomSpin  = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-                    candidateRot = surfaceAlign * randomSpin;
+                    candidateRot = surfaceAlign * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                 }
                 else
                 {
                     candidatePos = new Vector3(rx, floorY, rz);
                     candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                 }
-
-                // Check depth difference to preferred biological depth window
-                float depthDiff = 0f;
-                if (candidatePos.y > upperDepthLimit) depthDiff = candidatePos.y - upperDepthLimit;
-                else if (candidatePos.y < lowerDepthLimit) depthDiff = lowerDepthLimit - candidatePos.y;
-
-                if (depthDiff < bestDepthDiff)
-                {
-                    bestDepthDiff = depthDiff;
-                    bestCandidatePos = candidatePos;
-                    bestCandidateRot = candidateRot;
-                }
-
-                // Strict biological match for first 25 attempts
-                float tolerance = attempt > 25 ? 15f + (attempt - 25) * 1.5f : 4f;
-                if (depthDiff > tolerance)
-                {
-                    continue; // Keep searching for a closer reef summit or rock structure
-                }
             }
             else
             {
-                // Mobile species: swim in depth band, stay safely above the floor
-                float ry = Random.Range(lowerDepthLimit, upperDepthLimit);
-                ry       = Mathf.Clamp(ry, floorY + 2.5f, -1.5f);
-
+                // Mobile species: swim in depth band, safely above floor
+                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
+                float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                if (minSwimY > maxSwimY)
+                {
+                    // Water column too shallow for this depth band here
+                    continue;
+                }
+                float ry = Random.Range(minSwimY, maxSwimY);
                 candidatePos = new Vector3(rx, ry, rz);
                 candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
 
-            // Minimum separation check against already placed entities
-            bool tooClose = false;
-            foreach (var used in _usedPositions)
+            // Track candidate score for fallback
+            float score = EvaluateCandidate(candidatePos, biome, data, lowerDepthLimit, upperDepthLimit, floorY);
+            if (score > bestScore)
             {
-                if (Vector3.Distance(candidatePos, used) < minSeparation)
-                {
-                    tooClose = true;
-                    break;
-                }
+                bestScore = score;
+                bestCandidatePos = candidatePos;
+                bestCandidateRot = candidateRot;
             }
-            if (tooClose) continue;
+
+            // Strict check: Biome must match preferred habitat
+            if (biome != data.preferredBiome) continue;
+
+            // Strict check: Depth for stationary species
+            if (data.isStationary)
+            {
+                if (candidatePos.y < lowerDepthLimit - 3f || candidatePos.y > upperDepthLimit + 3f)
+                    continue;
+            }
+
+            // Separation check
+            if (!IsSeparated(candidatePos, minSeparation)) continue;
 
             resultPos = candidatePos;
             resultRot = candidateRot;
             return true;
         }
 
-        // Fallback: use best candidate found during search
+        // ── Phase 2: Targeted Grid Search (Guarantee Habitat & Closest Depth) ──
+        int gridSteps = 16;
+        float stepX = (halfW * 2f) / gridSteps;
+        float stepZ = (halfL * 2f) / gridSteps;
+
+        for (int ix = 0; ix < gridSteps; ix++)
+        {
+            for (int iz = 0; iz < gridSteps; iz++)
+            {
+                float rx = -halfW + (ix + Random.Range(0.2f, 0.8f)) * stepX;
+                float rz = -halfL + (iz + Random.Range(0.2f, 0.8f)) * stepZ;
+
+                BiomeBand biome = terrain != null ? terrain.GetBiomeAt(rx, rz) : data.preferredBiome;
+                if (biome != data.preferredBiome && !IsCompatibleBiome(biome, data.preferredBiome))
+                    continue;
+
+                float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
+                Vector3 candidatePos;
+                Quaternion candidateRot;
+
+                if (data.isStationary)
+                {
+                    Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
+                    if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
+                    {
+                        candidatePos = hit.point;
+                        Quaternion surfaceAlign = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                        candidateRot = surfaceAlign * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    }
+                    else
+                    {
+                        candidatePos = new Vector3(rx, floorY, rz);
+                        candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    }
+                }
+                else
+                {
+                    float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
+                    float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                    if (minSwimY > maxSwimY) continue;
+                    float ry = Random.Range(minSwimY, maxSwimY);
+                    candidatePos = new Vector3(rx, ry, rz);
+                    candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                }
+
+                float score = EvaluateCandidate(candidatePos, biome, data, lowerDepthLimit, upperDepthLimit, floorY);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestCandidatePos = candidatePos;
+                    bestCandidateRot = candidateRot;
+                }
+
+                // In Phase 2, accept relaxed separation (50%)
+                if (IsSeparated(candidatePos, minSeparation * 0.5f))
+                {
+                    if (biome == data.preferredBiome)
+                    {
+                        resultPos = candidatePos;
+                        resultRot = candidateRot;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // ── Phase 3: Guaranteed Placement Fallback ──
         if (bestCandidatePos != Vector3.zero)
         {
             resultPos = bestCandidatePos;
@@ -214,6 +287,64 @@ public class SpeciesSpawner : MonoBehaviour
             return true;
         }
 
+        // Final safety fallback if terrain sampling was completely degenerate
+        float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -2f);
+        resultPos = new Vector3(Random.Range(-halfW * 0.5f, halfW * 0.5f), fallbackY, Random.Range(-halfL * 0.5f, halfL * 0.5f));
+        resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        return true;
+    }
+
+    private bool IsSeparated(Vector3 pos, float minDist)
+    {
+        for (int i = 0; i < _usedPositions.Count; i++)
+        {
+            if (Vector3.Distance(pos, _usedPositions[i]) < minDist)
+                return false;
+        }
+        return true;
+    }
+
+    private float EvaluateCandidate(Vector3 pos, BiomeBand biome, SpeciesData data, float lowerDepth, float upperDepth, float floorY)
+    {
+        float score = 0f;
+
+        // 1. Biome alignment score
+        if (biome == data.preferredBiome) score += 400f;
+        else if (IsCompatibleBiome(biome, data.preferredBiome)) score += 150f;
+
+        // 2. Depth alignment score
+        float depthDist = 0f;
+        if (data.isStationary)
+        {
+            if (pos.y < lowerDepth) depthDist = lowerDepth - pos.y;
+            else if (pos.y > upperDepth) depthDist = pos.y - upperDepth;
+        }
+        else
+        {
+            if (pos.y < lowerDepth) depthDist = lowerDepth - pos.y;
+            else if (pos.y > upperDepth) depthDist = pos.y - upperDepth;
+            if (pos.y < floorY + 2f) depthDist += (floorY + 2f - pos.y) * 2f;
+        }
+        score += Mathf.Max(0f, 300f - depthDist * 4f);
+
+        // 3. Spacing score
+        float nearest = float.MaxValue;
+        for (int i = 0; i < _usedPositions.Count; i++)
+        {
+            float d = Vector3.Distance(pos, _usedPositions[i]);
+            if (d < nearest) nearest = d;
+        }
+        if (nearest < minSeparation) score -= (minSeparation - nearest) * 20f;
+        else score += 100f;
+
+        return score;
+    }
+
+    private static bool IsCompatibleBiome(BiomeBand a, BiomeBand b)
+    {
+        if (a == b) return true;
+        if ((a == BiomeBand.Hard && b == BiomeBand.Rock) || (a == BiomeBand.Rock && b == BiomeBand.Hard)) return true;
+        if ((a == BiomeBand.Soft && b == BiomeBand.OpenWater) || (a == BiomeBand.OpenWater && b == BiomeBand.Soft)) return true;
         return false;
     }
 
