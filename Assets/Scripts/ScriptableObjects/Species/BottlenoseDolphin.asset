@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000
     m, usually 1 - 50 m)
-  depthRangeText: "1\u201350 m"
+  depthRangeText: "1-50 m"
   explorationHint: Swims in social pods across coastal and reef-associated surface
     waters.
   secondaryZoneIndices: 

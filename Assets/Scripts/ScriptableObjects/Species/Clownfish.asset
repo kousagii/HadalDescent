@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Amphiprion ocellaris
   taxonomicClass: 0
   zoneIndex: 0
-  habitat: "Coral reefs and anemones (1\u201315 m)"
-  depthRangeText: "1\u201315 m"
+  habitat: "Coral reefs and anemones (1-15 m)"
+  depthRangeText: "1-15 m"
   explorationHint: Search around sunny, shallow coral reef summits nestled within
     sea anemone patches.
   secondaryZoneIndices: 

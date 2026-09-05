@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Laticauda colubrina
   taxonomicClass: 3
   zoneIndex: 0
-  habitat: "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
-  depthRangeText: "0\u201310 m"
+  habitat: "Shallow coral reefs, mangroves, and rocky shores (0-10 m)"
+  depthRangeText: "0-10 m"
   explorationHint: Swims gracefully through shallow coral branches near the surface.
   secondaryZoneIndices: 
   characteristics: Black stripes and a yellow snout, with a paddle-like tail for

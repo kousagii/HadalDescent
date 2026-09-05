@@ -485,10 +485,7 @@ public class ShopManager : MonoBehaviour
         bImg.sprite = WhiteSprite;
         bImg.color = new Color(0.12f, 0.65f, 0.75f, 0.35f);
         bImg.raycastTarget = false;
-
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         // Title Header
         var titleGO = new GameObject("TitleText", typeof(RectTransform));
@@ -540,28 +537,30 @@ public class ShopManager : MonoBehaviour
         var scrollRect = scrollGO.GetComponent<ScrollRect>();
         scrollRect.horizontal = false;
         scrollRect.vertical = true;
-        scrollRect.scrollSensitivity = 25f;
 
-        // Content container
+        var viewportGO = new GameObject("Viewport", typeof(RectTransform));
+        viewportGO.transform.SetParent(scrollGO.transform, false);
+        var vr = viewportGO.GetComponent<RectTransform>();
+        vr.anchorMin = Vector2.zero; vr.anchorMax = Vector2.one; vr.sizeDelta = Vector2.zero;
+        scrollRect.viewport = vr;
+
         var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-        contentGO.transform.SetParent(sr, false);
+        contentGO.transform.SetParent(viewportGO.transform, false);
         var contr = contentGO.GetComponent<RectTransform>();
         contr.anchorMin = new Vector2(0f, 1f); contr.anchorMax = new Vector2(1f, 1f);
-        contr.pivot = new Vector2(0.5f, 1f); contr.sizeDelta = new Vector2(0f, 0f);
+        contr.pivot = new Vector2(0.5f, 1f); contr.sizeDelta = Vector2.zero;
+        scrollRect.content = contr;
 
         var vlg = contentGO.GetComponent<VerticalLayoutGroup>();
-        vlg.spacing = 10;
-        vlg.padding = new RectOffset(8, 8, 8, 8);
-        vlg.childControlWidth = true; vlg.childControlHeight = false;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
+        vlg.spacing = 14f;
+        vlg.padding = new RectOffset(10, 10, 10, 10);
+        vlg.childControlWidth = true;
+        vlg.childControlHeight = false;
 
         var csf = contentGO.GetComponent<ContentSizeFitter>();
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        scrollRect.content = contr;
-        entryContainer = contr;
-
-        // Procedurally construct Card rows for each category
+        // Populate upgrade rows
         var cardList = new List<UpgradeCardUI>();
         foreach (var cfg in categoryConfigs)
         {
@@ -573,13 +572,14 @@ public class ShopManager : MonoBehaviour
 
     private UpgradeCardUI CreateProceduralCard(Transform parent, UpgradeCategoryConfig cfg)
     {
+        var font = UIThemeManager.AlohaFont;
         var rowGO = new GameObject($"Card_{cfg.category}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
         rowGO.transform.SetParent(parent, false);
         var rRect = rowGO.GetComponent<RectTransform>();
-        rRect.sizeDelta = new Vector2(0f, 68f);
+        rRect.sizeDelta = new Vector2(0f, 110f);
 
         var le = rowGO.GetComponent<LayoutElement>();
-        le.minHeight = 68f; le.preferredHeight = 68f;
+        le.minHeight = 110f; le.preferredHeight = 110f;
 
         var rImg = rowGO.GetComponent<Image>();
         rImg.color = new Color(0.08f, 0.14f, 0.22f, 0.85f);
@@ -593,17 +593,19 @@ public class ShopManager : MonoBehaviour
         var lr = leftGO.GetComponent<RectTransform>();
         lr.anchorMin = new Vector2(0.02f, 0.48f); lr.anchorMax = new Vector2(0.40f, 0.95f); lr.sizeDelta = Vector2.zero;
         var titleTxt = leftGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) titleTxt.font = font;
         titleTxt.text = cfg.displayName;
-        titleTxt.fontSize = 18; titleTxt.fontStyle = FontStyles.Bold;
+        titleTxt.fontSize = 36; titleTxt.fontStyle = FontStyles.Bold;
         titleTxt.color = new Color(0.25f, 0.92f, 0.80f);
 
         // Perk Description (under title)
         var descGO = new GameObject("DescArea", typeof(RectTransform));
         descGO.transform.SetParent(rRect, false);
         var dr = descGO.GetComponent<RectTransform>();
-        dr.anchorMin = new Vector2(0.02f, 0.08f); dr.anchorMax = new Vector2(0.68f, 0.48f); dr.sizeDelta = Vector2.zero;
+        dr.anchorMin = new Vector2(0.02f, 0.05f); dr.anchorMax = new Vector2(0.68f, 0.48f); dr.sizeDelta = Vector2.zero;
         var descTxt = descGO.AddComponent<TextMeshProUGUI>();
-        descTxt.fontSize = 13; descTxt.color = new Color(0.80f, 0.88f, 0.92f, 0.90f);
+        if (font != null) descTxt.font = font;
+        descTxt.fontSize = 36; descTxt.color = new Color(0.80f, 0.88f, 0.92f, 0.90f);
         descTxt.overflowMode = TextOverflowModes.Ellipsis;
 
         // Tier Pips container (5 pips)
@@ -612,7 +614,7 @@ public class ShopManager : MonoBehaviour
         var pr = pipsGO.GetComponent<RectTransform>();
         pr.anchorMin = new Vector2(0.42f, 0.52f); pr.anchorMax = new Vector2(0.65f, 0.88f); pr.sizeDelta = Vector2.zero;
         var hlg = pipsGO.GetComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 5; hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.spacing = 6; hlg.childAlignment = TextAnchor.MiddleLeft;
         hlg.childControlWidth = false; hlg.childControlHeight = false;
 
         var pips = new Image[5];
@@ -621,7 +623,7 @@ public class ShopManager : MonoBehaviour
             var pip = new GameObject($"Pip_{i + 1}", typeof(RectTransform), typeof(Image));
             pip.transform.SetParent(pr, false);
             var pipR = pip.GetComponent<RectTransform>();
-            pipR.sizeDelta = new Vector2(16f, 16f);
+            pipR.sizeDelta = new Vector2(22f, 22f);
             var pipImg = pip.GetComponent<Image>();
             pipImg.sprite = WhiteSprite;
             pipImg.color = (i == 0) ? new Color(0.12f, 0.95f, 0.78f) : new Color(0.15f, 0.20f, 0.28f, 0.8f);
@@ -632,16 +634,17 @@ public class ShopManager : MonoBehaviour
         var costGO = new GameObject("CostArea", typeof(RectTransform));
         costGO.transform.SetParent(rRect, false);
         var costr = costGO.GetComponent<RectTransform>();
-        costr.anchorMin = new Vector2(0.68f, 0.20f); costr.anchorMax = new Vector2(0.82f, 0.80f); costr.sizeDelta = Vector2.zero;
+        costr.anchorMin = new Vector2(0.68f, 0.15f); costr.anchorMax = new Vector2(0.82f, 0.85f); costr.sizeDelta = Vector2.zero;
         var costTxt = costGO.AddComponent<TextMeshProUGUI>();
-        costTxt.fontSize = 15; costTxt.fontStyle = FontStyles.Bold;
+        if (font != null) costTxt.font = font;
+        costTxt.fontSize = 36; costTxt.fontStyle = FontStyles.Bold;
         costTxt.alignment = TextAlignmentOptions.Center;
 
         // Upgrade Button
         var btnGO = new GameObject("UpgradeBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         btnGO.transform.SetParent(rRect, false);
         var btnr = btnGO.GetComponent<RectTransform>();
-        btnr.anchorMin = new Vector2(0.84f, 0.15f); btnr.anchorMax = new Vector2(0.98f, 0.85f); btnr.sizeDelta = Vector2.zero;
+        btnr.anchorMin = new Vector2(0.83f, 0.12f); btnr.anchorMax = new Vector2(0.98f, 0.88f); btnr.sizeDelta = Vector2.zero;
         var btnImg = btnGO.GetComponent<Image>();
         btnImg.sprite = WhiteSprite;
         btnImg.color = new Color(0.08f, 0.75f, 0.68f, 1f);
@@ -652,7 +655,8 @@ public class ShopManager : MonoBehaviour
         var blr = btnLblGO.GetComponent<RectTransform>();
         blr.anchorMin = Vector2.zero; blr.anchorMax = Vector2.one; blr.sizeDelta = Vector2.zero;
         var btnLbl = btnLblGO.AddComponent<TextMeshProUGUI>();
-        btnLbl.text = "UPGRADE"; btnLbl.fontSize = 14; btnLbl.fontStyle = FontStyles.Bold;
+        if (font != null) btnLbl.font = font;
+        btnLbl.text = "UPGRADE"; btnLbl.fontSize = 36; btnLbl.fontStyle = FontStyles.Bold;
         btnLbl.alignment = TextAlignmentOptions.Center; btnLbl.color = Color.white;
 
         // Wire serialized references on the card component
@@ -661,4 +665,3 @@ public class ShopManager : MonoBehaviour
         return cardUI;
     }
 }
-

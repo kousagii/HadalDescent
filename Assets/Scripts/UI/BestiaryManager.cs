@@ -274,9 +274,7 @@ public class BestiaryManager : MonoBehaviour
         var bgImg = defaultModalGO.GetComponent<Image>();
         bgImg.color = new Color(0.02f, 0.04f, 0.08f, 0.92f);
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         var cardGO = new GameObject("InspectionModalCard", typeof(RectTransform), typeof(Image));
         cardGO.transform.SetParent(defaultModalGO.transform, false);
@@ -284,7 +282,7 @@ public class BestiaryManager : MonoBehaviour
         cardRect.anchorMin = new Vector2(0.5f, 0.5f);
         cardRect.anchorMax = new Vector2(0.5f, 0.5f);
         cardRect.pivot     = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(560f, 560f);
+        cardRect.sizeDelta = new Vector2(720f, 680f);
         cardRect.anchoredPosition = Vector2.zero;
 
         var bg = cardGO.GetComponent<Image>();
@@ -298,22 +296,22 @@ public class BestiaryManager : MonoBehaviour
         titleRect.anchorMax = new Vector2(1f, 1f);
         titleRect.pivot     = new Vector2(0.5f, 1f);
         titleRect.anchoredPosition = new Vector2(0f, -14f);
-        titleRect.sizeDelta = new Vector2(-40f, 80f);
+        titleRect.sizeDelta = new Vector2(-40f, 110f);
 
         var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         if (font != null) titleTMP.font = font;
         titleTMP.alignment = TextAlignmentOptions.Center;
         titleTMP.color = Color.white;
-        titleTMP.fontSize = 36;
+        titleTMP.fontSize = 38;
         titleTMP.fontStyle = FontStyles.Bold;
 
         if (isDiscovered)
         {
-            titleTMP.text = $"<b>{data.commonName.ToUpper()}</b>\n<size=22><color=#88ccff><i>{data.scientificName}</i></color>  •  <color=#a0d8ef>Depth: {data.depthRangeText}</color></size>";
+            titleTMP.text = $"<b>{data.commonName.ToUpper()}</b>\n<size=36><color=#88ccff><i>{data.scientificName}</i></color>  •  <color=#a0d8ef>Depth: {data.depthRangeText}</color></size>";
         }
         else
         {
-            titleTMP.text = $"<b><color=#8899aa>??? UNCATALOGED</color></b>\n<size=22><color=#667788>Class: {data.taxonomicClass}</color>  •  <color=#88aacc>Depth: {data.depthRangeText}</color></size>";
+            titleTMP.text = $"<b><color=#8899aa>??? UNCATALOGED</color></b>\n<size=36><color=#667788>Class: {data.taxonomicClass}</color>  •  <color=#88aacc>Depth: {data.depthRangeText}</color></size>";
         }
 
         // Center 3D Viewport Box
@@ -323,7 +321,7 @@ public class BestiaryManager : MonoBehaviour
         viewRect.anchorMin = new Vector2(0.5f, 0.5f);
         viewRect.anchorMax = new Vector2(0.5f, 0.5f);
         viewRect.pivot     = new Vector2(0.5f, 0.5f);
-        viewRect.sizeDelta = new Vector2(380f, 320f);
+        viewRect.sizeDelta = new Vector2(460f, 360f);
         viewRect.anchoredPosition = new Vector2(0f, 6f);
 
         var viewImg = viewGO.GetComponent<Image>();
@@ -351,13 +349,13 @@ public class BestiaryManager : MonoBehaviour
         hintRect.anchorMin = new Vector2(0f, 0f);
         hintRect.anchorMax = new Vector2(1f, 0f);
         hintRect.pivot     = new Vector2(0.5f, 0f);
-        hintRect.anchoredPosition = new Vector2(0f, 76f);
-        hintRect.sizeDelta = new Vector2(-40f, 36f);
+        hintRect.anchoredPosition = new Vector2(0f, 85f);
+        hintRect.sizeDelta = new Vector2(-40f, 45f);
 
         var hintTMP = hintGO.AddComponent<TextMeshProUGUI>();
         if (font != null) hintTMP.font = font;
         hintTMP.alignment = TextAlignmentOptions.Center;
-        hintTMP.fontSize = 24;
+        hintTMP.fontSize = 36;
         hintTMP.color = new Color(0.5f, 0.8f, 1f, 0.85f);
         hintTMP.text = "✦ Touch and drag to spin 360°";
 
@@ -366,10 +364,10 @@ public class BestiaryManager : MonoBehaviour
         closeGO.transform.SetParent(cardGO.transform, false);
         var closeRect = closeGO.GetComponent<RectTransform>();
         closeRect.anchorMin = new Vector2(0.5f, 0f);
-        closeRect.anchorMax = new Vector2(0.5f, 0.5f);
+        closeRect.anchorMax = new Vector2(0.5f, 0f);
         closeRect.pivot     = new Vector2(0.5f, 0f);
-        closeRect.sizeDelta = new Vector2(220f, 54f);
-        closeRect.anchoredPosition = new Vector2(0f, 16f);
+        closeRect.sizeDelta = new Vector2(260f, 65f);
+        closeRect.anchoredPosition = new Vector2(0f, 14f);
 
         closeGO.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.55f, 1f);
         closeGO.GetComponent<Button>().onClick.AddListener(CloseModelInspectionModal);
@@ -753,7 +751,7 @@ public class BestiaryManager : MonoBehaviour
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.fontSize = 13;
         tmp.color    = Color.white;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
 
         if (discovered)
         {
@@ -822,7 +820,7 @@ public class BestiaryManager : MonoBehaviour
         titleTMP.fontStyle = FontStyles.Bold;
         titleTMP.alignment = TextAlignmentOptions.MidlineLeft;
         titleTMP.color = Color.white;
-        titleTMP.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=15><color=#a0d8ef>({zone.displayDepthMin:0} – {zone.displayDepthMax:0} m)</color></size>";
+        titleTMP.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=15><color=#a0d8ef>({zone.displayDepthMin:0} - {zone.displayDepthMax:0} m)</color></size>";
 
         // Bottom Row: Progress + Large Unlock Badge
         var subGO = new GameObject("ProgressSubtitle", typeof(RectTransform));
@@ -912,7 +910,9 @@ public class BestiaryManager : MonoBehaviour
         var tmp = textGO.AddComponent<TextMeshProUGUI>();
         tmp.fontSize = 14;
         tmp.color = Color.white;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        tmp.lineSpacing = 10f;
+        tmp.paragraphSpacing = 10f;
 
         tmp.text =
             $"<b><size=22><color=#ffffff>{data.commonName}</color></size></b>\n" +

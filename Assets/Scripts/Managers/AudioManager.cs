@@ -41,18 +41,43 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Duration in seconds for smooth crossfading between music tracks (0 for instant)")]
     [SerializeField] private float fadeDuration = 1.0f;
 
-    [Header("SFX Clips")]
+    [Header("SFX Clips - UI & Navigation")]
+    [Tooltip("Played when buttons are clicked (Shop, Bestiary, Pause, etc.)")]
     [SerializeField] private AudioClip buttonClickSFX;
+    [Tooltip("Played when clicking the Scan/Camera button")]
+    [SerializeField] private AudioClip cameraShutterSFX;
+
+    [Header("SFX Clips - Detection & Scanning")]
+    [Tooltip("Played when the reticle targets and highlights a debris cluster")]
+    [SerializeField] private AudioClip debrisFoundSFX;
+    [Tooltip("Played when the reticle targets and highlights a species")]
+    [SerializeField] private AudioClip speciesFoundSFX;
+
+    [Header("SFX Clips - Submarine & Movement")]
+    [Tooltip("Looping engine / propeller / thruster sound when submarine is moving")]
+    [SerializeField] private AudioClip subMovementSFX;
+    [SerializeField] private AudioSource subMovementSource;
+
+    [Header("SFX Clips - Transitions & World")]
+    [Tooltip("Transition sound from Zone Selection into gameplay")]
+    [SerializeField] private AudioClip zoneTransitionSFX;
+    [Tooltip("How long in seconds the zone transition sound will play before stopping (default: 3.0s)")]
+    [SerializeField] private float zoneTransitionDuration = 3.0f;
+    [Tooltip("Duration in seconds for smooth fade-out at the end of the transition sound (default: 0.5s)")]
+    [SerializeField] private float zoneTransitionFadeOut = 0.5f;
+    [SerializeField] private AudioSource transitionSource;
     [SerializeField] private AudioClip diveSFX;
     [SerializeField] private AudioClip surfaceSFX;
     [SerializeField] private AudioClip alertSFX;
 
     private Coroutine _fadeCoroutine;
+    private Coroutine _transitionCoroutine;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
+            Instance.CopyMissingClips(this);
             Destroy(gameObject);
             return;
         }
@@ -62,8 +87,32 @@ public class AudioManager : MonoBehaviour
 
         EnsureSources();
 
-
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    public void CopyMissingClips(AudioManager other)
+    {
+        if (other == null) return;
+        if (buttonClickSFX == null)     buttonClickSFX     = other.buttonClickSFX;
+        if (cameraShutterSFX == null)   cameraShutterSFX   = other.cameraShutterSFX;
+        if (debrisFoundSFX == null)     debrisFoundSFX     = other.debrisFoundSFX;
+        if (speciesFoundSFX == null)    speciesFoundSFX    = other.speciesFoundSFX;
+        if (subMovementSFX == null)     subMovementSFX     = other.subMovementSFX;
+        if (zoneTransitionSFX == null)
+        {
+            zoneTransitionSFX      = other.zoneTransitionSFX;
+            zoneTransitionDuration = other.zoneTransitionDuration;
+            zoneTransitionFadeOut  = other.zoneTransitionFadeOut;
+        }
+        if (sunlightZoneBGM == null)    sunlightZoneBGM    = other.sunlightZoneBGM;
+        if (twilightZoneBGM == null)    twilightZoneBGM    = other.twilightZoneBGM;
+        if (midnightZoneBGM == null)    midnightZoneBGM    = other.midnightZoneBGM;
+        if (abyssZoneBGM == null)       abyssZoneBGM       = other.abyssZoneBGM;
+        if (hadalZoneBGM == null)       hadalZoneBGM       = other.hadalZoneBGM;
+        if (mainMenuBGM == null)        mainMenuBGM        = other.mainMenuBGM;
+        if (defaultGameplayBGM == null) defaultGameplayBGM = other.defaultGameplayBGM;
+
+        EnsureSources();
     }
 
     private void OnDestroy()
@@ -120,6 +169,33 @@ public class AudioManager : MonoBehaviour
             sfxSource.playOnAwake = false;
         }
 
+        if (subMovementSource == null)
+        {
+            subMovementSource = gameObject.AddComponent<AudioSource>();
+            subMovementSource.loop = true;
+            subMovementSource.playOnAwake = false;
+            subMovementSource.spatialBlend = 0f;
+            subMovementSource.volume = 0f;
+        }
+        else
+        {
+            subMovementSource.loop = true;
+            subMovementSource.spatialBlend = 0f;
+        }
+
+        if (transitionSource == null)
+        {
+            transitionSource = gameObject.AddComponent<AudioSource>();
+            transitionSource.loop = false;
+            transitionSource.playOnAwake = false;
+            transitionSource.spatialBlend = 0f;
+        }
+        else
+        {
+            transitionSource.loop = false;
+            transitionSource.spatialBlend = 0f;
+        }
+
         // Auto-route AudioSources to mixer groups if not set
         if (audioMixer != null)
         {
@@ -136,6 +212,20 @@ public class AudioManager : MonoBehaviour
                 if (groups != null && groups.Length > 0)
                     sfxSource.outputAudioMixerGroup = groups[0];
             }
+
+            if (subMovementSource.outputAudioMixerGroup == null)
+            {
+                var groups = audioMixer.FindMatchingGroups("SFX");
+                if (groups != null && groups.Length > 0)
+                    subMovementSource.outputAudioMixerGroup = groups[0];
+            }
+
+            if (transitionSource.outputAudioMixerGroup == null)
+            {
+                var groups = audioMixer.FindMatchingGroups("SFX");
+                if (groups != null && groups.Length > 0)
+                    transitionSource.outputAudioMixerGroup = groups[0];
+            }
         }
     }
 
@@ -143,13 +233,13 @@ public class AudioManager : MonoBehaviour
     public bool  IsMuted      { get; private set; }
     public float MasterVolume { get; private set; } = 1.0f;
     public float BGMVolume    { get; private set; } = 1.0f;
-    public float SFXVolume    { get; private set; } = 1.0f;
+    public float SFXVolume    { get; private set; } = 0.3f;
 
     public void LoadAudioPreferences()
     {
         MasterVolume = PlayerPrefs.GetFloat("Settings_MasterVol", 1.0f);
         BGMVolume    = PlayerPrefs.GetFloat("Settings_MusicVol", 1.0f);
-        SFXVolume    = PlayerPrefs.GetFloat("Settings_SFXVol", 1.0f);
+        SFXVolume    = PlayerPrefs.GetFloat("Settings_SFXVol", SFXVolume);
         IsMuted      = PlayerPrefs.GetInt("Settings_Muted", 0) == 1;
 
         SetMasterVolume(MasterVolume, false);
@@ -182,6 +272,8 @@ public class AudioManager : MonoBehaviour
         SFXVolume = Mathf.Clamp(value, 0.0001f, 1f);
         SetMixerVolume(SFXVolumeParam, SFXVolume);
         if (sfxSource != null && audioMixer == null) sfxSource.volume = SFXVolume;
+        if (subMovementSource != null && audioMixer == null) subMovementSource.volume = SFXVolume;
+        if (transitionSource != null && audioMixer == null) transitionSource.volume = SFXVolume;
         if (save) { PlayerPrefs.SetFloat("Settings_SFXVol", SFXVolume); PlayerPrefs.Save(); }
     }
 
@@ -323,8 +415,139 @@ public class AudioManager : MonoBehaviour
         sfxSource.PlayOneShot(clip);
     }
 
-    public void PlayButtonClick() => PlaySFX(buttonClickSFX);
-    public void PlayDive() => PlaySFX(diveSFX);
-    public void PlaySurface() => PlaySFX(surfaceSFX);
-    public void PlayAlert() => PlaySFX(alertSFX);
+    public void PlayButtonClick()   => PlaySFX(buttonClickSFX);
+    public void PlayCameraShutter() => PlaySFX(cameraShutterSFX);
+    public void PlayDebrisFound()   => PlaySFX(debrisFoundSFX);
+    public void PlaySpeciesFound()  => PlaySFX(speciesFoundSFX);
+    public void PlayDive()          => PlaySFX(diveSFX);
+    public void PlaySurface()       => PlaySFX(surfaceSFX);
+    public void PlayAlert()         => PlaySFX(alertSFX);
+
+    /// <summary>
+    /// Plays the zone transition sound effect for the configured duration (default: 3.0s),
+    /// smoothly fading out towards the end.
+    /// </summary>
+    public void PlayZoneTransition() => PlayZoneTransition(zoneTransitionDuration, zoneTransitionFadeOut);
+
+    /// <summary>
+    /// Plays the zone transition sound effect for a specified duration in seconds with a smooth fade-out.
+    /// </summary>
+    public void PlayZoneTransition(float duration, float fadeOutDuration = 0.5f)
+    {
+        if (zoneTransitionSFX == null) return;
+        EnsureSources();
+
+        if (_transitionCoroutine != null)
+        {
+            StopCoroutine(_transitionCoroutine);
+            _transitionCoroutine = null;
+        }
+
+        _transitionCoroutine = StartCoroutine(PlayTimedTransitionRoutine(zoneTransitionSFX, duration, fadeOutDuration));
+    }
+
+    private IEnumerator PlayTimedTransitionRoutine(AudioClip clip, float duration, float fadeOutDuration)
+    {
+        transitionSource.Stop();
+        transitionSource.clip = clip;
+        float baseVol = (audioMixer != null ? 1f : SFXVolume);
+        transitionSource.volume = baseVol;
+        transitionSource.Play();
+
+        // If duration is 0 or negative, allow full clip playback
+        if (duration <= 0f)
+        {
+            _transitionCoroutine = null;
+            yield break;
+        }
+
+        float fadeStart = Mathf.Max(0f, duration - fadeOutDuration);
+        float elapsed = 0f;
+
+        // Play at full volume until fade-out window begins
+        while (elapsed < fadeStart)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        // Smoothly fade out volume over fadeOutDuration
+        float fadeElapsed = 0f;
+        float actualFadeDuration = Mathf.Max(0.01f, duration - fadeStart);
+        while (fadeElapsed < actualFadeDuration)
+        {
+            fadeElapsed += Time.unscaledDeltaTime;
+            transitionSource.volume = Mathf.Lerp(baseVol, 0f, fadeElapsed / actualFadeDuration);
+            yield return null;
+        }
+
+        transitionSource.volume = 0f;
+        transitionSource.Stop();
+        transitionSource.volume = baseVol;
+        _transitionCoroutine = null;
+    }
+
+    // ── Submarine Movement Loop ───────────────────────────────────
+    private float _targetSubMovementVol = 0f;
+    private float _currentSubMovementVol = 0f;
+
+    private void Update()
+    {
+        UpdateSubmarineMovementAudio();
+    }
+
+    private void UpdateSubmarineMovementAudio()
+    {
+        if (subMovementSource == null || subMovementSFX == null) return;
+
+        // Smoothly interpolate current volume towards target volume
+        float fadeSpeed = (_targetSubMovementVol > _currentSubMovementVol) ? 4f : 2.5f;
+        _currentSubMovementVol = Mathf.MoveTowards(_currentSubMovementVol, _targetSubMovementVol, Time.deltaTime * fadeSpeed);
+
+        float effectiveVol = _currentSubMovementVol * (audioMixer != null ? 1f : SFXVolume);
+        subMovementSource.volume = effectiveVol;
+
+        if (_currentSubMovementVol <= 0.001f && _targetSubMovementVol == 0f)
+        {
+            if (subMovementSource.isPlaying)
+            {
+                subMovementSource.Stop();
+            }
+        }
+        else if (_currentSubMovementVol > 0.001f)
+        {
+            if (!subMovementSource.isPlaying)
+            {
+                subMovementSource.Play();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Starts or stops the submarine movement loop sound with smooth volume fading.
+    /// Can be called continuously every frame or on input state changes.
+    /// </summary>
+    public void SetSubmarineMoving(bool isMoving, float intensity = 1f)
+    {
+        if (subMovementSFX == null) return;
+        EnsureSources();
+
+        if (subMovementSource.clip != subMovementSFX)
+        {
+            subMovementSource.clip = subMovementSFX;
+        }
+
+        if (isMoving && intensity > 0.01f)
+        {
+            _targetSubMovementVol = Mathf.Clamp01(intensity);
+            if (!subMovementSource.isPlaying)
+            {
+                subMovementSource.Play();
+            }
+        }
+        else
+        {
+            _targetSubMovementVol = 0f;
+        }
+    }
 }

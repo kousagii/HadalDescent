@@ -250,7 +250,7 @@ public class ZoneManager : MonoBehaviour
 
         Debug.Log($"[ZoneManager] Loaded '{zone.zoneName}' | " +
                   $"Playable: {zone.playableWidth}x{zone.playableLength}x{zone.playableDepth}m | " +
-                  $"Display: {zone.displayDepthMin}–{zone.displayDepthMax}m");
+                  $"Display: {zone.displayDepthMin}-{zone.displayDepthMax}m");
 
         // 5. Generate terrain via Perlin Noise (TerrainGenerator must be in the zone scene)
         var terrain = FindFirstObjectByType<TerrainGenerator>();

@@ -63,6 +63,7 @@ public class ScannerSystem : MonoBehaviour
     private ScanTarget    _interactTarget;
     private DebrisCluster _debrisTarget;
     private GameObject    _highlightedObject;
+    private GameObject    _lastDetectedTarget;
 
     // -----------------------------------------------------------------------
     // Lifecycle
@@ -174,6 +175,12 @@ public class ScannerSystem : MonoBehaviour
             _debrisTarget = null;
             _interactTarget = null;
 
+            if (_lastDetectedTarget != bestAI.gameObject)
+            {
+                _lastDetectedTarget = bestAI.gameObject;
+                AudioManager.Instance?.PlaySpeciesFound();
+            }
+
             bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestAI.Data.speciesId);
 
             if (isDiscovered)
@@ -209,6 +216,12 @@ public class ScannerSystem : MonoBehaviour
             // Stationary Species Target (Coral, Sponge, Bivalve, etc.)
             _scanTarget = null;
             _debrisTarget = null;
+
+            if (_lastDetectedTarget != bestStatic.gameObject)
+            {
+                _lastDetectedTarget = bestStatic.gameObject;
+                AudioManager.Instance?.PlaySpeciesFound();
+            }
 
             bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestStatic.Data.speciesId);
 
@@ -246,6 +259,12 @@ public class ScannerSystem : MonoBehaviour
             _scanTarget = null;
             _interactTarget = null;
 
+            if (_lastDetectedTarget != bestDebris.gameObject)
+            {
+                _lastDetectedTarget = bestDebris.gameObject;
+                AudioManager.Instance?.PlayDebrisFound();
+            }
+
             if (bestDist <= interactRange)
             {
                 // In Range → Ready to Clean
@@ -268,6 +287,7 @@ public class ScannerSystem : MonoBehaviour
         else
         {
             // Nothing in Reticle → Immediate Idle Reset
+            _lastDetectedTarget = null;
             ClearAllDetection();
         }
     }
@@ -280,14 +300,14 @@ public class ScannerSystem : MonoBehaviour
         if (col.GetComponentInParent<PlayerMovement>() != null) return;
 
         // Screen-space confirmation: ensure target collider is actually in front of the camera and within the center reticle
-        Vector3 targetPos = col.bounds.center;
-        Vector3 vp = scanCamera.WorldToViewportPoint(targetPos);
+        Vector3 aimPoint = (hitPoint != Vector3.zero) ? hitPoint : col.ClosestPoint(scanCamera.transform.position);
+        Vector3 vp = scanCamera.WorldToViewportPoint(aimPoint);
         if (vp.z <= 0.2f) return; // Behind camera or too close to lens
 
         float vpDistFromCenter = Vector2.Distance(new Vector2(vp.x, vp.y), new Vector2(0.5f, 0.5f));
         if (vpDistFromCenter > viewportAimThreshold) return; // Outside reticle viewport threshold
 
-        float dist = Vector3.Distance(scanCamera.transform.position, targetPos);
+        float dist = Vector3.Distance(scanCamera.transform.position, aimPoint);
         if (dist > detectionRange) return;
 
         // 1. Mobile Species
@@ -355,6 +375,7 @@ public class ScannerSystem : MonoBehaviour
         _scanTarget = null;
         _interactTarget = null;
         _debrisTarget = null;
+        _lastDetectedTarget = null;
         ClearHighlight();
 
         ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.Idle);
@@ -368,6 +389,7 @@ public class ScannerSystem : MonoBehaviour
 
     public void TryScan()
     {
+        AudioManager.Instance?.PlayCameraShutter();
         if (_scanTarget == null || _scanTarget.Data == null)
         {
             Debug.Log("[ScannerSystem] Scan pressed - no mobile target in focus.");

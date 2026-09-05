@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Haliclona fascigera
   taxonomicClass: 13
   zoneIndex: 0
-  habitat: "Western Pacific reef habitats (20\u201330 m)"
-  depthRangeText: "20\u201330 m"
+  habitat: "Western Pacific reef habitats (20-30 m)"
+  depthRangeText: "20-30 m"
   explorationHint: Look for vibrant blue cylindrical tubes anchored to rocky reef
     outcrops.
   secondaryZoneIndices: 

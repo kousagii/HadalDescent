@@ -231,9 +231,7 @@ public class FactCardUI : MonoBehaviour
     {
         if (_panel != null || _canvas == null) return;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         var go = new GameObject("FactCard", typeof(RectTransform), typeof(Image));
         go.transform.SetParent(_canvas.transform, false);
@@ -271,10 +269,10 @@ public class FactCardUI : MonoBehaviour
         sciGO.transform.SetParent(go.transform, false);
         var sr = sciGO.GetComponent<RectTransform>();
         sr.anchorMin = new Vector2(0f, 1f); sr.anchorMax = new Vector2(1f, 1f);
-        sr.sizeDelta = new Vector2(-40f, 36f); sr.anchoredPosition = new Vector2(0f, -295f);
+        sr.sizeDelta = new Vector2(-40f, 40f); sr.anchoredPosition = new Vector2(0f, -295f);
         _sciNameText = sciGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _sciNameText.font = font;
-        _sciNameText.fontSize = 24; _sciNameText.alignment = TextAlignmentOptions.Center;
+        _sciNameText.fontSize = 36; _sciNameText.alignment = TextAlignmentOptions.Center;
         _sciNameText.color = new Color(0.6f, 0.8f, 1f, 1f);
 
         // Body Text (Habitat, Characteristics, Ecological Role, Fact)
@@ -285,8 +283,10 @@ public class FactCardUI : MonoBehaviour
         br.offsetMin = new Vector2(28f, 110f); br.offsetMax = new Vector2(-28f, -340f);
         _bodyText = bodyGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _bodyText.font = font;
-        _bodyText.fontSize = 22; _bodyText.color = Color.white;
-        _bodyText.enableWordWrapping = true;
+        _bodyText.fontSize = 36; _bodyText.color = Color.white;
+        _bodyText.lineSpacing = 10f;
+        _bodyText.paragraphSpacing = 10f;
+        _bodyText.textWrappingMode = TextWrappingModes.Normal;
 
         // Reward Text
         var rdpGO = new GameObject("Reward", typeof(RectTransform));

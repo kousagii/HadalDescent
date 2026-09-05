@@ -123,7 +123,7 @@ public class TutorialManager : MonoBehaviour
         new TutorialStep
         {
             stepTitle = "8. SUBMARINE UPGRADE SHOP",
-            stepDescription = "• Open the <b>Shop</b> (top-right wrench icon) to spend your hard-earned RDP on submarine enhancements:\n  - <b>Hull Resistance (Tiers 1–5):</b> Withstand crushing pressure to unlock deeper ocean zones!\n  - <b>Engine, Sonar, Scanner, Lights:</b> Boost speed, scan area, focus size, and underwater visibility.\n• Reaching deeper zones requires both Hull upgrades and 50% species cataloged.",
+            stepDescription = "• Open the <b>Shop</b> (top-right wrench icon) to spend your hard-earned RDP on submarine enhancements:\n  - <b>Hull Resistance (Tiers 1-5):</b> Withstand crushing pressure to unlock deeper ocean zones!\n  - <b>Engine, Sonar, Scanner, Lights:</b> Boost speed, scan area, focus size, and underwater visibility.\n• Reaching deeper zones requires both Hull upgrades and 50% species cataloged.",
             objectivePrompt = "Review upgrade paths, then tap 'NEXT' to complete the tutorial."
         }
     };
@@ -296,7 +296,7 @@ public class TutorialManager : MonoBehaviour
         if (_proceduralDescText != null) _proceduralDescText.text = step.stepDescription;
         if (_proceduralObjectiveText != null) _proceduralObjectiveText.text = step.objectivePrompt;
 
-        string nextLabel = (_currentStepIndex == _steps.Length - 1) ? "FINISH TUTORIAL ✔" : "NEXT STEP ➔";
+        string nextLabel = (_currentStepIndex == _steps.Length - 1) ? "FINISH TUTORIAL" : "NEXT STEP";
         if (_proceduralNextBtnText != null) _proceduralNextBtnText.text = nextLabel;
     }
 
@@ -437,16 +437,14 @@ public class TutorialManager : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // Procedural UI Construction (36pt Poppins SDF Dark Sci-Fi Design)
+    // Procedural UI Construction (Aloha SDF Dark Sci-Fi Design, Min 36px)
     // -----------------------------------------------------------------------
 
     private void BuildProceduralUI()
     {
         if (_proceduralCanvasGO != null) return;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         _proceduralCanvasGO = new GameObject("Tutorial_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         DontDestroyOnLoad(_proceduralCanvasGO);
@@ -486,27 +484,52 @@ public class TutorialManager : MonoBehaviour
         cR.anchorMin = new Vector2(0.5f, 0.5f);
         cR.anchorMax = new Vector2(0.5f, 0.5f);
         cR.pivot     = new Vector2(0.5f, 0.5f);
-        cR.sizeDelta = new Vector2(680f, 420f);
+        cR.sizeDelta = new Vector2(1240f, 680f);
         cardGO.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
 
-        CreateText("Title", "SUBMARINE SYSTEMS TUTORIAL", new Vector2(0f, 140f), new Vector2(620f, 50f), 32, FontStyles.Bold, new Color(0.3f, 0.9f, 1f), cardGO.transform, font);
+        // Top accent line
+        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripe.transform.SetParent(cardGO.transform, false);
+        var tsR = topStripe.GetComponent<RectTransform>();
+        tsR.anchorMin = new Vector2(0f, 1f);
+        tsR.anchorMax = new Vector2(1f, 1f);
+        tsR.pivot     = new Vector2(0.5f, 1f);
+        tsR.sizeDelta = new Vector2(0f, 5f);
+        topStripe.GetComponent<Image>().color = new Color(0.2f, 0.85f, 1f, 1f);
 
-        CreateText("Desc", "Welcome Researcher!\n\nWould you like to complete the guided tutorial covering submarine navigation, sonar mapping, species scanning, debris cleanup, and upgrade systems?", new Vector2(0f, 20f), new Vector2(580f, 160f), 22, FontStyles.Normal, Color.white, cardGO.transform, font);
+        // Title (Top-anchored)
+        CreateText("Title", "SUBMARINE SYSTEMS TUTORIAL", new Vector2(0f, -36f), new Vector2(1160f, 50f), 36, FontStyles.Bold, new Color(0.3f, 0.9f, 1f), cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
 
+        // Subtitle (Top-anchored)
+        CreateText("Subtitle", "WELCOME, MARINE RESEARCHER!", new Vector2(0f, -94f), new Vector2(1160f, 44f), 32, FontStyles.Bold, Color.white, cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
+
+        // Desc (Top-anchored, top-aligned)
+        var descTMP = CreateText("Desc", "Would you like to complete the guided tutorial covering submarine navigation, sonar mapping, species scanning, debris cleanup, and upgrade systems?", new Vector2(0f, -156f), new Vector2(1100f, 350f), 32, FontStyles.Normal, new Color(0.92f, 0.94f, 0.97f), cardGO.transform, font, TextAlignmentOptions.Top, new Vector2(0.5f, 1f));
+        descTMP.enableAutoSizing = true;
+        descTMP.fontSizeMin = 26f;
+        descTMP.fontSizeMax = 32f;
+        descTMP.lineSpacing = 6f;
+        descTMP.paragraphSpacing = 10f;
+
+        // Button Row (Bottom-anchored)
         var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         btnRow.transform.SetParent(cardGO.transform, false);
         var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchoredPosition = new Vector2(0f, -140f);
-        brR.sizeDelta = new Vector2(580f, 60f);
+        brR.anchorMin = new Vector2(0.5f, 0f);
+        brR.anchorMax = new Vector2(0.5f, 0f);
+        brR.pivot     = new Vector2(0.5f, 0f);
+        brR.anchoredPosition = new Vector2(0f, 36f);
+        brR.sizeDelta = new Vector2(1100f, 84f);
 
         var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
         hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 24f;
+        hlg.spacing = 35f;
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        CreateButton("StartBtn", "START TUTORIAL ➔", Vector2.zero, new Vector2(260f, 54f), new Color(0.08f, 0.65f, 0.55f), OnPromptStartTutorial, btnRow.transform, font, 22);
-        CreateButton("SkipBtn", "SKIP TO DIVE", Vector2.zero, new Vector2(240f, 54f), new Color(0.18f, 0.25f, 0.35f), OnPromptSkipTutorial, btnRow.transform, font, 22);
+        // BOTH BUTTONS EXACT SAME SIZE (420x76), 1 LINE ONLY
+        CreateButton("StartBtn", "START TUTORIAL", Vector2.zero, new Vector2(420f, 76f), new Color(0.08f, 0.65f, 0.55f), OnPromptStartTutorial, btnRow.transform, font, 32);
+        CreateButton("SkipBtn", "SKIP TO DIVE", Vector2.zero, new Vector2(420f, 76f), new Color(0.18f, 0.25f, 0.35f), OnPromptSkipTutorial, btnRow.transform, font, 32);
 
         _proceduralPromptModal.SetActive(false);
     }
@@ -517,80 +540,101 @@ public class TutorialManager : MonoBehaviour
         _proceduralStepCard.transform.SetParent(parent, false);
 
         var cR = _proceduralStepCard.GetComponent<RectTransform>();
-        cR.anchorMin = new Vector2(0.5f, 0f);
-        cR.anchorMax = new Vector2(0.5f, 0f);
-        cR.pivot     = new Vector2(0.5f, 0f);
-        cR.anchoredPosition = new Vector2(0f, 30f);
-        cR.sizeDelta = new Vector2(960f, 380f);
+        cR.anchorMin = new Vector2(0.5f, 0.5f);
+        cR.anchorMax = new Vector2(0.5f, 0.5f);
+        cR.pivot     = new Vector2(0.5f, 0.5f);
+        cR.anchoredPosition = Vector2.zero;
+        cR.sizeDelta = new Vector2(1360f, 780f);
         _proceduralStepCard.GetComponent<Image>().color = new Color(0.03f, 0.07f, 0.14f, 0.96f);
 
-        // Step Number Banner
+        // Step Number Banner (Top-anchored)
         var stepNumGO = new GameObject("StepNum", typeof(RectTransform));
         stepNumGO.transform.SetParent(_proceduralStepCard.transform, false);
         var snR = stepNumGO.GetComponent<RectTransform>();
-        snR.anchoredPosition = new Vector2(0f, 155f);
-        snR.sizeDelta = new Vector2(900f, 30f);
+        snR.anchorMin = new Vector2(0.5f, 1f);
+        snR.anchorMax = new Vector2(0.5f, 1f);
+        snR.pivot     = new Vector2(0.5f, 1f);
+        snR.anchoredPosition = new Vector2(0f, -22f);
+        snR.sizeDelta = new Vector2(1260f, 38f);
         _proceduralStepNumText = stepNumGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _proceduralStepNumText.font = font;
-        _proceduralStepNumText.fontSize = 18;
+        _proceduralStepNumText.fontSize = 32;
         _proceduralStepNumText.fontStyle = FontStyles.Bold;
         _proceduralStepNumText.alignment = TextAlignmentOptions.Center;
         _proceduralStepNumText.color = new Color(0.3f, 0.85f, 1f);
 
-        // Title
+        // Title (Top-anchored)
         var titleGO = new GameObject("Title", typeof(RectTransform));
         titleGO.transform.SetParent(_proceduralStepCard.transform, false);
         var tR = titleGO.GetComponent<RectTransform>();
-        tR.anchoredPosition = new Vector2(0f, 115f);
-        tR.sizeDelta = new Vector2(900f, 44f);
+        tR.anchorMin = new Vector2(0.5f, 1f);
+        tR.anchorMax = new Vector2(0.5f, 1f);
+        tR.pivot     = new Vector2(0.5f, 1f);
+        tR.anchoredPosition = new Vector2(0f, -64f);
+        tR.sizeDelta = new Vector2(1260f, 46f);
         _proceduralTitleText = titleGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _proceduralTitleText.font = font;
-        _proceduralTitleText.fontSize = 28;
+        _proceduralTitleText.fontSize = 34;
         _proceduralTitleText.fontStyle = FontStyles.Bold;
         _proceduralTitleText.alignment = TextAlignmentOptions.Center;
         _proceduralTitleText.color = Color.white;
 
-        // Description
+        // Description (Top-anchored, generous 410px height for multi-paragraph guidance, auto-fitting to prevent overlap)
         var descGO = new GameObject("Desc", typeof(RectTransform));
         descGO.transform.SetParent(_proceduralStepCard.transform, false);
         var dR = descGO.GetComponent<RectTransform>();
-        dR.anchoredPosition = new Vector2(0f, 10f);
-        dR.sizeDelta = new Vector2(900f, 140f);
+        dR.anchorMin = new Vector2(0.5f, 1f);
+        dR.anchorMax = new Vector2(0.5f, 1f);
+        dR.pivot     = new Vector2(0.5f, 1f);
+        dR.anchoredPosition = new Vector2(0f, -116f);
+        dR.sizeDelta = new Vector2(1260f, 410f);
         _proceduralDescText = descGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _proceduralDescText.font = font;
-        _proceduralDescText.fontSize = 20;
-        _proceduralDescText.lineSpacing = 6f;
-        _proceduralDescText.alignment = TextAlignmentOptions.Center;
+        _proceduralDescText.fontSize = 32;
+        _proceduralDescText.lineSpacing = 4f;
+        _proceduralDescText.paragraphSpacing = 8f;
+        _proceduralDescText.enableAutoSizing = true;
+        _proceduralDescText.fontSizeMin = 26f;
+        _proceduralDescText.fontSizeMax = 32f;
+        _proceduralDescText.alignment = TextAlignmentOptions.Top;
         _proceduralDescText.color = new Color(0.9f, 0.92f, 0.95f);
 
-        // Objective Prompt
+        // Objective Prompt (Top-anchored strictly below description with zero overlap)
         var objGO = new GameObject("Objective", typeof(RectTransform));
         objGO.transform.SetParent(_proceduralStepCard.transform, false);
         var oR = objGO.GetComponent<RectTransform>();
-        oR.anchoredPosition = new Vector2(0f, -80f);
-        oR.sizeDelta = new Vector2(900f, 32f);
+        oR.anchorMin = new Vector2(0.5f, 1f);
+        oR.anchorMax = new Vector2(0.5f, 1f);
+        oR.pivot     = new Vector2(0.5f, 1f);
+        oR.anchoredPosition = new Vector2(0f, -540f);
+        oR.sizeDelta = new Vector2(1260f, 52f);
         _proceduralObjectiveText = objGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _proceduralObjectiveText.font = font;
-        _proceduralObjectiveText.fontSize = 18;
+        _proceduralObjectiveText.fontSize = 30;
         _proceduralObjectiveText.fontStyle = FontStyles.Italic;
         _proceduralObjectiveText.alignment = TextAlignmentOptions.Center;
         _proceduralObjectiveText.color = new Color(0.2f, 1f, 0.7f);
 
-        // Action Buttons Row
+        // Action Buttons Row (Bottom-anchored)
         var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         btnRow.transform.SetParent(_proceduralStepCard.transform, false);
         var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchoredPosition = new Vector2(0f, -135f);
-        brR.sizeDelta = new Vector2(900f, 50f);
+        brR.anchorMin = new Vector2(0.5f, 0f);
+        brR.anchorMax = new Vector2(0.5f, 0f);
+        brR.pivot     = new Vector2(0.5f, 0f);
+        brR.anchoredPosition = new Vector2(0f, 32f);
+        brR.sizeDelta = new Vector2(1260f, 84f);
 
         var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
         hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 30f;
+        hlg.spacing = 35f;
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        _proceduralNextBtn = CreateButton("NextBtn", "NEXT STEP ➔", Vector2.zero, new Vector2(260f, 50f), new Color(0.08f, 0.65f, 0.55f), OnNextStepClicked, btnRow.transform, font, 20, out _proceduralNextBtnText);
-        CreateButton("SkipBtn", "SKIP TUTORIAL", Vector2.zero, new Vector2(200f, 50f), new Color(0.18f, 0.22f, 0.28f), OnSkipTutorialClicked, btnRow.transform, font, 18);
+        // Next Button and Skip Button - EXACT SAME SIZE (400x76), 1 LINE ONLY
+        _proceduralNextBtn = CreateButton("NextBtn", "NEXT STEP", Vector2.zero, new Vector2(400f, 76f), new Color(0.08f, 0.65f, 0.55f), OnNextStepClicked, btnRow.transform, font, 32, out _proceduralNextBtnText);
+
+        CreateButton("SkipBtn", "SKIP TUTORIAL", Vector2.zero, new Vector2(400f, 76f), new Color(0.18f, 0.22f, 0.28f), OnSkipTutorialClicked, btnRow.transform, font, 32);
 
         _proceduralStepCard.SetActive(false);
     }
@@ -612,27 +656,53 @@ public class TutorialManager : MonoBehaviour
         cR.anchorMin = new Vector2(0.5f, 0.5f);
         cR.anchorMax = new Vector2(0.5f, 0.5f);
         cR.pivot     = new Vector2(0.5f, 0.5f);
-        cR.sizeDelta = new Vector2(680f, 440f);
+        cR.sizeDelta = new Vector2(1240f, 720f);
         cardGO.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
 
-        CreateText("Title", "🎉 TUTORIAL COMPLETED!", new Vector2(0f, 150f), new Vector2(620f, 50f), 34, FontStyles.Bold, new Color(0.2f, 1f, 0.7f), cardGO.transform, font);
+        // Top accent line
+        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripe.transform.SetParent(cardGO.transform, false);
+        var tsR = topStripe.GetComponent<RectTransform>();
+        tsR.anchorMin = new Vector2(0f, 1f);
+        tsR.anchorMax = new Vector2(1f, 1f);
+        tsR.pivot     = new Vector2(0.5f, 1f);
+        tsR.sizeDelta = new Vector2(0f, 5f);
+        topStripe.GetComponent<Image>().color = new Color(0.1f, 0.95f, 0.7f, 1f);
 
-        CreateText("Desc", "Congratulations Researcher!\n\nYou have completed all submarine operational training.\n\n<color=#00e5ff><b>+100 Research Data Points (RDP)</b></color> have been added to your submarine research fund.\n\nYou are now ready for free deep-sea exploration!", new Vector2(0f, 25f), new Vector2(580f, 170f), 22, FontStyles.Normal, Color.white, cardGO.transform, font);
+        // Title (Top-anchored)
+        CreateText("Title", "TUTORIAL COMPLETED!", new Vector2(0f, -36f), new Vector2(1160f, 52f), 40, FontStyles.Bold, new Color(0.2f, 1f, 0.7f), cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
 
+        // Subtitle (Top-anchored)
+        CreateText("Subtitle", "CONGRATULATIONS, RESEARCHER!", new Vector2(0f, -96f), new Vector2(1160f, 44f), 32, FontStyles.Bold, Color.white, cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
+
+        // Desc (Top-anchored, top-aligned)
+        string completionDesc = "You have completed all submarine operational training.\n\n<color=#00e5ff><b>+100 Research Data Points (RDP)</b></color>\nhave been added to your submarine research fund.\n\nYou are now ready for free deep-sea exploration!";
+        var descTMP = CreateText("Desc", completionDesc, new Vector2(0f, -158f), new Vector2(1120f, 380f), 32, FontStyles.Normal, new Color(0.92f, 0.94f, 0.97f), cardGO.transform, font, TextAlignmentOptions.Top, new Vector2(0.5f, 1f));
+        descTMP.enableAutoSizing = true;
+        descTMP.fontSizeMin = 26f;
+        descTMP.fontSizeMax = 32f;
+        descTMP.lineSpacing = 6f;
+        descTMP.paragraphSpacing = 12f;
+
+        // Button Row (Bottom-anchored)
         var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         btnRow.transform.SetParent(cardGO.transform, false);
         var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchoredPosition = new Vector2(0f, -145f);
-        brR.sizeDelta = new Vector2(580f, 60f);
+        brR.anchorMin = new Vector2(0.5f, 0f);
+        brR.anchorMax = new Vector2(0.5f, 0f);
+        brR.pivot     = new Vector2(0.5f, 0f);
+        brR.anchoredPosition = new Vector2(0f, 36f);
+        brR.sizeDelta = new Vector2(1120f, 84f);
 
         var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
         hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 24f;
+        hlg.spacing = 35f;
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        CreateButton("ProceedBtn", "START EXPEDITION 🌊", Vector2.zero, new Vector2(280f, 54f), new Color(0.08f, 0.65f, 0.55f), OnCompletionProceedClicked, btnRow.transform, font, 22);
-        CreateButton("ReplayBtn", "REPLAY TUTORIAL ↺", Vector2.zero, new Vector2(240f, 54f), new Color(0.18f, 0.25f, 0.35f), OnCompletionReplayClicked, btnRow.transform, font, 20);
+        // BOTH BUTTONS EXACT SAME SIZE (440x76), 1 LINE ONLY
+        CreateButton("ProceedBtn", "START EXPEDITION", Vector2.zero, new Vector2(440f, 76f), new Color(0.08f, 0.65f, 0.55f), OnCompletionProceedClicked, btnRow.transform, font, 32);
+        CreateButton("ReplayBtn", "REPLAY TUTORIAL", Vector2.zero, new Vector2(440f, 76f), new Color(0.18f, 0.25f, 0.35f), OnCompletionReplayClicked, btnRow.transform, font, 32);
 
         _proceduralCompletionModal.SetActive(false);
     }
@@ -641,24 +711,31 @@ public class TutorialManager : MonoBehaviour
     // UI Helpers
     // -----------------------------------------------------------------------
 
-    private void CreateText(string name, string text, Vector2 pos, Vector2 size, float fontSize, FontStyles style, Color color, Transform parent, TMP_FontAsset font)
+    private TextMeshProUGUI CreateText(string name, string text, Vector2 pos, Vector2 size, float fontSize, FontStyles style, Color color, Transform parent, TMP_FontAsset font, TextAlignmentOptions alignment = TextAlignmentOptions.Center, Vector2? anchor = null)
     {
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var r = go.GetComponent<RectTransform>();
+        if (anchor.HasValue)
+        {
+            r.anchorMin = anchor.Value;
+            r.anchorMax = anchor.Value;
+            r.pivot     = anchor.Value;
+        }
         r.anchoredPosition = pos;
         r.sizeDelta = size;
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
-        tmp.fontSize = fontSize;
+        tmp.fontSize = Mathf.Max(30f, fontSize);
         tmp.fontStyle = style;
-        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.alignment = alignment;
         tmp.color = color;
         tmp.text = text;
+        return tmp;
     }
 
-    private Button CreateButton(string name, string label, Vector2 pos, Vector2 size, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, float fontSize = 22)
+    private Button CreateButton(string name, string label, Vector2 pos, Vector2 size, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, float fontSize = 32f)
     {
         return CreateButton(name, label, pos, size, color, action, parent, font, fontSize, out _);
     }
@@ -680,15 +757,21 @@ public class TutorialManager : MonoBehaviour
         var lblR = lblGO.GetComponent<RectTransform>();
         lblR.anchorMin = Vector2.zero;
         lblR.anchorMax = Vector2.one;
-        lblR.sizeDelta = Vector2.zero;
+        lblR.offsetMin = new Vector2(16f, 4f);
+        lblR.offsetMax = new Vector2(-16f, -4f);
 
         var tmp = lblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
-        tmp.fontSize = fontSize;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.text = label;
+
+        // Enforce ONE LINE ONLY:
+        tmp.textWrappingMode = TextWrappingModes.NoWrap;
+        tmp.enableAutoSizing = true;
+        tmp.fontSizeMin = 22f;
+        tmp.fontSizeMax = Mathf.Max(28f, fontSize);
 
         labelText = tmp;
         return btn;

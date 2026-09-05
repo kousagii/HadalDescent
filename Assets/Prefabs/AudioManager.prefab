@@ -51,14 +51,23 @@ MonoBehaviour:
   bgmSource: {fileID: 5445631654854010829}
   sfxSource: {fileID: 241013902503530314}
   mainMenuBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
-  sunlightZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
+  sunlightZoneBGM: {fileID: 8300000, guid: 2bf2c7bbe1a2a074f87c358579762111, type: 3}
   twilightZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   midnightZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   abyssZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   hadalZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   defaultGameplayBGM: {fileID: 0}
   fadeDuration: 1
-  buttonClickSFX: {fileID: 0}
+  buttonClickSFX: {fileID: 8300000, guid: e5202679b288f0b42afb01b2be4ee1ef, type: 3}
+  cameraShutterSFX: {fileID: 8300000, guid: fb61cbc2cef159b42bc7316be257f83d, type: 3}
+  debrisFoundSFX: {fileID: 8300000, guid: 5cba734006905f6408bbcfe48add0882, type: 3}
+  speciesFoundSFX: {fileID: 8300000, guid: 5f15cbfbd00d1cf4483d2c4af3873dfe, type: 3}
+  subMovementSFX: {fileID: 8300000, guid: 0648e4bba69429b48af01d0310c124e2, type: 3}
+  subMovementSource: {fileID: 0}
+  zoneTransitionSFX: {fileID: 8300000, guid: 815538f7a8e54f844b3fc5c53114c072, type: 3}
+  zoneTransitionDuration: 2.5
+  zoneTransitionFadeOut: 0.5
+  transitionSource: {fileID: 0}
   diveSFX: {fileID: 0}
   surfaceSFX: {fileID: 0}
   alertSFX: {fileID: 0}

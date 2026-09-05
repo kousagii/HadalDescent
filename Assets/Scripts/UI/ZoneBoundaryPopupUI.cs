@@ -57,6 +57,9 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         if (promptPanel == null)
             promptPanel = gameObject;
 
+        UIThemeManager.ApplyAlohaTheme(promptPanel);
+        if (warningPanel != null) UIThemeManager.ApplyAlohaTheme(warningPanel);
+
         // Auto-find text if unassigned
         if (promptMessageText == null && promptPanel != null)
             promptMessageText = promptPanel.GetComponentInChildren<TMP_Text>(true);
@@ -134,7 +137,11 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         AutoWireComponents();
 
         if (promptMessageText != null)
+        {
             promptMessageText.text = message;
+            promptMessageText.lineSpacing = 10f;
+            promptMessageText.paragraphSpacing = 10f;
+        }
 
         if (promptPanel != null)
             promptPanel.SetActive(true);
@@ -166,14 +173,24 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
 
         if (warningPanel != null)
         {
-            if (warningMessageText != null) warningMessageText.text = warningMessage;
+            if (warningMessageText != null)
+            {
+                warningMessageText.text = warningMessage;
+                warningMessageText.lineSpacing = 10f;
+                warningMessageText.paragraphSpacing = 10f;
+            }
             warningPanel.SetActive(true);
             if (promptPanel != null && promptPanel != gameObject) promptPanel.SetActive(false);
         }
         else if (promptPanel != null)
         {
             // Fallback to prompt panel if no separate warning panel exists
-            if (promptMessageText != null) promptMessageText.text = warningMessage;
+            if (promptMessageText != null)
+            {
+                promptMessageText.text = warningMessage;
+                promptMessageText.lineSpacing = 10f;
+                promptMessageText.paragraphSpacing = 10f;
+            }
             promptPanel.SetActive(true);
         }
 

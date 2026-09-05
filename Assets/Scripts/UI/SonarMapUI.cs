@@ -31,6 +31,8 @@ public class SonarMapUI : MonoBehaviour
     [SerializeField] private RectTransform playerPointerRect;
     [Tooltip("Text label displaying current sonar detection range (e.g. 'RANGE 50 m').")]
     [SerializeField] private TMP_Text rangeLabel;
+    [Tooltip("Font asset for the range label (AlohaPop SDF).")]
+    [SerializeField] private TMP_FontAsset alohaFontAsset;
 
     [Header("Visual Sprites (Optional - auto-generates if empty)")]
     [SerializeField] private Sprite circleFrameSprite;
@@ -109,6 +111,7 @@ public class SonarMapUI : MonoBehaviour
     private void Start()
     {
         FindReferences();
+        ApplyRangeLabelStyle();
         UpdateSonarTier(true);
     }
 
@@ -163,6 +166,10 @@ public class SonarMapUI : MonoBehaviour
         if (rangeLabel != null)
         {
             rangeLabel.text = $"RANGE  {_currentDetectionRadius:0} m";
+            rangeLabel.enableAutoSizing = false;
+            rangeLabel.fontSize = 36f;
+            rangeLabel.fontSizeMin = 36f;
+            rangeLabel.fontSizeMax = 36f;
         }
     }
 
@@ -422,8 +429,8 @@ public class SonarMapUI : MonoBehaviour
             var bRect = badgeGO.GetComponent<RectTransform>();
             bRect.anchorMin = bRect.anchorMax = new Vector2(0.5f, 0f);
             bRect.pivot     = new Vector2(0.5f, 1f);
-            bRect.anchoredPosition = new Vector2(0f, -10f);
-            bRect.sizeDelta = new Vector2(170f, 34f);
+            bRect.anchoredPosition = new Vector2(0f, -12f);
+            bRect.sizeDelta = new Vector2(300f, 56f);
 
             var badgeImg = badgeGO.GetComponent<Image>();
             badgeImg.color = new Color(0.02f, 0.08f, 0.14f, 0.85f);
@@ -438,12 +445,63 @@ public class SonarMapUI : MonoBehaviour
             lRect.anchoredPosition = Vector2.zero;
 
             rangeLabel = labelGO.GetComponent<TextMeshProUGUI>();
-            rangeLabel.fontSize = 20f;
-            rangeLabel.fontStyle = FontStyles.Bold;
-            rangeLabel.alignment = TextAlignmentOptions.Center;
-            rangeLabel.color = new Color(0.00f, 0.93f, 0.85f, 1.00f);
+            rangeLabel.enableAutoSizing = false;
+            rangeLabel.fontSize = 36f;
+            rangeLabel.fontSizeMin = 36f;
+            rangeLabel.fontSizeMax = 36f;
             rangeLabel.text = "RANGE  50 m";
             rangeLabel.raycastTarget = false;
+        }
+
+        ApplyRangeLabelStyle();
+    }
+
+    private void ApplyRangeLabelStyle()
+    {
+        if (rangeLabel == null) return;
+
+        TMP_FontAsset fontToUse = alohaFontAsset;
+        if (fontToUse == null)
+        {
+            var zoneGO = GameObject.Find("Zone") ?? GameObject.Find("Depth") ?? GameObject.Find("RDP counter");
+            if (zoneGO != null)
+            {
+                var tmp = zoneGO.GetComponent<TMP_Text>();
+                if (tmp != null && tmp.font != null) fontToUse = tmp.font;
+            }
+        }
+        if (fontToUse == null)
+        {
+            var anyTmp = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var t in anyTmp)
+            {
+                if (t.font != null && (t.font.name.Contains("Antone") || t.font.name.Contains("Aloha")))
+                {
+                    fontToUse = t.font;
+                    break;
+                }
+            }
+        }
+        if (fontToUse == null)
+        {
+            fontToUse = UIThemeManager.AntoneFont;
+        }
+
+        if (fontToUse != null) rangeLabel.font = fontToUse;
+        rangeLabel.enableAutoSizing = false;
+        rangeLabel.fontSize = 36f;
+        rangeLabel.fontSizeMin = 36f;
+        rangeLabel.fontSizeMax = 36f;
+        rangeLabel.fontStyle = FontStyles.Bold;
+        rangeLabel.alignment = TextAlignmentOptions.Center;
+        rangeLabel.color = Color.white;
+        rangeLabel.textWrappingMode = TextWrappingModes.NoWrap;
+
+        var bRect = rangeLabel.transform.parent as RectTransform;
+        if (bRect != null)
+        {
+            bRect.sizeDelta = new Vector2(300f, 56f);
+            bRect.anchoredPosition = new Vector2(0f, -12f);
         }
     }
 

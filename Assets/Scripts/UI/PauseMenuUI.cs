@@ -25,6 +25,19 @@ public class PauseMenuUI : MonoBehaviour
 {
     public static PauseMenuUI Instance { get; private set; }
 
+    [Header("Font Settings")]
+    [Tooltip("Aloha font asset (AlohaPop SDF) used across Pause and Settings menus.")]
+    [SerializeField] private TMP_FontAsset alohaFontAsset;
+
+    public TMP_FontAsset GetAntoneFont() => GetAlohaFont();
+    public TMP_FontAsset GetAlohaFont()
+    {
+        if (alohaFontAsset != null) return alohaFontAsset;
+
+        alohaFontAsset = UIThemeManager.AntoneFont;
+        return alohaFontAsset;
+    }
+
     [Header("Custom UI Elements (Optional — procedural fallback created if null)")]
     [SerializeField] private GameObject customPauseRoot;
     [SerializeField] private GameObject customMainPausePanel;
@@ -81,6 +94,7 @@ public class PauseMenuUI : MonoBehaviour
         if (Instance != null && Instance != this)
         {
             // If another instance exists (e.g. from previous scene), copy custom fields if any
+            if (alohaFontAsset != null) Instance.alohaFontAsset = alohaFontAsset;
             if (customPauseRoot != null)
             {
                 Instance.customPauseRoot = customPauseRoot;
@@ -409,6 +423,16 @@ public class PauseMenuUI : MonoBehaviour
 
     private void WireCustomControls()
     {
+        if (customPauseRoot != null)
+        {
+            var aloha = GetAlohaFont();
+            foreach (var t in customPauseRoot.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (aloha != null) t.font = aloha;
+                if (t.fontSize < 36f) t.fontSize = 36f;
+            }
+        }
+
         if (customResumeButton != null)
         {
             customResumeButton.onClick.RemoveListener(OnResumeClicked);
@@ -489,16 +513,14 @@ public class PauseMenuUI : MonoBehaviour
     private void UpdateSensText(float val)   { if (_sensValText != null)   _sensValText.text   = $"{val:F1}x"; }
 
     // -----------------------------------------------------------------------
-    // Procedural UI Construction (Dedicated 1920x1080 Overlay Canvas)
+    // Procedural UI Construction (Aloha Font >= 36px Dedicated Overlay Canvas)
     // -----------------------------------------------------------------------
 
     private void BuildProceduralUI()
     {
         if (_proceduralRoot != null) return;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = GetAlohaFont();
 
         // Dedicated Pause Menu Canvas with Top Sorting Order
         _proceduralCanvasGO = new GameObject("PauseMenu_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -528,32 +550,32 @@ public class PauseMenuUI : MonoBehaviour
         mainRect.anchorMin = new Vector2(0.5f, 0.5f);
         mainRect.anchorMax = new Vector2(0.5f, 0.5f);
         mainRect.pivot     = new Vector2(0.5f, 0.5f);
-        mainRect.sizeDelta = new Vector2(560f, 620f);
+        mainRect.sizeDelta = new Vector2(620f, 700f);
         _mainPausePanel.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
 
-        // Title
-        CreateText("Title", "PAUSE", new Vector2(0f, 230f), new Vector2(480f, 60f), 42, FontStyles.Bold, Color.white, _mainPausePanel.transform, font);
+        // Title (Aloha, 48px Bold)
+        CreateText("Title", "PAUSE", new Vector2(0f, 270f), new Vector2(520f, 65f), 48, FontStyles.Bold, Color.white, _mainPausePanel.transform, font);
 
-        // Save Notification Text
+        // Save Notification Text (Aloha, 36px Bold)
         var notifGO = new GameObject("SaveNotification", typeof(RectTransform));
         notifGO.transform.SetParent(_mainPausePanel.transform, false);
         var notifRect = notifGO.GetComponent<RectTransform>();
-        notifRect.anchoredPosition = new Vector2(0f, 175f);
-        notifRect.sizeDelta = new Vector2(460f, 40f);
+        notifRect.anchoredPosition = new Vector2(0f, 205f);
+        notifRect.sizeDelta = new Vector2(520f, 48f);
         _saveNotification = notifGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _saveNotification.font = font;
-        _saveNotification.fontSize = 28;
+        _saveNotification.fontSize = 36;
         _saveNotification.fontStyle = FontStyles.Bold;
         _saveNotification.alignment = TextAlignmentOptions.Center;
         _saveNotification.color = new Color(0.2f, 1f, 0.7f);
         _saveNotification.text = "";
         notifGO.SetActive(false);
 
-        // Buttons: Resume, Save Game, Settings, Exit Game
-        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 90f),   new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font);
-        CreateMenuButton("SaveBtn",     "SAVE GAME", new Vector2(0f, 15f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font);
-        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -60f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font);
-        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -145f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font);
+        // Buttons: Resume, Save Game, Settings, Exit Game (Aloha, 36px Bold, 440x72)
+        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 110f),  new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font, new Vector2(440f, 72f));
+        CreateMenuButton("SaveBtn",     "SAVE GAME", new Vector2(0f, 24f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
+        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -62f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
+        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -148f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
 
         // ── 2. Settings Panel ────────────────────────────────────────────
         _settingsPanel = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
@@ -562,25 +584,25 @@ public class PauseMenuUI : MonoBehaviour
         setRect.anchorMin = new Vector2(0.5f, 0.5f);
         setRect.anchorMax = new Vector2(0.5f, 0.5f);
         setRect.pivot     = new Vector2(0.5f, 0.5f);
-        setRect.sizeDelta = new Vector2(720f, 680f);
+        setRect.sizeDelta = new Vector2(960f, 900f);
         _settingsPanel.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
         _settingsPanel.SetActive(false);
 
-        // Settings Header
-        CreateText("SettingsTitle", "SETTINGS", new Vector2(0f, 290f), new Vector2(500f, 50f), 38, FontStyles.Bold, Color.white, _settingsPanel.transform, font);
+        // Settings Header (Aloha, 46px Bold)
+        CreateText("SettingsTitle", "SETTINGS", new Vector2(0f, 390f), new Vector2(700f, 60f), 46, FontStyles.Bold, Color.white, _settingsPanel.transform, font);
 
-        // ── Audio Section ──
-        CreateText("AudioHeader", "AUDIO", new Vector2(0f, 240f), new Vector2(620f, 34f), 26, FontStyles.Bold, new Color(0.3f, 0.85f, 1f), _settingsPanel.transform, font, TextAlignmentOptions.Left);
+        // ── Audio Section ── (Aloha, 36px Bold)
+        CreateText("AudioHeader", "AUDIO", new Vector2(0f, 320f), new Vector2(880f, 48f), 36, FontStyles.Bold, new Color(0.3f, 0.85f, 1f), _settingsPanel.transform, font, TextAlignmentOptions.Left);
 
-        _masterSlider = CreateSettingSlider("MasterSlider", "Master Volume", new Vector2(0f, 195f), 0f, 1f, val => { AudioManager.Instance?.SetMasterVolume(val); UpdateMasterText(val); }, out _masterValText, _settingsPanel.transform, font);
-        _musicSlider  = CreateSettingSlider("MusicSlider",  "Music (BGM)",   new Vector2(0f, 145f), 0f, 1f, val => { AudioManager.Instance?.SetBGMVolume(val);    UpdateMusicText(val); },  out _musicValText,  _settingsPanel.transform, font);
-        _sfxSlider    = CreateSettingSlider("SfxSlider",    "SFX Volume",    new Vector2(0f, 95f),  0f, 1f, val => { AudioManager.Instance?.SetSFXVolume(val);    UpdateSfxText(val); },    out _sfxValText,    _settingsPanel.transform, font);
-        _muteToggle   = CreateSettingToggle("MuteToggle",   "Mute All Audio", new Vector2(0f, 45f), mute => AudioManager.Instance?.SetMute(mute), _settingsPanel.transform, font);
+        _masterSlider = CreateSettingSlider("MasterSlider", "Master Volume", new Vector2(0f, 250f), 0f, 1f, val => { AudioManager.Instance?.SetMasterVolume(val); UpdateMasterText(val); }, out _masterValText, _settingsPanel.transform, font);
+        _musicSlider  = CreateSettingSlider("MusicSlider",  "Music (BGM)",   new Vector2(0f, 180f), 0f, 1f, val => { AudioManager.Instance?.SetBGMVolume(val);    UpdateMusicText(val); },  out _musicValText,  _settingsPanel.transform, font);
+        _sfxSlider    = CreateSettingSlider("SfxSlider",    "SFX Volume",    new Vector2(0f, 110f), 0f, 1f, val => { AudioManager.Instance?.SetSFXVolume(val);    UpdateSfxText(val); },    out _sfxValText,    _settingsPanel.transform, font);
+        _muteToggle   = CreateSettingToggle("MuteToggle",   "Mute All Audio", new Vector2(0f, 40f), mute => AudioManager.Instance?.SetMute(mute), _settingsPanel.transform, font);
 
-        // ── Controls & Navigation Section ──
-        CreateText("ControlsHeader", "CONTROLS & NAVIGATION", new Vector2(0f, -10f), new Vector2(620f, 34f), 26, FontStyles.Bold, new Color(0.3f, 0.85f, 1f), _settingsPanel.transform, font, TextAlignmentOptions.Left);
+        // ── Controls & Navigation Section ── (Aloha, 36px Bold)
+        CreateText("ControlsHeader", "CONTROLS & NAVIGATION", new Vector2(0f, -35f), new Vector2(880f, 48f), 36, FontStyles.Bold, new Color(0.3f, 0.85f, 1f), _settingsPanel.transform, font, TextAlignmentOptions.Left);
 
-        _sensSlider   = CreateSettingSlider("SensSlider", "Look Sensitivity", new Vector2(0f, -55f), 0.5f, 2.0f, val =>
+        _sensSlider   = CreateSettingSlider("SensSlider", "Look Sensitivity", new Vector2(0f, -105f), 0.5f, 2.0f, val =>
         {
             SubmarineCamera.LookSensitivityMultiplier = val;
             PlayerPrefs.SetFloat("Settings_LookSensitivity", val);
@@ -588,22 +610,22 @@ public class PauseMenuUI : MonoBehaviour
             UpdateSensText(val);
         }, out _sensValText, _settingsPanel.transform, font);
 
-        _invertToggle = CreateSettingToggle("InvertToggle", "Invert Y-Axis (Pitch)", new Vector2(0f, -110f), inv =>
+        _invertToggle = CreateSettingToggle("InvertToggle", "Invert Y-Axis (Pitch)", new Vector2(0f, -175f), inv =>
         {
             SubmarineCamera.InvertPitch = inv;
             PlayerPrefs.SetInt("Settings_InvertPitch", inv ? 1 : 0);
             PlayerPrefs.Save();
         }, _settingsPanel.transform, font);
 
-        // Back Button
-        CreateMenuButton("SettingsBackBtn", "BACK", new Vector2(0f, -240f), new Color(0.15f, 0.35f, 0.5f), OnSettingsBackClicked, _settingsPanel.transform, font, new Vector2(280f, 54f));
+        // Back Button (Aloha, 36px Bold, 360x76)
+        CreateMenuButton("SettingsBackBtn", "BACK", new Vector2(0f, -275f), new Color(0.15f, 0.35f, 0.5f), OnSettingsBackClicked, _settingsPanel.transform, font, new Vector2(360f, 76f), 36f);
     }
 
     // -----------------------------------------------------------------------
-    // UI Element Creation Helpers
+    // UI Element Creation Helpers (Minimum 36px Aloha Font Support)
     // -----------------------------------------------------------------------
 
-    private void CreateText(string name, string text, Vector2 pos, Vector2 size, float fontSize, FontStyles style, Color color, Transform parent, TMP_FontAsset font, TextAlignmentOptions align = TextAlignmentOptions.Center)
+    private TMP_Text CreateText(string name, string text, Vector2 pos, Vector2 size, float fontSize, FontStyles style, Color color, Transform parent, TMP_FontAsset font, TextAlignmentOptions align = TextAlignmentOptions.Center)
     {
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
@@ -612,16 +634,17 @@ public class PauseMenuUI : MonoBehaviour
         r.sizeDelta = size;
         var tmp = go.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
-        tmp.fontSize = fontSize;
+        tmp.fontSize = Mathf.Max(36f, fontSize);
         tmp.fontStyle = style;
         tmp.alignment = align;
         tmp.color = color;
         tmp.text = text;
+        return tmp;
     }
 
-    private Button CreateMenuButton(string name, string label, Vector2 pos, Color btnColor, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, Vector2? customSize = null)
+    private Button CreateMenuButton(string name, string label, Vector2 pos, Color btnColor, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, Vector2? customSize = null, float fontSize = 36f)
     {
-        Vector2 size = customSize ?? new Vector2(400f, 58f);
+        Vector2 size = customSize ?? new Vector2(440f, 72f);
 
         var btnGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
         btnGO.transform.SetParent(parent, false);
@@ -644,7 +667,7 @@ public class PauseMenuUI : MonoBehaviour
 
         var tmp = lblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
-        tmp.fontSize = 36;
+        tmp.fontSize = Mathf.Max(36f, fontSize);
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
@@ -659,20 +682,21 @@ public class PauseMenuUI : MonoBehaviour
         rowGO.transform.SetParent(parent, false);
         var rowR = rowGO.GetComponent<RectTransform>();
         rowR.anchoredPosition = pos;
-        rowR.sizeDelta = new Vector2(620f, 40f);
+        rowR.sizeDelta = new Vector2(880f, 56f);
 
-        // Label
+        // Label (Aloha, 36px Bold)
         var lblGO = new GameObject("Label", typeof(RectTransform));
         lblGO.transform.SetParent(rowGO.transform, false);
         var lblR = lblGO.GetComponent<RectTransform>();
         lblR.anchorMin = new Vector2(0f, 0.5f);
         lblR.anchorMax = new Vector2(0f, 0.5f);
         lblR.pivot     = new Vector2(0f, 0.5f);
-        lblR.anchoredPosition = new Vector2(10f, 0f);
-        lblR.sizeDelta = new Vector2(230f, 36f);
+        lblR.anchoredPosition = new Vector2(15f, 0f);
+        lblR.sizeDelta = new Vector2(390f, 52f);
         var lblTMP = lblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) lblTMP.font = font;
-        lblTMP.fontSize = 22;
+        lblTMP.fontSize = 36f;
+        lblTMP.fontStyle = FontStyles.Bold;
         lblTMP.color = Color.white;
         lblTMP.text = label;
 
@@ -680,11 +704,11 @@ public class PauseMenuUI : MonoBehaviour
         var sliderGO = new GameObject(name, typeof(RectTransform), typeof(Slider));
         sliderGO.transform.SetParent(rowGO.transform, false);
         var sliderR = sliderGO.GetComponent<RectTransform>();
-        sliderR.anchorMin = new Vector2(0.5f, 0.5f);
-        sliderR.anchorMax = new Vector2(0.5f, 0.5f);
-        sliderR.pivot     = new Vector2(0.5f, 0.5f);
-        sliderR.anchoredPosition = new Vector2(55f, 0f);
-        sliderR.sizeDelta = new Vector2(240f, 22f);
+        sliderR.anchorMin = new Vector2(0f, 0.5f);
+        sliderR.anchorMax = new Vector2(0f, 0.5f);
+        sliderR.pivot     = new Vector2(0f, 0.5f);
+        sliderR.anchoredPosition = new Vector2(420f, 0f);
+        sliderR.sizeDelta = new Vector2(310f, 26f);
 
         var slider = sliderGO.GetComponent<Slider>();
         slider.minValue = min;
@@ -727,7 +751,7 @@ public class PauseMenuUI : MonoBehaviour
         var handleGO = new GameObject("Handle", typeof(RectTransform), typeof(Image));
         handleGO.transform.SetParent(handleArea.transform, false);
         var hR = handleGO.GetComponent<RectTransform>();
-        hR.sizeDelta = new Vector2(24f, 24f);
+        hR.sizeDelta = new Vector2(28f, 28f);
         var hImg = handleGO.GetComponent<Image>();
         hImg.color = Color.white;
 
@@ -735,18 +759,19 @@ public class PauseMenuUI : MonoBehaviour
         slider.targetGraphic = hImg;
         slider.onValueChanged.AddListener(onValChanged);
 
-        // Value text
+        // Value text (Aloha, 36px Bold)
         var valGO = new GameObject("ValText", typeof(RectTransform));
         valGO.transform.SetParent(rowGO.transform, false);
         var valR = valGO.GetComponent<RectTransform>();
         valR.anchorMin = new Vector2(1f, 0.5f);
         valR.anchorMax = new Vector2(1f, 0.5f);
         valR.pivot     = new Vector2(1f, 0.5f);
-        valR.anchoredPosition = new Vector2(-10f, 0f);
-        valR.sizeDelta = new Vector2(70f, 36f);
+        valR.anchoredPosition = new Vector2(-15f, 0f);
+        valR.sizeDelta = new Vector2(120f, 52f);
         valText = valGO.AddComponent<TextMeshProUGUI>();
         if (font != null) valText.font = font;
-        valText.fontSize = 20;
+        valText.fontSize = 36f;
+        valText.fontStyle = FontStyles.Bold;
         valText.alignment = TextAlignmentOptions.Right;
         valText.color = new Color(0.3f, 0.85f, 1f);
 
@@ -759,22 +784,23 @@ public class PauseMenuUI : MonoBehaviour
         toggleGO.transform.SetParent(parent, false);
         var tr = toggleGO.GetComponent<RectTransform>();
         tr.anchoredPosition = pos;
-        tr.sizeDelta = new Vector2(620f, 40f);
+        tr.sizeDelta = new Vector2(880f, 56f);
 
         var toggle = toggleGO.GetComponent<Toggle>();
 
-        // Label
+        // Label (Aloha, 36px Bold)
         var lblGO = new GameObject("Label", typeof(RectTransform));
         lblGO.transform.SetParent(toggleGO.transform, false);
         var lblR = lblGO.GetComponent<RectTransform>();
         lblR.anchorMin = new Vector2(0f, 0.5f);
         lblR.anchorMax = new Vector2(0f, 0.5f);
         lblR.pivot     = new Vector2(0f, 0.5f);
-        lblR.anchoredPosition = new Vector2(10f, 0f);
-        lblR.sizeDelta = new Vector2(300f, 36f);
+        lblR.anchoredPosition = new Vector2(15f, 0f);
+        lblR.sizeDelta = new Vector2(550f, 52f);
         var lblTMP = lblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) lblTMP.font = font;
-        lblTMP.fontSize = 22;
+        lblTMP.fontSize = 36f;
+        lblTMP.fontStyle = FontStyles.Bold;
         lblTMP.color = Color.white;
         lblTMP.text = label;
 
@@ -785,8 +811,8 @@ public class PauseMenuUI : MonoBehaviour
         bgR.anchorMin = new Vector2(1f, 0.5f);
         bgR.anchorMax = new Vector2(1f, 0.5f);
         bgR.pivot     = new Vector2(1f, 0.5f);
-        bgR.anchoredPosition = new Vector2(-20f, 0f);
-        bgR.sizeDelta = new Vector2(32f, 32f);
+        bgR.anchoredPosition = new Vector2(-25f, 0f);
+        bgR.sizeDelta = new Vector2(44f, 44f);
         var bgImg = bgGO.GetComponent<Image>();
         bgImg.color = new Color(0.12f, 0.20f, 0.30f);
 
@@ -796,7 +822,7 @@ public class PauseMenuUI : MonoBehaviour
         var cR = checkGO.GetComponent<RectTransform>();
         cR.anchorMin = Vector2.zero;
         cR.anchorMax = Vector2.one;
-        cR.sizeDelta = new Vector2(-8f, -8f);
+        cR.sizeDelta = new Vector2(-10f, -10f);
         var cImg = checkGO.GetComponent<Image>();
         cImg.color = new Color(0.08f, 0.75f, 0.68f);
 
@@ -807,3 +833,4 @@ public class PauseMenuUI : MonoBehaviour
         return toggle;
     }
 }
+

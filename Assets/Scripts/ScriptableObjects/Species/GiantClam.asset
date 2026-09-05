@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Tridacna gigas
   taxonomicClass: 11
   zoneIndex: 0
-  habitat: "Shallow sunlit coral reef lagoons (0\u201335 m)"
-  depthRangeText: "0\u201335 m"
+  habitat: "Shallow sunlit coral reef lagoons (0-35 m)"
+  depthRangeText: "0-35 m"
   explorationHint: Found embedded in sandy coral lagoons where bright sunlight penetrates.
   secondaryZoneIndices: 
   characteristics: Huge shell with colorful blue, green, or brown tissue.

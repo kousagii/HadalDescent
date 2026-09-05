@@ -239,9 +239,7 @@ public class BestiaryDiscoveryPopup : MonoBehaviour
     {
         if (_panel != null || _canvas == null) return;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         var go = new GameObject("DiscoveryPopup", typeof(RectTransform), typeof(Image));
         go.transform.SetParent(_canvas.transform, false);

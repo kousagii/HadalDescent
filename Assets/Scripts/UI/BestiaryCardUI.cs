@@ -69,9 +69,21 @@ public class BestiaryCardUI : MonoBehaviour
             }
 
             if (titleText != null) titleText.text = data.commonName;
-            if (subtitleText != null) subtitleText.text = $"<i>{data.scientificName}</i>";
-            if (depthText != null) depthText.text = $"📍 Depth: {data.depthRangeText}";
-            if (habitatOrClueText != null) habitatOrClueText.text = $"Habitat: {data.habitat}";
+            if (subtitleText != null)
+            {
+                subtitleText.text = $"Class: <pos=170>{data.taxonomicClass}</pos>";
+                subtitleText.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+            if (depthText != null)
+            {
+                depthText.text = $"Depth: <pos=170>{data.depthRangeText}</pos>";
+                depthText.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+            if (habitatOrClueText != null)
+            {
+                habitatOrClueText.text = $"Habitat: <pos=170>{data.habitat}</pos>";
+                habitatOrClueText.textWrappingMode = TextWrappingModes.Normal;
+            }
 
             if (accentImage != null)
                 accentImage.color = new Color(0.0f, 0.9f, 1.0f, 1f); // Vibrant Cyan
@@ -85,11 +97,23 @@ public class BestiaryCardUI : MonoBehaviour
             }
 
             if (titleText != null) titleText.text = "??? [Uncataloged Specimen]";
-            if (subtitleText != null) subtitleText.text = $"Class: {data.taxonomicClass}";
-            if (depthText != null) depthText.text = $"📍 Depth: {data.depthRangeText}";
+            if (subtitleText != null)
+            {
+                subtitleText.text = $"Class: <pos=170>{data.taxonomicClass}</pos>";
+                subtitleText.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+            if (depthText != null)
+            {
+                depthText.text = $"Depth: <pos=170>{data.depthRangeText}</pos>";
+                depthText.textWrappingMode = TextWrappingModes.NoWrap;
+            }
 
             string clue = !string.IsNullOrEmpty(data.explorationHint) ? data.explorationHint : data.habitat;
-            if (habitatOrClueText != null) habitatOrClueText.text = $"🔍 Search Clue: {clue}";
+            if (habitatOrClueText != null)
+            {
+                habitatOrClueText.text = $"Habitat: <pos=170>{clue}</pos>";
+                habitatOrClueText.textWrappingMode = TextWrappingModes.Normal;
+            }
 
             if (accentImage != null)
                 accentImage.color = new Color(0.35f, 0.40f, 0.45f, 1f); // Slate / Gray

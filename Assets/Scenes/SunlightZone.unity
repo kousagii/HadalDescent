@@ -1529,7 +1529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fb3faabc71d23e4881f645062249183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinigameManager
-  forceMG1: 0
+  forceMG1: 1
   forceMG2: 0
   _mg1: {fileID: 0}
   _mg2: {fileID: 0}
@@ -1547,6 +1547,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: AudioManager
       objectReference: {fileID: 0}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: buttonClickSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: e5202679b288f0b42afb01b2be4ee1ef, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: debrisFoundSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: 5cba734006905f6408bbcfe48add0882, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: subMovementSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: 0648e4bba69429b48af01d0310c124e2, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: speciesFoundSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: 5f15cbfbd00d1cf4483d2c4af3873dfe, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: sunlightZoneBGM
+      value: 
+      objectReference: {fileID: 8300000, guid: 2bf2c7bbe1a2a074f87c358579762111, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: cameraShutterSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: fb61cbc2cef159b42bc7316be257f83d, type: 3}
+    - target: {fileID: 6031361135474179840, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
+      propertyPath: zoneTransitionSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: 815538f7a8e54f844b3fc5c53114c072, type: 3}
     - target: {fileID: 7840180397241058769, guid: 1309bed943eb39047bfed732f46f9b00, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

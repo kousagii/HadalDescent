@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Physalia utriculus
   taxonomicClass: 9
   zoneIndex: 0
-  habitat: "Ocean surface (0\u20133 m)"
-  depthRangeText: "0\u20133 m"
+  habitat: "Ocean surface (0-3 m)"
+  depthRangeText: "0-3 m"
   explorationHint: Drifts right beneath the glistening water surface near Depth 0m.
   secondaryZoneIndices: 
   characteristics: Gas-filled float with long stinging structures.

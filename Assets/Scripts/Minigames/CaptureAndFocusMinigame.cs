@@ -500,9 +500,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         sheenImg.color = new Color(1f, 1f, 1f, 0.10f);
         sheenImg.raycastTarget = false;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         // Instruction label
         var instrGO = new GameObject("Instr", typeof(RectTransform));
@@ -514,7 +512,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         it.text = "<b>HOLD SCREEN</b> to raise focus bar  •  Keep creature in the green";
         it.fontSize = 36; it.color = new Color(0.85f, 0.95f, 0.85f, 0.90f);
         it.alignment = TextAlignmentOptions.Center; it.raycastTarget = false;
-        it.enableWordWrapping = false;
+        it.textWrappingMode = TextWrappingModes.NoWrap;
         it.overflowMode = TextOverflowModes.Overflow;
 
         // Result label

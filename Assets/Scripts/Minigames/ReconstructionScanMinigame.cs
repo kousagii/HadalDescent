@@ -267,9 +267,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _rootPanel.sizeDelta = Vector2.zero;
         rootGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.70f);
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         // Title
         var titleGO = new GameObject("Title", typeof(RectTransform));
@@ -283,7 +281,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         titleTmp.text = "RECONSTRUCTION SCAN - Arrange the tiles";
         titleTmp.fontSize = 36; titleTmp.fontStyle = FontStyles.Bold;
         titleTmp.color = new Color(0.8f, 0.95f, 1f); titleTmp.alignment = TextAlignmentOptions.Center;
-        titleTmp.enableWordWrapping = false;
+        titleTmp.textWrappingMode = TextWrappingModes.NoWrap;
         titleTmp.overflowMode = TextOverflowModes.Overflow;
 
         // Timer strip
@@ -307,7 +305,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         tlrect.anchorMin = Vector2.zero; tlrect.anchorMax = Vector2.one; tlrect.sizeDelta = Vector2.zero;
         _timerText = timerLblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _timerText.font = font;
-        _timerText.text = _totalTime.ToString("0"); _timerText.fontSize = 24;
+        _timerText.text = _totalTime.ToString("0"); _timerText.fontSize = 36;
         _timerText.color = Color.white; _timerText.alignment = TextAlignmentOptions.Center;
         _timerText.fontStyle = FontStyles.Bold;
 
@@ -356,7 +354,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
             nr.anchorMin = Vector2.zero; nr.anchorMax = Vector2.one; nr.sizeDelta = Vector2.zero;
             _tileTMP[i]           = numGO.AddComponent<TextMeshProUGUI>();
             if (font != null) _tileTMP[i].font = font;
-            _tileTMP[i].fontSize  = sz * 0.38f;
+            _tileTMP[i].fontSize  = Mathf.Max(36f, sz * 0.38f);
             _tileTMP[i].fontStyle = FontStyles.Bold;
             _tileTMP[i].color     = new Color(0.80f, 0.92f, 1f);
             _tileTMP[i].alignment = TextAlignmentOptions.Center;

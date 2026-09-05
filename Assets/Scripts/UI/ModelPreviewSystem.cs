@@ -124,7 +124,7 @@ public class ModelPreviewSystem : MonoBehaviour
             previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             previewCamera.fieldOfView = 28f;
             previewCamera.nearClipPlane = 0.02f;
-            previewCamera.farClipPlane = 40f;
+            previewCamera.farClipPlane = 500f;
             previewCamera.targetTexture = previewRT;
 
             if (_previewLayerId >= 0)
@@ -473,6 +473,7 @@ public class ModelPreviewSystem : MonoBehaviour
         float cameraDistance = Mathf.Max(distVertical, distHorizontal) * 1.10f;
         cameraDistance = Mathf.Max(cameraDistance, 0.25f);
 
+        previewCamera.farClipPlane = Mathf.Max(500f, cameraDistance * 3f);
         previewCamera.transform.position = previewWorldPosition + new Vector3(0f, 0f, -cameraDistance);
         previewCamera.transform.LookAt(previewWorldPosition);
     }

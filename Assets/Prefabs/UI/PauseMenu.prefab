@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86cdda2793b123244b1e6766871017e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenuUI
+  alohaFontAsset: {fileID: 11400000, guid: 7f219393d8efe2b4789a53cd57839cee, type: 2}
   customPauseRoot: {fileID: 0}
   customMainPausePanel: {fileID: 0}
   customSettingsPanel: {fileID: 0}

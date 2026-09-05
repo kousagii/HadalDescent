@@ -186,12 +186,10 @@ public class ScanReticleUI : MonoBehaviour
         Canvas canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
         if (canvas == null) return;
 
-        // Auto-load Poppins-Regular SDF font if not assigned in inspector
+        // Auto-load Aloha font if not assigned in inspector
         if (reticleFont == null)
         {
-            reticleFont = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                       ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                       ?? TMP_Settings.defaultFontAsset;
+            reticleFont = UIThemeManager.AlohaFont;
         }
 
         var rootGO = new GameObject("SquareCornerReticle", typeof(RectTransform));
@@ -240,7 +238,7 @@ public class ScanReticleUI : MonoBehaviour
         var viewBtnRect = viewBtnGO.GetComponent<RectTransform>();
         viewBtnRect.anchorMin = viewBtnRect.anchorMax = new Vector2(0.5f, 0.5f);
         viewBtnRect.pivot = new Vector2(0.5f, 1f);
-        viewBtnRect.sizeDelta = new Vector2(360f, 62f);
+        viewBtnRect.sizeDelta = new Vector2(480f, 68f);
         viewBtnRect.anchoredPosition = new Vector2(0f, -140f);
 
         var btnImg = viewBtnGO.GetComponent<Image>();
@@ -259,6 +257,10 @@ public class ScanReticleUI : MonoBehaviour
         _viewBestiaryLabel = lblGO.AddComponent<TextMeshProUGUI>();
         if (reticleFont != null) _viewBestiaryLabel.font = reticleFont;
         _viewBestiaryLabel.fontSize = 36f;
+        _viewBestiaryLabel.enableAutoSizing = true;
+        _viewBestiaryLabel.fontSizeMin = 32f;
+        _viewBestiaryLabel.fontSizeMax = 36f;
+        _viewBestiaryLabel.textWrappingMode = TextWrappingModes.NoWrap;
         _viewBestiaryLabel.fontStyle = FontStyles.Bold;
         _viewBestiaryLabel.alignment = TextAlignmentOptions.Center;
         _viewBestiaryLabel.color = Color.white;

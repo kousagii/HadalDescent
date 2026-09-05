@@ -57,17 +57,17 @@ public class ZoneHeaderUI : MonoBehaviour
             if (depthRangeText != null && depthRangeText != zoneTitleText && depthRangeText.gameObject != zoneTitleText.gameObject)
             {
                 zoneTitleText.text = zone.zoneName.ToUpper();
-                depthRangeText.text = $"({zone.displayDepthMin:0} – {zone.displayDepthMax:0} m)";
+                depthRangeText.text = $"({zone.displayDepthMin:0} - {zone.displayDepthMax:0} m)";
             }
             else
             {
                 // Single unified label: title and depth together with proportional size
-                zoneTitleText.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=85%><color=#a0d8ef>({zone.displayDepthMin:0} – {zone.displayDepthMax:0} m)</color></size>";
+                zoneTitleText.text = $"<b>{zone.zoneName.ToUpper()}</b>  <size=85%><color=#a0d8ef>({zone.displayDepthMin:0} - {zone.displayDepthMax:0} m)</color></size>";
             }
         }
         else if (depthRangeText != null)
         {
-            depthRangeText.text = $"<b>{zone.zoneName.ToUpper()}</b> ({zone.displayDepthMin:0} – {zone.displayDepthMax:0} m)";
+            depthRangeText.text = $"<b>{zone.zoneName.ToUpper()}</b> ({zone.displayDepthMin:0} - {zone.displayDepthMax:0} m)";
         }
 
         // 2. Discovery Progress Count & Percentage Formatting

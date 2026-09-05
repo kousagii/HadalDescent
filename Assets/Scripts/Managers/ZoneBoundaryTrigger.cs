@@ -357,16 +357,14 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private GameObject CreateSimplePopupPanel(Transform canvasTransform, string panelName, out TMP_Text textComponent, bool isWarning)
     {
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         GameObject panel = new GameObject(panelName, typeof(RectTransform), typeof(UnityEngine.UI.Image));
         panel.transform.SetParent(canvasTransform, false);
         panel.transform.SetAsLastSibling();
 
         RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(620, 360);
+        rect.sizeDelta = new Vector2(880, 480);
         rect.anchoredPosition = Vector2.zero;
 
         UnityEngine.UI.Image img = panel.GetComponent<UnityEngine.UI.Image>();
@@ -384,20 +382,20 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 28;
+        tmp.fontSize = 36;
         tmp.fontStyle = FontStyles.Bold;
         tmp.color = Color.white;
         textComponent = tmp;
 
         if (isWarning)
         {
-            CreateButton(panel.transform, "ShopBtn", "GO TO SHOP 🛠️", new Vector2(-125f, -100f), () => OnWarningShopClicked(), 220f);
-            CreateButton(panel.transform, "CancelBtn", "CANCEL", new Vector2(145f, -100f), () => OnCancel(), 160f);
+            CreateButton(panel.transform, "ShopBtn", "GO TO SHOP 🛠️", new Vector2(-160f, -160f), () => OnWarningShopClicked(), 280f);
+            CreateButton(panel.transform, "CancelBtn", "CANCEL", new Vector2(160f, -160f), () => OnCancel(), 220f);
         }
         else
         {
-            CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(-110f, -100f), () => OnConfirm(), 160f);
-            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(110f, -100f), () => OnCancel(), 160f);
+            CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(-140f, -160f), () => OnConfirm(), 220f);
+            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(140f, -160f), () => OnCancel(), 220f);
         }
 
         panel.SetActive(false);
@@ -406,15 +404,13 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private void CreateButton(Transform parent, string name, string labelText, Vector2 position, UnityEngine.Events.UnityAction onClick, float width = 160f)
     {
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         GameObject btnGO = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
         btnGO.transform.SetParent(parent, false);
 
         RectTransform rect = btnGO.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(width, 54);
+        rect.sizeDelta = new Vector2(width, 70);
         rect.anchoredPosition = position;
 
         UnityEngine.UI.Image img = btnGO.GetComponent<UnityEngine.UI.Image>();
@@ -436,7 +432,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         if (font != null) txt.font = font;
         txt.text = labelText;
         txt.alignment = TextAlignmentOptions.Center;
-        txt.fontSize = 24;
+        txt.fontSize = 36;
         txt.fontStyle = FontStyles.Bold;
         txt.color = Color.white;
         txt.raycastTarget = false;

@@ -112,6 +112,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDisable()
     {
+        AudioManager.Instance?.SetSubmarineMoving(false);
         if (inputActionsAsset != null)
         {
             var map = inputActionsAsset.FindActionMap("Player");
@@ -147,6 +148,10 @@ public class PlayerMovement : MonoBehaviour
 
         if (interactAction != null && interactAction.WasPressedThisFrame()) Interact();
         if (scanAction != null && scanAction.WasPressedThisFrame())         Scan();
+
+        bool isMoving = moveInput.sqrMagnitude > 0.01f || (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f);
+        float intensity = Mathf.Max(moveInput.magnitude, rb != null ? Mathf.Clamp01(rb.linearVelocity.magnitude / (moveSpeed * 0.5f)) : 0f);
+        AudioManager.Instance?.SetSubmarineMoving(isMoving, intensity);
     }
 
     private void FixedUpdate()

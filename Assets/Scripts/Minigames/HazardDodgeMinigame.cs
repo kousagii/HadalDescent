@@ -124,12 +124,29 @@ public class HazardDodgeMinigame : MonoBehaviour
     private RectTransform _rootUI;
     private Image         _explorationVignette;
     private Image         _redVignette;
-    private GameObject    _warningBanner;
     private TMP_Text      _distanceLabel;
     private TMP_Text      _rdpBonusLabel;
     private TMP_Text      _hullLabel;
     private Image[]       _hullPipImages;
-    private TMP_Text      _resultBanner;
+
+    // Rich Aesthetic Warning & Finish Banners
+    private GameObject _warningBannerRoot;
+    private Image      _warningBannerBg;
+    private Image      _warningBannerBorder;
+    private TMP_Text   _warningTitleTMP;
+    private TMP_Text   _warningDescTMP;
+    private TMP_Text   _warningHintTMP;
+    private Coroutine  _warningPulseCoroutine;
+
+    private GameObject _finishBannerRoot;
+    private Image      _finishBannerBg;
+    private Image      _finishBannerBorder;
+    private Image      _finishTopStripe;
+    private Image      _finishBottomStripe;
+    private TMP_Text   _finishTitleTMP;
+    private TMP_Text   _finishStatusTMP;
+    private TMP_Text   _finishRewardTMP;
+    private Coroutine  _finishPunchCoroutine;
 
     private bool         _isActive       = false;
 
@@ -231,12 +248,12 @@ public class HazardDodgeMinigame : MonoBehaviour
         vigRect.anchorMax = Vector2.one;
         vigRect.sizeDelta = Vector2.zero;
         _explorationVignette = vigGO.GetComponent<Image>();
-        _explorationVignette.color = new Color(1f, 0.05f, 0.05f, 0f);
+        _explorationVignette.color = new Color(0.85f, 0.20f, 0.12f, 0f);
         _explorationVignette.raycastTarget = false;
     }
 
     // -----------------------------------------------------------------------
-    // Phase 1: Alert & Warning Transition Sequence (2.5s)
+    // Phase 1: Alert & Warning Transition Sequence (3.0s)
     // -----------------------------------------------------------------------
 
     private IEnumerator Phase1AlertSequence()
@@ -261,25 +278,25 @@ public class HazardDodgeMinigame : MonoBehaviour
                 customUIRoot.SetActive(false);
             }
         }
-        if (_rootUI != null)              _rootUI.gameObject.SetActive(false);
-        if (_warningBanner != null)       _warningBanner.SetActive(false);
-        if (customWarningBanner != null)  customWarningBanner.SetActive(false);
-        if (_resultBanner != null)        _resultBanner.gameObject.SetActive(false);
-        if (customResultBanner != null)   customResultBanner.gameObject.SetActive(false);
+        if (_rootUI != null) _rootUI.gameObject.SetActive(false);
+        HideAllBanners();
 
-        // 1. Red flashing light on exploration screen (First-Person view) for 1.5 seconds
+        // 1. Gentle ambient warning on exploration screen with Warning Banner & Alert chime
+        ShowWarningBanner(true);
+
         float elapsed = 0f;
-        float exploreAlertDuration = 1.5f;
+        float exploreAlertDuration = 1.8f;
         while (elapsed < exploreAlertDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float pulse = Mathf.PingPong(elapsed * 4.5f, 1f) * 0.45f;
-            Color flashCol = new Color(1f, 0.08f, 0.08f, pulse);
+            // Smooth, calming 0.5 Hz breathing pulse (max alpha 0.16f - no strobing or eye strain)
+            float pulse = (Mathf.Sin(elapsed * Mathf.PI * 1.0f) * 0.5f + 0.5f) * 0.16f;
+            Color flashCol = new Color(0.85f, 0.20f, 0.12f, pulse);
             if (_explorationVignette != null) _explorationVignette.color = flashCol;
             yield return null;
         }
 
-        // 2. Transition into Hazard Dodge Minigame 1 sec before start of minigame!
+        // 2. Transition into Hazard Dodge Minigame before start of minigame
         if (customUIRoot != null)
         {
             customUIRoot.SetActive(true);
@@ -301,34 +318,29 @@ public class HazardDodgeMinigame : MonoBehaviour
             if (_stageViewport != null) _stageViewport.gameObject.SetActive(true);
         }
 
+        // Zero out exploration vignette so it doesn't double-tint with minigame vignette
+        if (_explorationVignette != null) _explorationVignette.color = new Color(0f, 0f, 0f, 0f);
+
         UpdateHUD();
 
-        // Show Warning Banner (Fallback if custom not assigned)
-        if (customWarningBanner != null)
-            customWarningBanner.SetActive(true);
-        else if (_warningBanner != null)
-            _warningBanner.SetActive(true);
-
-        // 3. 1.0 second warning transition countdown
+        // 3. 1.2 second warning transition countdown (Warning banner remains steady and readable)
         float transitionElapsed = 0f;
-        float transitionDuration = 1.0f;
+        float transitionDuration = 1.2f;
         while (transitionElapsed < transitionDuration)
         {
             transitionElapsed += Time.unscaledDeltaTime;
-            float pulse = Mathf.PingPong((exploreAlertDuration + transitionElapsed) * 4.5f, 1f) * 0.40f;
-            Color flashCol = new Color(1f, 0.08f, 0.08f, pulse);
-            if (_explorationVignette != null) _explorationVignette.color = flashCol;
+            float pulse = (Mathf.Sin((exploreAlertDuration + transitionElapsed) * Mathf.PI * 1.0f) * 0.5f + 0.5f) * 0.16f;
+            Color flashCol = new Color(0.85f, 0.20f, 0.12f, pulse);
             if (_redVignette != null)          _redVignette.color = flashCol;
             if (customRedVignette != null)     customRedVignette.color = flashCol;
             yield return null;
         }
 
-        // 4. Deactivate warning banners & turn off flash
-        if (_warningBanner != null)       _warningBanner.SetActive(false);
-        if (customWarningBanner != null) customWarningBanner.SetActive(false);
-        if (_explorationVignette != null) _explorationVignette.color = new Color(1f, 0.08f, 0.08f, 0f);
-        if (_redVignette != null)          _redVignette.color = new Color(1f, 0.08f, 0.08f, 0f);
-        if (customRedVignette != null)     customRedVignette.color = new Color(1f, 0.08f, 0.08f, 0f);
+        // 4. Deactivate warning banner & turn off ambient tint
+        ShowWarningBanner(false);
+        if (_explorationVignette != null) _explorationVignette.color = new Color(0f, 0f, 0f, 0f);
+        if (_redVignette != null)          _redVignette.color = new Color(0f, 0f, 0f, 0f);
+        if (customRedVignette != null)     customRedVignette.color = new Color(0f, 0f, 0f, 0f);
 
         // Phase 2 Begins: Minigame is live!
         _isRunning = true;
@@ -638,8 +650,8 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private IEnumerator ScreenShakeAndImpactFlash()
     {
-        if (_redVignette != null)      _redVignette.color = new Color(1f, 0.05f, 0.05f, 0.55f);
-        if (customRedVignette != null) customRedVignette.color = new Color(1f, 0.05f, 0.05f, 0.55f);
+        if (_redVignette != null)      _redVignette.color = new Color(0.85f, 0.15f, 0.12f, 0.28f);
+        if (customRedVignette != null) customRedVignette.color = new Color(0.85f, 0.15f, 0.12f, 0.28f);
 
         Vector3 origCamPos = _stageCamera != null ? _stageCamera.transform.localPosition : Vector3.zero;
         float elapsed = 0f;
@@ -648,15 +660,15 @@ public class HazardDodgeMinigame : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             if (_stageCamera != null)
             {
-                Vector2 shake = UnityEngine.Random.insideUnitCircle * 0.45f;
+                Vector2 shake = UnityEngine.Random.insideUnitCircle * 0.35f;
                 _stageCamera.transform.localPosition = origCamPos + new Vector3(shake.x, 0f, shake.y);
             }
             yield return null;
         }
 
         if (_stageCamera != null)      _stageCamera.transform.localPosition = origCamPos;
-        if (_redVignette != null)      _redVignette.color = new Color(1f, 0.05f, 0.05f, 0f);
-        if (customRedVignette != null) customRedVignette.color = new Color(1f, 0.05f, 0.05f, 0f);
+        if (_redVignette != null)      _redVignette.color = new Color(0f, 0f, 0f, 0f);
+        if (customRedVignette != null) customRedVignette.color = new Color(0f, 0f, 0f, 0f);
     }
 
     // -----------------------------------------------------------------------
@@ -674,36 +686,13 @@ public class HazardDodgeMinigame : MonoBehaviour
             int baseBonus = ZoneBaseBonus[_zoneIndex];
             int totalBonus = baseBonus + _collectedRdp;
 
-            if (customResultBanner != null)
-            {
-                customResultBanner.gameObject.SetActive(true);
-                customResultBanner.text = $"HAZARD ZONE CLEARED!\n+{totalBonus} RDP";
-            }
-            else if (_resultBanner != null)
-            {
-                _resultBanner.gameObject.SetActive(true);
-                _resultBanner.text = $"<b>HAZARD ZONE CLEARED!</b>\n<color=#ffdd00>+{totalBonus} RDP</color>";
-                _resultBanner.color = new Color(0.2f, 0.95f, 0.85f);
-            }
-
+            ShowFinishBanner(true, totalBonus);
             GameManager.Instance?.AddRDP(totalBonus);
             StartCoroutine(DelayedClose(true, totalBonus));
         }
         else
         {
-            if (customResultBanner != null)
-            {
-                customResultBanner.gameObject.SetActive(true);
-                customResultBanner.text = "HULL COMPROMISED!\n-50 RDP";
-            }
-            else if (_resultBanner != null)
-            {
-                _resultBanner.gameObject.SetActive(true);
-                _resultBanner.text = "<b>HULL COMPROMISED!</b>\n<color=#ff4444>-50 RDP</color>";
-                _resultBanner.color = new Color(1f, 0.3f, 0.3f);
-            }
-
-            // Deduct 50 RDP (clamped to 0 minimum)
+            ShowFinishBanner(false, 0);
             GameManager.Instance?.DeductRDP(50);
             StartCoroutine(DelayedClose(false, 0));
         }
@@ -711,15 +700,12 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private IEnumerator DelayedClose(bool success, int totalReward)
     {
-        yield return new WaitForSecondsRealtime(2.2f);
+        yield return new WaitForSecondsRealtime(2.8f);
 
         CleanupStage();
         if (_rootUI != null) _rootUI.gameObject.SetActive(false);
         if (customUIRoot != null) customUIRoot.SetActive(false);
-        if (_warningBanner != null) _warningBanner.SetActive(false);
-        if (customWarningBanner != null) customWarningBanner.SetActive(false);
-        if (_resultBanner != null) _resultBanner.gameObject.SetActive(false);
-        if (customResultBanner != null) customResultBanner.gameObject.SetActive(false);
+        HideAllBanners();
 
         _isActive = false;
         if (success) _onSuccess?.Invoke(totalReward);
@@ -1077,6 +1063,9 @@ public class HazardDodgeMinigame : MonoBehaviour
                 customRedVignette.color = new Color(1f, 0.05f, 0.05f, 0f);
             }
 
+            Canvas customCanvas = customUIRoot.GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+            EnsureBanners(customCanvas, UIThemeManager.AlohaFont);
+
             if (customWarningBanner != null)
             {
                 customWarningBanner.SetActive(false);
@@ -1089,9 +1078,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null) return;
 
-        var font = Resources.Load<TMP_FontAsset>("Fonts/Poppins-Regular SDF")
-                ?? Resources.Load<TMP_FontAsset>("Poppins-Regular SDF")
-                ?? TMP_Settings.defaultFontAsset;
+        var font = UIThemeManager.AlohaFont;
 
         // Root Container
         var rootGO = new GameObject("HazardDodgeUI", typeof(RectTransform));
@@ -1208,53 +1195,461 @@ public class HazardDodgeMinigame : MonoBehaviour
             _hullPipImages[i].color = new Color(0.2f, 0.95f, 1f, 0.95f);
         }
 
-        // Phase 1 Warning Banner (Fallback overlay on Canvas)
-        _warningBanner = new GameObject("WarningBanner", typeof(RectTransform), typeof(Image));
-        _warningBanner.transform.SetParent(canvas.transform, false);
-        _warningBanner.transform.SetAsLastSibling();
-        var warnRect = _warningBanner.GetComponent<RectTransform>();
-        warnRect.anchorMin = new Vector2(0.5f, 0.55f);
-        warnRect.anchorMax = new Vector2(0.5f, 0.55f);
-        warnRect.pivot = new Vector2(0.5f, 0.5f);
-        warnRect.sizeDelta = new Vector2(740f, 120f);
-        _warningBanner.GetComponent<Image>().color = new Color(0.85f, 0.12f, 0.12f, 0.90f);
-
-        var warnTextGO = new GameObject("WarnText", typeof(RectTransform));
-        warnTextGO.transform.SetParent(_warningBanner.transform, false);
-        var wtRect = warnTextGO.GetComponent<RectTransform>();
-        wtRect.anchorMin = Vector2.zero;
-        wtRect.anchorMax = Vector2.one;
-        var wt = warnTextGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) wt.font = font;
-        wt.fontSize = 36;
-        wt.fontStyle = FontStyles.Bold;
-        wt.alignment = TextAlignmentOptions.Center;
-        wt.color = Color.white;
-        wt.text = "⚠️ ENTERING HAZARD ZONE ⚠️\n<size=24>SWIPE TO EVADE INCOMING OBSTACLES</size>";
-        _warningBanner.SetActive(false);
-
-        // Result Banner (Win / Fail) (Fallback overlay on Canvas)
-        var resGO = new GameObject("ResultBanner", typeof(RectTransform));
-        resGO.transform.SetParent(canvas.transform, false);
-        resGO.transform.SetAsLastSibling();
-        var resRect = resGO.GetComponent<RectTransform>();
-        resRect.anchorMin = new Vector2(0.5f, 0.5f);
-        resRect.anchorMax = new Vector2(0.5f, 0.5f);
-        resRect.pivot = new Vector2(0.5f, 0.5f);
-        resRect.sizeDelta = new Vector2(740f, 140f);
-        _resultBanner = resGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) _resultBanner.font = font;
-        _resultBanner.fontSize = 36;
-        _resultBanner.fontStyle = FontStyles.Bold;
-        _resultBanner.alignment = TextAlignmentOptions.Center;
-        _resultBanner.text = "";
-        _resultBanner.gameObject.SetActive(false);
+        // Ensure banners exist for procedural HUD
+        EnsureBanners(canvas, font);
 
         // Left/Right Touch Tap Buttons (for direct clicking/tapping)
         CreateLaneButton("LeftBtn", new Vector2(0f, 0f), new Vector2(0.5f, 0.6f), -1);
         CreateLaneButton("RightBtn", new Vector2(0.5f, 0f), new Vector2(1f, 0.6f), 1);
 
         _rootUI.gameObject.SetActive(false);
+    }
+
+    // -----------------------------------------------------------------------
+    // Warning & Finish Banner Management & Builders
+    // -----------------------------------------------------------------------
+
+    private void EnsureBanners(Canvas canvas, TMP_FontAsset font)
+    {
+        if (canvas == null) return;
+
+        // Auto-link if present in customUIRoot
+        if (customWarningBanner == null && customUIRoot != null)
+        {
+            var foundWarn = customUIRoot.transform.Find("WarningBanner") ?? customUIRoot.transform.Find("AlertBanner");
+            if (foundWarn != null) customWarningBanner = foundWarn.gameObject;
+        }
+
+        if (customResultBanner == null && customUIRoot != null)
+        {
+            var foundRes = customUIRoot.transform.Find("FinishBanner") ?? customUIRoot.transform.Find("ResultBanner");
+            if (foundRes != null) customResultBanner = foundRes.GetComponent<TMP_Text>() ?? foundRes.GetComponentInChildren<TMP_Text>();
+        }
+
+        // Build procedural Warning Banner if not assigned
+        if (customWarningBanner == null && _warningBannerRoot == null)
+        {
+            BuildProceduralWarningBanner(canvas.transform, font);
+        }
+
+        // Build procedural Finish Banner if not assigned
+        if (customResultBanner == null && _finishBannerRoot == null)
+        {
+            BuildProceduralFinishBanner(canvas.transform, font);
+        }
+    }
+
+    private void BuildProceduralWarningBanner(Transform parent, TMP_FontAsset font)
+    {
+        if (font == null) font = UIThemeManager.AntoneFont;
+
+        // 1. Root Container with Scrim Dimmer (fills parent canvas)
+        _warningBannerRoot = new GameObject("HazardWarningBanner", typeof(RectTransform));
+        _warningBannerRoot.transform.SetParent(parent, false);
+        _warningBannerRoot.transform.SetAsLastSibling();
+
+        var r = _warningBannerRoot.GetComponent<RectTransform>();
+        r.anchorMin = Vector2.zero;
+        r.anchorMax = Vector2.one;
+        r.sizeDelta = Vector2.zero;
+        r.anchoredPosition = Vector2.zero;
+
+        // Dark ambient background scrim to dim scene behind the banner
+        var scrimGO = new GameObject("DimmerScrim", typeof(RectTransform), typeof(Image));
+        scrimGO.transform.SetParent(_warningBannerRoot.transform, false);
+        var scrimRect = scrimGO.GetComponent<RectTransform>();
+        scrimRect.anchorMin = Vector2.zero;
+        scrimRect.anchorMax = Vector2.one;
+        scrimRect.sizeDelta = Vector2.zero;
+        var scrimImg = scrimGO.GetComponent<Image>();
+        scrimImg.color = new Color(0.01f, 0.03f, 0.06f, 0.65f);
+        scrimImg.raycastTarget = false;
+
+        // 2. Main Alert Card (1120 x 260)
+        var cardGO = new GameObject("AlertCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(_warningBannerRoot.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0.5f, 0.52f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.52f);
+        cardRect.pivot     = new Vector2(0.5f, 0.5f);
+        cardRect.sizeDelta = new Vector2(1120f, 260f);
+        _warningBannerBg = cardGO.GetComponent<Image>();
+        _warningBannerBg.color = new Color(0.04f, 0.08f, 0.14f, 0.98f); // Deep obsidian-navy
+
+        // Outer amber glow border
+        var borderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
+        borderGO.transform.SetParent(cardGO.transform, false);
+        borderGO.transform.SetAsFirstSibling();
+        var bR = borderGO.GetComponent<RectTransform>();
+        bR.anchorMin = Vector2.zero;
+        bR.anchorMax = Vector2.one;
+        bR.offsetMin = new Vector2(-4f, -4f);
+        bR.offsetMax = new Vector2(4f, 4f);
+        _warningBannerBorder = borderGO.GetComponent<Image>();
+        _warningBannerBorder.color = new Color(1f, 0.72f, 0.18f, 0.95f); // Amber alert gold
+        _warningBannerBorder.raycastTarget = false;
+
+        // Top hazard accent line
+        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripe.transform.SetParent(cardGO.transform, false);
+        var tsR = topStripe.GetComponent<RectTransform>();
+        tsR.anchorMin = new Vector2(0f, 1f);
+        tsR.anchorMax = new Vector2(1f, 1f);
+        tsR.pivot     = new Vector2(0.5f, 1f);
+        tsR.sizeDelta = new Vector2(0f, 6f);
+        topStripe.GetComponent<Image>().color = new Color(1f, 0.78f, 0.22f, 1f);
+
+        // Bottom hazard accent line
+        var botStripe = new GameObject("BottomStripe", typeof(RectTransform), typeof(Image));
+        botStripe.transform.SetParent(cardGO.transform, false);
+        var bsR = botStripe.GetComponent<RectTransform>();
+        bsR.anchorMin = new Vector2(0f, 0f);
+        bsR.anchorMax = new Vector2(1f, 0f);
+        bsR.pivot     = new Vector2(0.5f, 0f);
+        bsR.sizeDelta = new Vector2(0f, 6f);
+        botStripe.GetComponent<Image>().color = new Color(1f, 0.78f, 0.22f, 1f);
+
+        // 3. Warning Title (Warm Amber-Gold, 44px Bold, Clean Text)
+        var titleGO = new GameObject("Title", typeof(RectTransform));
+        titleGO.transform.SetParent(cardGO.transform, false);
+        var tR = titleGO.GetComponent<RectTransform>();
+        tR.anchorMin = new Vector2(0f, 1f);
+        tR.anchorMax = new Vector2(1f, 1f);
+        tR.pivot     = new Vector2(0.5f, 1f);
+        tR.anchoredPosition = new Vector2(0f, -22f);
+        tR.sizeDelta = new Vector2(0f, 58f);
+        _warningTitleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _warningTitleTMP.font = font;
+        _warningTitleTMP.enableAutoSizing = false;
+        _warningTitleTMP.fontSize = 44f;
+        _warningTitleTMP.fontStyle = FontStyles.Bold;
+        _warningTitleTMP.alignment = TextAlignmentOptions.Center;
+        _warningTitleTMP.color = new Color(1f, 0.85f, 0.25f, 1f); // Warm alert gold
+        _warningTitleTMP.text = "HAZARD ZONE DETECTED";
+        _warningTitleTMP.raycastTarget = false;
+
+        // 4. Instruction Subtitle (Crisp Pure White, 36px Bold)
+        var descGO = new GameObject("Instruction", typeof(RectTransform));
+        descGO.transform.SetParent(cardGO.transform, false);
+        var dR = descGO.GetComponent<RectTransform>();
+        dR.anchorMin = new Vector2(0f, 1f);
+        dR.anchorMax = new Vector2(1f, 1f);
+        dR.pivot     = new Vector2(0.5f, 1f);
+        dR.anchoredPosition = new Vector2(0f, -96f);
+        dR.sizeDelta = new Vector2(0f, 52f);
+        _warningDescTMP = descGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _warningDescTMP.font = font;
+        _warningDescTMP.enableAutoSizing = false;
+        _warningDescTMP.fontSize = 36f;
+        _warningDescTMP.fontStyle = FontStyles.Bold;
+        _warningDescTMP.alignment = TextAlignmentOptions.Center;
+        _warningDescTMP.color = Color.white; // Pure crisp white for 100% readability
+        _warningDescTMP.text = "SWIPE TO EVADE INCOMING HAZARDS";
+        _warningDescTMP.raycastTarget = false;
+
+        // 5. Tip Line (Soft Cyan, 32px Bold)
+        var hintGO = new GameObject("Hint", typeof(RectTransform));
+        hintGO.transform.SetParent(cardGO.transform, false);
+        var hR = hintGO.GetComponent<RectTransform>();
+        hR.anchorMin = new Vector2(0f, 1f);
+        hR.anchorMax = new Vector2(1f, 1f);
+        hR.pivot     = new Vector2(0.5f, 1f);
+        hR.anchoredPosition = new Vector2(0f, -162f);
+        hR.sizeDelta = new Vector2(0f, 48f);
+        _warningHintTMP = hintGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _warningHintTMP.font = font;
+        _warningHintTMP.enableAutoSizing = false;
+        _warningHintTMP.fontSize = 32f;
+        _warningHintTMP.fontStyle = FontStyles.Bold;
+        _warningHintTMP.alignment = TextAlignmentOptions.Center;
+        _warningHintTMP.color = new Color(0.40f, 0.92f, 1f, 1f); // Soft cyan
+        _warningHintTMP.text = "COLLECT DATA PODS FOR BONUS RDP";
+        _warningHintTMP.raycastTarget = false;
+
+        _warningBannerRoot.SetActive(false);
+    }
+
+    private void BuildProceduralFinishBanner(Transform parent, TMP_FontAsset font)
+    {
+        _finishBannerRoot = new GameObject("HazardFinishBanner", typeof(RectTransform), typeof(Image));
+        _finishBannerRoot.transform.SetParent(parent, false);
+        _finishBannerRoot.transform.SetAsLastSibling();
+
+        var r = _finishBannerRoot.GetComponent<RectTransform>();
+        r.anchorMin = new Vector2(0.5f, 0.5f);
+        r.anchorMax = new Vector2(0.5f, 0.5f);
+        r.pivot     = new Vector2(0.5f, 0.5f);
+        r.sizeDelta = new Vector2(1120f, 250f);
+        _finishBannerBg = _finishBannerRoot.GetComponent<Image>();
+        _finishBannerBg.color = new Color(0.03f, 0.08f, 0.14f, 0.96f);
+
+        // Glowing outer border
+        var borderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
+        borderGO.transform.SetParent(_finishBannerRoot.transform, false);
+        borderGO.transform.SetAsFirstSibling();
+        var bR = borderGO.GetComponent<RectTransform>();
+        bR.anchorMin = Vector2.zero;
+        bR.anchorMax = Vector2.one;
+        bR.offsetMin = new Vector2(-4f, -4f);
+        bR.offsetMax = new Vector2(4f, 4f);
+        _finishBannerBorder = borderGO.GetComponent<Image>();
+        _finishBannerBorder.color = new Color(0f, 0.92f, 0.95f, 0.95f);
+        _finishBannerBorder.raycastTarget = false;
+
+        // Top accent line
+        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripe.transform.SetParent(_finishBannerRoot.transform, false);
+        var tsR = topStripe.GetComponent<RectTransform>();
+        tsR.anchorMin = new Vector2(0f, 1f);
+        tsR.anchorMax = new Vector2(1f, 1f);
+        tsR.pivot     = new Vector2(0.5f, 1f);
+        tsR.sizeDelta = new Vector2(0f, 6f);
+        _finishTopStripe = topStripe.GetComponent<Image>();
+        _finishTopStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+
+        // Bottom accent line
+        var botStripe = new GameObject("BottomStripe", typeof(RectTransform), typeof(Image));
+        botStripe.transform.SetParent(_finishBannerRoot.transform, false);
+        var bsR = botStripe.GetComponent<RectTransform>();
+        bsR.anchorMin = new Vector2(0f, 0f);
+        bsR.anchorMax = new Vector2(1f, 0f);
+        bsR.pivot     = new Vector2(0.5f, 0f);
+        bsR.sizeDelta = new Vector2(0f, 6f);
+        _finishBottomStripe = botStripe.GetComponent<Image>();
+        _finishBottomStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+
+        // Finish Title
+        var titleGO = new GameObject("Title", typeof(RectTransform));
+        titleGO.transform.SetParent(_finishBannerRoot.transform, false);
+        var tR = titleGO.GetComponent<RectTransform>();
+        tR.anchorMin = new Vector2(0f, 1f);
+        tR.anchorMax = new Vector2(1f, 1f);
+        tR.pivot     = new Vector2(0.5f, 1f);
+        tR.anchoredPosition = new Vector2(0f, -24f);
+        tR.sizeDelta = new Vector2(0f, 62f);
+        _finishTitleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _finishTitleTMP.font = font;
+        _finishTitleTMP.fontSize = 48f;
+        _finishTitleTMP.fontStyle = FontStyles.Bold;
+        _finishTitleTMP.alignment = TextAlignmentOptions.Center;
+
+        // Finish Status
+        var statusGO = new GameObject("Status", typeof(RectTransform));
+        statusGO.transform.SetParent(_finishBannerRoot.transform, false);
+        var sR = statusGO.GetComponent<RectTransform>();
+        sR.anchorMin = new Vector2(0f, 1f);
+        sR.anchorMax = new Vector2(1f, 1f);
+        sR.pivot     = new Vector2(0.5f, 1f);
+        sR.anchoredPosition = new Vector2(0f, -96f);
+        sR.sizeDelta = new Vector2(0f, 48f);
+        _finishStatusTMP = statusGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _finishStatusTMP.font = font;
+        _finishStatusTMP.fontSize = 36f;
+        _finishStatusTMP.fontStyle = FontStyles.Bold;
+        _finishStatusTMP.alignment = TextAlignmentOptions.Center;
+
+        // Finish Reward / Penalty
+        var rewGO = new GameObject("Reward", typeof(RectTransform));
+        rewGO.transform.SetParent(_finishBannerRoot.transform, false);
+        var rR = rewGO.GetComponent<RectTransform>();
+        rR.anchorMin = new Vector2(0f, 1f);
+        rR.anchorMax = new Vector2(1f, 1f);
+        rR.pivot     = new Vector2(0.5f, 1f);
+        rR.anchoredPosition = new Vector2(0f, -158f);
+        rR.sizeDelta = new Vector2(0f, 54f);
+        _finishRewardTMP = rewGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) _finishRewardTMP.font = font;
+        _finishRewardTMP.fontSize = 40f;
+        _finishRewardTMP.fontStyle = FontStyles.Bold;
+        _finishRewardTMP.alignment = TextAlignmentOptions.Center;
+
+        _finishBannerRoot.SetActive(false);
+    }
+
+    private void ShowWarningBanner(bool show)
+    {
+        if (_warningPulseCoroutine != null)
+        {
+            StopCoroutine(_warningPulseCoroutine);
+            _warningPulseCoroutine = null;
+        }
+
+        if (customWarningBanner != null)
+        {
+            customWarningBanner.SetActive(show);
+        }
+
+        if (_warningBannerRoot != null)
+        {
+            _warningBannerRoot.SetActive(show);
+            if (show)
+            {
+                _warningBannerRoot.transform.SetAsLastSibling();
+                _warningPulseCoroutine = StartCoroutine(AnimateWarningBannerPulse());
+            }
+        }
+
+        if (show)
+        {
+            AudioManager.Instance?.PlayAlert();
+        }
+    }
+
+    private IEnumerator AnimateWarningBannerPulse()
+    {
+        if (_warningBannerRoot == null) yield break;
+        float elapsed = 0f;
+        _warningBannerRoot.transform.localScale = Vector3.one;
+
+        while (_warningBannerRoot.activeSelf)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            // Rock-solid stationary scale so text never shakes or vibrates while reading
+            _warningBannerRoot.transform.localScale = Vector3.one;
+
+            // Calm, gentle breathing border glow (warm amber alert)
+            if (_warningBannerBorder != null)
+            {
+                float borderAlpha = Mathf.Lerp(0.70f, 1.0f, Mathf.Sin(elapsed * 2.0f) * 0.5f + 0.5f);
+                _warningBannerBorder.color = new Color(1f, 0.72f, 0.18f, borderAlpha);
+            }
+            yield return null;
+        }
+        _warningBannerRoot.transform.localScale = Vector3.one;
+    }
+
+    private void ShowFinishBanner(bool success, int totalBonus)
+    {
+        if (customResultBanner != null)
+        {
+            customResultBanner.gameObject.SetActive(true);
+            customResultBanner.text = success
+                ? $"HAZARD ZONE CLEARED!\n+{totalBonus} RDP"
+                : "HULL COMPROMISED!\n-50 RDP";
+        }
+
+        if (_finishBannerRoot != null)
+        {
+            _finishBannerRoot.SetActive(true);
+            _finishBannerRoot.transform.SetAsLastSibling();
+
+            if (success)
+            {
+                // Victory Theme (Cyan & Emerald)
+                if (_finishBannerBg != null)
+                    _finishBannerBg.color = new Color(0.02f, 0.10f, 0.16f, 0.96f);
+                if (_finishBannerBorder != null)
+                    _finishBannerBorder.color = new Color(0f, 0.92f, 0.95f, 0.95f);
+                if (_finishTopStripe != null)
+                    _finishTopStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+                if (_finishBottomStripe != null)
+                    _finishBottomStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+
+                if (_finishTitleTMP != null)
+                {
+                    _finishTitleTMP.color = new Color(0.3f, 1f, 0.9f);
+                    _finishTitleTMP.text = "HAZARD ZONE CLEARED!";
+                }
+                if (_finishStatusTMP != null)
+                {
+                    _finishStatusTMP.color = new Color(0.92f, 0.96f, 1f);
+                    _finishStatusTMP.text = "EXTREME DEPTH SURVEY DATA RECOVERED";
+                }
+                if (_finishRewardTMP != null)
+                {
+                    _finishRewardTMP.color = new Color(1f, 0.88f, 0.15f); // Gold
+                    _finishRewardTMP.text = $"+{totalBonus} RDP REWARD AWARDED";
+                }
+            }
+            else
+            {
+                // Defeat Theme (Alarm Crimson)
+                if (_finishBannerBg != null)
+                    _finishBannerBg.color = new Color(0.12f, 0.02f, 0.04f, 0.96f);
+                if (_finishBannerBorder != null)
+                    _finishBannerBorder.color = new Color(1f, 0.2f, 0.25f, 0.95f);
+                if (_finishTopStripe != null)
+                    _finishTopStripe.color = new Color(1f, 0.3f, 0.3f, 1f);
+                if (_finishBottomStripe != null)
+                    _finishBottomStripe.color = new Color(1f, 0.3f, 0.3f, 1f);
+
+                if (_finishTitleTMP != null)
+                {
+                    _finishTitleTMP.color = new Color(1f, 0.40f, 0.40f);
+                    _finishTitleTMP.text = "HULL COMPROMISED!";
+                }
+                if (_finishStatusTMP != null)
+                {
+                    _finishStatusTMP.color = new Color(0.95f, 0.85f, 0.85f);
+                    _finishStatusTMP.text = "EMERGENCY SURFACE RETREAT INITIATED";
+                }
+                if (_finishRewardTMP != null)
+                {
+                    _finishRewardTMP.color = new Color(1f, 0.45f, 0.45f);
+                    _finishRewardTMP.text = "-50 RDP REPAIR PENALTY";
+                }
+            }
+
+            if (_finishPunchCoroutine != null)
+            {
+                StopCoroutine(_finishPunchCoroutine);
+            }
+            _finishPunchCoroutine = StartCoroutine(AnimateFinishBannerPunch());
+        }
+    }
+
+    private IEnumerator AnimateFinishBannerPunch()
+    {
+        if (_finishBannerRoot == null) yield break;
+        float elapsed = 0f;
+        float duration = 0.35f;
+        Vector3 baseScale = Vector3.one;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            float scale = Mathf.LerpUnclamped(0.82f, 1.0f, EaseOutBack(t));
+            _finishBannerRoot.transform.localScale = baseScale * scale;
+            yield return null;
+        }
+        _finishBannerRoot.transform.localScale = baseScale;
+    }
+
+    private static float EaseOutBack(float t)
+    {
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+        return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
+    }
+
+    private void HideAllBanners()
+    {
+        if (_warningPulseCoroutine != null)
+        {
+            StopCoroutine(_warningPulseCoroutine);
+            _warningPulseCoroutine = null;
+        }
+
+        if (_finishPunchCoroutine != null)
+        {
+            StopCoroutine(_finishPunchCoroutine);
+            _finishPunchCoroutine = null;
+        }
+
+        if (_warningBannerRoot != null)  _warningBannerRoot.SetActive(false);
+        if (customWarningBanner != null) customWarningBanner.SetActive(false);
+
+        if (_finishBannerRoot != null)   _finishBannerRoot.SetActive(false);
+        if (customResultBanner != null)  customResultBanner.gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        HideAllBanners();
+        if (_warningBannerRoot != null) Destroy(_warningBannerRoot);
+        if (_finishBannerRoot != null)  Destroy(_finishBannerRoot);
+        if (_explorationVignette != null) Destroy(_explorationVignette.gameObject);
     }
 
     private void CreateLaneButton(string name, Vector2 minAnchor, Vector2 maxAnchor, int dir)
