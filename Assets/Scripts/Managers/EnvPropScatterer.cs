@@ -175,6 +175,9 @@ public class EnvPropScatterer : MonoBehaviour
         go.transform.localScale = Vector3.one * scale;
         go.name = entry.prefab.name;
 
+        // Ensure rocks/props have an authentic marine stone material instead of default flat white
+        ApplyPropMaterial(go);
+
         // Adjust vertical position to sit naturally on the seabed
         AdjustContactHeight(go, floorY, scale);
 
@@ -271,6 +274,53 @@ public class EnvPropScatterer : MonoBehaviour
         if (_propParent == null) return;
         for (int i = _propParent.childCount - 1; i >= 0; i--)
             Destroy(_propParent.GetChild(i).gameObject);
+    }
+
+    private static Material _cachedRockMaterial;
+
+    private static void ApplyPropMaterial(GameObject go)
+    {
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers == null || renderers.Length == 0) return;
+
+        foreach (var r in renderers)
+        {
+            if (r == null) continue;
+            // Check if mesh has missing or default white URP material
+            bool isDefaultWhite = r.sharedMaterial == null
+                               || r.sharedMaterial.name.StartsWith("Default")
+                               || r.sharedMaterial.name == "Lit"
+                               || r.sharedMaterial.name == "Universal Render Pipeline/Lit";
+
+            if (isDefaultWhite)
+            {
+                if (_cachedRockMaterial == null)
+                {
+                    Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                                 ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                                 ?? Shader.Find("Standard");
+
+                    if (shader != null)
+                    {
+                        _cachedRockMaterial = new Material(shader)
+                        {
+                            name = "ProceduralMarineRock",
+                            // Authentic weathered marine basalt/limestone hue
+                            color = new Color(0.38f, 0.42f, 0.44f, 1.0f)
+                        };
+                        if (_cachedRockMaterial.HasProperty("_BaseColor"))
+                            _cachedRockMaterial.SetColor("_BaseColor", new Color(0.38f, 0.42f, 0.44f, 1.0f));
+                        if (_cachedRockMaterial.HasProperty("_Smoothness"))
+                            _cachedRockMaterial.SetFloat("_Smoothness", 0.15f);
+                    }
+                }
+
+                if (_cachedRockMaterial != null)
+                {
+                    r.sharedMaterial = _cachedRockMaterial;
+                }
+            }
+        }
     }
 
     private static void SetLayerRecursive(GameObject go, int layer)

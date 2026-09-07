@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Taeniura lymma
   taxonomicClass: 1
   zoneIndex: 0
-  habitat: "Shallow reef sand flats and lagoons (0-20 m)"
-  depthRangeText: "0-20 m"
+  habitat: Shallow reef sand flats and lagoons (0-20 m)
+  depthRangeText: 0-20 m
   explorationHint: Glides over shallow sandy channels between coral formations.
   secondaryZoneIndices: 
   characteristics: Flat oval body covered with bright blue spots.
@@ -43,6 +43,6 @@ MonoBehaviour:
   placeholderShape: 3
   placeholderColor: {r: 0.2, g: 0.65, b: 0.9, a: 1}
   placeholderScale: {x: 1.8, y: 0.2, z: 1.8}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 18f88d2063668644d9a1e72c8f89cc81, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

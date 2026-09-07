@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Panulirus ornatus
   taxonomicClass: 5
   zoneIndex: 0
-  habitat: "Shallow coral reefs and shelf sediments (1-50 m)"
-  depthRangeText: "1-50 m"
+  habitat: Shallow coral reefs and shelf sediments (1-50 m)
+  depthRangeText: 1-50 m
   explorationHint: Hides under rocky overhangs and deep reef crevices.
   secondaryZoneIndices: 
   characteristics: Colorful patterned body with long spiny antennae.
@@ -43,6 +43,6 @@ MonoBehaviour:
   placeholderShape: 2
   placeholderColor: {r: 0.85, g: 0.4, b: 0.15, a: 1}
   placeholderScale: {x: 1.2, y: 0.5, z: 1.5}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 166f51b3690817f4592a4acaba83bf7e, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

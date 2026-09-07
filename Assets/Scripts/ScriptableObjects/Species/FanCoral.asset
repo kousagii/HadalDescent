@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Melithaea philippinensis
   taxonomicClass: 12
   zoneIndex: 0
-  habitat: "Shallow coral reefs and reef drop-offs (10-60 m)"
-  depthRangeText: "10-60 m"
+  habitat: Shallow coral reefs and reef drop-offs (10-60 m)
+  depthRangeText: 10-60 m
   explorationHint: Look along sloping reef edges and drop-off rock walls exposed
     to steady currents.
   secondaryZoneIndices: 
@@ -47,6 +47,6 @@ MonoBehaviour:
   placeholderShape: 2
   placeholderColor: {r: 0.92, g: 0.25, b: 0.35, a: 1}
   placeholderScale: {x: 1.5, y: 2, z: 0.3}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 448e208ca3517e648953db4e00c34caa, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

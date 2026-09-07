@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2976060539556094565}
   - component: {fileID: 6066005312429273305}
   m_Layer: 5
-  m_Name: Characteristics
+  m_Name: Description
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -286,7 +286,7 @@ GameObject:
   - component: {fileID: 7916505777263455534}
   - component: {fileID: 439637613942383872}
   m_Layer: 5
-  m_Name: CommonName
+  m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -544,7 +544,7 @@ GameObject:
   - component: {fileID: 6382774785518808721}
   - component: {fileID: 1266380640211137642}
   m_Layer: 5
-  m_Name: ScientificName
+  m_Name: HabitatCategory
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -688,7 +688,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3106910634620062050
 RectTransform:
   m_ObjectHideFlags: 0
@@ -785,12 +785,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FactCardUI
   customCardPanel: {fileID: 2935642581396142103}
   customPhoto: {fileID: 1355473678798087340}
-  customCommonName: {fileID: 439637613942383872}
-  customScientificName: {fileID: 1266380640211137642}
-  customClass: {fileID: 111257903766988491}
-  customHabitat: {fileID: 4813017464804497809}
-  customCharacteristics: {fileID: 6066005312429273305}
-  customEcologicalRole: {fileID: 7701014523164152710}
+  customHabitatName: {fileID: 439637613942383872}
+  customCategory: {fileID: 1266380640211137642}
+  customZone: {fileID: 111257903766988491}
+  customDepth: {fileID: 7738833451414957322}
+  customDescription: {fileID: 6066005312429273305}
+  customEcologicalSignificance: {fileID: 7701014523164152710}
   customFact: {fileID: 2700716396247498418}
   customReward: {fileID: 7738833451414957322}
   customCloseButton: {fileID: 5808986471941925763}
@@ -1294,7 +1294,7 @@ GameObject:
   - component: {fileID: 2994717395194397853}
   - component: {fileID: 7738833451414957322}
   m_Layer: 5
-  m_Name: Reward
+  m_Name: Depth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1431,7 +1431,7 @@ GameObject:
   - component: {fileID: 5133952631196129698}
   - component: {fileID: 111257903766988491}
   m_Layer: 5
-  m_Name: Class
+  m_Name: Zone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

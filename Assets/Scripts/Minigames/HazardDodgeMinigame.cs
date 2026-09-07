@@ -1262,32 +1262,32 @@ public class HazardDodgeMinigame : MonoBehaviour
         scrimRect.anchorMax = Vector2.one;
         scrimRect.sizeDelta = Vector2.zero;
         var scrimImg = scrimGO.GetComponent<Image>();
-        scrimImg.color = new Color(0.01f, 0.03f, 0.06f, 0.65f);
+        scrimImg.color = new Color(0f, 0f, 0f, 0.88f); // Deep dark dimmer scrim
         scrimImg.raycastTarget = false;
 
-        // 2. Main Alert Card (1120 x 260)
-        var cardGO = new GameObject("AlertCard", typeof(RectTransform), typeof(Image));
-        cardGO.transform.SetParent(_warningBannerRoot.transform, false);
-        var cardRect = cardGO.GetComponent<RectTransform>();
-        cardRect.anchorMin = new Vector2(0.5f, 0.52f);
-        cardRect.anchorMax = new Vector2(0.5f, 0.52f);
-        cardRect.pivot     = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(1120f, 260f);
-        _warningBannerBg = cardGO.GetComponent<Image>();
-        _warningBannerBg.color = new Color(0.04f, 0.08f, 0.14f, 0.98f); // Deep obsidian-navy
-
-        // Outer amber glow border
-        var borderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
-        borderGO.transform.SetParent(cardGO.transform, false);
-        borderGO.transform.SetAsFirstSibling();
-        var bR = borderGO.GetComponent<RectTransform>();
-        bR.anchorMin = Vector2.zero;
-        bR.anchorMax = Vector2.one;
-        bR.offsetMin = new Vector2(-4f, -4f);
-        bR.offsetMax = new Vector2(4f, 4f);
-        _warningBannerBorder = borderGO.GetComponent<Image>();
-        _warningBannerBorder.color = new Color(1f, 0.72f, 0.18f, 0.95f); // Amber alert gold
+        // 2. Outer Warning Border Frame (1120 x 260) - Vivid Alert Red Glowing Border Outline
+        var borderFrameGO = new GameObject("AlertBorderFrame", typeof(RectTransform), typeof(Image));
+        borderFrameGO.transform.SetParent(_warningBannerRoot.transform, false);
+        var borderRect = borderFrameGO.GetComponent<RectTransform>();
+        borderRect.anchorMin = new Vector2(0.5f, 0.52f);
+        borderRect.anchorMax = new Vector2(0.5f, 0.52f);
+        borderRect.pivot     = new Vector2(0.5f, 0.5f);
+        borderRect.sizeDelta = new Vector2(1120f, 260f);
+        _warningBannerBorder = borderFrameGO.GetComponent<Image>();
+        _warningBannerBorder.color = new Color(0.95f, 0.20f, 0.22f, 0.95f); // Vivid alert red
         _warningBannerBorder.raycastTarget = false;
+
+        // 3. Inner Dark Alert Card (inset 4px inside border frame) - Deep Dark Crimson-Black
+        var cardGO = new GameObject("AlertCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(borderFrameGO.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = Vector2.zero;
+        cardRect.anchorMax = Vector2.one;
+        cardRect.offsetMin = new Vector2(4f, 4f);
+        cardRect.offsetMax = new Vector2(-4f, -4f);
+        _warningBannerBg = cardGO.GetComponent<Image>();
+        _warningBannerBg.color = new Color(0.04f, 0.01f, 0.02f, 0.98f); // Deep dark crimson-black (like minigame 3 dark banners)
+        _warningBannerBg.raycastTarget = false;
 
         // Top hazard accent line
         var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
@@ -1296,8 +1296,10 @@ public class HazardDodgeMinigame : MonoBehaviour
         tsR.anchorMin = new Vector2(0f, 1f);
         tsR.anchorMax = new Vector2(1f, 1f);
         tsR.pivot     = new Vector2(0.5f, 1f);
-        tsR.sizeDelta = new Vector2(0f, 6f);
-        topStripe.GetComponent<Image>().color = new Color(1f, 0.78f, 0.22f, 1f);
+        tsR.sizeDelta = new Vector2(0f, 5f);
+        var topStripeImg = topStripe.GetComponent<Image>();
+        topStripeImg.color = new Color(1f, 0.30f, 0.30f, 0.9f);
+        topStripeImg.raycastTarget = false;
 
         // Bottom hazard accent line
         var botStripe = new GameObject("BottomStripe", typeof(RectTransform), typeof(Image));
@@ -1306,10 +1308,12 @@ public class HazardDodgeMinigame : MonoBehaviour
         bsR.anchorMin = new Vector2(0f, 0f);
         bsR.anchorMax = new Vector2(1f, 0f);
         bsR.pivot     = new Vector2(0.5f, 0f);
-        bsR.sizeDelta = new Vector2(0f, 6f);
-        botStripe.GetComponent<Image>().color = new Color(1f, 0.78f, 0.22f, 1f);
+        bsR.sizeDelta = new Vector2(0f, 5f);
+        var botStripeImg = botStripe.GetComponent<Image>();
+        botStripeImg.color = new Color(1f, 0.30f, 0.30f, 0.9f);
+        botStripeImg.raycastTarget = false;
 
-        // 3. Warning Title (Warm Amber-Gold, 44px Bold, Clean Text)
+        // 3. Warning Title (Vibrant Alert Red, 44px Bold, Clean Text)
         var titleGO = new GameObject("Title", typeof(RectTransform));
         titleGO.transform.SetParent(cardGO.transform, false);
         var tR = titleGO.GetComponent<RectTransform>();
@@ -1324,7 +1328,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         _warningTitleTMP.fontSize = 44f;
         _warningTitleTMP.fontStyle = FontStyles.Bold;
         _warningTitleTMP.alignment = TextAlignmentOptions.Center;
-        _warningTitleTMP.color = new Color(1f, 0.85f, 0.25f, 1f); // Warm alert gold
+        _warningTitleTMP.color = new Color(1f, 0.35f, 0.35f, 1f); // Vibrant bright alert red
         _warningTitleTMP.text = "HAZARD ZONE DETECTED";
         _warningTitleTMP.raycastTarget = false;
 
@@ -1371,56 +1375,78 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void BuildProceduralFinishBanner(Transform parent, TMP_FontAsset font)
     {
-        _finishBannerRoot = new GameObject("HazardFinishBanner", typeof(RectTransform), typeof(Image));
+        _finishBannerRoot = new GameObject("HazardFinishBanner", typeof(RectTransform));
         _finishBannerRoot.transform.SetParent(parent, false);
         _finishBannerRoot.transform.SetAsLastSibling();
 
         var r = _finishBannerRoot.GetComponent<RectTransform>();
-        r.anchorMin = new Vector2(0.5f, 0.5f);
-        r.anchorMax = new Vector2(0.5f, 0.5f);
-        r.pivot     = new Vector2(0.5f, 0.5f);
-        r.sizeDelta = new Vector2(1120f, 250f);
-        _finishBannerBg = _finishBannerRoot.GetComponent<Image>();
-        _finishBannerBg.color = new Color(0.03f, 0.08f, 0.14f, 0.96f);
+        r.anchorMin = Vector2.zero;
+        r.anchorMax = Vector2.one;
+        r.sizeDelta = Vector2.zero;
+        r.anchoredPosition = Vector2.zero;
 
-        // Glowing outer border
-        var borderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
-        borderGO.transform.SetParent(_finishBannerRoot.transform, false);
-        borderGO.transform.SetAsFirstSibling();
-        var bR = borderGO.GetComponent<RectTransform>();
-        bR.anchorMin = Vector2.zero;
-        bR.anchorMax = Vector2.one;
-        bR.offsetMin = new Vector2(-4f, -4f);
-        bR.offsetMax = new Vector2(4f, 4f);
-        _finishBannerBorder = borderGO.GetComponent<Image>();
-        _finishBannerBorder.color = new Color(0f, 0.92f, 0.95f, 0.95f);
+        // Dark ambient background scrim to dim scene behind the finish banner
+        var scrimGO = new GameObject("DimmerScrim", typeof(RectTransform), typeof(Image));
+        scrimGO.transform.SetParent(_finishBannerRoot.transform, false);
+        var scrimRect = scrimGO.GetComponent<RectTransform>();
+        scrimRect.anchorMin = Vector2.zero;
+        scrimRect.anchorMax = Vector2.one;
+        scrimRect.sizeDelta = Vector2.zero;
+        var scrimImg = scrimGO.GetComponent<Image>();
+        scrimImg.color = new Color(0f, 0f, 0f, 0.88f); // Deep dark dimmer scrim
+        scrimImg.raycastTarget = false;
+
+        // 2. Outer Finish Border Frame (1120 x 260)
+        var borderFrameGO = new GameObject("FinishBorderFrame", typeof(RectTransform), typeof(Image));
+        borderFrameGO.transform.SetParent(_finishBannerRoot.transform, false);
+        var borderRect = borderFrameGO.GetComponent<RectTransform>();
+        borderRect.anchorMin = new Vector2(0.5f, 0.5f);
+        borderRect.anchorMax = new Vector2(0.5f, 0.5f);
+        borderRect.pivot     = new Vector2(0.5f, 0.5f);
+        borderRect.sizeDelta = new Vector2(1120f, 260f);
+        _finishBannerBorder = borderFrameGO.GetComponent<Image>();
+        _finishBannerBorder.color = new Color(0.95f, 0.20f, 0.22f, 0.95f);
         _finishBannerBorder.raycastTarget = false;
+
+        // 3. Inner Dark Finish Card (inset 4px inside border frame) - Deep Darkened Crimson-Black
+        var cardGO = new GameObject("FinishCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(borderFrameGO.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = Vector2.zero;
+        cardRect.anchorMax = Vector2.one;
+        cardRect.offsetMin = new Vector2(4f, 4f);
+        cardRect.offsetMax = new Vector2(-4f, -4f);
+        _finishBannerBg = cardGO.GetComponent<Image>();
+        _finishBannerBg.color = new Color(0.04f, 0.01f, 0.02f, 0.98f);
+        _finishBannerBg.raycastTarget = false;
 
         // Top accent line
         var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
-        topStripe.transform.SetParent(_finishBannerRoot.transform, false);
+        topStripe.transform.SetParent(cardGO.transform, false);
         var tsR = topStripe.GetComponent<RectTransform>();
         tsR.anchorMin = new Vector2(0f, 1f);
         tsR.anchorMax = new Vector2(1f, 1f);
         tsR.pivot     = new Vector2(0.5f, 1f);
-        tsR.sizeDelta = new Vector2(0f, 6f);
+        tsR.sizeDelta = new Vector2(0f, 5f);
         _finishTopStripe = topStripe.GetComponent<Image>();
-        _finishTopStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+        _finishTopStripe.color = new Color(1f, 0.30f, 0.30f, 0.9f);
+        _finishTopStripe.raycastTarget = false;
 
         // Bottom accent line
         var botStripe = new GameObject("BottomStripe", typeof(RectTransform), typeof(Image));
-        botStripe.transform.SetParent(_finishBannerRoot.transform, false);
+        botStripe.transform.SetParent(cardGO.transform, false);
         var bsR = botStripe.GetComponent<RectTransform>();
         bsR.anchorMin = new Vector2(0f, 0f);
         bsR.anchorMax = new Vector2(1f, 0f);
         bsR.pivot     = new Vector2(0.5f, 0f);
-        bsR.sizeDelta = new Vector2(0f, 6f);
+        bsR.sizeDelta = new Vector2(0f, 5f);
         _finishBottomStripe = botStripe.GetComponent<Image>();
-        _finishBottomStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
+        _finishBottomStripe.color = new Color(1f, 0.30f, 0.30f, 0.9f);
+        _finishBottomStripe.raycastTarget = false;
 
         // Finish Title
         var titleGO = new GameObject("Title", typeof(RectTransform));
-        titleGO.transform.SetParent(_finishBannerRoot.transform, false);
+        titleGO.transform.SetParent(cardGO.transform, false);
         var tR = titleGO.GetComponent<RectTransform>();
         tR.anchorMin = new Vector2(0f, 1f);
         tR.anchorMax = new Vector2(1f, 1f);
@@ -1435,7 +1461,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // Finish Status
         var statusGO = new GameObject("Status", typeof(RectTransform));
-        statusGO.transform.SetParent(_finishBannerRoot.transform, false);
+        statusGO.transform.SetParent(cardGO.transform, false);
         var sR = statusGO.GetComponent<RectTransform>();
         sR.anchorMin = new Vector2(0f, 1f);
         sR.anchorMax = new Vector2(1f, 1f);
@@ -1450,7 +1476,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // Finish Reward / Penalty
         var rewGO = new GameObject("Reward", typeof(RectTransform));
-        rewGO.transform.SetParent(_finishBannerRoot.transform, false);
+        rewGO.transform.SetParent(cardGO.transform, false);
         var rR = rewGO.GetComponent<RectTransform>();
         rR.anchorMin = new Vector2(0f, 1f);
         rR.anchorMax = new Vector2(1f, 1f);
@@ -1507,11 +1533,11 @@ public class HazardDodgeMinigame : MonoBehaviour
             // Rock-solid stationary scale so text never shakes or vibrates while reading
             _warningBannerRoot.transform.localScale = Vector3.one;
 
-            // Calm, gentle breathing border glow (warm amber alert)
+            // Gentle breathing border glow (vivid alarm red outline)
             if (_warningBannerBorder != null)
             {
                 float borderAlpha = Mathf.Lerp(0.70f, 1.0f, Mathf.Sin(elapsed * 2.0f) * 0.5f + 0.5f);
-                _warningBannerBorder.color = new Color(1f, 0.72f, 0.18f, borderAlpha);
+                _warningBannerBorder.color = new Color(0.95f, 0.20f, 0.22f, borderAlpha);
             }
             yield return null;
         }
@@ -1526,6 +1552,11 @@ public class HazardDodgeMinigame : MonoBehaviour
             customResultBanner.text = success
                 ? $"HAZARD ZONE CLEARED!\n+{totalBonus} RDP"
                 : "HULL COMPROMISED!\n-50 RDP";
+            if (!success)
+            {
+                var pImg = customResultBanner.GetComponentInParent<Image>();
+                if (pImg != null) pImg.color = new Color(0.18f, 0.03f, 0.04f, 0.98f);
+            }
         }
 
         if (_finishBannerRoot != null)
@@ -1537,9 +1568,9 @@ public class HazardDodgeMinigame : MonoBehaviour
             {
                 // Victory Theme (Cyan & Emerald)
                 if (_finishBannerBg != null)
-                    _finishBannerBg.color = new Color(0.02f, 0.10f, 0.16f, 0.96f);
+                    _finishBannerBg.color = new Color(0.01f, 0.04f, 0.08f, 0.98f); // Deep dark oceanic navy
                 if (_finishBannerBorder != null)
-                    _finishBannerBorder.color = new Color(0f, 0.92f, 0.95f, 0.95f);
+                    _finishBannerBorder.color = new Color(0f, 0.92f, 0.95f, 0.95f); // Neon cyan outline
                 if (_finishTopStripe != null)
                     _finishTopStripe.color = new Color(0.1f, 0.95f, 0.7f, 1f);
                 if (_finishBottomStripe != null)
@@ -1563,29 +1594,29 @@ public class HazardDodgeMinigame : MonoBehaviour
             }
             else
             {
-                // Defeat Theme (Alarm Crimson)
+                // Defeat Theme (Deep Darkened Crimson-Black with high-contrast text)
                 if (_finishBannerBg != null)
-                    _finishBannerBg.color = new Color(0.12f, 0.02f, 0.04f, 0.96f);
+                    _finishBannerBg.color = new Color(0.04f, 0.01f, 0.02f, 0.98f); // Deep dark crimson-black
                 if (_finishBannerBorder != null)
-                    _finishBannerBorder.color = new Color(1f, 0.2f, 0.25f, 0.95f);
+                    _finishBannerBorder.color = new Color(0.95f, 0.20f, 0.22f, 0.95f); // Vivid alarm red outline
                 if (_finishTopStripe != null)
-                    _finishTopStripe.color = new Color(1f, 0.3f, 0.3f, 1f);
+                    _finishTopStripe.color = new Color(1f, 0.30f, 0.30f, 1f);
                 if (_finishBottomStripe != null)
-                    _finishBottomStripe.color = new Color(1f, 0.3f, 0.3f, 1f);
+                    _finishBottomStripe.color = new Color(1f, 0.30f, 0.30f, 1f);
 
                 if (_finishTitleTMP != null)
                 {
-                    _finishTitleTMP.color = new Color(1f, 0.40f, 0.40f);
+                    _finishTitleTMP.color = new Color(1f, 0.35f, 0.35f); // Vibrant bright alarm red
                     _finishTitleTMP.text = "HULL COMPROMISED!";
                 }
                 if (_finishStatusTMP != null)
                 {
-                    _finishStatusTMP.color = new Color(0.95f, 0.85f, 0.85f);
+                    _finishStatusTMP.color = Color.white; // Crisp pure white for 100% legibility
                     _finishStatusTMP.text = "EMERGENCY SURFACE RETREAT INITIATED";
                 }
                 if (_finishRewardTMP != null)
                 {
-                    _finishRewardTMP.color = new Color(1f, 0.45f, 0.45f);
+                    _finishRewardTMP.color = new Color(1f, 0.45f, 0.45f); // High-contrast bright coral penalty text
                     _finishRewardTMP.text = "-50 RDP REPAIR PENALTY";
                 }
             }

@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Entacmaea quadricolor
   taxonomicClass: 12
   zoneIndex: 0
-  habitat: "Shallow coral reefs (0-200 m)"
-  depthRangeText: "0-200 m"
+  habitat: Shallow coral reefs (0-200 m)
+  depthRangeText: 0-200 m
   explorationHint: Attached firmly to the upper surfaces of sunlit coral boulders.
   secondaryZoneIndices: 
   characteristics: Many tentacles with rounded, bubble-like tips.
@@ -43,6 +43,6 @@ MonoBehaviour:
   placeholderShape: 3
   placeholderColor: {r: 0.95, g: 0.35, b: 0.65, a: 1}
   placeholderScale: {x: 1.2, y: 0.8, z: 1.2}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 2a11eb7966250fb458eb3a637f20aa0b, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

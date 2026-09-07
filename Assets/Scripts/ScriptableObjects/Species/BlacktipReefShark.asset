@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Carcharhinus melanopterus
   taxonomicClass: 1
   zoneIndex: 0
-  habitat: "Shallow coral reef flats and drop-offs (0-75 m)"
-  depthRangeText: "0-75 m"
+  habitat: Shallow coral reef flats and drop-offs (0-75 m)
+  depthRangeText: 0-75 m
   explorationHint: Patrols along reef edges and open drop-offs in continuous forward
     motion.
   secondaryZoneIndices: 
@@ -39,10 +39,11 @@ MonoBehaviour:
   fleeRange: 10
   returnThreshold: 40
   modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
+  modelYawOffset: 0
   previewScaleMultiplier: 0.8
   placeholderShape: 1
   placeholderColor: {r: 0.4, g: 0.45, b: 0.5, a: 1}
   placeholderScale: {x: 1.2, y: 3.5, z: 1.2}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 115f5c9c8f67af346a4db6f0284e640b, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

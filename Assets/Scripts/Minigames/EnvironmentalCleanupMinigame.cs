@@ -769,8 +769,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customStatusTextLegacy == null && customStatusText == null) customStatusTextLegacy = FindDeepChild<Text>(customUIRoot, "Status", "StatusText", "Banner");
             if (customStatusText == null && customStatusTextLegacy == null)
             {
-                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.88f), new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(720f, 45f), new Color(0f, 0f, 0f, 0.65f));
-                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 19, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white);
+                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.88f), new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(920f, 65f), new Color(0.02f, 0.06f, 0.12f, 0.88f));
+                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(880f, 55f));
+                customStatusText.enableAutoSizing = true;
+                customStatusText.fontSizeMin = 14;
+                customStatusText.fontSizeMax = 22;
             }
 
             // Auto-wire Phase 1 Controls
@@ -812,6 +815,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 if (hImg != null) hImg.raycastTarget = false;
             }
 
+            // Style buttons and joystick on Minigame3HUD to match main HUD (dark oceanic base + cyan inner glow)
+            StyleMinigame3ButtonsLikeHUD();
+
             // Hide Phase 2 & 3 elements on start
             if (customSortingContainer != null) customSortingContainer.SetActive(false);
             if (customBinPlastics != null) customBinPlastics.gameObject.SetActive(false);
@@ -837,8 +843,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         CreateUIText(topBar.transform, "PhaseTitle", "REMOVAL PHASE", 36, new Vector2(0.50f, 0.5f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
         customTimerText = CreateUIText(topBar.transform, "TimerText", "Time: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
 
-        var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.86f), new Vector2(0.5f, 0.86f), Vector2.zero, new Vector2(720f, 45f), new Color(0f, 0f, 0f, 0.65f));
-        customStatusText = CreateUIText(bannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 19, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white);
+        var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.86f), new Vector2(0.5f, 0.86f), Vector2.zero, new Vector2(920f, 65f), new Color(0.02f, 0.06f, 0.12f, 0.88f));
+        customStatusText = CreateUIText(bannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(880f, 55f));
+        customStatusText.enableAutoSizing = true;
+        customStatusText.fontSizeMin = 14;
+        customStatusText.fontSizeMax = 22;
 
         BuildVirtualJoystick();
 
@@ -905,6 +914,121 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _isDraggingJoystick = false;
         _joystickHorizontalInput = 0f;
         if (_joystickHandle != null) _joystickHandle.anchoredPosition = Vector2.zero;
+    }
+
+    private void StyleMinigame3ButtonsLikeHUD()
+    {
+        Color btnDark = UIManager.BtnDefault;
+        Color innerGlowColor = UIManager.InnerGlowIdle;
+
+        // 1. MoveOuterRing (Joystick Base Ring - identical to Exploration HUD)
+        if (customJoystickBackground != null)
+        {
+            customJoystickBackground.anchoredPosition = new Vector2(75f, 75f);
+
+            var ringImg = customJoystickBackground.GetComponent<Image>();
+            if (ringImg != null)
+            {
+                ringImg.color = btnDark;
+            }
+            var glow = UIManager.EnsureInnerGlow(customJoystickBackground.gameObject, 0.85f, innerGlowColor);
+            if (glow != null) glow.transform.SetSiblingIndex(0);
+        }
+
+        // 2. Move (Joystick Handle Thumb - solid dark circle like in HUD picture 1, NO inner glow)
+        if (customJoystickHandle != null)
+        {
+            var oldGlow = customJoystickHandle.transform.Find("InnerGlow");
+            if (oldGlow != null)
+            {
+                if (Application.isPlaying) Destroy(oldGlow.gameObject);
+                else DestroyImmediate(oldGlow.gameObject);
+            }
+
+            var handleImg = customJoystickHandle.GetComponent<Image>();
+            if (handleImg != null)
+            {
+                handleImg.color = btnDark;
+            }
+        }
+
+        // 3. DropButton (Claw Drop Button with Hand Icon)
+        if (customDropClawButton != null)
+        {
+            var dropRt = customDropClawButton.GetComponent<RectTransform>();
+            if (dropRt != null)
+            {
+                dropRt.anchoredPosition = new Vector2(-75f, 75f);
+            }
+
+            var dropImg = customDropClawButton.GetComponent<Image>();
+            if (dropImg != null)
+            {
+                // Ensure child Icon exists so InnerGlow sits behind the hand icon
+                var iconTr = customDropClawButton.transform.Find("Icon");
+                Image iconImg = null;
+                if (iconTr != null)
+                {
+                    iconImg = iconTr.GetComponent<Image>();
+                }
+                else
+                {
+                    var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                    iconGO.transform.SetParent(customDropClawButton.transform, false);
+                    var irt = iconGO.GetComponent<RectTransform>();
+                    irt.anchorMin = Vector2.zero;
+                    irt.anchorMax = Vector2.one;
+                    irt.sizeDelta = Vector2.zero;
+                    irt.anchoredPosition = Vector2.zero;
+
+                    iconImg = iconGO.GetComponent<Image>();
+                    iconImg.raycastTarget = false;
+                    iconImg.preserveAspect = true;
+                    if (dropImg.sprite != null) iconImg.sprite = dropImg.sprite;
+                }
+
+                // Set parent image to outer ring sprite
+                var ringSprite = UIManager.GetOuterRingSprite();
+                if (ringSprite != null)
+                {
+                    dropImg.sprite = ringSprite;
+                    dropImg.preserveAspect = true;
+                }
+                dropImg.color = btnDark;
+
+                // Inner radial glow
+                var dropGlow = UIManager.EnsureInnerGlow(customDropClawButton.gameObject, 0.85f, innerGlowColor);
+                if (dropGlow != null) dropGlow.transform.SetSiblingIndex(0);
+
+                if (iconImg != null)
+                {
+                    iconImg.color = btnDark;
+                    iconImg.transform.SetAsLastSibling();
+                }
+
+                // Add pointer down / up glow illumination
+                var trigger = customDropClawButton.GetComponent<EventTrigger>() ?? customDropClawButton.gameObject.AddComponent<EventTrigger>();
+                trigger.triggers.Clear();
+
+                var pDown = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+                pDown.callback.AddListener((_) =>
+                {
+                    if (dropGlow != null) dropGlow.color = UIManager.InnerGlowActive;
+                    if (dropImg != null) dropImg.color = UIManager.BtnActiveRing;
+                    if (iconImg != null) iconImg.color = UIManager.BtnActiveIcon;
+                });
+                trigger.triggers.Add(pDown);
+
+                var pUp = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
+                pUp.callback.AddListener((_) =>
+                {
+                    if (dropGlow != null) dropGlow.color = innerGlowColor;
+                    if (dropImg != null) dropImg.color = btnDark;
+                    if (iconImg != null) iconImg.color = btnDark;
+                });
+                trigger.triggers.Add(pUp);
+            }
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -1148,16 +1272,16 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         if (_sortingPanel == null)
         {
-            _sortingPanel = CreateUIPanel(parentTransform, "SortingPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 580f), new Color(0.03f, 0.09f, 0.16f, 0.96f));
+            _sortingPanel = CreateUIPanel(parentTransform, "SortingPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1080f, 620f), new Color(0.02f, 0.07f, 0.14f, 0.96f));
 
-            CreateUIText(_sortingPanel.transform, "Title", "SORTING PHASE", 32, new Vector2(0.5f, 0.92f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
-            CreateUIText(_sortingPanel.transform, "Subtitle", "Sort retrieved waste into the correct category (+RDP):", 18, new Vector2(0.5f, 0.83f), TextAlignmentOptions.Center, Color.white);
+            CreateUIText(_sortingPanel.transform, "Title", "SORTING PHASE", 32, new Vector2(0.5f, 0.89f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f), new Vector2(960f, 45f));
+            CreateUIText(_sortingPanel.transform, "Subtitle", "Sort retrieved waste into the correct category (+RDP):", 20, new Vector2(0.5f, 0.77f), TextAlignmentOptions.Center, new Color(0.85f, 0.90f, 0.96f), new Vector2(960f, 35f));
 
-            _btnPlastics = CreateUIButton(_sortingPanel.transform, "BinPlastics", "♻ PLASTICS\n(Bottles/Bags/Rings)", new Vector2(0.18f, 0.35f), new Vector2(200f, 160f), () => OnBinSelected(DebrisCategory.Plastic), new Color(0f, 0.45f, 0.9f));
-            _btnMetals = CreateUIButton(_sortingPanel.transform, "BinMetals", "⚙ METALS\n(Cans/Pipes/Drums)", new Vector2(0.42f, 0.35f), new Vector2(200f, 160f), () => OnBinSelected(DebrisCategory.Metal), new Color(0.9f, 0.65f, 0f));
-            _btnHazardous = CreateUIButton(_sortingPanel.transform, "BinHazardous", "☣ HAZARDOUS\n(Batteries/E-Waste)", new Vector2(0.66f, 0.35f), new Vector2(200f, 160f), () => OnBinSelected(DebrisCategory.Hazardous), new Color(0.85f, 0.15f, 0.15f));
+            customSortingItemText = CreateUIText(_sortingPanel.transform, "ItemName", "", 24, new Vector2(0.5f, 0.63f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f), new Vector2(960f, 65f));
 
-            customSortingItemText = CreateUIText(_sortingPanel.transform, "ItemName", "", 24, new Vector2(0.5f, 0.68f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
+            _btnPlastics = CreateUIButton(_sortingPanel.transform, "BinPlastics", "[PLASTICS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Plastic), new Color(0f, 0.48f, 0.92f, 0.95f), new Vector2(-300f, 0f));
+            _btnMetals = CreateUIButton(_sortingPanel.transform, "BinMetals", "[METALS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Metal), new Color(0.92f, 0.65f, 0f, 0.95f), new Vector2(0f, 0f));
+            _btnHazardous = CreateUIButton(_sortingPanel.transform, "BinHazardous", "[HAZARDOUS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Hazardous), new Color(0.85f, 0.16f, 0.16f, 0.95f), new Vector2(300f, 0f));
         }
         else
         {
@@ -1172,7 +1296,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         if (_sortingIndex < _collectedDebris.Count)
         {
             var item = _collectedDebris[_sortingIndex];
-            string msg = $"ITEM {_sortingIndex + 1}/{_collectedDebris.Count}: <b>{item.displayName}</b> ➔ [Choose Bin]";
+            string msg = $"ITEM {_sortingIndex + 1}/{_collectedDebris.Count}: <b><color=#FFD700>{item.displayName.ToUpper()}</color></b>\n<size=19><color=#00E0FF>[CHOOSE BIN]</color></size>";
             if (customSortingItemText != null || customSortingItemTextLegacy != null)
             {
                 SetText(customSortingItemText, customSortingItemTextLegacy, msg);
@@ -1253,9 +1377,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         // 2. Safe Fallback: Auto-generate results panel strictly on dedicated canvas
         Transform parentTransform = _dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : transform;
-        _resultsPanel = CreateUIPanel(parentTransform, "ResultsPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 480f), new Color(0.03f, 0.08f, 0.15f, 0.98f));
+        _resultsPanel = CreateUIPanel(parentTransform, "ResultsPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1040f, 620f), new Color(0.02f, 0.07f, 0.14f, 0.98f));
 
-        CreateUIText(_resultsPanel.transform, "Title", "ECOSYSTEM RESTORED", 30, new Vector2(0.5f, 0.84f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.75f));
+        CreateUIText(_resultsPanel.transform, "Title", "ECOSYSTEM RESTORED", 32, new Vector2(0.5f, 0.88f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.75f), new Vector2(900f, 45f));
 
         string richSummary =
             $"<b>Debris Retrieved:</b> {totalCleaned} items\n" +
@@ -1264,9 +1388,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             $"<color=#00e0ff><b>✦ OBJECTIVES COMPLETE</b></color>\n" +
             $"Increased species spawn rate by 20% (45s)";
 
-        CreateUIText(_resultsPanel.transform, "Summary", richSummary, 20, new Vector2(0.5f, 0.50f), TextAlignmentOptions.Center, Color.white, new Vector2(680f, 220f));
+        CreateUIText(_resultsPanel.transform, "Summary", richSummary, 22, new Vector2(0.5f, 0.52f), TextAlignmentOptions.Center, Color.white, new Vector2(860f, 220f));
 
-        CreateUIButton(_resultsPanel.transform, "BtnReturn", "RETURN TO EXPLORATION", new Vector2(0.5f, 0.15f), new Vector2(340f, 65f), OnFinishMinigame, new Color(0f, 0.75f, 0.65f));
+        CreateUIButton(_resultsPanel.transform, "BtnReturn", "RETURN TO EXPLORATION", new Vector2(0.5f, 0.15f), new Vector2(380f, 75f), OnFinishMinigame, new Color(0f, 0.75f, 0.65f), Vector2.zero);
     }
 
     private void OnFinishMinigame()
@@ -1386,7 +1510,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         return go;
     }
 
-    private static TMP_Text CreateUIText(Transform parent, string name, string text, float fontSize, Vector2 anchorPos, TextAlignmentOptions align, Color col, Vector2? size = null)
+    private static TMP_Text CreateUIText(Transform parent, string name, string text, float fontSize, Vector2 anchorPos, TextAlignmentOptions align, Color col, Vector2? size = null, Vector2? pos = null)
     {
         var font = UIThemeManager.AlohaFont;
 
@@ -1394,12 +1518,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         go.transform.SetParent(parent, false);
         var r = go.GetComponent<RectTransform>();
         r.anchorMin = r.anchorMax = anchorPos;
-        r.anchoredPosition = Vector2.zero;
-        r.sizeDelta = size ?? new Vector2(720f, 150f);
+        r.anchoredPosition = pos ?? Vector2.zero;
+        r.sizeDelta = size ?? new Vector2(720f, 50f);
         var tmp = go.GetComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.text = text;
-        tmp.fontSize = Mathf.Max(36f, fontSize);
+        tmp.fontSize = fontSize;
         tmp.alignment = align;
         tmp.color = col;
         tmp.richText = true;
@@ -1407,7 +1531,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         return tmp;
     }
 
-    private static Button CreateUIButton(Transform parent, string name, string label, Vector2 anchorPos, Vector2 size, Action onClick, Color? btnColor = null)
+    private static Button CreateUIButton(Transform parent, string name, string label, Vector2 anchorPos, Vector2 size, Action onClick, Color? btnColor = null, Vector2? pos = null)
     {
         var font = UIThemeManager.AlohaFont;
 
@@ -1415,7 +1539,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         go.transform.SetParent(parent, false);
         var r = go.GetComponent<RectTransform>();
         r.anchorMin = r.anchorMax = anchorPos;
-        r.anchoredPosition = Vector2.zero;
+        r.anchoredPosition = pos ?? Vector2.zero;
         r.sizeDelta = size;
 
         var img = go.GetComponent<Image>();
@@ -1429,17 +1553,18 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var tr = textGO.GetComponent<RectTransform>();
         tr.anchorMin = Vector2.zero;
         tr.anchorMax = Vector2.one;
-        tr.sizeDelta = Vector2.zero;
+        tr.offsetMin = new Vector2(8f, 6f);
+        tr.offsetMax = new Vector2(-8f, -6f);
         var tmp = textGO.GetComponent<TextMeshProUGUI>();
         if (font != null) tmp.font = font;
         tmp.text = label;
-        tmp.fontSize = 36;
+        tmp.fontSize = 26;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 36;
-        tmp.fontSizeMax = 24;
+        tmp.fontSizeMin = 16;
+        tmp.fontSizeMax = 28;
         tmp.raycastTarget = false;
 
         return btn;

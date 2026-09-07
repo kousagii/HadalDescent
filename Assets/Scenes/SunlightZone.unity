@@ -1529,7 +1529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fb3faabc71d23e4881f645062249183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinigameManager
-  forceMG1: 1
+  forceMG1: 0
   forceMG2: 0
   _mg1: {fileID: 0}
   _mg2: {fileID: 0}

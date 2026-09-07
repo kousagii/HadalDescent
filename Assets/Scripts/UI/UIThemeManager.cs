@@ -177,6 +177,11 @@ public class UIThemeManager : MonoBehaviour
             text.text = text.text.Replace('–', '-').Replace('—', '-').Replace('\u2013', '-').Replace('\u2014', '-');
         }
 
+        // Identify if this text is a multi-line card body / description / habitat / clue element
+        var bestiaryCard = text.GetComponentInParent<BestiaryCardUI>();
+        bool isBestiaryBody = bestiaryCard != null && (text == bestiaryCard.habitatOrClueText || text.name == "Habitat" || text.name == "Clue");
+        bool isMultiLineContent = isBestiaryBody || text.name == "Description" || text.name == "Fact" || text.name == "Body" || text.name == "EcologicalSignificance";
+
         // Special case: Sonar map range badge must strictly remain 36px and not auto-size down
         if (text.name == "RangeText" || text.name == "RangeLabel" || (text.transform.parent != null && text.transform.parent.name == "RangeBadge"))
         {
@@ -185,30 +190,147 @@ public class UIThemeManager : MonoBehaviour
             text.fontSizeMax = 36f;
             text.enableAutoSizing = false;
         }
+        else if (isBestiaryBody)
+        {
+            // Preserve original font size and settings from the prefab; only ensure text wraps normally
+            text.textWrappingMode = TextWrappingModes.Normal;
+        }
         else if (text.fontSize < MinFontSize)
         {
             text.fontSize = MinFontSize;
         }
 
-        // Ensure all UI button labels strictly stay on one single line
-        if (text.GetComponentInParent<Button>() != null)
+        // Ensure dedicated UI button labels stay on one single line, but NEVER force NoWrap on multi-line cards/descriptions
+        if (!isMultiLineContent && bestiaryCard == null)
         {
-            text.textWrappingMode = TextWrappingModes.NoWrap;
+            // Only apply NoWrap if it is directly on a Button or direct child of a Button (standard button label)
+            if (text.GetComponent<Button>() != null || (text.transform.parent != null && text.transform.parent.GetComponent<Button>() != null))
+            {
+                text.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+        }
+        else if (isMultiLineContent)
+        {
+            text.textWrappingMode = TextWrappingModes.Normal;
         }
 
-        if (text.enableAutoSizing && text.fontSizeMin < 24f)
+        if (!isBestiaryBody)
         {
-            text.fontSizeMin = 24f;
-        }
+            if (text.enableAutoSizing && text.fontSizeMin < 24f)
+            {
+                text.fontSizeMin = 24f;
+            }
 
-        if (text.lineSpacing < DefaultLineSpacing)
-        {
-            text.lineSpacing = DefaultLineSpacing;
-        }
+            if (text.lineSpacing < DefaultLineSpacing)
+            {
+                text.lineSpacing = DefaultLineSpacing;
+            }
 
-        if (text.paragraphSpacing < DefaultParagraphSpacing)
-        {
-            text.paragraphSpacing = DefaultParagraphSpacing;
+            if (text.paragraphSpacing < DefaultParagraphSpacing)
+            {
+                text.paragraphSpacing = DefaultParagraphSpacing;
+            }
         }
     }
+
+    /// <summary>
+    /// Preserves the aspect ratio of the sprite and crops it to completely fill the placeholder
+    /// with the absolute minimum cut off possible (Aspect Fill / Center Crop / object-fit: cover).
+    /// Prevents real-life photos from ever being distorted, stretched, or squished into non-matching placeholder aspect ratios.
+    /// </summary>
+    public static void ApplyAspectFillCrop(Image targetImage, Sprite sprite)
+    {
+        if (targetImage == null) return;
+        if (sprite == null)
+        {
+            targetImage.sprite = null;
+            return;
+        }
+
+        targetImage.sprite = sprite;
+        targetImage.preserveAspect = false;
+
+        RectTransform imgRect = targetImage.rectTransform;
+        RectTransform parentRect = imgRect.parent as RectTransform;
+        if (parentRect == null) return;
+
+        // Ensure targetImage is enclosed within a dedicated RectMask2D container
+        RectTransform maskContainer;
+        if (parentRect.name.EndsWith("_CropContainer"))
+        {
+            maskContainer = parentRect;
+        }
+        else
+        {
+            string containerName = targetImage.gameObject.name + "_CropContainer";
+            Transform existing = parentRect.Find(containerName);
+            if (existing != null)
+            {
+                maskContainer = existing as RectTransform;
+            }
+            else
+            {
+                var containerGO = new GameObject(containerName, typeof(RectTransform), typeof(RectMask2D));
+                maskContainer = containerGO.GetComponent<RectTransform>();
+                maskContainer.SetParent(parentRect, false);
+
+                // Copy original layout transforms to container
+                maskContainer.anchorMin = imgRect.anchorMin;
+                maskContainer.anchorMax = imgRect.anchorMax;
+                maskContainer.pivot = imgRect.pivot;
+                maskContainer.anchoredPosition = imgRect.anchoredPosition;
+                maskContainer.sizeDelta = imgRect.sizeDelta;
+
+                maskContainer.SetSiblingIndex(imgRect.GetSiblingIndex());
+                imgRect.SetParent(maskContainer, false);
+            }
+        }
+
+        // Ensure mask component is active on container
+        if (maskContainer.GetComponent<RectMask2D>() == null && maskContainer.GetComponent<Mask>() == null)
+        {
+            maskContainer.gameObject.AddComponent<RectMask2D>();
+        }
+
+        // Center image within the crop container
+        imgRect.anchorMin = new Vector2(0.5f, 0.5f);
+        imgRect.anchorMax = new Vector2(0.5f, 0.5f);
+        imgRect.pivot = new Vector2(0.5f, 0.5f);
+        imgRect.anchoredPosition = Vector2.zero;
+
+        // Calculate exact dimensions for minimum cut off (Aspect Fill)
+        float cW = maskContainer.rect.width > 0f ? maskContainer.rect.width : maskContainer.sizeDelta.x;
+        float cH = maskContainer.rect.height > 0f ? maskContainer.rect.height : maskContainer.sizeDelta.y;
+        if (cW <= 0f) cW = 300f;
+        if (cH <= 0f) cH = 300f;
+
+        float sW = sprite.rect.width;
+        float sH = sprite.rect.height;
+        if (sW <= 0f || sH <= 0f) return;
+
+        float containerAspect = cW / cH;
+        float spriteAspect = sW / sH;
+
+        if (spriteAspect > containerAspect)
+        {
+            // Landscape/wider photo: match container height (0 vertical cut off), crop left and right equally
+            float h = cH;
+            float w = cH * spriteAspect;
+            imgRect.sizeDelta = new Vector2(w, h);
+        }
+        else
+        {
+            // Portrait/taller photo: match container width (0 horizontal cut off), crop top and bottom equally
+            float w = cW;
+            float h = cW / spriteAspect;
+            imgRect.sizeDelta = new Vector2(w, h);
+        }
+
+        // Add or update AspectRatioFitter in EnvelopeParent mode so dynamic layout changes remain aspect-filled
+        var fitter = targetImage.GetComponent<AspectRatioFitter>();
+        if (fitter == null) fitter = targetImage.gameObject.AddComponent<AspectRatioFitter>();
+        fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        fitter.aspectRatio = spriteAspect;
+    }
 }
+

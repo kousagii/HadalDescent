@@ -230,17 +230,26 @@ public class AudioManager : MonoBehaviour
     }
 
     // ── Volume Control (Slider-ready: 0.0001 - 1.0) ───────────────
+    public const float SFXBaseVolumeFactor = 0.5f;
+
     public bool  IsMuted      { get; private set; }
     public float MasterVolume { get; private set; } = 1.0f;
     public float BGMVolume    { get; private set; } = 1.0f;
-    public float SFXVolume    { get; private set; } = 0.3f;
+    public float SFXVolume    { get; private set; } = 1.0f;
 
     public void LoadAudioPreferences()
     {
         MasterVolume = PlayerPrefs.GetFloat("Settings_MasterVol", 1.0f);
         BGMVolume    = PlayerPrefs.GetFloat("Settings_MusicVol", 1.0f);
-        SFXVolume    = PlayerPrefs.GetFloat("Settings_SFXVol", SFXVolume);
-        IsMuted      = PlayerPrefs.GetInt("Settings_Muted", 0) == 1;
+        float savedSfx = PlayerPrefs.GetFloat("Settings_SFXVol", 1.0f);
+        if (Mathf.Approximately(savedSfx, 0.3f))
+        {
+            savedSfx = 1.0f;
+            PlayerPrefs.SetFloat("Settings_SFXVol", 1.0f);
+            PlayerPrefs.Save();
+        }
+        SFXVolume = savedSfx;
+        IsMuted   = PlayerPrefs.GetInt("Settings_Muted", 0) == 1;
 
         SetMasterVolume(MasterVolume, false);
         SetBGMVolume(BGMVolume, false);
@@ -270,10 +279,11 @@ public class AudioManager : MonoBehaviour
     public void SetSFXVolume(float value, bool save)
     {
         SFXVolume = Mathf.Clamp(value, 0.0001f, 1f);
-        SetMixerVolume(SFXVolumeParam, SFXVolume);
-        if (sfxSource != null && audioMixer == null) sfxSource.volume = SFXVolume;
-        if (subMovementSource != null && audioMixer == null) subMovementSource.volume = SFXVolume;
-        if (transitionSource != null && audioMixer == null) transitionSource.volume = SFXVolume;
+        float effectiveSFX = SFXVolume * SFXBaseVolumeFactor;
+        SetMixerVolume(SFXVolumeParam, effectiveSFX);
+        if (sfxSource != null && audioMixer == null) sfxSource.volume = effectiveSFX;
+        if (subMovementSource != null && audioMixer == null) subMovementSource.volume = effectiveSFX;
+        if (transitionSource != null && audioMixer == null) transitionSource.volume = effectiveSFX;
         if (save) { PlayerPrefs.SetFloat("Settings_SFXVol", SFXVolume); PlayerPrefs.Save(); }
     }
 
@@ -450,7 +460,7 @@ public class AudioManager : MonoBehaviour
     {
         transitionSource.Stop();
         transitionSource.clip = clip;
-        float baseVol = (audioMixer != null ? 1f : SFXVolume);
+        float baseVol = (audioMixer != null ? 0.4f : SFXVolume * SFXBaseVolumeFactor);
         transitionSource.volume = baseVol;
         transitionSource.Play();
 
@@ -504,7 +514,7 @@ public class AudioManager : MonoBehaviour
         float fadeSpeed = (_targetSubMovementVol > _currentSubMovementVol) ? 4f : 2.5f;
         _currentSubMovementVol = Mathf.MoveTowards(_currentSubMovementVol, _targetSubMovementVol, Time.deltaTime * fadeSpeed);
 
-        float effectiveVol = _currentSubMovementVol * (audioMixer != null ? 1f : SFXVolume);
+        float effectiveVol = _currentSubMovementVol * (audioMixer != null ? 1f : SFXVolume * SFXBaseVolumeFactor);
         subMovementSource.volume = effectiveVol;
 
         if (_currentSubMovementVol <= 0.001f && _targetSubMovementVol == 0f)

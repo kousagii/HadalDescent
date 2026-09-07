@@ -852,7 +852,7 @@ public class BestiaryManager : MonoBehaviour
             Sprite display = data.photo != null ? data.photo : data.fullImage;
             if (display != null)
             {
-                detailPhoto.sprite = display;
+                UIThemeManager.ApplyAspectFillCrop(detailPhoto, display);
                 detailPhoto.color  = Color.white;
             }
         }
@@ -895,8 +895,14 @@ public class BestiaryManager : MonoBehaviour
 
         var photoImg = photoGO.GetComponent<Image>();
         Sprite display = data.photo != null ? data.photo : data.fullImage;
-        if (display != null) photoImg.sprite = display;
-        else photoImg.color = new Color(0.1f, 0.2f, 0.3f, 1f);
+        if (display != null)
+        {
+            UIThemeManager.ApplyAspectFillCrop(photoImg, display);
+        }
+        else
+        {
+            photoImg.color = new Color(0.1f, 0.2f, 0.3f, 1f);
+        }
 
         // Text
         var textGO = new GameObject("DetailText", typeof(RectTransform));

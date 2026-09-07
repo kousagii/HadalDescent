@@ -148,6 +148,7 @@ public class MinigameManager : MonoBehaviour
             Time.timeScale = 1f;
             _minigameActive = false;
             EnableControls();
+            UIManager.Instance?.SetExplorationHUDVisible(true);
             onSuccess?.Invoke();
         };
         Action wrappedFail = () =>
@@ -155,6 +156,7 @@ public class MinigameManager : MonoBehaviour
             Time.timeScale = 1f;
             _minigameActive = false;
             EnableControls();
+            UIManager.Instance?.SetExplorationHUDVisible(true);
             onFail?.Invoke();
         };
 
@@ -258,6 +260,7 @@ public class MinigameManager : MonoBehaviour
         Time.timeScale = 1f;
         _minigameActive = false;
         EnableControls();
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     public bool IsMinigameActive => _minigameActive;

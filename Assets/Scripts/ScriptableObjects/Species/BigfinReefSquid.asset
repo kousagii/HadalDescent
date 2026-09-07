@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Sepioteuthis lessoniana
   taxonomicClass: 4
   zoneIndex: 0
-  habitat: "Shallow coastal reefs and seagrass beds (0-100 m)"
-  depthRangeText: "0-100 m"
+  habitat: Shallow coastal reefs and seagrass beds (0-100 m)
+  depthRangeText: 0-100 m
   explorationHint: Cruises gracefully over seagrass beds and midwater channels; shy
     to approach.
   secondaryZoneIndices: 
@@ -39,10 +39,11 @@ MonoBehaviour:
   fleeRange: 10
   returnThreshold: 40
   modelPrefab: {fileID: 8681646802474497732, guid: 2ea6a00234df36f418f3b7c8c63aaba8, type: 3}
+  modelYawOffset: 0
   previewScaleMultiplier: 1
   placeholderShape: 1
   placeholderColor: {r: 0.85, g: 0.95, b: 1, a: 1}
   placeholderScale: {x: 0.8, y: 1.8, z: 0.8}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 2ca67aba784bd3743bd3667ebf2bb942, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

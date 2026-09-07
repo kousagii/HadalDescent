@@ -18,7 +18,7 @@ MonoBehaviour:
   taxonomicClass: 10
   zoneIndex: 0
   habitat: Indo-Pacific reefs, shallow waters (6 - 17 m)
-  depthRangeText: "6-17 m"
+  depthRangeText: 6-17 m
   explorationHint: Slowly moving along sandy reef floors and coral rubble channels.
   secondaryZoneIndices: 
   characteristics: Cone-shaped patterned shell.
@@ -43,6 +43,6 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.82, g: 0.68, b: 0.48, a: 1}
   placeholderScale: {x: 0.6, y: 1, z: 0.6}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 58b679c3aab38164094c40be4d6edef4, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

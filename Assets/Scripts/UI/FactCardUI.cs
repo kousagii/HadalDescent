@@ -5,14 +5,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Fact Card popup shown when the player scans/interacts with a stationary species.
-/// Displays the exact same detailed scientific data as the Bestiary Detail Modal.
+/// Environmental Fact Card popup shown when the player interacts with a natural
+/// habitat feature, landmark, coral reef formation, hydrothermal vent, or rock outcrop.
 ///
 /// Features:
-///   - Matches DetailModal 1:1 (Photo, Common Name, Scientific Name, Class, Habitat,
-///     Characteristics, Ecological Role, Did you know?, Research Reward).
+///   - Displays habitat name, geological/ecological category, ocean zone, depth range,
+///     habitat description, ecological significance, and fascinating biological facts.
 ///   - Supports custom UI panel designed in Canvas (just drag references into Inspector).
 ///   - Automatically builds default UI if none is assigned in Inspector.
+///   - Awards Research Data Points (RDP) on first-time survey.
 /// </summary>
 public class FactCardUI : MonoBehaviour
 {
@@ -21,15 +22,36 @@ public class FactCardUI : MonoBehaviour
     [Header("Custom UI Panel (Optional - assign if designed in Canvas)")]
     [Tooltip("Custom Fact Card GameObject in Canvas.")]
     [SerializeField] private GameObject customCardPanel;
+
+    [Header("Custom UI - Content Bindings (Drag your TextMeshPro & Image elements here)")]
+    [Tooltip("Photo or Illustration Image component for the habitat / prop.")]
     [SerializeField] private Image      customPhoto;
-    [SerializeField] private TMP_Text   customCommonName;
-    [SerializeField] private TMP_Text   customScientificName;
-    [SerializeField] private TMP_Text   customClass;
-    [SerializeField] private TMP_Text   customHabitat;
-    [SerializeField] private TMP_Text   customCharacteristics;
-    [SerializeField] private TMP_Text   customEcologicalRole;
+
+    [Tooltip("Title text component (e.g. 'Tropical Coral Reef Matrix').")]
+    [SerializeField] private TMP_Text   customHabitatName;
+
+    [Tooltip("Category / Subtitle text component (e.g. 'Biogenic Marine Habitat').")]
+    [SerializeField] private TMP_Text   customCategory;
+
+    [Tooltip("Zone text component (e.g. 'Zone: Sunlight Zone (0–200 m)').")]
+    [SerializeField] private TMP_Text   customZone;
+
+    [Tooltip("Depth Range text component (e.g. 'Depth: 10–30 m').")]
+    [SerializeField] private TMP_Text   customDepth;
+
+    [Tooltip("Habitat Description text component.")]
+    [SerializeField] private TMP_Text   customDescription;
+
+    [Tooltip("Ecological Significance text component.")]
+    [SerializeField] private TMP_Text   customEcologicalSignificance;
+
+    [Tooltip("Interesting Fact / 'Did you know?' text component.")]
     [SerializeField] private TMP_Text   customFact;
+
+    [Tooltip("RDP Survey Reward text component (e.g. '+30 RDP (Habitat Surveyed!)').")]
     [SerializeField] private TMP_Text   customReward;
+
+    [Tooltip("Close Button component.")]
     [SerializeField] private Button     customCloseButton;
 
     // Runtime programmatic elements (used if customCardPanel is null)
@@ -103,10 +125,12 @@ public class FactCardUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Safely finds or instantiates FactCardUI and displays the species fact card.
+    /// Safely finds or instantiates FactCardUI and displays the environmental habitat fact card.
     /// </summary>
-    public static FactCardUI ShowFactCard(SpeciesData data, bool isNewDiscovery)
+    public static FactCardUI ShowEnvironmentFact(EnvironmentFactTarget target)
     {
+        if (target == null) return null;
+
         var fc = Instance ?? FindFirstObjectByType<FactCardUI>(FindObjectsInactive.Include);
         if (fc == null)
         {
@@ -124,7 +148,7 @@ public class FactCardUI : MonoBehaviour
         if (fc != null)
         {
             fc.gameObject.SetActive(true);
-            fc.Show(data, isNewDiscovery);
+            fc.Show(target);
         }
         else
         {
@@ -133,12 +157,24 @@ public class FactCardUI : MonoBehaviour
         return fc;
     }
 
-    public void Show(SpeciesData data, bool isNewDiscovery)
+    public void Show(EnvironmentFactTarget target)
     {
-        if (data == null) return;
+        if (target == null) return;
 
         gameObject.SetActive(true);
         _isOpen = true;
+
+        bool isNew = !target.IsSurveyed;
+        if (isNew)
+        {
+            target.IsSurveyed = true;
+            GameManager.Instance?.AddRDP(target.RdpReward);
+            AudioManager.Instance?.PlaySpeciesFound();
+        }
+
+        string zoneName = ZoneConfig.Zones != null && target.ZoneIndex >= 0 && target.ZoneIndex < ZoneConfig.Zones.Length
+            ? ZoneConfig.Zones[target.ZoneIndex].zoneName
+            : "Ocean Ecosystem";
 
         if (customCardPanel != null)
         {
@@ -147,33 +183,28 @@ public class FactCardUI : MonoBehaviour
             customCardPanel.transform.localPosition = new Vector3(customCardPanel.transform.localPosition.x, customCardPanel.transform.localPosition.y, 0f);
 
             var canvas = customCardPanel.GetComponent<Canvas>();
-            if (canvas == null)
-            {
-                canvas = customCardPanel.AddComponent<Canvas>();
-            }
+            if (canvas == null) canvas = customCardPanel.AddComponent<Canvas>();
             canvas.overrideSorting = true;
             canvas.sortingOrder = 9999;
 
             var raycaster = customCardPanel.GetComponent<GraphicRaycaster>();
-            if (raycaster == null)
-            {
-                customCardPanel.AddComponent<GraphicRaycaster>();
-            }
+            if (raycaster == null) customCardPanel.AddComponent<GraphicRaycaster>();
 
-            Sprite display = data.photo != null ? data.photo : data.fullImage;
             if (customPhoto != null)
             {
-                customPhoto.sprite = display;
-                customPhoto.color  = display != null ? Color.white : data.placeholderColor;
+                UIThemeManager.ApplyAspectFillCrop(customPhoto, target.HabitatPhoto);
+                customPhoto.gameObject.SetActive(target.HabitatPhoto != null);
+                customPhoto.color = Color.white;
             }
-            if (customCommonName != null)       customCommonName.text       = data.commonName;
-            if (customScientificName != null)   customScientificName.text   = $"<i>{data.scientificName}</i>";
-            if (customClass != null)            customClass.text            = $"Class: {data.taxonomicClass}";
-            if (customHabitat != null)          customHabitat.text          = $"Habitat: {data.habitat}";
-            if (customCharacteristics != null)  customCharacteristics.text  = $"Characteristics: {data.characteristics}";
-            if (customEcologicalRole != null)   customEcologicalRole.text   = $"Ecological Role: {data.ecologicalRole}";
-            if (customFact != null)             customFact.text             = $"Did you know? {data.interestingFact}";
-            if (customReward != null)           customReward.text           = isNewDiscovery ? $"{data.rdpReward} RDP (Added to Bestiary!)" : $"+{data.rdpReward} RDP";
+
+            if (customHabitatName != null)            customHabitatName.text            = target.HabitatName;
+            if (customCategory != null)               customCategory.text               = target.Category;
+            if (customZone != null)                   customZone.text                   = $"Zone: {zoneName}";
+            if (customDepth != null)                  customDepth.text                  = $"Depth: {target.DepthRangeText}";
+            if (customDescription != null)            customDescription.text            = target.HabitatDescription;
+            if (customEcologicalSignificance != null) customEcologicalSignificance.text = $"Significance: {target.EcologicalSignificance}";
+            if (customFact != null)                   customFact.text                   = $"Did you know? {target.InterestingFact}";
+            if (customReward != null)                 customReward.text                 = isNew ? $"+{target.RdpReward} RDP (Habitat Surveyed!)" : "Habitat Already Surveyed";
         }
         else
         {
@@ -184,8 +215,11 @@ public class FactCardUI : MonoBehaviour
                 _panel.gameObject.SetActive(true);
                 _panel.SetAsLastSibling();
             }
-            PopulateCard(data, isNewDiscovery);
+
+            PopulateProgrammaticCard(target, zoneName, isNew);
         }
+
+        UIThemeManager.ApplyAntoneTheme(customCardPanel != null ? customCardPanel : (_panel != null ? _panel.gameObject : gameObject));
     }
 
     public void Hide()
@@ -205,25 +239,29 @@ public class FactCardUI : MonoBehaviour
         }
     }
 
-    private void PopulateCard(SpeciesData data, bool isNew)
+    private void PopulateProgrammaticCard(EnvironmentFactTarget target, string zoneName, bool isNew)
     {
-        Sprite display = data.photo != null ? data.photo : data.fullImage;
-        if (_photo != null) { _photo.sprite = display; _photo.color = display != null ? Color.white : data.placeholderColor; }
-        if (_commonNameText != null) _commonNameText.text = data.commonName;
-        if (_sciNameText != null)    _sciNameText.text    = $"<i>{data.scientificName}</i>  •  Class: {data.taxonomicClass}";
+        if (_photo != null)
+        {
+            UIThemeManager.ApplyAspectFillCrop(_photo, target.HabitatPhoto);
+            _photo.gameObject.SetActive(target.HabitatPhoto != null);
+            _photo.color = Color.white;
+        }
+
+        if (_commonNameText != null) _commonNameText.text = target.HabitatName;
+        if (_sciNameText != null)    _sciNameText.text    = $"{target.Category}  •  {zoneName} ({target.DepthRangeText})";
 
         if (_bodyText != null)
         {
             _bodyText.text =
-                $"<color=#77ddbb><b>HABITAT:</b></color> {data.habitat}\n\n" +
-                $"<color=#77ddbb><b>CHARACTERISTICS:</b></color> {data.characteristics}\n\n" +
-                $"<color=#77ddbb><b>ECOLOGICAL ROLE:</b></color> {data.ecologicalRole}\n\n" +
-                $"<color=#ffcc00><b>✦ INTERESTING FACT:</b></color>\n{data.interestingFact}";
+                $"<color=#77ddbb><b>HABITAT OVERVIEW:</b></color>\n{target.HabitatDescription}\n\n" +
+                $"<color=#77ddbb><b>ECOLOGICAL SIGNIFICANCE:</b></color>\n{target.EcologicalSignificance}\n\n" +
+                $"<color=#ffcc00><b>✦ DID YOU KNOW?</b></color>\n{target.InterestingFact}";
         }
 
         if (_rewardText != null)
         {
-            _rewardText.text = isNew ? $"<color=#ffcc00>+{data.rdpReward} RDP</color>  Added to Bestiary!" : "<color=#88ccff>Specimen Observed</color>";
+            _rewardText.text = isNew ? $"<color=#ffcc00>+{target.RdpReward} RDP</color>  Habitat Surveyed!" : "<color=#88ccff>Habitat Previously Surveyed</color>";
         }
     }
 
@@ -231,7 +269,7 @@ public class FactCardUI : MonoBehaviour
     {
         if (_panel != null || _canvas == null) return;
 
-        var font = UIThemeManager.AlohaFont;
+        var font = UIThemeManager.AntoneFont;
 
         var go = new GameObject("FactCard", typeof(RectTransform), typeof(Image));
         go.transform.SetParent(_canvas.transform, false);
@@ -253,8 +291,8 @@ public class FactCardUI : MonoBehaviour
         pr.sizeDelta = new Vector2(480f, 200f); pr.anchoredPosition = new Vector2(0f, -120f);
         _photo = photoGO.GetComponent<Image>();
 
-        // Common Name
-        var nameGO = new GameObject("CommonName", typeof(RectTransform));
+        // Habitat Name
+        var nameGO = new GameObject("HabitatName", typeof(RectTransform));
         nameGO.transform.SetParent(go.transform, false);
         var nr = nameGO.GetComponent<RectTransform>();
         nr.anchorMin = new Vector2(0f, 1f); nr.anchorMax = new Vector2(1f, 1f);
@@ -264,18 +302,18 @@ public class FactCardUI : MonoBehaviour
         _commonNameText.fontSize = 36; _commonNameText.fontStyle = FontStyles.Bold;
         _commonNameText.alignment = TextAlignmentOptions.Center; _commonNameText.color = Color.white;
 
-        // Scientific Name & Class
-        var sciGO = new GameObject("SciNameAndClass", typeof(RectTransform));
+        // Category & Zone
+        var sciGO = new GameObject("CategoryAndZone", typeof(RectTransform));
         sciGO.transform.SetParent(go.transform, false);
         var sr = sciGO.GetComponent<RectTransform>();
         sr.anchorMin = new Vector2(0f, 1f); sr.anchorMax = new Vector2(1f, 1f);
         sr.sizeDelta = new Vector2(-40f, 40f); sr.anchoredPosition = new Vector2(0f, -295f);
         _sciNameText = sciGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _sciNameText.font = font;
-        _sciNameText.fontSize = 36; _sciNameText.alignment = TextAlignmentOptions.Center;
+        _sciNameText.fontSize = 32; _sciNameText.alignment = TextAlignmentOptions.Center;
         _sciNameText.color = new Color(0.6f, 0.8f, 1f, 1f);
 
-        // Body Text (Habitat, Characteristics, Ecological Role, Fact)
+        // Body Text (Overview, Significance, Fact)
         var bodyGO = new GameObject("Body", typeof(RectTransform));
         bodyGO.transform.SetParent(go.transform, false);
         var br = bodyGO.GetComponent<RectTransform>();
@@ -283,7 +321,7 @@ public class FactCardUI : MonoBehaviour
         br.offsetMin = new Vector2(28f, 110f); br.offsetMax = new Vector2(-28f, -340f);
         _bodyText = bodyGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _bodyText.font = font;
-        _bodyText.fontSize = 36; _bodyText.color = Color.white;
+        _bodyText.fontSize = 32; _bodyText.color = Color.white;
         _bodyText.lineSpacing = 10f;
         _bodyText.paragraphSpacing = 10f;
         _bodyText.textWrappingMode = TextWrappingModes.Normal;
@@ -296,7 +334,7 @@ public class FactCardUI : MonoBehaviour
         rr.sizeDelta = new Vector2(0f, 44f); rr.anchoredPosition = new Vector2(0f, 72f);
         _rewardText = rdpGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _rewardText.font = font;
-        _rewardText.fontSize = 36; _rewardText.fontStyle = FontStyles.Bold;
+        _rewardText.fontSize = 32; _rewardText.fontStyle = FontStyles.Bold;
         _rewardText.alignment = TextAlignmentOptions.Center;
 
         // Close button
@@ -315,7 +353,7 @@ public class FactCardUI : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
         var lbl = lblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) lbl.font = font;
-        lbl.fontSize = 36; lbl.alignment = TextAlignmentOptions.Center;
+        lbl.fontSize = 32; lbl.alignment = TextAlignmentOptions.Center;
         lbl.fontStyle = FontStyles.Bold;
         lbl.text = "CLOSE"; lbl.color = Color.white;
     }

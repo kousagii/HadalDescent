@@ -282,15 +282,49 @@ public class SpeciesSpawner : MonoBehaviour
         // ── Phase 3: Guaranteed Placement Fallback ──
         if (bestCandidatePos != Vector3.zero)
         {
+            if (data.isStationary)
+            {
+                float floorY = terrain != null ? terrain.SampleHeight(bestCandidatePos.x, bestCandidatePos.z) : bestCandidatePos.y;
+                Vector3 rayOrigin = new Vector3(bestCandidatePos.x, floorY + 30f, bestCandidatePos.z);
+                if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
+                {
+                    bestCandidatePos = hit.point;
+                    bestCandidateRot = Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                }
+                else
+                {
+                    bestCandidatePos.y = floorY;
+                }
+            }
             resultPos = bestCandidatePos;
             resultRot = bestCandidateRot;
             return true;
         }
 
         // Final safety fallback if terrain sampling was completely degenerate
-        float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -2f);
-        resultPos = new Vector3(Random.Range(-halfW * 0.5f, halfW * 0.5f), fallbackY, Random.Range(-halfL * 0.5f, halfL * 0.5f));
-        resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        float fallbackX = Random.Range(-halfW * 0.5f, halfW * 0.5f);
+        float fallbackZ = Random.Range(-halfL * 0.5f, halfL * 0.5f);
+        if (data.isStationary)
+        {
+            float floorY = terrain != null ? terrain.SampleHeight(fallbackX, fallbackZ) : -D;
+            Vector3 rayOrigin = new Vector3(fallbackX, floorY + 30f, fallbackZ);
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
+            {
+                resultPos = hit.point;
+                resultRot = Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            }
+            else
+            {
+                resultPos = new Vector3(fallbackX, floorY, fallbackZ);
+                resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            }
+        }
+        else
+        {
+            float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -2f);
+            resultPos = new Vector3(fallbackX, fallbackY, fallbackZ);
+            resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        }
         return true;
     }
 

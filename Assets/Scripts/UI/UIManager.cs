@@ -66,13 +66,14 @@ public class UIManager : MonoBehaviour
     private Image _scanInnerGlow;
     private Image _interactInnerGlow;
     private Image _moveInnerGlow;
+    private static Sprite _cachedInnerGlowSprite;
 
-    private static readonly UnityEngine.Color BtnDefault       = new UnityEngine.Color(0.02f, 0.08f, 0.13f, 1.00f); // #051421 (Sonar Map dark ocean, fully opaque)
-    private static readonly UnityEngine.Color BtnActiveIcon     = new UnityEngine.Color(0.20f, 1.00f, 0.95f, 1.00f); // Clean, sharp, luminous cyan-white (Active Detection)
-    private static readonly UnityEngine.Color BtnActiveRing     = new UnityEngine.Color(0.08f, 0.75f, 0.68f, 1.00f); // Active Ring Cyan
-    private static readonly UnityEngine.Color NavBtnDefault     = new UnityEngine.Color(0.60f, 0.88f, 0.90f, 1.00f); // Subtle, softer/lighter oceanic cyan (Top-Right Buttons)
-    private static readonly UnityEngine.Color InnerGlowIdle     = new UnityEngine.Color(0.00f, 0.93f, 0.85f, 0.28f); // Soft subtle inner radial gradient
-    private static readonly UnityEngine.Color InnerGlowActive   = new UnityEngine.Color(0.00f, 0.93f, 0.85f, 0.75f); // Vibrant active inner cavity illumination
+    public static readonly UnityEngine.Color BtnDefault       = new UnityEngine.Color(0.02f, 0.08f, 0.13f, 1.00f); // #051421 (Sonar Map dark ocean, fully opaque)
+    public static readonly UnityEngine.Color BtnActiveIcon     = new UnityEngine.Color(0.20f, 1.00f, 0.95f, 1.00f); // Clean, sharp, luminous cyan-white (Active Detection)
+    public static readonly UnityEngine.Color BtnActiveRing     = new UnityEngine.Color(0.08f, 0.75f, 0.68f, 1.00f); // Active Ring Cyan
+    public static readonly UnityEngine.Color NavBtnDefault     = new UnityEngine.Color(0.60f, 0.88f, 0.90f, 1.00f); // Subtle, softer/lighter oceanic cyan (Top-Right Buttons)
+    public static readonly UnityEngine.Color InnerGlowIdle     = new UnityEngine.Color(0.00f, 0.93f, 0.85f, 0.28f); // Soft subtle inner radial gradient
+    public static readonly UnityEngine.Color InnerGlowActive   = new UnityEngine.Color(0.00f, 0.93f, 0.85f, 0.75f); // Vibrant active inner cavity illumination
 
     // -----------------------------------------------------------------------
     // Unity lifecycle
@@ -368,13 +369,13 @@ public class UIManager : MonoBehaviour
     // Button glow helpers
     // -----------------------------------------------------------------------
 
-    /// <summary>Tint the SCAN button when a mobile species is in the reticle.</summary>
+    /// <summary>Tint the SCAN button when a target is ready to scan.</summary>
     public void ShowScanButton(bool active)
     {
         var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (scanButtonImage != null)
         {
-            scanButtonImage.color = targetColor;
+            scanButtonImage.color = active ? BtnActiveRing : BtnDefault;
             for (int i = 0; i < scanButtonImage.transform.childCount; i++)
             {
                 var child = scanButtonImage.transform.GetChild(i);
@@ -387,10 +388,10 @@ public class UIManager : MonoBehaviour
             if (btn != null)
             {
                 var cb = btn.colors;
-                cb.normalColor = targetColor;
+                cb.normalColor = scanButtonImage.color;
                 cb.highlightedColor = BtnActiveIcon;
                 cb.pressedColor = BtnActiveIcon;
-                cb.selectedColor = targetColor;
+                cb.selectedColor = scanButtonImage.color;
                 btn.colors = cb;
             }
         }
@@ -400,9 +401,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    /// <summary>Tint the INTERACT button when near a stationary species or debris cluster.</summary>
+    /// <summary>Tint the INTERACT button when near an interactive target or debris cluster.</summary>
     public void ShowInteractButton(bool active)
     {
+        var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (interactButtonImage != null)
         {
             interactButtonImage.color = active ? BtnActiveRing : BtnDefault;
@@ -411,7 +413,18 @@ public class UIManager : MonoBehaviour
                 var child = interactButtonImage.transform.GetChild(i);
                 if (child.name == "InnerGlow") continue;
                 var childImg = child.GetComponent<Image>();
-                if (childImg != null) childImg.color = active ? BtnActiveIcon : BtnDefault;
+                if (childImg != null) childImg.color = targetColor;
+            }
+
+            var btn = interactButtonImage.GetComponent<Button>();
+            if (btn != null)
+            {
+                var cb = btn.colors;
+                cb.normalColor = interactButtonImage.color;
+                cb.highlightedColor = BtnActiveIcon;
+                cb.pressedColor = BtnActiveIcon;
+                cb.selectedColor = interactButtonImage.color;
+                btn.colors = cb;
             }
         }
         if (_interactInnerGlow != null)
@@ -493,11 +506,11 @@ public class UIManager : MonoBehaviour
         if (scanButtonImage != null) scanBtn = scanButtonImage.GetComponent<Button>();
         if (scanBtn == null)
         {
-            var btnGO = GameObject.Find("ScanButton") ?? GameObject.Find("Scan") ?? GameObject.Find("ScanBtn");
+            var btnGO = GameObject.Find("ScanOuterRing") ?? GameObject.Find("ScanButton") ?? GameObject.Find("Scan") ?? GameObject.Find("ScanBtn");
             if (btnGO != null)
             {
-                scanButtonImage = btnGO.GetComponent<Image>();
-                scanBtn = btnGO.GetComponent<Button>();
+                scanButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
+                scanBtn = btnGO.GetComponent<Button>() ?? btnGO.GetComponentInChildren<Button>();
             }
         }
         if (scanBtn != null)
@@ -513,8 +526,16 @@ public class UIManager : MonoBehaviour
             pDown.callback.AddListener((_) =>
             {
                 if (_scanInnerGlow != null) _scanInnerGlow.color = InnerGlowActive;
-                var ic = scanButtonImage != null ? scanButtonImage.transform.Find("Icon")?.GetComponent<Image>() : null;
-                if (ic != null) ic.color = BtnActiveIcon;
+                if (scanButtonImage != null)
+                {
+                    for (int i = 0; i < scanButtonImage.transform.childCount; i++)
+                    {
+                        var ch = scanButtonImage.transform.GetChild(i);
+                        if (ch.name == "InnerGlow") continue;
+                        var img = ch.GetComponent<Image>();
+                        if (img != null) img.color = BtnActiveIcon;
+                    }
+                }
             });
             trigger.triggers.Add(pDown);
 
@@ -522,63 +543,38 @@ public class UIManager : MonoBehaviour
             pUp.callback.AddListener((_) =>
             {
                 if (_scanInnerGlow != null) _scanInnerGlow.color = InnerGlowIdle;
-                var ic = scanButtonImage != null ? scanButtonImage.transform.Find("Icon")?.GetComponent<Image>() : null;
-                if (ic != null) ic.color = BtnDefault;
+                if (scanButtonImage != null)
+                {
+                    for (int i = 0; i < scanButtonImage.transform.childCount; i++)
+                    {
+                        var ch = scanButtonImage.transform.GetChild(i);
+                        if (ch.name == "InnerGlow") continue;
+                        var img = ch.GetComponent<Image>();
+                        if (img != null) img.color = BtnDefault;
+                    }
+                }
             });
             trigger.triggers.Add(pUp);
         }
         if (scanButtonImage != null)
         {
             RemoveGlowEffects(scanButtonImage.gameObject);
-
-            // 1. Inner radial glow (Sibling 0, behind the icon)
             _scanInnerGlow = EnsureInnerGlow(scanButtonImage.gameObject, 0.85f);
             if (_scanInnerGlow != null)
             {
                 _scanInnerGlow.transform.SetSiblingIndex(0);
             }
-
-            // 2. Dedicated Icon child (rendered in FRONT of InnerGlow)
-            var iconTr = scanButtonImage.transform.Find("Icon");
-            Image iconImg = null;
-            if (iconTr != null)
-            {
-                iconImg = iconTr.GetComponent<Image>();
-            }
-            else
-            {
-                Sprite cameraSprite = scanButtonImage.sprite != null && scanButtonImage.sprite != GetOuterRingSprite()
-                    ? scanButtonImage.sprite
-                    : null;
-
-                var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconGO.transform.SetParent(scanButtonImage.transform, false);
-
-                var rt = iconGO.GetComponent<RectTransform>();
-                rt.anchorMin = Vector2.zero;
-                rt.anchorMax = Vector2.one;
-                rt.sizeDelta = Vector2.zero;
-                rt.anchoredPosition = Vector2.zero;
-
-                iconImg = iconGO.GetComponent<Image>();
-                iconImg.raycastTarget = false;
-                iconImg.preserveAspect = true;
-                if (cameraSprite != null) iconImg.sprite = cameraSprite;
-            }
-
-            if (iconImg != null)
-            {
-                iconImg.color = BtnDefault;
-                iconImg.transform.SetAsLastSibling(); // Crucial: drawn in FRONT of InnerGlow!
-            }
-
-            // 3. Ensure base button image is the circular outer ring background
-            var ringSprite = GetOuterRingSprite();
-            if (ringSprite != null)
-            {
-                scanButtonImage.sprite = ringSprite;
-            }
             scanButtonImage.color = BtnDefault;
+            for (int i = 0; i < scanButtonImage.transform.childCount; i++)
+            {
+                var child = scanButtonImage.transform.GetChild(i);
+                if (child.name != "InnerGlow")
+                {
+                    RemoveGlowEffects(child.gameObject);
+                    var cImg = child.GetComponent<Image>();
+                    if (cImg != null) cImg.color = BtnDefault;
+                }
+            }
         }
 
         // 2. Interact Button
@@ -586,7 +582,7 @@ public class UIManager : MonoBehaviour
         if (interactButtonImage != null) interactBtn = interactButtonImage.GetComponent<Button>();
         if (interactBtn == null)
         {
-            var btnGO = GameObject.Find("InteractOuterRing") ?? GameObject.Find("Interact") ?? GameObject.Find("InteractBtn");
+            var btnGO = GameObject.Find("InteractButton") ?? GameObject.Find("InteractOuterRing") ?? GameObject.Find("Interact") ?? GameObject.Find("InteractBtn");
             if (btnGO != null)
             {
                 interactButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
@@ -597,11 +593,113 @@ public class UIManager : MonoBehaviour
         {
             interactBtn.onClick.RemoveListener(OnInteractButtonPressed);
             interactBtn.onClick.AddListener(OnInteractButtonPressed);
+
+            var trigger = interactButtonImage.GetComponent<UnityEngine.EventSystems.EventTrigger>();
+            if (trigger == null) trigger = interactButtonImage.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            trigger.triggers.Clear();
+
+            var pDown = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
+            pDown.callback.AddListener((_) =>
+            {
+                if (_interactInnerGlow != null) _interactInnerGlow.color = InnerGlowActive;
+                if (interactButtonImage != null)
+                {
+                    for (int i = 0; i < interactButtonImage.transform.childCount; i++)
+                    {
+                        var ch = interactButtonImage.transform.GetChild(i);
+                        if (ch.name == "InnerGlow") continue;
+                        var img = ch.GetComponent<Image>();
+                        if (img != null) img.color = BtnActiveIcon;
+                    }
+                }
+            });
+            trigger.triggers.Add(pDown);
+
+            var pUp = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
+            pUp.callback.AddListener((_) =>
+            {
+                if (_interactInnerGlow != null) _interactInnerGlow.color = InnerGlowIdle;
+                if (interactButtonImage != null)
+                {
+                    for (int i = 0; i < interactButtonImage.transform.childCount; i++)
+                    {
+                        var ch = interactButtonImage.transform.GetChild(i);
+                        if (ch.name == "InnerGlow") continue;
+                        var img = ch.GetComponent<Image>();
+                        if (img != null) img.color = BtnDefault;
+                    }
+                }
+            });
+            trigger.triggers.Add(pUp);
         }
         if (interactButtonImage != null)
         {
             RemoveGlowEffects(interactButtonImage.gameObject);
+
+            // Separate the hand icon into a child Icon so that InnerGlow is rendered strictly BEHIND the hand (like the camera)
+            var ringSprite = GetOuterRingSprite();
+            var iconTr = interactButtonImage.transform.Find("Icon");
+            Image iconImg = null;
+            if (iconTr != null)
+            {
+                iconImg = iconTr.GetComponent<Image>();
+            }
+            else
+            {
+                Sprite handSprite = null;
+                if (interactButtonImage.sprite != null && interactButtonImage.sprite != ringSprite)
+                {
+                    handSprite = interactButtonImage.sprite;
+                }
+                if (handSprite == null)
+                {
+                    var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+                    foreach (var s in allSprites)
+                    {
+                        if (s.name == "buttons-prototype_8") { handSprite = s; break; }
+                    }
+                }
+
+                var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconGO.transform.SetParent(interactButtonImage.transform, false);
+
+                var rt = iconGO.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.sizeDelta = Vector2.zero;
+                rt.anchoredPosition = Vector2.zero;
+
+                iconImg = iconGO.GetComponent<Image>();
+                iconImg.raycastTarget = false;
+                iconImg.preserveAspect = true;
+                if (handSprite != null) iconImg.sprite = handSprite;
+            }
+
+            if (iconImg != null)
+            {
+                iconImg.color = BtnDefault;
+            }
+
+            // Set parent image to outer ring
+            if (ringSprite != null)
+            {
+                interactButtonImage.sprite = ringSprite;
+                interactButtonImage.type = Image.Type.Simple;
+                interactButtonImage.preserveAspect = true;
+            }
+            interactButtonImage.color = BtnDefault;
+
+            // Inner glow placed at index 0 (behind child Icon)
             _interactInnerGlow = EnsureInnerGlow(interactButtonImage.gameObject, 0.85f);
+            if (_interactInnerGlow != null)
+            {
+                _interactInnerGlow.transform.SetSiblingIndex(0);
+            }
+            if (iconImg != null)
+            {
+                iconImg.transform.SetAsLastSibling();
+            }
+
             for (int i = 0; i < interactButtonImage.transform.childCount; i++)
             {
                 var child = interactButtonImage.transform.GetChild(i);
@@ -662,8 +760,7 @@ public class UIManager : MonoBehaviour
         SetupNavButtonLikeOuterRing(pauseGO, OnPauseButtonPressed);
     }
 
-    private static Sprite _cachedInnerGlowSprite;
-    private static Sprite GetOrCreateInnerGlowSprite()
+    public static Sprite GetOrCreateInnerGlowSprite()
     {
         if (_cachedInnerGlowSprite != null) return _cachedInnerGlowSprite;
 
@@ -697,7 +794,7 @@ public class UIManager : MonoBehaviour
         return _cachedInnerGlowSprite;
     }
 
-    private Image EnsureInnerGlow(GameObject parentGO, float sizeRatio = 0.85f)
+    public static Image EnsureInnerGlow(GameObject parentGO, float sizeRatio = 0.85f, Color? glowColor = null)
     {
         if (parentGO == null) return null;
         var existingTr = parentGO.transform.Find("InnerGlow");
@@ -729,7 +826,7 @@ public class UIManager : MonoBehaviour
         if (glowImg != null)
         {
             glowImg.sprite = GetOrCreateInnerGlowSprite();
-            glowImg.color = InnerGlowIdle;
+            glowImg.color = glowColor ?? InnerGlowIdle;
         }
         return glowImg;
     }
@@ -755,21 +852,52 @@ public class UIManager : MonoBehaviour
     }
 
     private static Sprite _cachedOuterRingSprite;
-    private Sprite GetOuterRingSprite()
+    public static Sprite GetOuterRingSprite()
     {
-        if (_cachedOuterRingSprite != null) return _cachedOuterRingSprite;
+        if (_cachedOuterRingSprite != null && _cachedOuterRingSprite.name != "buttons-prototype_8") 
+            return _cachedOuterRingSprite;
 
-        if (interactButtonImage != null && interactButtonImage.sprite != null)
-            _cachedOuterRingSprite = interactButtonImage.sprite;
+        _cachedOuterRingSprite = null;
+
+        if (Instance != null && Instance.scanButtonImage != null && Instance.scanButtonImage.sprite != null && Instance.scanButtonImage.sprite.name != "buttons-prototype_8")
+        {
+            _cachedOuterRingSprite = Instance.scanButtonImage.sprite;
+        }
         else
+        {
+            var scanRing = GameObject.Find("ScanOuterRing");
+            if (scanRing != null)
+            {
+                var sImg = scanRing.GetComponent<Image>();
+                if (sImg != null && sImg.sprite != null && sImg.sprite.name != "buttons-prototype_8")
+                    _cachedOuterRingSprite = sImg.sprite;
+            }
+        }
+
+        if (_cachedOuterRingSprite == null)
         {
             var moveRing = GameObject.Find("MoveOuterRing");
             if (moveRing != null)
             {
                 var mImg = moveRing.GetComponent<Image>();
-                if (mImg != null) _cachedOuterRingSprite = mImg.sprite;
+                if (mImg != null && mImg.sprite != null && mImg.sprite.name != "buttons-prototype_8")
+                    _cachedOuterRingSprite = mImg.sprite;
             }
         }
+
+        if (_cachedOuterRingSprite == null)
+        {
+            var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+            foreach (var s in allSprites)
+            {
+                if (s.name == "buttons-prototype_2")
+                {
+                    _cachedOuterRingSprite = s;
+                    break;
+                }
+            }
+        }
+
         return _cachedOuterRingSprite;
     }
 
@@ -787,7 +915,7 @@ public class UIManager : MonoBehaviour
         }
 
         // 1. Resolve outer ring circular sprite
-        if (_cachedOuterRingSprite == null) _cachedOuterRingSprite = GetOuterRingSprite();
+        var ringSprite = GetOuterRingSprite();
 
         var baseImg = buttonGO.GetComponent<Image>();
 
@@ -801,7 +929,7 @@ public class UIManager : MonoBehaviour
         else
         {
             Sprite iconSprite = null;
-            if (baseImg != null && baseImg.sprite != _cachedOuterRingSprite)
+            if (baseImg != null && baseImg.sprite != ringSprite && (baseImg.sprite == null || baseImg.sprite.name != "buttons-prototype_8"))
             {
                 iconSprite = baseImg.sprite;
             }
@@ -824,6 +952,20 @@ public class UIManager : MonoBehaviour
             if (iconSprite != null) iconImg.sprite = iconSprite;
         }
 
+        // Safety: If iconImg was polluted with the hand or ring, recover proper icon
+        if (iconImg != null && (iconImg.sprite == null || iconImg.sprite.name == "buttons-prototype_8" || iconImg.sprite == ringSprite))
+        {
+            var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+            if (buttonGO.name.IndexOf("Bestiary", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                foreach (var s in allSprites) { if (s.name == "buttons-prototype_14") { iconImg.sprite = s; break; } }
+            }
+            else if (buttonGO.name.IndexOf("Shop", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                foreach (var s in allSprites) { if (s.name.IndexOf("arrow", StringComparison.OrdinalIgnoreCase) >= 0 || s.name == "buttons-prototype_12") { iconImg.sprite = s; break; } }
+            }
+        }
+
         if (iconImg != null)
         {
             iconImg.color = BtnDefault;
@@ -832,7 +974,7 @@ public class UIManager : MonoBehaviour
         // 3. Make base image the circular outer ring background
         if (baseImg != null)
         {
-            if (_cachedOuterRingSprite != null) baseImg.sprite = _cachedOuterRingSprite;
+            if (ringSprite != null) baseImg.sprite = ringSprite;
             baseImg.color = BtnDefault;
             baseImg.type = Image.Type.Simple;
             baseImg.preserveAspect = true;
