@@ -125,6 +125,10 @@ public class EnvPropScatterer : MonoBehaviour
         Random.state = savedState;
 
         Debug.Log($"[EnvPropScatterer] Placed {placedCount} natural props in {totalClusters} clusters across {width}x{length}m.");
+
+        // Register all props with distance culling for performance
+        if (DistanceCullingManager.Instance != null && _propParent != null)
+            DistanceCullingManager.Instance.RegisterParent(_propParent);
     }
 
     // -----------------------------------------------------------------------

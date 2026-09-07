@@ -115,6 +115,76 @@ public class ContextSteering : MonoBehaviour
                 _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime));
             }
         }
+
+        // Keep creature within zone depth boundaries (smooth correction to avoid jitter)
+        EnforceZoneDepthBounds();
+    }
+
+    // -----------------------------------------------------------------------
+    // Zone depth enforcement (prevents breaching boundary triggers)
+    // -----------------------------------------------------------------------
+
+    private float _zoneBottomY = -300f;
+    private float _zoneTopY = 0f;
+    private bool _zoneBoundsInitialized = false;
+
+    /// <summary>
+    /// Smoothly corrects creature position if it approaches zone boundaries.
+    /// Uses a soft margin for gradual pushback, and a hard clamp as safety net.
+    /// </summary>
+    private void EnforceZoneDepthBounds()
+    {
+        if (!_zoneBoundsInitialized)
+        {
+            var tracker = FindFirstObjectByType<DepthTracker>();
+            if (tracker != null)
+            {
+                _zoneBottomY = tracker.ZoneBottomY;
+                _zoneTopY = tracker.ZoneTopY;
+                _zoneBoundsInitialized = true;
+            }
+            else
+            {
+                return; // No tracker yet, skip
+            }
+        }
+
+        // Soft margin: creatures start getting gently pushed back within this range.
+        // Hard limit: absolute boundary they can never cross (safely above the boundary trigger zone).
+        const float softMargin = 20f;
+        const float hardMargin = 15f;
+
+        float safeBottom = _zoneBottomY + softMargin;
+        float safeTop    = _zoneTopY - 2.5f;
+        float hardBottom = _zoneBottomY + hardMargin;
+        float hardTop    = _zoneTopY - 1.0f;
+
+        Vector3 pos = _rb.position;
+        bool corrected = false;
+
+        if (pos.y < safeBottom)
+        {
+            // Smooth push upward — strength proportional to how far past soft margin
+            float overshoot = safeBottom - pos.y;
+            float correction = Mathf.Min(overshoot, overshoot * 3f * Time.fixedDeltaTime + 0.05f);
+            pos.y += correction;
+            corrected = true;
+        }
+        else if (pos.y > safeTop)
+        {
+            float overshoot = pos.y - safeTop;
+            float correction = Mathf.Min(overshoot, overshoot * 3f * Time.fixedDeltaTime + 0.05f);
+            pos.y -= correction;
+            corrected = true;
+        }
+
+        // Hard clamp as absolute safety net
+        pos.y = Mathf.Clamp(pos.y, hardBottom, hardTop);
+
+        if (corrected || pos.y != _rb.position.y)
+        {
+            _rb.MovePosition(pos);
+        }
     }
 
     // -----------------------------------------------------------------------

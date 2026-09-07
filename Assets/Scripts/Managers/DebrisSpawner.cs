@@ -74,6 +74,10 @@ public class DebrisSpawner : MonoBehaviour
         }
 
         Debug.Log($"[DebrisSpawner] Spawned {clusterCount} 3D marine debris clusters in Zone {zoneIndex}.");
+
+        // Register all debris with distance culling for performance
+        if (DistanceCullingManager.Instance != null && _debrisParent != null)
+            DistanceCullingManager.Instance.RegisterParent(_debrisParent);
     }
 
     private void SpawnSingleCluster(Vector3 position, int index)

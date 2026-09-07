@@ -33,6 +33,8 @@ public class SpeciesSpawner : MonoBehaviour
     [SerializeField] private LayerMask overlapMask;
     [Tooltip("All spawned creatures go here. Auto-created if null.")]
     [SerializeField] private Transform creatureParent;
+    [Tooltip("Maximum ground slope angle (degrees) for stationary benthic species. Prevents floating overhangs on steep slopes/cliffs.")]
+    [SerializeField] private float maxStationarySlope = 18f;
 
     // -----------------------------------------------------------------------
     // Runtime
@@ -95,6 +97,10 @@ public class SpeciesSpawner : MonoBehaviour
 
         Debug.Log($"[SpeciesSpawner] Zone {zoneIndex}: {totalSpawned} entities spawned " +
                   $"({allSpecies.Count} species defined).");
+
+        // Register all creatures with distance culling for performance
+        if (DistanceCullingManager.Instance != null && creatureParent != null)
+            DistanceCullingManager.Instance.RegisterParent(creatureParent);
     }
 
     // -----------------------------------------------------------------------
@@ -133,7 +139,9 @@ public class SpeciesSpawner : MonoBehaviour
         // Depth bounds in world Y coordinates:
         // minDepthFraction = 0 (surface Y=0m), maxDepthFraction = 1 (floor Y=-Dm)
         float upperDepthLimit = -Mathf.Min(data.minDepthFraction, data.maxDepthFraction) * D;
-        float lowerDepthLimit = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * D;
+        float rawLowerLimit   = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * D;
+        // Mobile swimming species must never spawn in the bottom boundary popup zone
+        float lowerDepthLimit = data.isStationary ? rawLowerLimit : Mathf.Max(rawLowerLimit, -D + 16f);
 
         float halfW = W * 0.44f;
         float halfL = L * 0.44f;
@@ -158,18 +166,32 @@ public class SpeciesSpawner : MonoBehaviour
             if (data.isStationary)
             {
                 // Benthic / stationary species MUST be planted on the ocean floor or reef structures.
+                Vector3 surfaceNormal = terrain != null ? terrain.SampleNormal(rx, rz) : Vector3.up;
+                float slopeAngle = Vector3.Angle(Vector3.up, surfaceNormal);
+
+                // Pillar 1: Filter out steep slopes based on species anatomy (gentle slope for wide branching corals)
+                float maxSlope = GetMaxSlopeForSpecies(data);
+                if (slopeAngle > maxSlope)
+                    continue;
+
+                // Footprint clearance check: prevents wide branches/bases from intersecting dunes or ridges
+                if (!CheckFootprintFlatness(rx, rz, data))
+                    continue;
+
                 Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
                     candidatePos = hit.point;
-                    Quaternion surfaceAlign = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                    candidateRot = surfaceAlign * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
+                        surfaceNormal = hit.normal;
                 }
                 else
                 {
                     candidatePos = new Vector3(rx, floorY, rz);
-                    candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                 }
+
+                // Pillar 2: Natural, biologically accurate rotation (upright for branching corals & sponges, aligned for crawlers)
+                candidateRot = GetStationaryRotation(data, surfaceNormal);
             }
             else
             {
@@ -235,18 +257,29 @@ public class SpeciesSpawner : MonoBehaviour
 
                 if (data.isStationary)
                 {
+                    Vector3 surfaceNormal = terrain != null ? terrain.SampleNormal(rx, rz) : Vector3.up;
+                    float slopeAngle = Vector3.Angle(Vector3.up, surfaceNormal);
+
+                    float maxSlope = GetMaxSlopeForSpecies(data);
+                    if (slopeAngle > maxSlope * 1.25f)
+                        continue;
+
+                    if (!CheckFootprintFlatness(rx, rz, data))
+                        continue;
+
                     Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                     {
                         candidatePos = hit.point;
-                        Quaternion surfaceAlign = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                        candidateRot = surfaceAlign * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                        if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
+                            surfaceNormal = hit.normal;
                     }
                     else
                     {
                         candidatePos = new Vector3(rx, floorY, rz);
-                        candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                     }
+
+                    candidateRot = GetStationaryRotation(data, surfaceNormal);
                 }
                 else
                 {
@@ -285,16 +318,18 @@ public class SpeciesSpawner : MonoBehaviour
             if (data.isStationary)
             {
                 float floorY = terrain != null ? terrain.SampleHeight(bestCandidatePos.x, bestCandidatePos.z) : bestCandidatePos.y;
+                Vector3 normal = terrain != null ? terrain.SampleNormal(bestCandidatePos.x, bestCandidatePos.z) : Vector3.up;
                 Vector3 rayOrigin = new Vector3(bestCandidatePos.x, floorY + 30f, bestCandidatePos.z);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
                     bestCandidatePos = hit.point;
-                    bestCandidateRot = Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
                 }
                 else
                 {
                     bestCandidatePos.y = floorY;
                 }
+                bestCandidateRot = GetStationaryRotation(data, normal);
             }
             resultPos = bestCandidatePos;
             resultRot = bestCandidateRot;
@@ -307,17 +342,18 @@ public class SpeciesSpawner : MonoBehaviour
         if (data.isStationary)
         {
             float floorY = terrain != null ? terrain.SampleHeight(fallbackX, fallbackZ) : -D;
+            Vector3 normal = terrain != null ? terrain.SampleNormal(fallbackX, fallbackZ) : Vector3.up;
             Vector3 rayOrigin = new Vector3(fallbackX, floorY + 30f, fallbackZ);
             if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
             {
                 resultPos = hit.point;
-                resultRot = Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
             }
             else
             {
                 resultPos = new Vector3(fallbackX, floorY, fallbackZ);
-                resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
+            resultRot = GetStationaryRotation(data, normal);
         }
         else
         {
@@ -371,7 +407,100 @@ public class SpeciesSpawner : MonoBehaviour
         if (nearest < minSeparation) score -= (minSeparation - nearest) * 20f;
         else score += 100f;
 
+        // 4. Slope flatness score for stationary species (favors flat plateaus & basins)
+        if (data.isStationary && terrain != null)
+        {
+            Vector3 normal = terrain.SampleNormal(pos.x, pos.z);
+            float slope = Vector3.Angle(Vector3.up, normal);
+            float maxSlope = GetMaxSlopeForSpecies(data);
+            if (slope <= maxSlope)
+                score += (maxSlope - slope) * 25f;
+            else
+                score -= (slope - maxSlope) * 50f;
+        }
+
         return score;
+    }
+
+    private float GetMaxSlopeForSpecies(SpeciesData data)
+    {
+        if (data == null || !data.isStationary) return 90f;
+        // Wide branching corals need flat ground to prevent branches hitting or getting buried in slopes
+        if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0) return 8f;
+        if (data.taxonomicClass == TaxonomicClass.Anthozoa) return 12f;
+        if (data.taxonomicClass == TaxonomicClass.Demospongiae) return 12f;
+        if (data.taxonomicClass == TaxonomicClass.Bivalvia) return 14f;
+        return maxStationarySlope;
+    }
+
+    private bool CheckFootprintFlatness(float cx, float cz, SpeciesData data)
+    {
+        if (data == null || !data.isStationary || terrain == null) return true;
+
+        float checkRadius = 0f;
+        float maxAllowedVariance = 0f;
+
+        if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            // Fan Coral is ~7.6m wide! Check 2.8m radius to ensure branches stay in clear water
+            checkRadius = 2.8f;
+            maxAllowedVariance = 0.35f;
+        }
+        else if (data.taxonomicClass == TaxonomicClass.Anthozoa ||
+                 data.taxonomicClass == TaxonomicClass.Demospongiae ||
+                 data.taxonomicClass == TaxonomicClass.Bivalvia)
+        {
+            checkRadius = 1.2f;
+            maxAllowedVariance = 0.25f;
+        }
+        else
+        {
+            // Small creeping species (Starfish, Snail, Lobster) do not require broad clearance checks
+            return true;
+        }
+
+        float centerH = terrain.SampleHeight(cx, cz);
+        float h0 = terrain.SampleHeight(cx + checkRadius, cz);
+        float h1 = terrain.SampleHeight(cx - checkRadius, cz);
+        float h2 = terrain.SampleHeight(cx, cz + checkRadius);
+        float h3 = terrain.SampleHeight(cx, cz - checkRadius);
+
+        if (Mathf.Abs(h0 - centerH) > maxAllowedVariance ||
+            Mathf.Abs(h1 - centerH) > maxAllowedVariance ||
+            Mathf.Abs(h2 - centerH) > maxAllowedVariance ||
+            Mathf.Abs(h3 - centerH) > maxAllowedVariance)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private Quaternion GetStationaryRotation(SpeciesData data, Vector3 surfaceNormal)
+    {
+        Quaternion randomYaw = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+        // 1. Upright branching colonies & tall sponges grow straight up against gravity
+        if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            data.taxonomicClass == TaxonomicClass.Demospongiae)
+        {
+            return randomYaw;
+        }
+
+        // 2. Anemones and Giant Clams: mostly upright, subtle slope adaptation (max 8 degrees)
+        if (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia)
+        {
+            Vector3 blendedNormal = Vector3.Slerp(Vector3.up, surfaceNormal, 0.35f);
+            return Quaternion.FromToRotation(Vector3.up, blendedNormal) * randomYaw;
+        }
+
+        // 3. Flat crawling species (Starfish, Snail, Lobster): cling to surface normal (clamped to 22 deg)
+        Vector3 clampedNormal = surfaceNormal;
+        if (Vector3.Angle(Vector3.up, surfaceNormal) > 22f)
+        {
+            clampedNormal = Vector3.RotateTowards(Vector3.up, surfaceNormal, 22f * Mathf.Deg2Rad, 0f);
+        }
+        return Quaternion.FromToRotation(Vector3.up, clampedNormal) * randomYaw;
     }
 
     private static bool IsCompatibleBiome(BiomeBand a, BiomeBand b)
@@ -438,17 +567,34 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SetupStationary(GameObject go, SpeciesData data)
     {
-        // Align bottom of object to surface so it doesn't sink into the seabed/rocks
-        AdjustContactHeight(go);
+        // 1. Remove any Rigidbodies on stationary species so physics NEVER simulates or moves them
+        var rbs = go.GetComponentsInChildren<Rigidbody>();
+        for (int i = 0; i < rbs.Length; i++)
+        {
+            if (rbs[i] != null)
+            {
+                rbs[i].isKinematic = true;
+                Destroy(rbs[i]);
+            }
+        }
 
-        var col = go.GetComponent<Collider>();
-        if (col == null)
+        // 2. Set all colliders on stationary species to triggers (for scanning / interaction, no physics push)
+        var allCols = go.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < allCols.Length; i++)
+        {
+            if (allCols[i] != null)
+                allCols[i].isTrigger = true;
+        }
+
+        if (allCols.Length == 0)
         {
             var box = go.AddComponent<BoxCollider>();
             box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.5f : Vector3.one * 2f;
-            col = box;
+            box.isTrigger = true;
         }
-        col.isTrigger = true;
+
+        // 3. Align bottom of object to surface so it sits firmly on the seabed/rocks
+        AdjustContactHeight(go, data);
 
         try { go.tag = "Species"; } catch { }
 
@@ -498,25 +644,106 @@ public class SpeciesSpawner : MonoBehaviour
         trackable.Initialize(SonarTrackable.SonarTargetType.Species, data.commonName, discovered);
     }
 
-    private void AdjustContactHeight(GameObject go)
+    private void AdjustContactHeight(GameObject go, SpeciesData data)
     {
-        var renderers = go.GetComponentsInChildren<Renderer>();
-        if (renderers != null && renderers.Length > 0)
+        // Temporarily disable the creature's own colliders so our ground-finding
+        // raycast passes through to the actual terrain surface beneath.
+        var ownColliders = go.GetComponentsInChildren<Collider>();
+        bool[] wasEnabled = new bool[ownColliders.Length];
+        for (int i = 0; i < ownColliders.Length; i++)
         {
-            Bounds combinedBounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-                combinedBounds.Encapsulate(renderers[i].bounds);
+            wasEnabled[i] = ownColliders[i].enabled;
+            ownColliders[i].enabled = false;
+        }
 
-            float bottomY = combinedBounds.min.y;
-            float pivotY  = go.transform.position.y;
-            float bottomOffset = pivotY - bottomY;
+        try
+        {
+            int terrainMask = LayerMask.GetMask("Terrain", "Default");
+            if (terrainMask == 0) terrainMask = ~0;
 
-            // Lift so the bottom sits flush on the surface with tiny natural embedding (5%)
-            float height = combinedBounds.size.y;
-            float sink = height * 0.05f;
-            Vector3 pos = go.transform.position;
-            pos.y = pos.y + bottomOffset - sink;
-            go.transform.position = pos;
+            float SampleGroundAt(float wx, float wz)
+            {
+                Vector3 ray = new Vector3(wx, go.transform.position.y + 25f, wz);
+                if (Physics.Raycast(ray, Vector3.down, out RaycastHit h, 60f, terrainMask, QueryTriggerInteraction.Ignore))
+                    return h.point.y;
+                if (terrain != null)
+                    return terrain.SampleHeight(wx, wz);
+                return go.transform.position.y;
+            }
+
+            var renderers = go.GetComponentsInChildren<Renderer>();
+            if (renderers != null && renderers.Length > 0)
+            {
+                Bounds combinedBounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                    combinedBounds.Encapsulate(renderers[i].bounds);
+
+                float pivotX = go.transform.position.x;
+                float pivotZ = go.transform.position.z;
+                float gPivot = SampleGroundAt(pivotX, pivotZ);
+
+                // Distance from object transform to the lowest visual vertex in world space
+                float bottomOffset = combinedBounds.min.y - go.transform.position.y;
+
+                // Subtle natural embed depth into the seabed sand:
+                // - Starfish: 1.5 cm (so it lies flat on the seabed without getting submerged)
+                // - Snails & Lobsters: 2 cm
+                // - Fan Coral: 3 cm (anchors the central trunk in sand without burying branches)
+                // - Sponges: 3 cm
+                // - Anemone & Giant Clam: 4 cm (fleshy base / shell rests in sediment)
+                float sink = 0.03f;
+                bool isCoral = data != null && data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (data != null)
+                {
+                    if (data.taxonomicClass == TaxonomicClass.Asteroidea)
+                        sink = 0.015f;
+                    else if (data.taxonomicClass == TaxonomicClass.Gastropoda || data.taxonomicClass == TaxonomicClass.Malacostraca)
+                        sink = 0.02f;
+                    else if (isCoral)
+                        sink = 0.03f;
+                    else if (data.taxonomicClass == TaxonomicClass.Demospongiae)
+                        sink = 0.03f;
+                    else if (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia)
+                        sink = 0.04f;
+                }
+
+                // For species with wide fleshy/flat base pads (like Sea Anemones), check nearby ground
+                // to avoid downhill floating, but clamp strictly to prevent pulling uphill/center down.
+                float groundTargetY = gPivot;
+                if (!isCoral && data != null && (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia))
+                {
+                    float baseR = Mathf.Clamp(combinedBounds.extents.x * 0.25f, 0.2f, 0.5f);
+                    float g0 = SampleGroundAt(pivotX - baseR, pivotZ);
+                    float g1 = SampleGroundAt(pivotX + baseR, pivotZ);
+                    float g2 = SampleGroundAt(pivotX, pivotZ - baseR);
+                    float g3 = SampleGroundAt(pivotX, pivotZ + baseR);
+                    float minEdge = Mathf.Min(g0, Mathf.Min(g1, Mathf.Min(g2, g3)));
+
+                    // Never pull the base more than 4cm below center ground
+                    groundTargetY = Mathf.Max(gPivot - 0.04f, Mathf.Lerp(gPivot, minEdge, 0.4f));
+                }
+
+                Vector3 pos = go.transform.position;
+                pos.y = groundTargetY - bottomOffset - sink;
+                go.transform.position = pos;
+            }
+            else
+            {
+                float groundY = SampleGroundAt(go.transform.position.x, go.transform.position.z);
+                Vector3 pos = go.transform.position;
+                pos.y = groundY;
+                go.transform.position = pos;
+            }
+        }
+        finally
+        {
+            // Always re-enable colliders
+            for (int i = 0; i < ownColliders.Length; i++)
+            {
+                if (ownColliders[i] != null)
+                    ownColliders[i].enabled = wasEnabled[i];
+            }
         }
     }
 

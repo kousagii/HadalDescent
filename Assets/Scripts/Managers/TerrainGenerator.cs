@@ -62,6 +62,17 @@ public class TerrainGenerator : MonoBehaviour
         return _seabedY;
     }
 
+    /// <summary>
+    /// Query the surface normal at a world (x, z) position.
+    /// Returns Vector3.up if mesh hasn't been generated yet.
+    /// </summary>
+    public Vector3 SampleNormal(float worldX, float worldZ)
+    {
+        if (_meshGen != null)
+            return _meshGen.SampleNormal(worldX, worldZ);
+        return Vector3.up;
+    }
+
     /// <summary>Y coordinate of the zone seabed baseline (world space). Used as fallback.</summary>
     public float SeabedY => _seabedY;
 
@@ -129,6 +140,11 @@ public class TerrainGenerator : MonoBehaviour
             seabedMat
         );
 
+        // --- Prepare distance culling (must exist before spawners register objects) ---
+        var culler = GetComponent<DistanceCullingManager>()
+                     ?? gameObject.AddComponent<DistanceCullingManager>();
+        culler.ClearAll();
+
         // --- Phase 2: Scatter environment props on the mesh ---
         _propScatterer.Scatter(_meshGen, envPropSet, _zoneW, _zoneL, _pcgSeed);
 
@@ -149,6 +165,9 @@ public class TerrainGenerator : MonoBehaviour
 
         Debug.Log($"[TerrainGenerator] Zone {zoneIndex} fully generated " +
                   $"(mesh + props + species + debris, seed={_pcgSeed:0}).");
+
+        // --- Phase 5: Finalize distance culling thresholds ---
+        culler.RefreshThresholds();
     }
 
     // -----------------------------------------------------------------------

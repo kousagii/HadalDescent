@@ -171,6 +171,8 @@ public class SpeciesAI : MonoBehaviour
         _wanderArrivalThreshold = Mathf.Max(2.5f, scaleMag * 0.8f);
     }
 
+    private DepthTracker _cachedDepthTracker;
+
     private void PickNewWanderTarget()
     {
         float radius = Data != null ? Data.wanderRadius : 15f;
@@ -203,6 +205,18 @@ public class SpeciesAI : MonoBehaviour
         candidate.y = Mathf.Max(candidate.y, minSafeY);
         candidate.y = Mathf.Min(candidate.y, -1.5f); // Stay below water surface
 
+        // Clamp to zone depth boundaries with safe margin so creatures never
+        // wander or flee into the boundary trigger volume
+        if (_cachedDepthTracker == null)
+            _cachedDepthTracker = FindFirstObjectByType<DepthTracker>();
+
+        if (_cachedDepthTracker != null)
+        {
+            float safeBottom = _cachedDepthTracker.ZoneBottomY + 16f;
+            float safeTop    = _cachedDepthTracker.ZoneTopY - 2.5f;
+            candidate.y = Mathf.Clamp(candidate.y, safeBottom, safeTop);
+        }
+
         _wanderTarget = candidate;
     }
 
@@ -210,7 +224,21 @@ public class SpeciesAI : MonoBehaviour
     {
         Vector3 fleeDir = (transform.position - threat).normalized;
         if (fleeDir == Vector3.zero) fleeDir = Vector3.forward;
-        if (_steering != null) _steering.SetGoal(transform.position + fleeDir * 25f);
+
+        Vector3 fleeGoal = transform.position + fleeDir * 25f;
+
+        // Ensure flee goal also respects zone boundaries so creatures don't flee past boundaries
+        if (_cachedDepthTracker == null)
+            _cachedDepthTracker = FindFirstObjectByType<DepthTracker>();
+
+        if (_cachedDepthTracker != null)
+        {
+            float safeBottom = _cachedDepthTracker.ZoneBottomY + 16f;
+            float safeTop    = _cachedDepthTracker.ZoneTopY - 2.5f;
+            fleeGoal.y = Mathf.Clamp(fleeGoal.y, safeBottom, safeTop);
+        }
+
+        if (_steering != null) _steering.SetGoal(fleeGoal);
     }
 
     private void EnterReturning()
