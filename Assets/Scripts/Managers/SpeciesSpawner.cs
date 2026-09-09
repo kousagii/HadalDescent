@@ -181,9 +181,17 @@ public class SpeciesSpawner : MonoBehaviour
                 Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
-                    candidatePos = hit.point;
-                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
-                        surfaceNormal = hit.normal;
+                    // Strict benthic check: must sit on seabed or grounded rock, never in mid-water
+                    if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                    {
+                        candidatePos = hit.point;
+                        if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
+                            surfaceNormal = hit.normal;
+                    }
+                    else
+                    {
+                        candidatePos = new Vector3(rx, floorY, rz);
+                    }
                 }
                 else
                 {
@@ -270,9 +278,16 @@ public class SpeciesSpawner : MonoBehaviour
                     Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                     {
-                        candidatePos = hit.point;
-                        if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
-                            surfaceNormal = hit.normal;
+                        if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                        {
+                            candidatePos = hit.point;
+                            if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
+                                surfaceNormal = hit.normal;
+                        }
+                        else
+                        {
+                            candidatePos = new Vector3(rx, floorY, rz);
+                        }
                     }
                     else
                     {
@@ -322,8 +337,15 @@ public class SpeciesSpawner : MonoBehaviour
                 Vector3 rayOrigin = new Vector3(bestCandidatePos.x, floorY + 30f, bestCandidatePos.z);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
-                    bestCandidatePos = hit.point;
-                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
+                    if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                    {
+                        bestCandidatePos = hit.point;
+                        if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
+                    }
+                    else
+                    {
+                        bestCandidatePos.y = floorY;
+                    }
                 }
                 else
                 {
@@ -346,8 +368,15 @@ public class SpeciesSpawner : MonoBehaviour
             Vector3 rayOrigin = new Vector3(fallbackX, floorY + 30f, fallbackZ);
             if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
             {
-                resultPos = hit.point;
-                if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
+                if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                {
+                    resultPos = hit.point;
+                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
+                }
+                else
+                {
+                    resultPos = new Vector3(fallbackX, floorY, fallbackZ);
+                }
             }
             else
             {
@@ -426,10 +455,10 @@ public class SpeciesSpawner : MonoBehaviour
     {
         if (data == null || !data.isStationary) return 90f;
         // Wide branching corals need flat ground to prevent branches hitting or getting buried in slopes
-        if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0) return 8f;
+        if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0) return 6f;
         if (data.taxonomicClass == TaxonomicClass.Anthozoa) return 12f;
         if (data.taxonomicClass == TaxonomicClass.Demospongiae) return 12f;
-        if (data.taxonomicClass == TaxonomicClass.Bivalvia) return 14f;
+        if (data.taxonomicClass == TaxonomicClass.Bivalvia) return 12f;
         return maxStationarySlope;
     }
 
@@ -442,21 +471,22 @@ public class SpeciesSpawner : MonoBehaviour
 
         if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
-            // Fan Coral is ~7.6m wide! Check 2.8m radius to ensure branches stay in clear water
-            checkRadius = 2.8f;
-            maxAllowedVariance = 0.35f;
+            // Fan Coral is ~7.6m wide! Check 2.5m radius to ensure branches stay in clear water
+            checkRadius = 2.5f;
+            maxAllowedVariance = 0.20f;
         }
         else if (data.taxonomicClass == TaxonomicClass.Anthozoa ||
                  data.taxonomicClass == TaxonomicClass.Demospongiae ||
                  data.taxonomicClass == TaxonomicClass.Bivalvia)
         {
             checkRadius = 1.2f;
-            maxAllowedVariance = 0.25f;
+            maxAllowedVariance = 0.20f;
         }
         else
         {
-            // Small creeping species (Starfish, Snail, Lobster) do not require broad clearance checks
-            return true;
+            // Small creeping species (Starfish, Snail, Lobster): check 0.6m radius
+            checkRadius = 0.6f;
+            maxAllowedVariance = 0.15f;
         }
 
         float centerH = terrain.SampleHeight(cx, cz);
@@ -487,10 +517,10 @@ public class SpeciesSpawner : MonoBehaviour
             return randomYaw;
         }
 
-        // 2. Anemones and Giant Clams: mostly upright, subtle slope adaptation (max 8 degrees)
+        // 2. Anemones and Giant Clams: mostly upright, natural slope adaptation (70% blend)
         if (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia)
         {
-            Vector3 blendedNormal = Vector3.Slerp(Vector3.up, surfaceNormal, 0.35f);
+            Vector3 blendedNormal = Vector3.Slerp(Vector3.up, surfaceNormal, 0.70f);
             return Quaternion.FromToRotation(Vector3.up, blendedNormal) * randomYaw;
         }
 
@@ -546,20 +576,7 @@ public class SpeciesSpawner : MonoBehaviour
         var rend = go.GetComponent<Renderer>();
         if (rend != null)
         {
-            // Use URP Lit shader to avoid pink / violet rendering
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                         ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                         ?? Shader.Find("Standard")
-                         ?? Shader.Find("Diffuse");
-
-            if (shader != null)
-            {
-                var mat = new Material(shader)
-                {
-                    color = data.placeholderColor
-                };
-                rend.material = mat;
-            }
+            rend.material = MaterialUtils.CreateColoredMaterial(data.placeholderColor);
         }
 
         return go;
@@ -598,6 +615,11 @@ public class SpeciesSpawner : MonoBehaviour
 
         try { go.tag = "Species"; } catch { }
 
+        // Assign to Creatures layer for collision matrix filtering
+        int creaturesLayer = LayerMask.NameToLayer("Creatures");
+        if (creaturesLayer < 0) creaturesLayer = LayerMask.NameToLayer("Default");
+        SetLayerRecursive(go, creaturesLayer);
+
         var target = go.GetComponent<ScanTarget>();
         if (target == null) target = go.AddComponent<ScanTarget>();
         target.Initialize(data);
@@ -626,10 +648,17 @@ public class SpeciesSpawner : MonoBehaviour
             box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.1f : Vector3.one * 1.2f;
             col = box;
         }
-        // Solid collider so physics stops creature from passing through seabed and rocks
-        col.isTrigger = false;
+        // Trigger collider — creatures should be scannable/interactive but NOT
+        // physically block the player submarine (their BoxColliders can be 20m+).
+        // ContextSteering still uses raycasts against Terrain layer for AI avoidance.
+        col.isTrigger = true;
 
         try { go.tag = "Species"; } catch { }
+
+        // Assign to Creatures layer for collision matrix filtering
+        int creaturesLayer = LayerMask.NameToLayer("Creatures");
+        if (creaturesLayer < 0) creaturesLayer = LayerMask.NameToLayer("Default");
+        SetLayerRecursive(go, creaturesLayer);
 
         var cs = go.GetComponent<ContextSteering>();
         if (cs == null) cs = go.AddComponent<ContextSteering>();
@@ -658,75 +687,142 @@ public class SpeciesSpawner : MonoBehaviour
 
         try
         {
+            float D = _zoneDef != null ? _zoneDef.playableDepth : 200f;
             int terrainMask = LayerMask.GetMask("Terrain", "Default");
             if (terrainMask == 0) terrainMask = ~0;
 
             float SampleGroundAt(float wx, float wz)
             {
-                Vector3 ray = new Vector3(wx, go.transform.position.y + 25f, wz);
-                if (Physics.Raycast(ray, Vector3.down, out RaycastHit h, 60f, terrainMask, QueryTriggerInteraction.Ignore))
-                    return h.point.y;
-                if (terrain != null)
-                    return terrain.SampleHeight(wx, wz);
-                return go.transform.position.y;
+                float trueFloorY = terrain != null ? terrain.SampleHeight(wx, wz) : -D;
+                Vector3 ray = new Vector3(wx, trueFloorY + 25f, wz);
+                if (Physics.Raycast(ray, Vector3.down, out RaycastHit h, 35f, terrainMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (h.point.y <= trueFloorY + 3.5f && h.point.y >= trueFloorY - 2.0f)
+                        return h.point.y;
+                }
+                return trueFloorY;
             }
 
             var renderers = go.GetComponentsInChildren<Renderer>();
             if (renderers != null && renderers.Length > 0)
             {
-                Bounds combinedBounds = renderers[0].bounds;
+                // Measure unrotated, object-space local bounds of the visual mesh
+                Quaternion originalRot = go.transform.rotation;
+                Vector3 originalPos = go.transform.position;
+
+                go.transform.rotation = Quaternion.identity;
+                go.transform.position = Vector3.zero;
+
+                Bounds localBounds = renderers[0].bounds;
                 for (int i = 1; i < renderers.Length; i++)
-                    combinedBounds.Encapsulate(renderers[i].bounds);
+                    localBounds.Encapsulate(renderers[i].bounds);
 
-                float pivotX = go.transform.position.x;
-                float pivotZ = go.transform.position.z;
-                float gPivot = SampleGroundAt(pivotX, pivotZ);
+                go.transform.rotation = originalRot;
+                go.transform.position = originalPos;
 
-                // Distance from object transform to the lowest visual vertex in world space
-                float bottomOffset = combinedBounds.min.y - go.transform.position.y;
-
-                // Subtle natural embed depth into the seabed sand:
-                // - Starfish: 1.5 cm (so it lies flat on the seabed without getting submerged)
-                // - Snails & Lobsters: 2 cm
-                // - Fan Coral: 3 cm (anchors the central trunk in sand without burying branches)
-                // - Sponges: 3 cm
-                // - Anemone & Giant Clam: 4 cm (fleshy base / shell rests in sediment)
-                float sink = 0.03f;
                 bool isCoral = data != null && data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isSponge = data != null && data.taxonomicClass == TaxonomicClass.Demospongiae;
+                bool isMoundOrClam = data != null && (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia);
 
-                if (data != null)
+                float cx = localBounds.center.x;
+                float cz = localBounds.center.z;
+                float yMin = localBounds.min.y;
+
+                if (isCoral || isSponge)
                 {
-                    if (data.taxonomicClass == TaxonomicClass.Asteroidea)
-                        sink = 0.015f;
-                    else if (data.taxonomicClass == TaxonomicClass.Gastropoda || data.taxonomicClass == TaxonomicClass.Malacostraca)
-                        sink = 0.02f;
-                    else if (isCoral)
-                        sink = 0.03f;
-                    else if (data.taxonomicClass == TaxonomicClass.Demospongiae)
-                        sink = 0.03f;
-                    else if (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia)
-                        sink = 0.04f;
-                }
+                    // Branching corals & upright sponges: anchor the central trunk base firmly into the seabed.
+                    // The trunk base is at local (cx * 0.2f, yMin, cz * 0.2f)
+                    Vector3 trunkLocal = new Vector3(cx * 0.2f, yMin, cz * 0.2f);
+                    Vector3 trunkWorld = originalPos + originalRot * trunkLocal;
+                    float gTrunk = SampleGroundAt(trunkWorld.x, trunkWorld.z);
 
-                // For species with wide fleshy/flat base pads (like Sea Anemones), check nearby ground
-                // to avoid downhill floating, but clamp strictly to prevent pulling uphill/center down.
-                float groundTargetY = gPivot;
-                if (!isCoral && data != null && (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia))
+                    float sink = isCoral ? 0.08f : 0.06f;
+                    Vector3 pos = originalPos;
+                    pos.y = gTrunk - (originalRot * trunkLocal).y - sink;
+                    go.transform.position = pos;
+                }
+                else if (isMoundOrClam)
                 {
-                    float baseR = Mathf.Clamp(combinedBounds.extents.x * 0.25f, 0.2f, 0.5f);
-                    float g0 = SampleGroundAt(pivotX - baseR, pivotZ);
-                    float g1 = SampleGroundAt(pivotX + baseR, pivotZ);
-                    float g2 = SampleGroundAt(pivotX, pivotZ - baseR);
-                    float g3 = SampleGroundAt(pivotX, pivotZ + baseR);
-                    float minEdge = Mathf.Min(g0, Mathf.Min(g1, Mathf.Min(g2, g3)));
+                    // Sea Anemones & Giant Clams: sample 5 points across the base pad/hinge
+                    float baseR = Mathf.Clamp(localBounds.extents.x * 0.35f, 0.3f, 0.6f);
+                    Vector3[] localPts = new Vector3[]
+                    {
+                        new Vector3(cx, yMin, cz),
+                        new Vector3(cx + baseR, yMin, cz),
+                        new Vector3(cx - baseR, yMin, cz),
+                        new Vector3(cx, yMin, cz + baseR),
+                        new Vector3(cx, yMin, cz - baseR)
+                    };
 
-                    // Never pull the base more than 4cm below center ground
-                    groundTargetY = Mathf.Max(gPivot - 0.04f, Mathf.Lerp(gPivot, minEdge, 0.4f));
+                    float sink = (data != null && data.taxonomicClass == TaxonomicClass.Bivalvia) ? 0.08f : 0.06f;
+                    float minRequiredY = float.MaxValue;
+                    float centerTargetY = 0f;
+
+                    for (int i = 0; i < localPts.Length; i++)
+                    {
+                        Vector3 ptWorld = originalPos + originalRot * localPts[i];
+                        float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
+                        float targetY = gy - (originalRot * localPts[i]).y - sink;
+                        if (i == 0) centerTargetY = targetY;
+                        if (targetY < minRequiredY) minRequiredY = targetY;
+                    }
+
+                    // Sink so lowest edge touches ground; cap at max 12cm below center to keep upper body visible
+                    Vector3 pos = originalPos;
+                    pos.y = Mathf.Max(minRequiredY, centerTargetY - 0.12f);
+                    go.transform.position = pos;
                 }
+                else
+                {
+                    // Flat / creeping species (Starfish, Snail, Lobster): underside conforms to terrain slope
+                    float rx = localBounds.extents.x * 0.65f;
+                    float rz = localBounds.extents.z * 0.65f;
+                    Vector3[] localPts = new Vector3[]
+                    {
+                        new Vector3(cx, yMin, cz),
+                        new Vector3(cx + rx, yMin, cz),
+                        new Vector3(cx - rx, yMin, cz),
+                        new Vector3(cx, yMin, cz + rz),
+                        new Vector3(cx, yMin, cz - rz)
+                    };
 
-                Vector3 pos = go.transform.position;
-                pos.y = groundTargetY - bottomOffset - sink;
-                go.transform.position = pos;
+                    float sink = 0.035f;
+                    float maxPen = 0.06f;
+                    if (data != null)
+                    {
+                        if (data.taxonomicClass == TaxonomicClass.Asteroidea)
+                        {
+                            sink = 0.025f; // Starfish: 2.5cm embed ensures all 5 arms touch sand without burial
+                            maxPen = 0.04f;
+                        }
+                        else if (data.taxonomicClass == TaxonomicClass.Malacostraca)
+                        {
+                            sink = 0.045f; // Lobster: 4.5cm embed ensures legs touch seabed firmly
+                            maxPen = 0.08f;
+                        }
+                        else if (data.taxonomicClass == TaxonomicClass.Gastropoda)
+                        {
+                            sink = 0.035f; // Cone Snail: 3.5cm embed
+                            maxPen = 0.06f;
+                        }
+                    }
+
+                    float minRequiredY = float.MaxValue;
+                    float centerTargetY = 0f;
+
+                    for (int i = 0; i < localPts.Length; i++)
+                    {
+                        Vector3 ptWorld = originalPos + originalRot * localPts[i];
+                        float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
+                        float targetY = gy - (originalRot * localPts[i]).y - sink;
+                        if (i == 0) centerTargetY = targetY;
+                        if (targetY < minRequiredY) minRequiredY = targetY;
+                    }
+
+                    Vector3 pos = originalPos;
+                    pos.y = Mathf.Max(minRequiredY, centerTargetY - maxPen);
+                    go.transform.position = pos;
+                }
             }
             else
             {
@@ -734,6 +830,15 @@ public class SpeciesSpawner : MonoBehaviour
                 Vector3 pos = go.transform.position;
                 pos.y = groundY;
                 go.transform.position = pos;
+            }
+
+            // Absolute safeguard: stationary benthic organisms must never float above the true seabed
+            float groundTruthY = terrain != null ? terrain.SampleHeight(go.transform.position.x, go.transform.position.z) : -D;
+            if (go.transform.position.y > groundTruthY + 3.5f)
+            {
+                Vector3 clampedPos = go.transform.position;
+                clampedPos.y = groundTruthY;
+                go.transform.position = clampedPos;
             }
         }
         finally
@@ -770,5 +875,12 @@ public class SpeciesSpawner : MonoBehaviour
         {
             Destroy(creatureParent.GetChild(i).gameObject);
         }
+    }
+
+    private static void SetLayerRecursive(GameObject go, int layer)
+    {
+        go.layer = layer;
+        foreach (Transform child in go.transform)
+            SetLayerRecursive(child.gameObject, layer);
     }
 }

@@ -79,7 +79,7 @@ public static class ZoneConfig
             fogStartDistance = 25f,
             fogEndDistance   = 140f,
             fogDensity       = 0.008f,
-            ambientLight     = new Color(0.85f, 0.92f, 1.00f, 1f),
+            ambientLight     = new Color(0.25f, 0.40f, 0.52f, 1f),
 
             requiredHullTier = 1,
             totalSpeciesCount = 15,

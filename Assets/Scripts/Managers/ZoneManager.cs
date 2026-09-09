@@ -294,12 +294,33 @@ public class ZoneManager : MonoBehaviour
         RenderSettings.ambientLight     = zone.ambientLight;
         RenderSettings.ambientMode      = UnityEngine.Rendering.AmbientMode.Flat;
 
-        var mainCam = Camera.main;
-        if (mainCam != null)
+        // Apply only to main scene cameras, never offscreen, UI, or preview cameras
+        var mainCam = Camera.main ?? FindFirstObjectByType<Camera>();
+        if (mainCam != null && mainCam.targetTexture == null)
         {
             mainCam.clearFlags      = CameraClearFlags.SolidColor;
             mainCam.backgroundColor = zone.fogColor;
-            mainCam.farClipPlane    = Mathf.Max(zone.fogEndDistance + 20f, 120f);
+            mainCam.farClipPlane    = Mathf.Max(zone.fogEndDistance + 25f, 120f);
+        }
+
+        var cams = Camera.allCameras;
+        if (cams != null)
+        {
+            foreach (var cam in cams)
+            {
+                if (cam == null || cam == mainCam) continue;
+                // Exclude any camera rendering to a RenderTexture or specialized preview/stage cameras
+                if (cam.targetTexture != null) continue;
+                string camName = cam.gameObject.name;
+                if (camName.Contains("Preview") || camName.Contains("Stage") || camName.Contains("Minigame")) continue;
+
+                if (cam.cameraType == CameraType.Game && !cam.orthographic && cam.CompareTag("MainCamera"))
+                {
+                    cam.clearFlags      = CameraClearFlags.SolidColor;
+                    cam.backgroundColor = zone.fogColor;
+                    cam.farClipPlane    = Mathf.Max(zone.fogEndDistance + 25f, 120f);
+                }
+            }
         }
     }
 

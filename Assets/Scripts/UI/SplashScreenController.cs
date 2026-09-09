@@ -11,6 +11,8 @@ public class SplashScreenController : MonoBehaviour
 
     private void Start()
     {
+        UIManager.Instance?.SetExplorationHUDVisible(false);
+
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayMainMenuBGM();

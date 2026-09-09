@@ -75,7 +75,7 @@ public class TutorialManager : MonoBehaviour
         new TutorialStep
         {
             stepTitle = "EXPEDITION MISSION OVERVIEW",
-            stepDescription = "Welcome, Marine Researcher!\n\nYou have been deployed to the Philippine Sea aboard a state-of-the-art exploration submersible.\n\nYour mission is to explore all 5 ocean depth zones, research endemic marine species, collect underwater pollutants, survive environmental hazards, and upgrade your submarine.",
+            stepDescription = "Welcome, Marine Researcher!\n\nYou have been deployed to the Philippine Sea aboard a state-of-the-art exploration submersible.\n\nYour mission is to explore all 5 ocean depth zones, research endemic marine species, collect underwater pollutants, survive environmental hazards, and upgrade your submarine.\n\nTo progress to the next zone, you need to document half the species and upgrade your submarine hull.",
             objectivePrompt = "Tap 'NEXT' to begin HUD & Controls Orientation."
         },
         new TutorialStep
@@ -87,7 +87,7 @@ public class TutorialManager : MonoBehaviour
         new TutorialStep
         {
             stepTitle = "2. SUBMARINE NAVIGATION",
-            stepDescription = "• <b>Cockpit Look & Aim:</b> Drag anywhere across the exploration viewport to rotate your camera yaw and pitch.\n• <b>Propulsion:</b> Use the left joystick (or WASD / Arrow keys on keyboard) to steer forward, backward, left, and right.\n• Moving forward while aiming up or down controls your vertical ascent and descent.",
+            stepDescription = "• <b>Cockpit Look & Aim:</b> Drag anywhere across the exploration viewport to rotate your camera yaw and pitch.\n• <b>Propulsion:</b> Use the left joystick to steer forward, backward, left, and right.\n• Moving forward while aiming up or down controls your vertical ascent and descent.",
             objectivePrompt = "Practice looking and steering, then tap 'NEXT'."
         },
         new TutorialStep
@@ -99,7 +99,7 @@ public class TutorialManager : MonoBehaviour
         new TutorialStep
         {
             stepTitle = "4. SPECIES ENCOUNTER & SCANNING",
-            stepDescription = "• When approaching marine life, center the creature within your HUD <b>Scan Reticle</b>.\n• When locked on, tap <b>SCAN</b> (or press 'F') to initiate research.\n• Complete the scanning mini-game (keep target inside the focus zone or solve the reconstruction puzzle) to document the species and earn <b>Research Data Points (RDP)</b>!",
+            stepDescription = "• When approaching marine life, center the creature within your HUD <b>Scan Reticle</b>.\n• When locked on, tap <b>SCAN</b> to initiate research.\n• Complete the scanning mini-game (keep target inside the focus zone or solve the reconstruction puzzle) to document the species and earn <b>Research Data Points (RDP)</b>!",
             objectivePrompt = "Aim at a species and practice scan targeting, then tap 'NEXT'."
         },
         new TutorialStep
@@ -111,7 +111,7 @@ public class TutorialManager : MonoBehaviour
         new TutorialStep
         {
             stepTitle = "6. ENVIRONMENTAL DEBRIS CLEANUP",
-            stepDescription = "• Throughout the seabed, you will encounter marine debris clusters that threaten ocean ecosystems.\n• Approach debris and tap <b>INTERACT</b> (or press 'E') to deploy the robotic collection claw.\n• Classify and sort retrieved trash into <b>Plastics, Metals, and Hazardous Waste</b> bins to earn bonus RDP and increase species spawn rates!",
+            stepDescription = "• Throughout the seabed, you will encounter marine debris clusters that threaten ocean ecosystems.\n• Approach debris and tap <b>INTERACT</b> to deploy the robotic collection claw.\n• Classify and sort retrieved trash into <b>Plastics, Metals, and Hazardous Waste</b> bins to earn bonus RDP and increase species spawn rates!",
             objectivePrompt = "Learn debris retrieval mechanics, then tap 'NEXT'."
         },
         new TutorialStep

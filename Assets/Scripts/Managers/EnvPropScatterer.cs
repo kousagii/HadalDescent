@@ -4,13 +4,16 @@ using UnityEngine;
 /// <summary>
 /// Scatters environment prop prefabs (rocks, corals, sponges) on top of the
 /// procedural ocean floor mesh in natural geological and ecological clusters
-/// (Endless Ocean Luminous style).
+/// (Endless Ocean Luminous style) according to the Hadal Descent Environment Blueprint.
 ///
 /// Features:
-///   - Cluster-based spawning: creates natural coral gardens and rock outcroppings.
-///   - Precise surface alignment & embed depth: props sit realistically on/in the sand.
-///   - Elevation & Biome weighting: corals thrive on shallower reef mounds; rocks on slopes.
-///   - Obstacle tagging: tagged for ContextSteering avoidance.
+///   - Biome-Aware Placement: queries Perlin BiomeBand to cluster geological props
+///     in their natural habitats (Limestone in Hard/Reef, Boulders in Rock, etc.).
+///   - Multi-Zone Transformation Matrix: supports non-uniform scaling (e.g. flat reef
+///     ledges, tall hydrothermal spires, spherical boulders).
+///   - Blueprint Material Application: overrides default untextured Blender white materials
+///     with authentic marine rock shaders.
+///   - Natural seabed anchoring and obstacle tagging for submarine ContextSteering.
 /// </summary>
 public class EnvPropScatterer : MonoBehaviour
 {
@@ -46,11 +49,18 @@ public class EnvPropScatterer : MonoBehaviour
     // Public API
     // -----------------------------------------------------------------------
 
-    /// <summary>
-    /// Scatter props across the zone's ocean floor.
-    /// </summary>
     public void Scatter(OceanFloorMeshGenerator meshGen, EnvPropSet propSet,
                         float width, float length, float seed)
+    {
+        TerrainGenerator terrain = GetComponent<TerrainGenerator>() ?? FindFirstObjectByType<TerrainGenerator>();
+        Scatter(meshGen, terrain, propSet, width, length, seed);
+    }
+
+    /// <summary>
+    /// Scatter props across the zone's ocean floor with biome-aware placement.
+    /// </summary>
+    public void Scatter(OceanFloorMeshGenerator meshGen, TerrainGenerator terrain,
+                        EnvPropSet propSet, float width, float length, float seed)
     {
         if (propSet == null || propSet.props == null || propSet.props.Length == 0)
         {
@@ -61,19 +71,6 @@ public class EnvPropScatterer : MonoBehaviour
         _terrainLayerId = LayerMask.NameToLayer("Terrain");
         EnsurePropParent();
         ClearExistingProps();
-
-        // Calculate total weight for random prop selection
-        float totalWeight = 0f;
-        foreach (var entry in propSet.props)
-        {
-            if (entry.prefab != null) totalWeight += entry.weight;
-        }
-
-        if (totalWeight <= 0f)
-        {
-            Debug.LogWarning("[EnvPropScatterer] All prop weights are zero — skipping.");
-            return;
-        }
 
         // Seed random state for deterministic placement
         Random.State savedState = Random.state;
@@ -105,7 +102,7 @@ public class EnvPropScatterer : MonoBehaviour
                 float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
                 float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
 
-                if (TryPlaceProp(meshGen, propSet, totalWeight, px, pz, placedPositions))
+                if (TryPlaceProp(meshGen, terrain, propSet, px, pz, placedPositions))
                     placedCount++;
             }
         }
@@ -117,7 +114,7 @@ public class EnvPropScatterer : MonoBehaviour
             float sx = Random.Range(-halfW, halfW);
             float sz = Random.Range(-halfL, halfL);
 
-            if (TryPlaceProp(meshGen, propSet, totalWeight, sx, sz, placedPositions))
+            if (TryPlaceProp(meshGen, terrain, propSet, sx, sz, placedPositions))
                 placedCount++;
         }
 
@@ -135,8 +132,8 @@ public class EnvPropScatterer : MonoBehaviour
     // Placement helper
     // -----------------------------------------------------------------------
 
-    private bool TryPlaceProp(OceanFloorMeshGenerator meshGen, EnvPropSet propSet,
-                              float totalWeight, float px, float pz,
+    private bool TryPlaceProp(OceanFloorMeshGenerator meshGen, TerrainGenerator terrain,
+                              EnvPropSet propSet, float px, float pz,
                               List<Vector3> placedPositions)
     {
         // Spacing check
@@ -152,21 +149,25 @@ public class EnvPropScatterer : MonoBehaviour
         float floorY = meshGen.SampleHeight(px, pz);
         Vector3 normal = meshGen.SampleNormal(px, pz);
 
-        // Pick weighted prop
-        EnvPropSet.PropEntry entry = PickWeightedProp(propSet.props, totalWeight);
+        // Biome-aware selection (Environment Blueprint Section 4)
+        BiomeBand currentBiome = terrain != null ? terrain.GetBiomeAt(px, pz) : BiomeBand.Hard;
+        EnvPropSet.PropEntry entry = PickWeightedPropForBiome(propSet.props, currentBiome);
         if (entry == null || entry.prefab == null) return false;
 
-        // Rotation & Scale with globalScaleMultiplier
-        float mult  = propSet != null ? Mathf.Max(0.1f, propSet.globalScaleMultiplier) : 1f;
-        float scale = Random.Range(entry.minScale, entry.maxScale) * mult;
-        Quaternion rot = Quaternion.identity;
+        // Rotation & Scale with globalScaleMultiplier and non-uniform scale matrix
+        float mult = propSet != null ? Mathf.Max(0.1f, propSet.globalScaleMultiplier) : 1f;
+        float randomScale = Random.Range(entry.minScale, entry.maxScale) * mult;
+        Vector3 scaleAxis = entry.scaleMultiplier != Vector3.zero ? entry.scaleMultiplier : Vector3.one;
+        Vector3 finalScale = Vector3.Scale(scaleAxis, Vector3.one * randomScale);
 
+        Quaternion rot = Quaternion.identity;
         if (entry.alignToSurface)
         {
-            // Slerp towards surface normal (tilted naturally with slope)
+            // Slerp towards surface normal based on surfaceTiltStrength
             Quaternion slopeAlign = Quaternion.FromToRotation(Vector3.up, normal);
             Quaternion randomSpin = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-            rot = Quaternion.Slerp(randomSpin, slopeAlign * randomSpin, 0.75f);
+            float tilt = Mathf.Clamp01(entry.surfaceTiltStrength);
+            rot = Quaternion.Slerp(randomSpin, slopeAlign * randomSpin, tilt);
         }
         else
         {
@@ -176,14 +177,24 @@ public class EnvPropScatterer : MonoBehaviour
         // Spawn instance at floorY
         Vector3 spawnPos = new Vector3(px, floorY, pz);
         GameObject go = Instantiate(entry.prefab, spawnPos, rot, _propParent);
-        go.transform.localScale = Vector3.one * scale;
+        go.transform.localScale = finalScale;
         go.name = entry.prefab.name;
 
+        // Ensure any child transform offsets (e.g. from editor placement) are zeroed
+        for (int i = 0; i < go.transform.childCount; i++)
+        {
+            Transform child = go.transform.GetChild(i);
+            if (child.localPosition.sqrMagnitude > 1f)
+            {
+                child.localPosition = Vector3.zero;
+            }
+        }
+
         // Ensure rocks/props have an authentic marine stone material instead of default flat white
-        ApplyPropMaterial(go);
+        ApplyPropMaterial(go, entry.materialOverride);
 
         // Adjust vertical position to sit naturally on the seabed
-        AdjustContactHeight(go, floorY, scale);
+        AdjustContactHeight(go, floorY);
 
         // Assign obstacle layer for ContextSteering
         if (entry.isObstacle && _terrainLayerId >= 0)
@@ -200,7 +211,7 @@ public class EnvPropScatterer : MonoBehaviour
     /// Calculates the bottom of the object's mesh bounds and adjusts position
     /// so the base embeds slightly into the sand rather than floating.
     /// </summary>
-    private void AdjustContactHeight(GameObject go, float floorY, float scale)
+    private void AdjustContactHeight(GameObject go, float floorY)
     {
         var renderers = go.GetComponentsInChildren<Renderer>();
         if (renderers != null && renderers.Length > 0)
@@ -228,28 +239,77 @@ public class EnvPropScatterer : MonoBehaviour
 
     private void EnsureCollider(GameObject go)
     {
-        if (go.GetComponentInChildren<Collider>() == null)
+        var colliders = go.GetComponentsInChildren<Collider>();
+        if (colliders == null || colliders.Length == 0)
         {
-            var box = go.AddComponent<BoxCollider>();
-            box.isTrigger = false;
+            var mf = go.GetComponentInChildren<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null)
+            {
+                var mc = mf.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = mf.sharedMesh;
+                mc.convex = true;  // Must be convex to support isTrigger
+                mc.isTrigger = true;
+            }
+            else
+            {
+                var box = go.AddComponent<BoxCollider>();
+                box.isTrigger = true;
+            }
+        }
+        else
+        {
+            // Existing colliders from prefab — make them triggers so props
+            // don't physically block the submarine. The ocean floor mesh
+            // already provides the solid terrain collision surface.
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                    colliders[i].isTrigger = true;
+            }
         }
     }
 
-    private EnvPropSet.PropEntry PickWeightedProp(EnvPropSet.PropEntry[] props, float totalWeight)
+    private EnvPropSet.PropEntry PickWeightedPropForBiome(EnvPropSet.PropEntry[] props, BiomeBand currentBiome)
     {
-        float roll = Random.Range(0f, totalWeight);
-        float cumulative = 0f;
-        foreach (var entry in props)
+        if (props == null || props.Length == 0) return null;
+
+        float totalWeight = 0f;
+        for (int i = 0; i < props.Length; i++)
         {
-            if (entry.prefab == null) continue;
-            cumulative += entry.weight;
-            if (roll <= cumulative) return entry;
+            if (props[i].prefab != null && props[i].targetBiome == currentBiome)
+                totalWeight += props[i].weight;
         }
 
-        for (int i = props.Length - 1; i >= 0; i--)
+        // If no props configured for this specific biome, fall back to any available prop
+        if (totalWeight <= 0f)
         {
-            if (props[i].prefab != null) return props[i];
+            for (int i = 0; i < props.Length; i++)
+            {
+                if (props[i].prefab != null)
+                    totalWeight += props[i].weight;
+            }
+            if (totalWeight <= 0f) return null;
+
+            float fallbackRoll = Random.Range(0f, totalWeight);
+            float cumFallback = 0f;
+            for (int i = 0; i < props.Length; i++)
+            {
+                if (props[i].prefab == null) continue;
+                cumFallback += props[i].weight;
+                if (fallbackRoll <= cumFallback) return props[i];
+            }
+            return null;
         }
+
+        float roll = Random.Range(0f, totalWeight);
+        float cumulative = 0f;
+        for (int i = 0; i < props.Length; i++)
+        {
+            if (props[i].prefab == null || props[i].targetBiome != currentBiome) continue;
+            cumulative += props[i].weight;
+            if (roll <= cumulative) return props[i];
+        }
+
         return null;
     }
 
@@ -282,7 +342,7 @@ public class EnvPropScatterer : MonoBehaviour
 
     private static Material _cachedRockMaterial;
 
-    private static void ApplyPropMaterial(GameObject go)
+    private static void ApplyPropMaterial(GameObject go, Material materialOverride)
     {
         var renderers = go.GetComponentsInChildren<Renderer>();
         if (renderers == null || renderers.Length == 0) return;
@@ -290,33 +350,32 @@ public class EnvPropScatterer : MonoBehaviour
         foreach (var r in renderers)
         {
             if (r == null) continue;
-            // Check if mesh has missing or default white URP material
-            bool isDefaultWhite = r.sharedMaterial == null
-                               || r.sharedMaterial.name.StartsWith("Default")
-                               || r.sharedMaterial.name == "Lit"
-                               || r.sharedMaterial.name == "Universal Render Pipeline/Lit";
 
-            if (isDefaultWhite)
+            // 1. Explicit material recipe override from EnvPropSet
+            if (materialOverride != null)
+            {
+                r.sharedMaterial = materialOverride;
+                continue;
+            }
+
+            // 2. Catch default / untextured materials from Blender (e.g. "Material", "Material.001", "Default-Material")
+            string matName = r.sharedMaterial != null ? r.sharedMaterial.name : "";
+            bool isUntexturedWhite = r.sharedMaterial == null
+                                  || matName.StartsWith("Material", System.StringComparison.OrdinalIgnoreCase)
+                                  || matName.StartsWith("Default", System.StringComparison.OrdinalIgnoreCase)
+                                  || matName.Equals("Lit", System.StringComparison.OrdinalIgnoreCase)
+                                  || matName.Equals("Universal Render Pipeline/Lit", System.StringComparison.OrdinalIgnoreCase);
+
+            if (isUntexturedWhite)
             {
                 if (_cachedRockMaterial == null)
                 {
-                    Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                                 ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                                 ?? Shader.Find("Standard");
-
-                    if (shader != null)
-                    {
-                        _cachedRockMaterial = new Material(shader)
-                        {
-                            name = "ProceduralMarineRock",
-                            // Authentic weathered marine basalt/limestone hue
-                            color = new Color(0.38f, 0.42f, 0.44f, 1.0f)
-                        };
-                        if (_cachedRockMaterial.HasProperty("_BaseColor"))
-                            _cachedRockMaterial.SetColor("_BaseColor", new Color(0.38f, 0.42f, 0.44f, 1.0f));
-                        if (_cachedRockMaterial.HasProperty("_Smoothness"))
-                            _cachedRockMaterial.SetFloat("_Smoothness", 0.15f);
-                    }
+                    _cachedRockMaterial = MaterialUtils.CreateColoredMaterial(
+                        new Color(123f / 255f, 140f / 255f, 120f / 255f, 1.0f),
+                        0.15f,
+                        0.0f
+                    );
+                    _cachedRockMaterial.name = "ProceduralMarineLimestone";
                 }
 
                 if (_cachedRockMaterial != null)

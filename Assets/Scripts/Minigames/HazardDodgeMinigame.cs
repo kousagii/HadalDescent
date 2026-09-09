@@ -107,14 +107,99 @@ public class HazardDodgeMinigame : MonoBehaviour
     // Swipe tracking
     private Vector2      _touchStartPos;
     private bool         _touchActive;
+    private bool         _hasSwipedThisTouch;
 
     // 2.5D World Stage
-    private GameObject   _stageRoot;
-    private Camera       _stageCamera;
-    private RenderTexture _stageRT;
-    private RawImage     _stageViewport;
-    private GameObject   _submarineObj;
-    private Vector3      _stageOrigin = new Vector3(9000f, 9000f, 9000f);
+    private GameObject            _stageRoot;
+    private Camera                _stageCamera;
+    private readonly List<Camera> _disabledSceneCams = new List<Camera>();
+    private RenderTexture         _stageRT;
+    private RawImage              _stageViewport;
+    private GameObject            _submarineObj;
+    private Vector3               _stageOrigin = new Vector3(9000f, 9000f, 9000f);
+
+    private void SwitchToMinigameCamera()
+    {
+        _disabledSceneCams.Clear();
+        var allCams = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+        foreach (var c in allCams)
+        {
+            if (c != _stageCamera && c.enabled)
+            {
+                c.enabled = false;
+                _disabledSceneCams.Add(c);
+            }
+        }
+        if (_stageCamera != null) _stageCamera.enabled = true;
+    }
+
+    private void RestoreSceneCamera()
+    {
+        foreach (var c in _disabledSceneCams)
+        {
+            if (c != null) c.enabled = true;
+        }
+        _disabledSceneCams.Clear();
+    }
+
+    private static Sprite _cachedPipSprite;
+    private static Sprite GetPipSprite()
+    {
+        if (_cachedPipSprite != null) return _cachedPipSprite;
+
+        int size = 32;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        float radius = (size - 2) * 0.5f;
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
+                if (dist > radius + 0.75f)
+                {
+                    tex.SetPixel(x, y, Color.clear);
+                }
+                else
+                {
+                    float alpha = Mathf.Clamp01(radius + 0.75f - dist);
+                    float highlight = Mathf.Clamp01(1f - (Vector2.Distance(new Vector2(x, y), center + new Vector2(0f, 4f)) / radius));
+                    Color col = Color.Lerp(new Color(0.85f, 0.95f, 1f), Color.white, highlight);
+                    col.a = alpha;
+                    tex.SetPixel(x, y, col);
+                }
+            }
+        }
+        tex.Apply();
+        _cachedPipSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+        return _cachedPipSprite;
+    }
+
+    private void SetExplorationHUDActive(bool active)
+    {
+        UIManager.Instance?.SetExplorationHUDVisible(active);
+
+        var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var c in allCanvases)
+        {
+            if (customUIRoot != null && c.transform.IsChildOf(customUIRoot.transform)) continue;
+            if (c.gameObject == gameObject) continue;
+
+            var hudTr = c.transform.Find("HUD");
+            if (hudTr != null) hudTr.gameObject.SetActive(active);
+
+            var mc = c.transform.Find("MobileControls");
+            if (mc != null) mc.gameObject.SetActive(active);
+        }
+
+        var hudDirect = GameObject.Find("HUD");
+        if (hudDirect != null) hudDirect.SetActive(active);
+
+        var mcDirect = GameObject.Find("MobileControls");
+        if (mcDirect != null) mcDirect.SetActive(active);
+    }
 
     // Active Spawns
     private readonly List<ActiveHazardItem> _activeItems = new List<ActiveHazardItem>();
@@ -203,6 +288,8 @@ public class HazardDodgeMinigame : MonoBehaviour
         StopAllCoroutines();
         CleanupStage();
 
+        SetExplorationHUDActive(false);
+
         _totalDistance = ZoneDistances[_zoneIndex];
         _distanceLeft  = _totalDistance;
         _remainingHits = ZoneHullHits[_zoneIndex];
@@ -213,6 +300,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         _isRunning     = false;
         _isFinished    = false;
         _touchActive   = false;
+        _hasSwipedThisTouch = false;
         _isActive      = true;
 
         gameObject.SetActive(true);
@@ -296,7 +384,10 @@ public class HazardDodgeMinigame : MonoBehaviour
             yield return null;
         }
 
-        // 2. Transition into Hazard Dodge Minigame before start of minigame
+        // 2. Transition into Hazard Dodge Minigame 3D stage
+        SwitchToMinigameCamera();
+        SetExplorationHUDActive(false);
+
         if (customUIRoot != null)
         {
             customUIRoot.SetActive(true);
@@ -308,14 +399,13 @@ public class HazardDodgeMinigame : MonoBehaviour
             }
             if (customViewportRawImage != null)
             {
-                customViewportRawImage.texture = _stageRT;
-                customViewportRawImage.gameObject.SetActive(true);
+                customViewportRawImage.gameObject.SetActive(false); // Direct-to-screen camera, no RawImage needed!
             }
         }
         else
         {
             if (_rootUI != null) _rootUI.gameObject.SetActive(true);
-            if (_stageViewport != null) _stageViewport.gameObject.SetActive(true);
+            if (_stageViewport != null) _stageViewport.gameObject.SetActive(false);
         }
 
         // Zero out exploration vignette so it doesn't double-tint with minigame vignette
@@ -377,7 +467,8 @@ public class HazardDodgeMinigame : MonoBehaviour
         _currentX = Mathf.Lerp(_currentX, _targetX, dt * laneSwitchSpeed);
         if (_submarineObj != null)
         {
-            float tilt = (_targetX - _currentX) * -12.0f;
+            float tiltNorm = laneWidth > 0.01f ? Mathf.Clamp((_targetX - _currentX) / laneWidth, -1f, 1f) : 0f;
+            float tilt = tiltNorm * -28.0f; // Snappy, sleek banking roll clamped to 28 degrees
             _submarineObj.transform.localPosition = new Vector3(_currentX, 0f, -2.2f);
             _submarineObj.transform.localRotation = Quaternion.Euler(0f, 0f, tilt);
         }
@@ -398,7 +489,7 @@ public class HazardDodgeMinigame : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // Input Handling (Swipes + Keys + Screen Taps)
+    // Input Handling (Mobile Swipes + Keyboard)
     // -----------------------------------------------------------------------
 
     private void HandleInput()
@@ -411,51 +502,71 @@ public class HazardDodgeMinigame : MonoBehaviour
             if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) ShiftLane(1);
         }
 
-        // 2. Mobile Touch & Pointer Swipe
+        // 2. Mobile Touch & Pointer Swipe (Swipe ONLY - exactly one lane move per swipe)
         var ts = Touchscreen.current;
-        if (ts != null && ts.primaryTouch.press.isPressed)
+        if (ts != null)
         {
-            Vector2 touchPos = ts.primaryTouch.position.ReadValue();
-            if (!_touchActive)
+            if (ts.primaryTouch.press.wasPressedThisFrame)
             {
                 _touchActive = true;
-                _touchStartPos = touchPos;
+                _hasSwipedThisTouch = false;
+                _touchStartPos = ts.primaryTouch.position.ReadValue();
             }
-            else
+            else if (ts.primaryTouch.press.isPressed && _touchActive && !_hasSwipedThisTouch)
             {
+                Vector2 touchPos = ts.primaryTouch.position.ReadValue();
                 float deltaX = touchPos.x - _touchStartPos.x;
                 if (Mathf.Abs(deltaX) > swipeSensitivity)
                 {
                     ShiftLane(deltaX > 0 ? 1 : -1);
-                    _touchStartPos = touchPos; // Reset baseline for continuous swiping
+                    _hasSwipedThisTouch = true; // Consumed: only 1 lane move per swipe gesture!
                 }
+            }
+            else if (ts.primaryTouch.press.wasReleasedThisFrame)
+            {
+                _touchActive = false;
+                _hasSwipedThisTouch = false;
             }
         }
         else
         {
             var ptr = Pointer.current;
-            if (ptr != null && ptr.press.isPressed)
+            if (ptr != null)
             {
-                Vector2 ptrPos = ptr.position.ReadValue();
-                if (!_touchActive)
+                if (ptr.press.wasPressedThisFrame)
                 {
                     _touchActive = true;
-                    _touchStartPos = ptrPos;
+                    _hasSwipedThisTouch = false;
+                    _touchStartPos = ptr.position.ReadValue();
                 }
-                else
+                else if (ptr.press.isPressed && _touchActive && !_hasSwipedThisTouch)
                 {
+                    Vector2 ptrPos = ptr.position.ReadValue();
                     float deltaX = ptrPos.x - _touchStartPos.x;
                     if (Mathf.Abs(deltaX) > swipeSensitivity)
                     {
                         ShiftLane(deltaX > 0 ? 1 : -1);
-                        _touchStartPos = ptrPos;
+                        _hasSwipedThisTouch = true; // Consumed: only 1 lane move per swipe gesture!
                     }
                 }
+                else if (ptr.press.wasReleasedThisFrame)
+                {
+                    _touchActive = false;
+                    _hasSwipedThisTouch = false;
+                }
             }
-            else
-            {
-                _touchActive = false;
-            }
+        }
+    }
+
+    public void SetLane(int targetLane)
+    {
+        if (!_isRunning || _isFinished) return;
+
+        int clamped = Mathf.Clamp(targetLane, 0, 2);
+        if (clamped != _currentLane)
+        {
+            _currentLane = clamped;
+            _targetX = (_currentLane - 1) * laneWidth;
         }
     }
 
@@ -557,7 +668,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         if (go != null)
         {
-            SetLayerRecursive(go, LayerMask.NameToLayer("UI"));
+            SetLayerRecursive(go, 0);
             _activeItems.Add(new ActiveHazardItem
             {
                 GameObject     = go,
@@ -597,10 +708,11 @@ public class HazardDodgeMinigame : MonoBehaviour
 
             // Collision check with submarine (submarine is located at Z = -2.2f)
             float subZ = -2.2f;
-            if (!item.CollectedOrHit && Mathf.Abs(item.ZPos - subZ) < 1.6f)
+            if (!item.CollectedOrHit && Mathf.Abs(item.ZPos - subZ) < 2.0f)
             {
-                // Lane alignment check
-                if (item.Lane == _currentLane && Mathf.Abs(_currentX - xPos) < 1.4f)
+                // Lane alignment check (scaled to laneWidth)
+                float hitThreshold = Mathf.Max(1.4f, laneWidth * 0.38f);
+                if (item.Lane == _currentLane && Mathf.Abs(_currentX - xPos) < hitThreshold)
                 {
                     item.CollectedOrHit = true;
 
@@ -702,6 +814,9 @@ public class HazardDodgeMinigame : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(2.8f);
 
+        RestoreSceneCamera();
+        SetExplorationHUDActive(true);
+
         CleanupStage();
         if (_rootUI != null) _rootUI.gameObject.SetActive(false);
         if (customUIRoot != null) customUIRoot.SetActive(false);
@@ -743,8 +858,10 @@ public class HazardDodgeMinigame : MonoBehaviour
             for (int i = 0; i < _hullPipImages.Length; i++)
             {
                 if (_hullPipImages[i] == null) continue;
+                if (_hullPipImages[i].sprite == null) _hullPipImages[i].sprite = GetPipSprite();
+                _hullPipImages[i].gameObject.SetActive(true);
                 bool isIntact = i < _remainingHits;
-                _hullPipImages[i].color = isIntact ? new Color(0.2f, 0.95f, 1f, 0.95f) : new Color(0.6f, 0.1f, 0.1f, 0.35f);
+                _hullPipImages[i].color = isIntact ? new Color(0.2f, 0.95f, 1f, 0.95f) : new Color(0.35f, 0.1f, 0.1f, 0.35f);
             }
         }
 
@@ -758,8 +875,15 @@ public class HazardDodgeMinigame : MonoBehaviour
             for (int i = 0; i < customHullPipImages.Length; i++)
             {
                 if (customHullPipImages[i] == null) continue;
+                if (customHullPipImages[i].sprite == null)
+                {
+                    customHullPipImages[i].sprite = GetPipSprite();
+                }
+                customHullPipImages[i].gameObject.SetActive(true);
                 bool isIntact = i < _remainingHits;
-                customHullPipImages[i].color = isIntact ? new Color(0.2f, 0.95f, 1.0f, 1.0f) : new Color(0.35f, 0.1f, 0.1f, 0.3f);
+                customHullPipImages[i].color = isIntact 
+                    ? new Color(0.20f, 0.95f, 1.0f, 1.0f) // Bright glowing cyan badge
+                    : new Color(0.35f, 0.10f, 0.10f, 0.35f); // Depleted dark red badge
             }
         }
     }
@@ -775,50 +899,83 @@ public class HazardDodgeMinigame : MonoBehaviour
         _stageRoot = new GameObject("HazardDodgeStage");
         _stageRoot.transform.position = _stageOrigin;
 
-        // 1. RenderTexture & Camera (Framed for lower-third submarine view)
-        if (_stageRT == null)
-        {
-            _stageRT = new RenderTexture(1080, 1920, 24, RenderTextureFormat.ARGB32)
-            {
-                name = "HazardDodge_RT",
-                antiAliasing = 2,
-                filterMode = FilterMode.Bilinear
-            };
-            _stageRT.Create();
-        }
-
+        // 1. Direct-to-Screen Minigame Camera (Framed for lower-third submarine view with 3 equal full-screen lanes)
         var camGO = new GameObject("StageCamera", typeof(Camera));
         camGO.transform.SetParent(_stageRoot.transform, false);
         _stageCamera = camGO.GetComponent<Camera>();
-        _stageCamera.transform.localPosition = new Vector3(0f, 16f, -10f);
-        _stageCamera.transform.localRotation = Quaternion.Euler(58f, 0f, 0f);
+        _stageCamera.transform.localPosition = new Vector3(0f, 14.0f, -7.5f);
+        _stageCamera.transform.localRotation = Quaternion.Euler(52f, 0f, 0f);
         _stageCamera.clearFlags = CameraClearFlags.SolidColor;
-        _stageCamera.backgroundColor = new Color(0.02f, 0.08f, 0.16f, 1f);
+        _stageCamera.backgroundColor = new Color(0.015f, 0.05f, 0.12f, 1f);
         _stageCamera.fieldOfView = 48f;
-        _stageCamera.targetTexture = _stageRT;
+        _stageCamera.nearClipPlane = 0.3f;
+        _stageCamera.farClipPlane = 160f;
+        _stageCamera.depth = 100;
+        _stageCamera.targetTexture = null; // Direct full-screen backbuffer rendering!
+        _stageCamera.enabled = false; // Enabled during transition by SwitchToMinigameCamera()
 
-        // 2. Directional Key Light
-        var lightGO = new GameObject("StageLight", typeof(Light));
+        var camData = camGO.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (camData != null)
+        {
+            camData.renderPostProcessing = false;
+            camData.renderShadows = false;
+        }
+
+        // Dynamically compute laneWidth based on screen aspect ratio so the 3 lanes ALWAYS span the entire screen!
+        float aspect = (float)Screen.width / Mathf.Max(1, Screen.height);
+        if (aspect < 1.2f) aspect = 16f / 9f; // Mobile landscape safeguard
+
+        float subZ = -2.2f;
+        float camY = 14.0f;
+        float camZ = -7.5f;
+        float pitchRad = 52.0f * Mathf.Deg2Rad;
+        float dz = camY * Mathf.Sin(pitchRad) + (subZ - camZ) * Mathf.Cos(pitchRad);
+        float vFovRad = 48.0f * Mathf.Deg2Rad;
+        float wSub = 2.0f * dz * aspect * Mathf.Tan(vFovRad * 0.5f);
+
+        // Divide total visible width into 3 equal lanes with slim outer boundary bezel margins
+        laneWidth = wSub / 3.08f;
+
+        // 2. Stage Lighting (Directional Key Light + Fill Light for guaranteed mobile URP visibility)
+        var lightGO = new GameObject("StageKeyLight", typeof(Light));
         lightGO.transform.SetParent(_stageRoot.transform, false);
         lightGO.transform.localRotation = Quaternion.Euler(50f, -25f, 0f);
-        var light = lightGO.GetComponent<Light>();
-        light.type = LightType.Directional;
-        light.intensity = 1.4f;
-        light.color = new Color(0.8f, 0.95f, 1f);
+        var keyLight = lightGO.GetComponent<Light>();
+        keyLight.type = LightType.Directional;
+        keyLight.intensity = 1.3f;
+        keyLight.color = new Color(0.85f, 0.95f, 1.0f);
 
-        // 3. Lane Track / Seafloor Trench Plane
+        var fillLightGO = new GameObject("StageFillLight", typeof(Light));
+        fillLightGO.transform.SetParent(_stageRoot.transform, false);
+        fillLightGO.transform.localRotation = Quaternion.Euler(-35f, 155f, 0f);
+        var fillLight = fillLightGO.GetComponent<Light>();
+        fillLight.type = LightType.Directional;
+        fillLight.intensity = 0.6f;
+        fillLight.color = new Color(0.35f, 0.65f, 0.95f);
+
+        // 3. Lane Track / Seafloor Trench Plane (Wide enough to fill all device aspects without gaps)
         var trenchGO = GameObject.CreatePrimitive(PrimitiveType.Plane);
         trenchGO.name = "TrenchFloor";
         trenchGO.transform.SetParent(_stageRoot.transform, false);
-        trenchGO.transform.localPosition = new Vector3(0f, -0.6f, 16f);
-        trenchGO.transform.localScale = new Vector3(2.5f, 1f, 7.0f);
+        trenchGO.transform.localPosition = new Vector3(0f, -0.6f, 25f);
+        trenchGO.transform.localScale = new Vector3(8.0f, 1f, 14.0f);
         var trenchRend = trenchGO.GetComponent<Renderer>();
-        trenchRend.material = CreateLitMaterial(new Color(0.03f, 0.09f, 0.15f));
+        trenchRend.material = CreateLitMaterial(new Color(0.03f, 0.08f, 0.14f));
         Destroy(trenchGO.GetComponent<Collider>());
 
-        // Glowing lane divider lines
-        CreateLaneLine(-laneWidth * 0.5f);
-        CreateLaneLine(laneWidth * 0.5f);
+        // 3 Equal Lanes taking up the entire screen:
+        // Lane 0 = -laneWidth (Left 1/3) | Lane 1 = 0.0f (Center 1/3) | Lane 2 = +laneWidth (Right 1/3)
+        // Glowing cyan lane divider lines
+        CreateLaneLine(-laneWidth * 0.5f, new Color(0.20f, 0.90f, 1.0f, 0.85f));
+        CreateLaneLine(laneWidth * 0.5f, new Color(0.20f, 0.90f, 1.0f, 0.85f));
+
+        // Glowing outer boundary warning lines right at the screen edges
+        CreateBoundaryWall(-laneWidth * 1.5f);
+        CreateBoundaryWall(laneWidth * 1.5f);
+
+        // Outer abyss seabed ledges
+        CreateSideLedge(-laneWidth * 1.5f - 8f);
+        CreateSideLedge(laneWidth * 1.5f + 8f);
 
         // 4. Submarine Player
         if (customSubmarinePrefab != null)
@@ -831,16 +988,40 @@ public class HazardDodgeMinigame : MonoBehaviour
         }
     }
 
-    private void CreateLaneLine(float xOffset)
+    private void CreateLaneLine(float xOffset, Color glowCol)
     {
         var lineGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
         lineGO.name = "LaneLine";
         lineGO.transform.SetParent(_stageRoot.transform, false);
-        lineGO.transform.localPosition = new Vector3(xOffset, -0.55f, 16f);
-        lineGO.transform.localScale = new Vector3(0.08f, 0.05f, 60f);
+        lineGO.transform.localPosition = new Vector3(xOffset, -0.55f, 25f);
+        lineGO.transform.localScale = new Vector3(0.14f, 0.06f, 90f);
         var rend = lineGO.GetComponent<Renderer>();
-        rend.material = CreateUnlitMaterial(new Color(0.15f, 0.70f, 0.95f, 0.40f));
+        rend.material = CreateUnlitMaterial(glowCol);
         Destroy(lineGO.GetComponent<Collider>());
+    }
+
+    private void CreateBoundaryWall(float xOffset)
+    {
+        var wallGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        wallGO.name = "BoundaryMarker";
+        wallGO.transform.SetParent(_stageRoot.transform, false);
+        wallGO.transform.localPosition = new Vector3(xOffset, -0.42f, 25f);
+        wallGO.transform.localScale = new Vector3(0.25f, 0.38f, 90f);
+        var rend = wallGO.GetComponent<Renderer>();
+        rend.material = CreateUnlitMaterial(new Color(1.0f, 0.45f, 0.10f, 0.90f));
+        Destroy(wallGO.GetComponent<Collider>());
+    }
+
+    private void CreateSideLedge(float xCenter)
+    {
+        var ledgeGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ledgeGO.name = "SideLedge";
+        ledgeGO.transform.SetParent(_stageRoot.transform, false);
+        ledgeGO.transform.localPosition = new Vector3(xCenter, -0.35f, 25f);
+        ledgeGO.transform.localScale = new Vector3(16f, 0.5f, 90f);
+        var rend = ledgeGO.GetComponent<Renderer>();
+        rend.material = CreateLitMaterial(new Color(0.015f, 0.04f, 0.08f));
+        Destroy(ledgeGO.GetComponent<Collider>());
     }
 
     private GameObject CreateProceduralSubmarine()
@@ -853,25 +1034,25 @@ public class HazardDodgeMinigame : MonoBehaviour
         var hull = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         hull.transform.SetParent(subRoot.transform, false);
         hull.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        hull.transform.localScale = new Vector3(1.4f, 2.2f, 1.4f);
+        hull.transform.localScale = new Vector3(2.2f, 3.4f, 2.2f);
         hull.GetComponent<Renderer>().material = CreateLitMaterial(new Color(1.0f, 0.80f, 0.05f)); // Bright Exploration Yellow
         Destroy(hull.GetComponent<Collider>());
 
         // Conning Tower / Cockpit Dome
         var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         dome.transform.SetParent(subRoot.transform, false);
-        dome.transform.localPosition = new Vector3(0f, 0.55f, 0.4f);
-        dome.transform.localScale = new Vector3(0.9f, 0.7f, 1.1f);
+        dome.transform.localPosition = new Vector3(0f, 0.8f, 0.6f);
+        dome.transform.localScale = new Vector3(1.4f, 1.1f, 1.7f);
         dome.GetComponent<Renderer>().material = CreateLitMaterial(new Color(0.1f, 0.9f, 1.0f)); // Glowing Cyan Glass
         Destroy(dome.GetComponent<Collider>());
 
         // Left & Right Stabilizer Fins
-        CreateFin(subRoot.transform, new Vector3(-1.15f, 0f, -0.6f), new Vector3(0.9f, 0.1f, 0.6f));
-        CreateFin(subRoot.transform, new Vector3(1.15f, 0f, -0.6f), new Vector3(0.9f, 0.1f, 0.6f));
+        CreateFin(subRoot.transform, new Vector3(-1.8f, 0f, -0.9f), new Vector3(1.4f, 0.16f, 0.9f));
+        CreateFin(subRoot.transform, new Vector3(1.8f, 0f, -0.9f), new Vector3(1.4f, 0.16f, 0.9f));
 
         // Twin Thruster Glow Cones (Cyan Engine Glow)
-        CreateEngineGlow(subRoot.transform, new Vector3(-0.45f, 0f, -1.3f));
-        CreateEngineGlow(subRoot.transform, new Vector3(0.45f, 0f, -1.3f));
+        CreateEngineGlow(subRoot.transform, new Vector3(-0.7f, 0f, -2.0f));
+        CreateEngineGlow(subRoot.transform, new Vector3(0.7f, 0f, -2.0f));
 
         return subRoot;
     }
@@ -891,7 +1072,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         var glow = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         glow.transform.SetParent(parent, false);
         glow.transform.localPosition = localPos;
-        glow.transform.localScale = new Vector3(0.35f, 0.35f, 0.5f);
+        glow.transform.localScale = new Vector3(0.5f, 0.5f, 0.7f);
         glow.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(0.2f, 0.95f, 1.0f, 0.9f));
         Destroy(glow.GetComponent<Collider>());
     }
@@ -904,15 +1085,15 @@ public class HazardDodgeMinigame : MonoBehaviour
         // Rock Chimney Cone (Cylinder)
         var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         cone.transform.SetParent(go.transform, false);
-        cone.transform.localScale = new Vector3(1.4f, 0.9f, 1.4f);
+        cone.transform.localScale = new Vector3(2.8f, 1.6f, 2.8f);
         cone.GetComponent<Renderer>().material = CreateLitMaterial(new Color(0.18f, 0.12f, 0.08f));
         Destroy(cone.GetComponent<Collider>());
 
         // Glowing Core Plume (Sphere)
         var plume = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         plume.transform.SetParent(go.transform, false);
-        plume.transform.localPosition = new Vector3(0f, 0.7f, 0f);
-        plume.transform.localScale = new Vector3(1.2f, 1.6f, 1.2f);
+        plume.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+        plume.transform.localScale = new Vector3(2.2f, 2.6f, 2.2f);
         plume.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(1.0f, 0.35f, 0.05f, 0.90f));
         Destroy(plume.GetComponent<Collider>());
 
@@ -928,7 +1109,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         ring.transform.SetParent(go.transform, false);
         ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        ring.transform.localScale = new Vector3(2.2f, 0.05f, 2.2f);
+        ring.transform.localScale = new Vector3(4.2f, 0.15f, 4.2f);
         ring.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(0.10f, 0.85f, 0.95f, 0.65f));
         Destroy(ring.GetComponent<Collider>());
 
@@ -943,7 +1124,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         // Jagged Rock Sphere
         var rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         rock.transform.SetParent(go.transform, false);
-        rock.transform.localScale = new Vector3(1.6f, 1.3f, 1.5f);
+        rock.transform.localScale = new Vector3(2.8f, 2.4f, 2.8f);
         rock.GetComponent<Renderer>().material = CreateLitMaterial(new Color(0.25f, 0.22f, 0.20f));
         Destroy(rock.GetComponent<Collider>());
 
@@ -959,7 +1140,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         var diamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
         diamond.transform.SetParent(go.transform, false);
         diamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
-        diamond.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+        diamond.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
         diamond.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(1.0f, 0.82f, 0.15f, 0.95f));
         Destroy(diamond.GetComponent<Collider>());
 
@@ -968,24 +1149,26 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private Material CreateLitMaterial(Color col)
     {
-        Shader s = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        var m = new Material(s);
-        m.color = col;
-        if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", col);
-        return m;
+        return MaterialUtils.CreateColoredMaterial(col);
     }
 
     private Material CreateUnlitMaterial(Color col)
     {
-        Shader s = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
-        var m = new Material(s);
-        m.color = col;
-        if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", col);
-        return m;
+        Shader s = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
+        if (s != null)
+        {
+            var m = new Material(s);
+            MaterialUtils.SetMaterialColor(m, col);
+            return m;
+        }
+        return MaterialUtils.CreateColoredMaterial(col);
     }
 
     private void CleanupStage()
     {
+        RestoreSceneCamera();
+        SetExplorationHUDActive(true);
+
         foreach (var item in _activeItems)
         {
             if (item != null && item.GameObject != null)
@@ -997,6 +1180,13 @@ public class HazardDodgeMinigame : MonoBehaviour
         {
             Destroy(_stageRoot);
             _stageRoot = null;
+        }
+
+        if (_stageRT != null)
+        {
+            _stageRT.Release();
+            Destroy(_stageRT);
+            _stageRT = null;
         }
     }
 
@@ -1034,6 +1224,7 @@ public class HazardDodgeMinigame : MonoBehaviour
                 if (customViewportRawImage == null) customViewportRawImage = customUIRoot.GetComponentInChildren<RawImage>(true);
                 if (customDistanceText == null) customDistanceText = customUIRoot.transform.Find("DistanceText")?.GetComponent<TMP_Text>() ?? customUIRoot.transform.Find("Distance")?.GetComponent<TMP_Text>();
                 if (customRdpBonusText == null) customRdpBonusText = customUIRoot.transform.Find("RdpText")?.GetComponent<TMP_Text>() ?? customUIRoot.transform.Find("RDP")?.GetComponent<TMP_Text>();
+                if (customHullText == null)     customHullText     = customUIRoot.transform.Find("HullIntegrity")?.GetComponentInChildren<TMP_Text>() ?? customUIRoot.transform.Find("Hull")?.GetComponent<TMP_Text>();
                 if (customRedVignette == null)
                 {
                     var redTransform = customUIRoot.transform.Find("RedImage") ?? customUIRoot.transform.Find("RedVignette");
@@ -1047,9 +1238,57 @@ public class HazardDodgeMinigame : MonoBehaviour
             if (customViewportRawImage == null)
                 customViewportRawImage = customUIRoot.GetComponentInChildren<RawImage>(true);
 
+            // Deactivate RawImage so it never blocks the direct-to-screen minigame camera
             if (customViewportRawImage != null)
             {
-                customViewportRawImage.texture = _stageRT;
+                customViewportRawImage.gameObject.SetActive(false);
+            }
+
+            // Auto-find hull pips if not wired in Inspector
+            if (customHullPipImages == null || customHullPipImages.Length == 0)
+            {
+                var customHullContainer = customUIRoot.transform.Find("HullIntegrity") ?? customUIRoot.transform.Find("Hull");
+                if (customHullContainer != null)
+                {
+                    var pips = new List<Image>();
+                    for (int i = 1; i <= 3; i++)
+                    {
+                        var p = customHullContainer.Find($"Pip{i}")?.GetComponent<Image>() ?? customHullContainer.Find($"Pip_{i}")?.GetComponent<Image>();
+                        if (p != null) pips.Add(p);
+                    }
+                    if (pips.Count > 0) customHullPipImages = pips.ToArray();
+                }
+            }
+
+            // Configure HorizontalLayoutGroup so pips stay crisp, fixed-size badges next to Hull text
+            var customHlg = customHullText != null ? customHullText.GetComponentInParent<HorizontalLayoutGroup>() : null;
+            if (customHlg != null)
+            {
+                customHlg.childForceExpandWidth = false;
+                customHlg.childControlWidth = false;
+                customHlg.spacing = 10f;
+                customHlg.childAlignment = TextAnchor.MiddleRight;
+            }
+
+            if (customHullPipImages != null)
+            {
+                for (int i = 0; i < customHullPipImages.Length; i++)
+                {
+                    if (customHullPipImages[i] == null) continue;
+                    if (customHullPipImages[i].sprite == null)
+                    {
+                        customHullPipImages[i].sprite = GetPipSprite();
+                    }
+                    var le = customHullPipImages[i].GetComponent<LayoutElement>() ?? customHullPipImages[i].gameObject.AddComponent<LayoutElement>();
+                    le.preferredWidth = 24f;
+                    le.preferredHeight = 24f;
+                    le.minWidth = 24f;
+                    le.minHeight = 24f;
+                    le.flexibleWidth = 0f;
+                    le.flexibleHeight = 0f;
+                    customHullPipImages[i].rectTransform.sizeDelta = new Vector2(24f, 24f);
+                    customHullPipImages[i].gameObject.SetActive(true);
+                }
             }
 
             if (customRedVignette == null)
@@ -1197,10 +1436,6 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // Ensure banners exist for procedural HUD
         EnsureBanners(canvas, font);
-
-        // Left/Right Touch Tap Buttons (for direct clicking/tapping)
-        CreateLaneButton("LeftBtn", new Vector2(0f, 0f), new Vector2(0.5f, 0.6f), -1);
-        CreateLaneButton("RightBtn", new Vector2(0.5f, 0f), new Vector2(1f, 0.6f), 1);
 
         _rootUI.gameObject.SetActive(false);
     }
@@ -1677,23 +1912,12 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void OnDestroy()
     {
+        RestoreSceneCamera();
+        SetExplorationHUDActive(true);
         HideAllBanners();
         if (_warningBannerRoot != null) Destroy(_warningBannerRoot);
         if (_finishBannerRoot != null)  Destroy(_finishBannerRoot);
         if (_explorationVignette != null) Destroy(_explorationVignette.gameObject);
-    }
-
-    private void CreateLaneButton(string name, Vector2 minAnchor, Vector2 maxAnchor, int dir)
-    {
-        var btnGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-        btnGO.transform.SetParent(_rootUI, false);
-        var r = btnGO.GetComponent<RectTransform>();
-        r.anchorMin = minAnchor;
-        r.anchorMax = maxAnchor;
-        r.sizeDelta = Vector2.zero;
-        btnGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f); // Invisible touch detector
-        var btn = btnGO.GetComponent<Button>();
-        btn.onClick.AddListener(() => ShiftLane(dir));
     }
 
     private static void SetLayerRecursive(GameObject go, int layer)

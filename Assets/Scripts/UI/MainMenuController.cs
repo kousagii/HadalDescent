@@ -39,6 +39,8 @@ public class MainMenuController : MonoBehaviour
         AutoFindButtons();
         if (customConfirmPopupRoot != null)
             customConfirmPopupRoot.SetActive(false);
+
+        UIManager.Instance?.SetExplorationHUDVisible(false);
     }
 
     private void OnEnable()
@@ -48,6 +50,8 @@ public class MainMenuController : MonoBehaviour
 
     private void Start()
     {
+        UIManager.Instance?.SetExplorationHUDVisible(false);
+
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayMainMenuBGM();

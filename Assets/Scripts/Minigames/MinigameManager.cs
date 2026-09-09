@@ -232,11 +232,13 @@ public class MinigameManager : MonoBehaviour
 
         _minigameActive = true;
         DisableControls();
+        UIManager.Instance?.SetExplorationHUDVisible(false);
 
         Action<int> wrappedSuccess = (reward) =>
         {
             _minigameActive = false;
             EnableControls();
+            UIManager.Instance?.SetExplorationHUDVisible(true);
             onSuccess?.Invoke(reward);
         };
 
@@ -244,6 +246,7 @@ public class MinigameManager : MonoBehaviour
         {
             _minigameActive = false;
             EnableControls();
+            UIManager.Instance?.SetExplorationHUDVisible(true);
             onFail?.Invoke();
         };
 

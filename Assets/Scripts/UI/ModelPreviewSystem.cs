@@ -131,6 +131,13 @@ public class ModelPreviewSystem : MonoBehaviour
                 previewCamera.cullingMask = 1 << _previewLayerId;
             else
                 previewCamera.cullingMask = ~0;
+
+            var camData = camGO.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            if (camData != null)
+            {
+                camData.renderPostProcessing = false;
+                camData.renderShadows = false;
+            }
         }
 
         if (_keyLight == null)
@@ -208,6 +215,10 @@ public class ModelPreviewSystem : MonoBehaviour
         // 3. Position and frame camera
         FrameCamera(tempPivot);
 
+        // Enforce transparent clear flags on preview camera
+        previewCamera.clearFlags = CameraClearFlags.SolidColor;
+        previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
+
         // 4. Clear RenderTexture and Render offscreen
         RenderTexture prevActive = RenderTexture.active;
         RenderTexture.active = previewRT;
@@ -277,7 +288,12 @@ public class ModelPreviewSystem : MonoBehaviour
             targetImage.gameObject.SetActive(true);
         }
 
-        if (previewCamera != null) previewCamera.gameObject.SetActive(true);
+        if (previewCamera != null)
+        {
+            previewCamera.clearFlags = CameraClearFlags.SolidColor;
+            previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            previewCamera.gameObject.SetActive(true);
+        }
     }
 
     private GameObject SpawnModelInstance(SpeciesData data, bool isSilhouette)
@@ -307,11 +323,7 @@ public class ModelPreviewSystem : MonoBehaviour
             var rend = go.GetComponent<Renderer>();
             if (rend != null && !isSilhouette)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                             ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                             ?? Shader.Find("Standard");
-                if (shader != null)
-                    rend.material = new Material(shader) { color = data.placeholderColor };
+                rend.material = MaterialUtils.CreateColoredMaterial(data.placeholderColor);
             }
         }
 
@@ -383,20 +395,10 @@ public class ModelPreviewSystem : MonoBehaviour
     private void CreateSilhouetteMaterial()
     {
         // Darkened 3D silhouette material: URP Lit renders the geometry contours with directional lighting
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                     ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                     ?? Shader.Find("Universal Render Pipeline/Unlit")
-                     ?? Shader.Find("Standard");
-
-        if (shader != null)
+        Color silColor = new Color(0.10f, 0.12f, 0.16f, 1.0f);
+        _silhouetteMat = MaterialUtils.CreateColoredMaterial(silColor, 0.35f, 0.05f);
+        if (_silhouetteMat != null)
         {
-            _silhouetteMat = new Material(shader);
-
-            // Sleek charcoal-slate silhouette color
-            Color silColor = new Color(0.10f, 0.12f, 0.16f, 1.0f);
-            _silhouetteMat.color = silColor;
-            if (_silhouetteMat.HasProperty("_BaseColor")) _silhouetteMat.SetColor("_BaseColor", silColor);
-            if (_silhouetteMat.HasProperty("_Color"))     _silhouetteMat.SetColor("_Color", silColor);
 
             // CRITICAL: Replace creature textures with flat white texture so _BaseColor * white = pure dark silhouette
             if (_silhouetteMat.HasProperty("_BaseMap"))  _silhouetteMat.SetTexture("_BaseMap", Texture2D.whiteTexture);

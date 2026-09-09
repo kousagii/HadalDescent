@@ -67,6 +67,17 @@ public class SubmarineCamera : MonoBehaviour
     {
         if (dragZone == null)
             dragZone = FindFirstObjectByType<TouchDragZone>();
+
+        var cam = GetComponent<Camera>();
+        if (cam != null && RenderSettings.fog)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = RenderSettings.fogColor;
+            if (RenderSettings.fogMode == FogMode.Linear && RenderSettings.fogEndDistance > 0f)
+            {
+                cam.farClipPlane = Mathf.Max(RenderSettings.fogEndDistance + 25f, 120f);
+            }
+        }
     }
 
     private void LateUpdate()

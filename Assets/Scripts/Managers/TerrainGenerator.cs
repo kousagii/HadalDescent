@@ -146,7 +146,7 @@ public class TerrainGenerator : MonoBehaviour
         culler.ClearAll();
 
         // --- Phase 2: Scatter environment props on the mesh ---
-        _propScatterer.Scatter(_meshGen, envPropSet, _zoneW, _zoneL, _pcgSeed);
+        _propScatterer.Scatter(_meshGen, this, envPropSet, _zoneW, _zoneL, _pcgSeed);
 
         // --- Phase 3: Spawn species onto the generated seabed ---
         var spawner = FindFirstObjectByType<SpeciesSpawner>();

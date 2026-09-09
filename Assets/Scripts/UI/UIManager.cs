@@ -79,6 +79,48 @@ public class UIManager : MonoBehaviour
     // Unity lifecycle
     // -----------------------------------------------------------------------
 
+    private GameObject _hudRoot;
+    private bool _isExplorationHUDVisible = false;
+    public bool IsExplorationHUDVisible => _isExplorationHUDVisible;
+
+    public static bool IsMenuScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName)) return false;
+        return sceneName == "MainMenu" || sceneName == "SplashScreen" || sceneName == "ZoneSelection" || sceneName == "ZoneSelect";
+    }
+
+    private void EnsureHudRoot()
+    {
+        if (_hudRoot != null) return;
+        var hudTr = transform.Find("HUD");
+        if (hudTr != null)
+        {
+            _hudRoot = hudTr.gameObject;
+            return;
+        }
+
+        var canvas = GetComponentInParent<Canvas>() ?? GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            hudTr = canvas.transform.Find("HUD");
+            if (hudTr != null)
+            {
+                _hudRoot = hudTr.gameObject;
+                return;
+            }
+        }
+
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            var child = transform.GetChild(i);
+            if (child.name.Equals("HUD", StringComparison.OrdinalIgnoreCase))
+            {
+                _hudRoot = child.gameObject;
+                return;
+            }
+        }
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -96,7 +138,15 @@ public class UIManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
+        EnsureHudRoot();
         HideMinigamesAndModals();
+
+        // Immediately hide HUD if starting in a menu scene
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (IsMenuScene(currentScene))
+        {
+            SetExplorationHUDVisible(false);
+        }
     }
 
     private void OnDestroy()
@@ -108,8 +158,10 @@ public class UIManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        EnsureHudRoot();
+
         // 1. Is this a menu scene or an exploration zone?
-        bool isMenu = scene.name == "MainMenu" || scene.name == "SplashScreen" || scene.name == "ZoneSelect";
+        bool isMenu = IsMenuScene(scene.name);
         SetExplorationHUDVisible(!isMenu);
 
         HideMinigamesAndModals();
@@ -138,6 +190,16 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        EnsureHudRoot();
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        bool isMenu = IsMenuScene(currentScene);
+        if (isMenu)
+        {
+            SetExplorationHUDVisible(false);
+            return;
+        }
+
         if (depthTracker == null)
             depthTracker = FindFirstObjectByType<DepthTracker>();
 
@@ -174,6 +236,7 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
+        if (!_isExplorationHUDVisible) return;
         RefreshDepth();
         RefreshHUD();
     }
@@ -212,18 +275,25 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SetExplorationHUDVisible(bool visible)
     {
-        var hudGO = GameObject.Find("HUD");
-        if (hudGO != null)
+        _isExplorationHUDVisible = visible;
+
+        EnsureHudRoot();
+        if (_hudRoot != null)
         {
-            hudGO.SetActive(visible);
+            _hudRoot.SetActive(visible);
         }
 
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas == null) canvas = GetComponent<Canvas>();
+        var canvas = GetComponentInParent<Canvas>() ?? GetComponent<Canvas>();
         if (canvas != null)
         {
             var hudTr = canvas.transform.Find("HUD");
             if (hudTr != null) hudTr.gameObject.SetActive(visible);
+        }
+
+        var hudGO = GameObject.Find("HUD");
+        if (hudGO != null)
+        {
+            hudGO.SetActive(visible);
         }
 
         if (sonarMap != null) sonarMap.gameObject.SetActive(visible);

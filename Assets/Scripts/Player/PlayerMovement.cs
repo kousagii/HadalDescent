@@ -198,6 +198,16 @@ public class PlayerMovement : MonoBehaviour
             targetVelocity.y = 0f;
         }
 
+        // Safety check: prevent extreme velocity spikes or NaN corruption from violent collisions
+        if (float.IsNaN(rb.linearVelocity.x) || float.IsNaN(rb.linearVelocity.y) || float.IsNaN(rb.linearVelocity.z))
+        {
+            rb.linearVelocity = Vector3.zero;
+        }
+        else if (rb.linearVelocity.sqrMagnitude > 625f) // Clamp max speed to 25 m/s
+        {
+            rb.linearVelocity = Vector3.ClampMagnitude(rb.linearVelocity, 25f);
+        }
+
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
 
         // Clamp position to water surface ceiling

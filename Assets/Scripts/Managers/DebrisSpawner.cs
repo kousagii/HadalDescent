@@ -111,6 +111,7 @@ public class DebrisSpawner : MonoBehaviour
         drum.transform.localScale = new Vector3(1.2f, 1.4f, 1.2f);
         drum.transform.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 15f);
         drum.GetComponent<Renderer>().material = CreateMaterial(new Color(0.45f, 0.32f, 0.22f)); // Rusted iron
+        var c1 = drum.GetComponent<Collider>(); if (c1 != null) Destroy(c1);
 
         // 2. Metal Scrap Pipe
         var pipe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -119,6 +120,7 @@ public class DebrisSpawner : MonoBehaviour
         pipe.transform.localScale = new Vector3(0.6f, 1.6f, 0.6f);
         pipe.transform.localRotation = Quaternion.Euler(0f, 45f, 80f);
         pipe.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.50f, 0.42f));
+        var c2 = pipe.GetComponent<Collider>(); if (c2 != null) Destroy(c2);
 
         // 3. Plastic Waste Pile
         var plastic = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -127,6 +129,7 @@ public class DebrisSpawner : MonoBehaviour
         plastic.transform.localScale = new Vector3(1.4f, 0.5f, 1.1f);
         plastic.transform.localRotation = Quaternion.Euler(5f, Random.Range(0f, 360f), 0f);
         plastic.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.90f, 0.95f, 0.8f));
+        var c3 = plastic.GetComponent<Collider>(); if (c3 != null) Destroy(c3);
 
         // 4. Toxic / Battery Canister
         var batt = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -134,6 +137,7 @@ public class DebrisSpawner : MonoBehaviour
         batt.transform.localPosition = new Vector3(0.3f, 0.2f, -0.9f);
         batt.transform.localScale = new Vector3(0.7f, 0.4f, 0.5f);
         batt.GetComponent<Renderer>().material = CreateMaterial(new Color(0.2f, 0.8f, 0.3f)); // Toxic green
+        var c4 = batt.GetComponent<Collider>(); if (c4 != null) Destroy(c4);
 
         return rootGO;
     }
@@ -159,12 +163,6 @@ public class DebrisSpawner : MonoBehaviour
 
     private static Material CreateMaterial(Color col)
     {
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                     ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                     ?? Shader.Find("Standard")
-                     ?? Shader.Find("Diffuse");
-        var mat = new Material(shader);
-        mat.color = col;
-        return mat;
+        return MaterialUtils.CreateColoredMaterial(col);
     }
 }

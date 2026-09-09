@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Generates a procedural ocean floor mesh with authentic marine geography:
@@ -131,7 +131,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         if (seabedMaterial != null)
             _meshRenderer.material = seabedMaterial;
         else
-            _meshRenderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            _meshRenderer.material = MaterialUtils.CreateColoredMaterial(new Color(0.12f, 0.22f, 0.28f, 1f));
 
         _meshCollider.sharedMesh = null;
         _meshCollider.sharedMesh = _mesh;

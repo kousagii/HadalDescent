@@ -333,6 +333,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _minigameCam.farClipPlane    = 50f;
         _minigameCam.depth           = 100;
 
+        var camData = camGO.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (camData != null)
+        {
+            camData.renderPostProcessing = false;
+        }
+
         // 2. Underwater Lighting (Key Light + Fill Light to prevent dark murky scenes)
         var lightGO = new GameObject("StageLight", typeof(Light));
         lightGO.transform.SetParent(_stageRoot.transform, false);
@@ -902,11 +908,17 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             eventData.pressEventCamera,
             out Vector2 localPoint);
 
-        float maxRadius = 70f;
-        localPoint = Vector2.ClampMagnitude(localPoint, maxRadius);
-        _joystickHandle.anchoredPosition = new Vector2(localPoint.x, 0f);
+        // Subtract the visual center of _joystickBackground so offset is 0 at center regardless of pivot!
+        Vector2 centerOffset = localPoint - _joystickBackground.rect.center;
 
-        _joystickHorizontalInput = Mathf.Clamp(localPoint.x / maxRadius, -1f, 1f);
+        // Radius constraint: keep handle nicely within outer ring (40% of ring width)
+        float bgWidth = _joystickBackground.rect.width > 10f ? _joystickBackground.rect.width : 100f;
+        float maxRadius = bgWidth * 0.40f;
+
+        float clampedX = Mathf.Clamp(centerOffset.x, -maxRadius, maxRadius);
+        _joystickHandle.anchoredPosition = new Vector2(clampedX, 0f);
+
+        _joystickHorizontalInput = Mathf.Clamp(clampedX / maxRadius, -1f, 1f);
     }
 
     private void OnJoystickPointerUp()
@@ -938,6 +950,16 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         // 2. Move (Joystick Handle Thumb - solid dark circle like in HUD picture 1, NO inner glow)
         if (customJoystickHandle != null)
         {
+            // Ensure proper center anchoring & zero initial offset
+            customJoystickHandle.anchorMin = new Vector2(0.5f, 0.5f);
+            customJoystickHandle.anchorMax = new Vector2(0.5f, 0.5f);
+            customJoystickHandle.pivot     = new Vector2(0.5f, 0.5f);
+            customJoystickHandle.anchoredPosition = Vector2.zero;
+
+            // Disable conflicting OnScreenStick so it doesn't fight our drag handler
+            var onScreenStick = customJoystickHandle.GetComponent<UnityEngine.InputSystem.OnScreen.OnScreenStick>();
+            if (onScreenStick != null) onScreenStick.enabled = false;
+
             var oldGlow = customJoystickHandle.transform.Find("InnerGlow");
             if (oldGlow != null)
             {
@@ -1064,6 +1086,19 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) moveAxis = 1f;
 
             if (kb.spaceKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame)
+            {
+                OnDropClawPressed();
+            }
+        }
+
+        var pad = Gamepad.current;
+        if (pad != null)
+        {
+            float padX = pad.leftStick.x.ReadValue();
+            if (Mathf.Abs(padX) > 0.1f && Mathf.Abs(padX) > Mathf.Abs(moveAxis))
+                moveAxis = padX;
+
+            if (pad.buttonSouth.wasPressedThisFrame || pad.dpad.down.wasPressedThisFrame)
             {
                 OnDropClawPressed();
             }
@@ -1488,13 +1523,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static Material CreateMaterial(Color col)
     {
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                     ?? Shader.Find("Universal Render Pipeline/Simple Lit")
-                     ?? Shader.Find("Standard")
-                     ?? Shader.Find("Diffuse");
-        var mat = new Material(shader);
-        mat.color = col;
-        return mat;
+        return MaterialUtils.CreateColoredMaterial(col);
     }
 
     private static GameObject CreateUIPanel(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 pos, Vector2 size, Color col)
