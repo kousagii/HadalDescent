@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: SuluSeaRibbonfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: sulu_ribbonfish_001
+  commonName: Sulu Sea Ribbonfish
+  scientificName: Benthodesmus suluensis
+  taxonomicClass: 0
+  zoneIndex: 1
+  habitat: "Deep water (200\u2013500 m)"
+  depthRangeText: "200\u2013500 m"
+  explorationHint: Look for undulating metallic silver bands gliding vertically through
+    open mesopelagic water.
+  secondaryZoneIndices: 
+  characteristics: Very long, thin, silver-colored body.
+  ecologicalRole: Hunts small fish and other small animals.
+  interestingFact: Its ribbon-like body makes it look more like a swimming ribbon
+    than a normal fish.
+  rdpReward: 85
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 1
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 0.38
+  instanceCount: 4
+  wanderRadius: 22
+  moveSpeed: 2.8
+  fleeSpeed: 5.5
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 0.9
+  placeholderShape: 1
+  placeholderColor: {r: 0.78, g: 0.84, b: 0.9, a: 1}
+  placeholderScale: {x: 0.3, y: 2.5, z: 0.3}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

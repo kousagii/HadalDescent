@@ -480,7 +480,7 @@ public static class SpeciesDataGenerator
             previewScaleMultiplier = 1.0f
         }));
 
-        UpdateRegistry(createdAssets);
+        UpdateRegistryForZone(0, createdAssets);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -488,7 +488,30 @@ public static class SpeciesDataGenerator
         Debug.Log($"[SpeciesDataGenerator] Successfully generated and aligned all {createdAssets.Count} official scientific species for Sunlight Zone!");
     }
 
-    private static SpeciesData CreateOrUpdateSpecies(string folder, string assetName, SpeciesDataConfig config)
+    [MenuItem("HadalDescent/Populate Twilight Zone (Zone 1)")]
+    public static void GenerateTwilightSpecies() => TwilightSpeciesData.Generate();
+
+    [MenuItem("HadalDescent/Populate Midnight Zone (Zone 2)")]
+    public static void GenerateMidnightSpecies() => MidnightSpeciesData.Generate();
+
+    [MenuItem("HadalDescent/Populate Abyssal Zone (Zone 3)")]
+    public static void GenerateAbyssalSpecies() => AbyssalSpeciesData.Generate();
+
+    [MenuItem("HadalDescent/Populate Hadal Zone (Zone 4)")]
+    public static void GenerateHadalSpecies() => HadalSpeciesData.Generate();
+
+    [MenuItem("HadalDescent/Populate ALL Species (All 5 Zones)")]
+    public static void GenerateAllZonesSpecies()
+    {
+        GenerateSunlightSpecies();
+        TwilightSpeciesData.Generate();
+        MidnightSpeciesData.Generate();
+        AbyssalSpeciesData.Generate();
+        HadalSpeciesData.Generate();
+        Debug.Log("[SpeciesDataGenerator] Successfully generated all scientific species across all 5 ocean zones!");
+    }
+
+    public static SpeciesData CreateOrUpdateSpecies(string folder, string assetName, SpeciesDataConfig config)
     {
         string path = $"{folder}/{assetName}.asset";
         SpeciesData asset = AssetDatabase.LoadAssetAtPath<SpeciesData>(path);
@@ -529,7 +552,7 @@ public static class SpeciesDataGenerator
         return asset;
     }
 
-    private static void UpdateRegistry(List<SpeciesData> speciesList)
+    public static void UpdateRegistryForZone(int targetZoneIndex, List<SpeciesData> speciesList)
     {
         string registryPath = "Assets/Resources/SpeciesRegistry.asset";
         var registry = AssetDatabase.LoadAssetAtPath<SpeciesRegistry>(registryPath);
@@ -546,7 +569,7 @@ public static class SpeciesDataGenerator
         for (int i = 0; i < allSpeciesProp.arraySize; i++)
         {
             var item = allSpeciesProp.GetArrayElementAtIndex(i).objectReferenceValue as SpeciesData;
-            if (item != null && item.zoneIndex != 0)
+            if (item != null && item.zoneIndex != targetZoneIndex)
                 existingList.Add(item);
         }
 
@@ -563,7 +586,7 @@ public static class SpeciesDataGenerator
         EditorUtility.SetDirty(registry);
     }
 
-    private struct SpeciesDataConfig
+    public struct SpeciesDataConfig
     {
         public string speciesId;
         public string commonName;

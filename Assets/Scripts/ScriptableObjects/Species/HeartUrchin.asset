@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: HeartUrchin
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: heart_urchin_001
+  commonName: Heart Urchin
+  scientificName: Echinocardium cordatum
+  taxonomicClass: 6
+  zoneIndex: 1
+  habitat: "Sandy or muddy seafloor (0\u2013230 m)"
+  depthRangeText: "0\u2013230 m"
+  explorationHint: Semi-buried in fine sand beds near the zone entrance.
+  secondaryZoneIndices: 
+  characteristics: Heart-shaped body covered with tiny spines.
+  ecologicalRole: Mixes the sand and mud while searching for food.
+  interestingFact: Its heart shape is why it is commonly called a heart urchin.
+  rdpReward: 60
+  scanDifficulty: 1
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0
+  maxDepthFraction: 0.15
+  instanceCount: 4
+  wanderRadius: 0
+  moveSpeed: 0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 0
+  placeholderColor: {r: 0.85, g: 0.75, b: 0.55, a: 1}
+  placeholderScale: {x: 0.8, y: 0.6, z: 0.8}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

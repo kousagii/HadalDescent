@@ -178,7 +178,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.02f, 0.015f, 0.04f, 1f),
 
             requiredHullTier = 4,
-            totalSpeciesCount = 21,
+            totalSpeciesCount = 15,
             unlockThreshold  = 0.5f,
 
             // PCG — vast mud plains & cold seep hills
@@ -210,7 +210,7 @@ public static class ZoneConfig
             ambientLight     = new Color(0.01f, 0.01f, 0.015f, 1f),
 
             requiredHullTier = 5,
-            totalSpeciesCount = 23,
+            totalSpeciesCount = 21,
             unlockThreshold  = 0.5f,
 
             // PCG — deep trench walls & fault terraces

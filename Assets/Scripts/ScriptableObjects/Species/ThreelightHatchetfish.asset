@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: ThreelightHatchetfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: threelight_hatchetfish_001
+  commonName: Threelight Hatchetfish
+  scientificName: Polyipnus triphanos
+  taxonomicClass: 0
+  zoneIndex: 1
+  habitat: "Open water (322\u2013966 m)"
+  depthRangeText: "322\u2013966 m"
+  explorationHint: Watch for small glimmering photophores glowing in the twilight
+    midwater.
+  secondaryZoneIndices: 
+  characteristics: Small, shiny fish with light-producing organs.
+  ecologicalRole: Eats tiny sea animals and is food for larger fish.
+  interestingFact: It can produce its own light in the darkness.
+  rdpReward: 70
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.15
+  maxDepthFraction: 0.96
+  instanceCount: 6
+  wanderRadius: 14
+  moveSpeed: 2
+  fleeSpeed: 4.5
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 2
+  placeholderColor: {r: 0.7, g: 0.8, b: 0.9, a: 1}
+  placeholderScale: {x: 0.5, y: 0.7, z: 0.2}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

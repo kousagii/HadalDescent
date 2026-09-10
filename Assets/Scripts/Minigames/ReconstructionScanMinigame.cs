@@ -399,7 +399,11 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
         var font = UIThemeManager.AlohaFont;
 
-        // Top Header Border Frame (1120 x 136 px) - Glowing cyan outline border
+        // Top Header Border Frame - Glowing cyan outline border (responsive width, clamped to canvas)
+        var canvasRect = canvas.GetComponent<RectTransform>();
+        float canvasW  = canvasRect != null ? canvasRect.rect.width : 1920f;
+        float headerW  = Mathf.Min(1120f, canvasW * 0.94f);
+
         var borderFrameGO = new GameObject("HeaderBorderFrame", typeof(RectTransform), typeof(Image));
         borderFrameGO.transform.SetParent(_rootPanel, false);
         var borderRect = borderFrameGO.GetComponent<RectTransform>();
@@ -407,7 +411,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
         borderRect.anchorMax = new Vector2(0.5f, 1.0f);
         borderRect.pivot     = new Vector2(0.5f, 1.0f);
         borderRect.anchoredPosition = new Vector2(0f, -50f);
-        borderRect.sizeDelta = new Vector2(1120f, 136f);
+        borderRect.sizeDelta = new Vector2(headerW, 136f);
         var borderImg = borderFrameGO.GetComponent<Image>();
         borderImg.color = new Color(0.15f, 0.75f, 0.95f, 0.95f); // Glowing cyan border
         borderImg.raycastTarget = false;
@@ -424,25 +428,24 @@ public class ReconstructionScanMinigame : MonoBehaviour
         headerCardImg.color = new Color(0.01f, 0.03f, 0.06f, 0.98f); // Deep dark oceanic slate (like minigame 3 status banner)
         headerCardImg.raycastTarget = false;
 
-        // Title inside Header Box (36pt bold font preserved, cleanly centered inside the box)
+        // Title & Brief Instruction inside Header Box (formatted like minigame 1 with auto-sizing to strictly prevent overflow)
         var titleGO = new GameObject("Title", typeof(RectTransform));
         titleGO.transform.SetParent(headerCardGO.transform, false);
         var titleRect = titleGO.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.02f, 0.48f);
-        titleRect.anchorMax = new Vector2(0.98f, 0.94f);
+        titleRect.anchorMin = new Vector2(0.03f, 0.44f);
+        titleRect.anchorMax = new Vector2(0.97f, 0.94f);
         titleRect.sizeDelta = Vector2.zero;
         var titleTmp = titleGO.AddComponent<TextMeshProUGUI>();
         if (font != null) titleTmp.font = font;
-        string headerTitle = _data != null && !string.IsNullOrEmpty(_data.commonName)
-            ? $"RECONSTRUCTION SCAN: {_data.commonName.ToUpper()}"
-            : "RECONSTRUCTION SCAN - ARRANGE THE TILES";
-        titleTmp.text = headerTitle;
-        titleTmp.fontSize = 36;
-        titleTmp.fontStyle = FontStyles.Bold;
+        titleTmp.text = "RECONSTRUCTION SCAN - ARRANGE THE TILES";
+        titleTmp.enableAutoSizing = true;
+        titleTmp.fontSizeMin = 18f;
+        titleTmp.fontSizeMax = 30f;
+        titleTmp.fontStyle = FontStyles.Normal;
         titleTmp.color = Color.white;
         titleTmp.alignment = TextAlignmentOptions.Center;
         titleTmp.textWrappingMode = TextWrappingModes.NoWrap;
-        titleTmp.overflowMode = TextOverflowModes.Overflow;
+        titleTmp.overflowMode = TextOverflowModes.Ellipsis;
 
         // Timer strip inside Header Box
         var timerBG = new GameObject("TimerBG", typeof(RectTransform), typeof(Image));
@@ -479,7 +482,6 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _timerText.fontStyle = FontStyles.Bold;
 
         // Grid container
-        var canvasRect = canvas.GetComponent<RectTransform>();
         float canvasH  = canvasRect != null ? canvasRect.rect.height : 1080f;
         
         // Header banner bottom edge is at Y = -186 from canvas top.

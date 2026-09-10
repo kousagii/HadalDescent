@@ -168,6 +168,9 @@ public enum TaxonomicClass
     Bivalvia,         // Clams, mussels                 [Stationary]
     Anthozoa,         // Corals, anemones, sea pens     [Stationary + Scannable]
     Demospongiae,     // Sponges                        [Stationary + Scannable]
+    Holothuroidea,    // Sea cucumbers                  [Stationary / Benthic]
+    Crinoidea,        // Sea lilies, feather stars      [Stationary]
+    Pycnogonida       // Sea spiders                    [Benthic]
 }
 
 public enum PlaceholderShape { Sphere, Capsule, Cube, Cylinder }

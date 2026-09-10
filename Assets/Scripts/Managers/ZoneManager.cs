@@ -83,6 +83,19 @@ public class ZoneManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        // Detect which zone scene is *already* active when PersistentManagers
+        // loads additively, or when Play is pressed directly inside a zone scene.
+        string activeName = SceneManager.GetActiveScene().name;
+        for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+        {
+            if (ZoneConfig.Zones[i].sceneName == activeName)
+            {
+                CurrentZoneIndex = i;
+                Debug.Log($"[ZoneManager] Detected active zone scene '{activeName}' → CurrentZoneIndex = {i} ({ZoneConfig.Zones[i].zoneName})");
+                break;
+            }
+        }
     }
 
     private void OnDestroy()

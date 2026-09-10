@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: DeepWaterSponge
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: deepwater_sponge_001
+  commonName: Deep-water Sponge
+  scientificName: Corallistes masoni
+  taxonomicClass: 13
+  zoneIndex: 1
+  habitat: "Rocky seafloor (200\u20131,000 m)"
+  depthRangeText: "200\u20131,000 m"
+  explorationHint: Anchored to exposed rock promontories filtering mineral-rich deep
+    currents.
+  secondaryZoneIndices: 
+  characteristics: Hard, cup-shaped body with a strong skeleton.
+  ecologicalRole: Filters food from the water and provides shelter.
+  interestingFact: Its skeleton contains tiny structures made of silica.
+  rdpReward: 65
+  scanDifficulty: 1
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 3
+  minDepthFraction: 0
+  maxDepthFraction: 1
+  instanceCount: 4
+  wanderRadius: 0
+  moveSpeed: 0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 3
+  placeholderColor: {r: 0.82, g: 0.78, b: 0.68, a: 1}
+  placeholderScale: {x: 1.2, y: 1.2, z: 1.2}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

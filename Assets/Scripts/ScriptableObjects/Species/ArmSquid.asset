@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: ArmSquid
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: arm_squid_001
+  commonName: Arm Squid
+  scientificName: Brachioteuthis picta
+  taxonomicClass: 4
+  zoneIndex: 1
+  habitat: "Open ocean (500\u20131,000 m)"
+  depthRangeText: "500\u20131,000 m"
+  explorationHint: Drifting in deep, dim water with arms outstretched to snag prey.
+  secondaryZoneIndices: 
+  characteristics: Small squid with a soft body and long arms.
+  ecologicalRole: Eats tiny sea animals and becomes food for larger predators.
+  interestingFact: Like other squid, it can shoot water from its body to move quickly.
+  rdpReward: 80
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.375
+  maxDepthFraction: 1
+  instanceCount: 4
+  wanderRadius: 18
+  moveSpeed: 3
+  fleeSpeed: 6
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 1
+  placeholderColor: {r: 0.72, g: 0.35, b: 0.4, a: 1}
+  placeholderScale: {x: 0.5, y: 1.4, z: 0.5}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

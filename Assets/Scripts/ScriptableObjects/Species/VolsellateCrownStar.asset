@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: VolsellateCrownStar
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: crown_star_001
+  commonName: Volsellate Crown Star
+  scientificName: Coronaster volsellatus
+  taxonomicClass: 7
+  zoneIndex: 1
+  habitat: "Deep seafloor (82\u2013630 m)"
+  depthRangeText: "82\u2013630 m"
+  explorationHint: Sprawled along stony seabed slopes with multiple spiny arms deployed.
+  secondaryZoneIndices: 
+  characteristics: Star-shaped body with many arms and spines.
+  ecologicalRole: Eats small animals and leftover organic material.
+  interestingFact: It can regrow an arm after losing one.
+  rdpReward: 70
+  scanDifficulty: 2
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 2
+  minDepthFraction: 0
+  maxDepthFraction: 0.54
+  instanceCount: 4
+  wanderRadius: 0
+  moveSpeed: 0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 0
+  placeholderColor: {r: 0.92, g: 0.28, b: 0.28, a: 1}
+  placeholderScale: {x: 1.1, y: 0.25, z: 1.1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

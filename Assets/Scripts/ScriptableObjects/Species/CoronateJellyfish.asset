@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: CoronateJellyfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: coronate_jellyfish_001
+  commonName: Coronate Jellyfish
+  scientificName: Nausithoe punctata
+  taxonomicClass: 8
+  zoneIndex: 1
+  habitat: Open water (up to 1,000 m)
+  depthRangeText: up to 1,000 m
+  explorationHint: Pulsing slowly through dark open currents with its distinctive
+    crown-like groove.
+  secondaryZoneIndices: 
+  characteristics: Small jellyfish with a rounded, ridged body.
+  ecologicalRole: Eats tiny animals drifting in the water.
+  interestingFact: Some members of its group have a crown-like shape around the bell.
+  rdpReward: 70
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 1
+  instanceCount: 5
+  wanderRadius: 16
+  moveSpeed: 1.2
+  fleeSpeed: 3
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 0
+  placeholderColor: {r: 0.65, g: 0.25, b: 0.7, a: 0.85}
+  placeholderScale: {x: 0.8, y: 0.8, z: 0.8}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

@@ -149,6 +149,9 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         if (warningPanel != null)
             warningPanel.SetActive(false);
 
+        // Ensure both buttons are wide and equal width
+        SynchronizeButtonSizes(confirmButton, cancelButton, 350f, 72f);
+
         Time.timeScale = 0f; // Pause gameplay while deciding
     }
 
@@ -163,10 +166,13 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
         // Update action button label based on warning type
         string actionLabel = isSpeciesWarning ? "GO TO BESTIARY" : "GO TO SHOP";
         UpdateButtonLabel(warningShopButton, actionLabel);
+        SynchronizeButtonSizes(warningShopButton, warningCloseButton, 350f, 72f);
+
         // Also update confirmButton label and click handler as fallback path
         if (warningPanel == null && confirmButton != null)
         {
             UpdateButtonLabel(confirmButton, actionLabel);
+            SynchronizeButtonSizes(confirmButton, cancelButton, 350f, 72f);
             confirmButton.onClick.RemoveAllListeners();
             confirmButton.onClick.AddListener(OnShopClicked);
         }
@@ -201,9 +207,42 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
     {
         if (btn == null) return;
         var tmp = btn.GetComponentInChildren<TMP_Text>(true);
-        if (tmp != null) { tmp.text = label; return; }
+        if (tmp != null)
+        {
+            tmp.text = label;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 18f;
+            tmp.fontSizeMax = 32f;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
+            return;
+        }
         var legacy = btn.GetComponentInChildren<Text>(true);
         if (legacy != null) legacy.text = label;
+    }
+
+    private static void SynchronizeButtonSizes(Button leftBtn, Button rightBtn, float minWidth = 350f, float minHeight = 72f)
+    {
+        if (leftBtn == null && rightBtn == null) return;
+        RectTransform leftRt  = leftBtn  != null ? leftBtn.GetComponent<RectTransform>()  : null;
+        RectTransform rightRt = rightBtn != null ? rightBtn.GetComponent<RectTransform>() : null;
+
+        float width  = minWidth;
+        float height = minHeight;
+        if (leftRt != null)
+        {
+            width  = Mathf.Max(width,  leftRt.sizeDelta.x);
+            height = Mathf.Max(height, leftRt.sizeDelta.y);
+        }
+        if (rightRt != null)
+        {
+            width  = Mathf.Max(width,  rightRt.sizeDelta.x);
+            height = Mathf.Max(height, rightRt.sizeDelta.y);
+        }
+
+        Vector2 size = new Vector2(width, height);
+        if (leftRt != null)  leftRt.sizeDelta  = size;
+        if (rightRt != null) rightRt.sizeDelta = size;
     }
 
     public void HideAll()

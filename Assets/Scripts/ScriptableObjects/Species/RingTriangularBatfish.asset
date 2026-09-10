@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: RingTriangularBatfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: ring_batfish_001
+  commonName: Ring Triangular Batfish
+  scientificName: Malthopsis annulifera
+  taxonomicClass: 0
+  zoneIndex: 1
+  habitat: "Deep seafloor (90\u2013590 m)"
+  depthRangeText: "90\u2013590 m"
+  explorationHint: Perched motionlessly on hard gravel and rock ledges resembling
+    an alien carving.
+  secondaryZoneIndices: 
+  characteristics: Wide, flattened body with a large head.
+  ecologicalRole: Finds and eats small animals on the seafloor.
+  interestingFact: Its unusual shape can make it look like a tiny alien creature.
+  rdpReward: 80
+  scanDifficulty: 2
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 2
+  minDepthFraction: 0
+  maxDepthFraction: 0.49
+  instanceCount: 4
+  wanderRadius: 0
+  moveSpeed: 0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 3
+  placeholderColor: {r: 0.68, g: 0.58, b: 0.45, a: 1}
+  placeholderScale: {x: 0.9, y: 0.4, z: 0.8}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

@@ -387,22 +387,26 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         tmp.color = Color.white;
         textComponent = tmp;
 
+        const float btnWidth = 350f;
+        const float btnHeight = 72f;
+        const float btnOffset = 195f; // Centers at -195 and +195 -> 40px gap between 350px buttons
+
         if (isWarning)
         {
-            CreateButton(panel.transform, "ShopBtn", "GO TO SHOP 🛠️", new Vector2(-160f, -160f), () => OnWarningShopClicked(), 280f);
-            CreateButton(panel.transform, "CancelBtn", "CANCEL", new Vector2(160f, -160f), () => OnCancel(), 220f);
+            CreateButton(panel.transform, "ShopBtn", "GO TO SHOP", new Vector2(-btnOffset, -160f), () => OnWarningShopClicked(), btnWidth, btnHeight);
+            CreateButton(panel.transform, "CancelBtn", "CANCEL", new Vector2(btnOffset, -160f), () => OnCancel(), btnWidth, btnHeight);
         }
         else
         {
-            CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(-140f, -160f), () => OnConfirm(), 220f);
-            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(140f, -160f), () => OnCancel(), 220f);
+            CreateButton(panel.transform, "ConfirmBtn", "YES", new Vector2(-btnOffset, -160f), () => OnConfirm(), btnWidth, btnHeight);
+            CreateButton(panel.transform, "CancelBtn", "NO", new Vector2(btnOffset, -160f), () => OnCancel(), btnWidth, btnHeight);
         }
 
         panel.SetActive(false);
         return panel;
     }
 
-    private void CreateButton(Transform parent, string name, string labelText, Vector2 position, UnityEngine.Events.UnityAction onClick, float width = 160f)
+    private void CreateButton(Transform parent, string name, string labelText, Vector2 position, UnityEngine.Events.UnityAction onClick, float width = 350f, float height = 72f)
     {
         var font = UIThemeManager.AlohaFont;
 
@@ -410,7 +414,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         btnGO.transform.SetParent(parent, false);
 
         RectTransform rect = btnGO.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(width, 70);
+        rect.sizeDelta = new Vector2(width, height);
         rect.anchoredPosition = position;
 
         UnityEngine.UI.Image img = btnGO.GetComponent<UnityEngine.UI.Image>();
@@ -425,14 +429,19 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         RectTransform textRect = textGO.GetComponent<RectTransform>();
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
+        textRect.offsetMin = new Vector2(12f, 4f);
+        textRect.offsetMax = new Vector2(-12f, -4f);
 
         TextMeshProUGUI txt = textGO.AddComponent<TextMeshProUGUI>();
         if (font != null) txt.font = font;
         txt.text = labelText;
         txt.alignment = TextAlignmentOptions.Center;
-        txt.fontSize = 36;
+        txt.enableAutoSizing = true;
+        txt.fontSize = 32;
+        txt.fontSizeMin = 18;
+        txt.fontSizeMax = 32;
+        txt.textWrappingMode = TextWrappingModes.NoWrap;
+        txt.overflowMode = TextOverflowModes.Ellipsis;
         txt.fontStyle = FontStyles.Bold;
         txt.color = Color.white;
         txt.raycastTarget = false;
@@ -596,22 +605,67 @@ public class ZoneBoundaryTrigger : MonoBehaviour
                 }
             }
 
+            // Also locate cancel button to synchronize width
+            Transform cancelBtnTr = hullWarningUI.transform.Find("CancelBtn");
+            if (cancelBtnTr == null)
+            {
+                var allBtns = hullWarningUI.GetComponentsInChildren<Button>(true);
+                foreach (var b in allBtns)
+                {
+                    if (b.name.Contains("Cancel") || b.name.Contains("Close") || b.name.Contains("No"))
+                    {
+                        cancelBtnTr = b.transform;
+                        break;
+                    }
+                }
+            }
+
             if (shopBtn != null)
             {
+                var shopRect = shopBtn.GetComponent<RectTransform>();
+                if (shopRect != null && shopRect.sizeDelta.x < 350f)
+                {
+                    shopRect.sizeDelta = new Vector2(350f, Mathf.Max(shopRect.sizeDelta.y, 72f));
+                }
+
                 var shopLabel = shopBtn.GetComponentInChildren<TMP_Text>(true);
                 var legacyLabel = shopBtn.GetComponentInChildren<UnityEngine.UI.Text>(true);
                 shopBtn.onClick.RemoveAllListeners();
                 if (speciesNotMet)
                 {
-                    if (shopLabel != null) shopLabel.text = "GO TO BESTIARY";
+                    if (shopLabel != null)
+                    {
+                        shopLabel.text = "GO TO BESTIARY";
+                        shopLabel.enableAutoSizing = true;
+                        shopLabel.fontSizeMin = 18;
+                        shopLabel.fontSizeMax = 32;
+                        shopLabel.textWrappingMode = TextWrappingModes.NoWrap;
+                    }
                     if (legacyLabel != null) legacyLabel.text = "BESTIARY";
                     shopBtn.onClick.AddListener(() => OnWarningBestiaryClicked());
                 }
                 else
                 {
-                    if (shopLabel != null) shopLabel.text = "GO TO SHOP";
+                    if (shopLabel != null)
+                    {
+                        shopLabel.text = "GO TO SHOP";
+                        shopLabel.enableAutoSizing = true;
+                        shopLabel.fontSizeMin = 18;
+                        shopLabel.fontSizeMax = 32;
+                        shopLabel.textWrappingMode = TextWrappingModes.NoWrap;
+                    }
                     if (legacyLabel != null) legacyLabel.text = "GO TO SHOP";
                     shopBtn.onClick.AddListener(() => OnWarningShopClicked());
+                }
+
+                // Ensure the Cancel button is exactly the same width as the left button
+                if (cancelBtnTr != null)
+                {
+                    var cancelRect = cancelBtnTr.GetComponent<RectTransform>();
+                    if (cancelRect != null && shopRect != null)
+                    {
+                        cancelRect.sizeDelta = shopRect.sizeDelta;
+                    }
                 }
             }
 

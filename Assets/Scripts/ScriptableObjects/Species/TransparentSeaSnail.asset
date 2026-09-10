@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: TransparentSeaSnail
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: transparent_snail_001
+  commonName: Transparent Sea Snail
+  scientificName: Carinaria cristata
+  taxonomicClass: 10
+  zoneIndex: 1
+  habitat: Open ocean (up to about 500 m)
+  depthRangeText: up to about 500 m
+  explorationHint: Drifting gracefully through open water, nearly invisible like
+    living glass.
+  secondaryZoneIndices: 
+  characteristics: Mostly transparent body with a small shell.
+  ecologicalRole: Hunts tiny animals floating in the water.
+  interestingFact: Its clear body makes it difficult for predators to see.
+  rdpReward: 85
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 1
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 0.38
+  instanceCount: 3
+  wanderRadius: 15
+  moveSpeed: 1.8
+  fleeSpeed: 4
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 1
+  placeholderColor: {r: 0.7, g: 0.85, b: 0.95, a: 0.7}
+  placeholderScale: {x: 0.6, y: 1.2, z: 0.6}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

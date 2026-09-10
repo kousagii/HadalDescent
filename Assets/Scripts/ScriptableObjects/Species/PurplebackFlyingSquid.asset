@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: PurplebackFlyingSquid
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: purpleback_squid_001
+  commonName: Purpleback Flying Squid
+  scientificName: Sthenoteuthis oualaniensis
+  taxonomicClass: 4
+  zoneIndex: 1
+  habitat: Open ocean (up to 1,000 m)
+  depthRangeText: up to 1,000 m
+  explorationHint: Darting with explosive speed across the open water column.
+  secondaryZoneIndices: 
+  characteristics: Large squid with wide fins and a dark purple back.
+  ecologicalRole: Eats fish, shrimp, and other squid.
+  interestingFact: "Despite its name, it does not fly in the air\u2014it can move
+    rapidly through the water using jet propulsion."
+  rdpReward: 90
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 1
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 1
+  instanceCount: 3
+  wanderRadius: 25
+  moveSpeed: 3.8
+  fleeSpeed: 7
+  fleeRange: 10
+  returnThreshold: 40
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  placeholderShape: 1
+  placeholderColor: {r: 0.48, g: 0.18, b: 0.6, a: 1}
+  placeholderScale: {x: 0.6, y: 1.8, z: 0.6}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}
