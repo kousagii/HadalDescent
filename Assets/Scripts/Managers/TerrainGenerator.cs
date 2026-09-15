@@ -130,6 +130,10 @@ public class TerrainGenerator : MonoBehaviour
 
         // --- Phase 0: Apply ocean atmosphere & linear fog ---
         ZoneManager.ApplyAtmosphere(zone);
+        if (zoneIndex == 0)
+        {
+            SunlightAtmosphereVFX.EnsureInstance();
+        }
 
         // --- Phase 1: Generate ocean floor mesh ---
         Material seabedMat = envPropSet != null ? envPropSet.seabedMaterial : null;

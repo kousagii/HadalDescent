@@ -28,6 +28,37 @@ public class ZoneSceneSetup : MonoBehaviour
     private void Awake()
     {
         Validate();
+        EnsurePerimeterSideWalls();
+    }
+
+    private void EnsurePerimeterSideWalls()
+    {
+        if (!ZoneConfig.IsValidZone(zoneIndex)) return;
+        ZoneDefinition zone = ZoneConfig.Zones[zoneIndex];
+
+        float W = zone.playableWidth;
+        float L = zone.playableLength;
+        float D = zone.playableDepth;
+        float thickness = 10f;
+
+        EnsureSideWallRuntime("Wall_North", new Vector3(0f, -D * 0.5f,  L * 0.5f), new Vector3(W, D + 50f, thickness));
+        EnsureSideWallRuntime("Wall_South", new Vector3(0f, -D * 0.5f, -L * 0.5f), new Vector3(W, D + 50f, thickness));
+        EnsureSideWallRuntime("Wall_East",  new Vector3( W * 0.5f, -D * 0.5f, 0f), new Vector3(thickness, D + 50f, L));
+        EnsureSideWallRuntime("Wall_West",  new Vector3(-W * 0.5f, -D * 0.5f, 0f), new Vector3(thickness, D + 50f, L));
+    }
+
+    private void EnsureSideWallRuntime(string wallName, Vector3 pos, Vector3 size)
+    {
+        var existing = GameObject.Find(wallName);
+        if (existing != null) return;
+
+        var wall = new GameObject(wallName);
+        wall.transform.position = pos;
+        var col = wall.AddComponent<BoxCollider>();
+        col.isTrigger = false;
+        col.size = size;
+        int terrainLayer = LayerMask.NameToLayer("Terrain");
+        if (terrainLayer >= 0) wall.layer = terrainLayer;
     }
 
     private void Validate()

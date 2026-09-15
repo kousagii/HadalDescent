@@ -193,6 +193,9 @@ public class MainMenuController : MonoBehaviour
         if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
         GameManager.Instance.LoadGame();
 
+        int savedZone = PlayerPrefs.GetInt("Save_CurrentZone", 0);
+        ZoneManager.SetCurrentZone(savedZone);
+
         if (continueOpensZoneSelection)
         {
             if (customZoneSelectionUI != null)
@@ -229,7 +232,6 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        int savedZone = PlayerPrefs.GetInt("Save_CurrentZone", 0);
         string zoneScene = savedZone switch
         {
             0 => "SunlightZone",
@@ -240,6 +242,7 @@ public class MainMenuController : MonoBehaviour
             _ => startingZoneSceneName
         };
 
+        ZoneManager.SetCurrentZone(savedZone);
         SceneManager.LoadScene(zoneScene);
 
         // Apply saved position after the zone scene finishes loading

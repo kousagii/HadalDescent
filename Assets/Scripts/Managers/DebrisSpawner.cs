@@ -50,6 +50,7 @@ public class DebrisSpawner : MonoBehaviour
             d = def.playableDepth;
         }
 
+        // Confine debris strictly to 40% of zone extent to prevent spawning outside or beyond the ocean floor
         float halfW = w * 0.40f;
         float halfL = l * 0.40f;
 
@@ -59,6 +60,7 @@ public class DebrisSpawner : MonoBehaviour
             float rz = Random.Range(-halfL, halfL);
 
             float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -d;
+            floorY = Mathf.Max(floorY, -d); // Never below zone seabed floor
 
             Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
             Vector3 spawnPos;
@@ -70,6 +72,13 @@ public class DebrisSpawner : MonoBehaviour
             {
                 spawnPos = new Vector3(rx, floorY, rz);
             }
+
+            // Strictly prevent debris from spawning beyond or below the ocean floor
+            if (spawnPos.y < floorY)
+            {
+                spawnPos.y = floorY;
+            }
+
             SpawnSingleCluster(spawnPos, i);
         }
 

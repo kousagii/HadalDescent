@@ -241,6 +241,8 @@ public class TutorialManager : MonoBehaviour
         GameManager.SetTutorialCompleted(true);
         Debug.Log("[TutorialManager] Tutorial skipped by player — opening Zone Selection.");
 
+        ZoneSelectionUI.IsAfterTutorialFlow = true;
+
         if (ZoneSelectionUI.Instance != null)
         {
             ZoneSelectionUI.Instance.OpenZoneSelection();
@@ -326,6 +328,8 @@ public class TutorialManager : MonoBehaviour
         GameManager.SetTutorialCompleted(true);
         Debug.Log("[TutorialManager] Tutorial skipped — opening Zone Selection.");
 
+        ZoneSelectionUI.IsAfterTutorialFlow = true;
+
         if (ZoneSelectionUI.Instance != null)
         {
             ZoneSelectionUI.Instance.OpenZoneSelection();
@@ -376,6 +380,8 @@ public class TutorialManager : MonoBehaviour
         if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
 
         Debug.Log("[TutorialManager] Tutorial completed — opening Zone Selection.");
+
+        ZoneSelectionUI.IsAfterTutorialFlow = true;
 
         if (ZoneSelectionUI.Instance != null)
         {

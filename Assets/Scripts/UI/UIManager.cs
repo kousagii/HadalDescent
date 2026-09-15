@@ -245,17 +245,60 @@ public class UIManager : MonoBehaviour
     // Refresh methods (called every frame or on-demand)
     // -----------------------------------------------------------------------
 
+    private void EnsureHudLabels()
+    {
+        EnsureHudRoot();
+        if (zoneNameLabel == null)
+        {
+            var tr = (_hudRoot != null ? _hudRoot.transform.Find("Zone") : null)
+                  ?? GameObject.Find("Zone")?.transform;
+            if (tr != null) zoneNameLabel = tr.GetComponent<TMP_Text>();
+        }
+        if (depthLabel == null)
+        {
+            var tr = (_hudRoot != null ? _hudRoot.transform.Find("Depth") : null)
+                  ?? GameObject.Find("Depth")?.transform;
+            if (tr != null) depthLabel = tr.GetComponent<TMP_Text>();
+        }
+        if (rdpLabel == null)
+        {
+            var tr = (_hudRoot != null ? _hudRoot.transform.Find("RDP counter") : null)
+                  ?? GameObject.Find("RDP counter")?.transform;
+            if (tr != null) rdpLabel = tr.GetComponent<TMP_Text>();
+        }
+    }
+
     public void RefreshDepth()
     {
+        EnsureHudLabels();
+        if (depthTracker == null) depthTracker = FindFirstObjectByType<DepthTracker>();
         if (depthLabel == null || depthTracker == null) return;
         depthLabel.text = $"DEPTH  {depthTracker.DisplayDepthMetres:0} m";
     }
 
     public void RefreshHUD()
     {
+        EnsureHudLabels();
+
+        int z = ZoneManager.CurrentZoneIndex;
+        string activeScene = SceneManager.GetActiveScene().name;
+
+        // If ZoneManager index doesn't match the active scene, sync it from the active scene name
+        if (!ZoneConfig.IsValidZone(z) || ZoneConfig.Zones[z].sceneName != activeScene)
+        {
+            for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+            {
+                if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, StringComparison.OrdinalIgnoreCase))
+                {
+                    z = i;
+                    ZoneManager.SetCurrentZone(i);
+                    break;
+                }
+            }
+        }
+
         if (zoneNameLabel != null)
         {
-            int z = ZoneManager.CurrentZoneIndex;
             zoneNameLabel.text = ZoneConfig.IsValidZone(z)
                 ? ZoneConfig.Zones[z].zoneName.ToUpper()
                 : "SUNLIGHT ZONE";
@@ -511,7 +554,20 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void HideMinigamesAndModals()
     {
-        // 1. Minigame 3 (Environmental Cleanup)
+        // 0. Abort and clean up any active minigames
+        MinigameManager.Instance?.CancelActiveMinigame();
+
+        // 1. Destroy lingering procedural Minigame 1 & 2 panels (ReconMinigame / CaptureMinigame)
+        var allTransforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTransforms)
+        {
+            if (t != null && (t.name == "ReconMinigame" || t.name == "CaptureMinigame"))
+            {
+                Destroy(t.gameObject);
+            }
+        }
+
+        // 2. Minigame 3 (Environmental Cleanup)
         var mg3s = FindObjectsByType<EnvironmentalCleanupMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var mg in mg3s)
         {
@@ -519,7 +575,7 @@ public class UIManager : MonoBehaviour
             mg.gameObject.SetActive(false);
         }
 
-        // 2. Minigame 4 (Hazard Dodge)
+        // 3. Minigame 4 (Hazard Dodge)
         var mg4s = FindObjectsByType<HazardDodgeMinigame>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var mg in mg4s)
         {
@@ -1023,7 +1079,7 @@ public class UIManager : MonoBehaviour
         }
 
         // Safety: If iconImg was polluted with the hand or ring, recover proper icon
-        if (iconImg != null && (iconImg.sprite == null || iconImg.sprite.name == "buttons-prototype_8" || iconImg.sprite == ringSprite))
+        if (iconImg != null && (iconImg.sprite == null || iconImg.sprite.name == "buttons-prototype_8" || iconImg.sprite == ringSprite || buttonGO.name.IndexOf("Pause", StringComparison.OrdinalIgnoreCase) >= 0))
         {
             var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
             if (buttonGO.name.IndexOf("Bestiary", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -1034,10 +1090,21 @@ public class UIManager : MonoBehaviour
             {
                 foreach (var s in allSprites) { if (s.name.IndexOf("arrow", StringComparison.OrdinalIgnoreCase) >= 0 || s.name == "buttons-prototype_12") { iconImg.sprite = s; break; } }
             }
+            else if (buttonGO.name.IndexOf("Pause", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                iconImg.sprite = GetPauseButtonSprite();
+            }
+        }
+
+        if (buttonGO.name.IndexOf("Pause", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            var pRt = buttonGO.GetComponent<RectTransform>();
+            if (pRt != null) pRt.sizeDelta = new Vector2(125f, 125f);
         }
 
         if (iconImg != null)
         {
+            iconImg.preserveAspect = true;
             iconImg.color = BtnDefault;
         }
 
@@ -1111,5 +1178,175 @@ public class UIManager : MonoBehaviour
             if (deep != null) return deep;
         }
         return null;
+    }
+
+    private static Sprite _cachedPauseIconSprite;
+    public static Sprite GetPauseButtonSprite()
+    {
+        if (_cachedPauseIconSprite != null) return _cachedPauseIconSprite;
+
+        // 1. Direct search for authentic pause sprite: buttons-prototype 1_6
+        var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+        foreach (var s in allSprites)
+        {
+            if (s.name == "buttons-prototype 1_6" || s.name == "buttons-prototype_6")
+            {
+                _cachedPauseIconSprite = s;
+                return _cachedPauseIconSprite;
+            }
+        }
+
+        // 2. Fallback to existing pause icon child in scene if valid pause name
+        var pauseGO = GameObject.Find("Pause") ?? GameObject.Find("PauseButton") ?? GameObject.Find("BtnPause");
+        if (pauseGO != null)
+        {
+            var iconTr = pauseGO.transform.Find("Icon");
+            if (iconTr != null)
+            {
+                var img = iconTr.GetComponent<Image>();
+                if (img != null && img.sprite != null && !img.sprite.name.Contains("8") && !img.sprite.name.Contains("14"))
+                {
+                    _cachedPauseIconSprite = img.sprite;
+                    return _cachedPauseIconSprite;
+                }
+            }
+            var pImg = pauseGO.GetComponent<Image>();
+            if (pImg != null && pImg.sprite != null && pImg.sprite != GetOuterRingSprite() && !pImg.sprite.name.Contains("8") && !pImg.sprite.name.Contains("14"))
+            {
+                _cachedPauseIconSprite = pImg.sprite;
+                return _cachedPauseIconSprite;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Returns the main exploration Canvas, strictly excluding PauseMenu_Canvas.
+    /// </summary>
+    public static Canvas GetExplorationCanvas()
+    {
+        if (Instance != null)
+        {
+            var c = Instance.GetComponentInParent<Canvas>() ?? Instance.GetComponent<Canvas>();
+            if (c != null && c.gameObject.name != "PauseMenu_Canvas") return c;
+        }
+
+        var allCanvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var c in allCanvases)
+        {
+            if (c.gameObject.name != "PauseMenu_Canvas" && !c.gameObject.name.Contains("DedicatedCanvas") && !c.gameObject.name.Contains("Minigame"))
+                return c;
+        }
+        return allCanvases.Length > 0 ? allCanvases[0] : null;
+    }
+
+    /// <summary>
+    /// Creates and configures a Pause button on a minigame canvas / panel at the exact same screen position
+    /// and style as the main exploration HUD pause button (Top-Right: -50px, -50px, size 125x125, outer ring + inner glow + pause icon).
+    /// </summary>
+    public static GameObject CreateMinigamePauseButton(Transform parentTransform)
+    {
+        if (parentTransform == null) return null;
+
+        var existing = parentTransform.Find("MinigamePauseButton");
+        if (existing != null)
+        {
+            existing.gameObject.SetActive(true);
+            existing.SetAsLastSibling();
+            return existing.gameObject;
+        }
+
+        var pauseGO = new GameObject("MinigamePauseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+        pauseGO.transform.SetParent(parentTransform, false);
+        pauseGO.transform.SetAsLastSibling();
+
+        var rt = pauseGO.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot     = new Vector2(1f, 1f);
+        rt.anchoredPosition = new Vector2(-50f, -50f);
+        rt.sizeDelta = new Vector2(125f, 125f);
+
+        var ringImg = pauseGO.GetComponent<Image>();
+        var ringSprite = GetOuterRingSprite();
+        if (ringSprite != null) ringImg.sprite = ringSprite;
+        ringImg.color = BtnDefault;
+        ringImg.type = Image.Type.Simple;
+        ringImg.preserveAspect = true;
+        ringImg.raycastTarget = true;
+
+        var innerGlow = EnsureInnerGlow(pauseGO, 0.85f, InnerGlowIdle);
+        if (innerGlow != null) innerGlow.transform.SetSiblingIndex(0);
+
+        // Icon child matching HUD SetupNavButtonLikeOuterRing
+        var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+        iconGO.transform.SetParent(pauseGO.transform, false);
+        var iconRt = iconGO.GetComponent<RectTransform>();
+        iconRt.anchorMin = iconRt.anchorMax = new Vector2(0.5f, 0.5f);
+        iconRt.pivot = new Vector2(0.5f, 0.5f);
+        iconRt.sizeDelta = new Vector2(125f * 0.55f, 125f * 0.55f);
+        iconRt.anchoredPosition = Vector2.zero;
+
+        var iconImg = iconGO.GetComponent<Image>();
+        iconImg.raycastTarget = false;
+        iconImg.preserveAspect = true;
+        iconImg.color = BtnDefault;
+
+        Sprite pauseSprite = GetPauseButtonSprite();
+        if (pauseSprite != null)
+        {
+            iconImg.sprite = pauseSprite;
+        }
+        else
+        {
+            Destroy(iconImg);
+            var txt = iconGO.AddComponent<TextMeshProUGUI>();
+            txt.text = "❚❚";
+            txt.font = UIThemeManager.AlohaFont;
+            txt.fontSize = 38f;
+            txt.alignment = TextAlignmentOptions.Center;
+            txt.color = BtnDefault;
+            txt.raycastTarget = false;
+        }
+
+        var btn = pauseGO.GetComponent<Button>();
+        btn.targetGraphic = ringImg;
+
+        var trigger = pauseGO.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+        var pDown = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
+        pDown.callback.AddListener((_) =>
+        {
+            if (iconImg != null) iconImg.color = BtnActiveIcon;
+            if (innerGlow != null) innerGlow.color = InnerGlowActive;
+        });
+        trigger.triggers.Add(pDown);
+
+        var pUp = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
+        pUp.callback.AddListener((_) =>
+        {
+            if (iconImg != null) iconImg.color = BtnDefault;
+            if (innerGlow != null) innerGlow.color = InnerGlowIdle;
+        });
+        trigger.triggers.Add(pUp);
+
+        btn.onClick.AddListener(() =>
+        {
+            AudioManager.Instance?.PlayButtonClick();
+            var pm = PauseMenuUI.Instance ?? FindFirstObjectByType<PauseMenuUI>(FindObjectsInactive.Include);
+            if (pm != null)
+            {
+                pm.gameObject.SetActive(true);
+                pm.TogglePause();
+            }
+            else
+            {
+                var pgo = new GameObject("PauseMenuUI");
+                var newPm = pgo.AddComponent<PauseMenuUI>();
+                newPm.TogglePause();
+            }
+        });
+
+        return pauseGO;
     }
 }

@@ -29,7 +29,7 @@ MonoBehaviour:
   scanDifficulty: 3
   isStationary: 0
   isShy: 1
-  preferredBiome: 2
+  preferredBiome: 3
   minDepthFraction: 0
   maxDepthFraction: 0.05
   instanceCount: 2

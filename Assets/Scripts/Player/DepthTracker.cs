@@ -60,6 +60,18 @@ public class DepthTracker : MonoBehaviour
     private void RecalculateDepth()
     {
         int zoneIndex = ZoneManager.CurrentZoneIndex;
+        string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (!ZoneConfig.IsValidZone(zoneIndex) || ZoneConfig.Zones[zoneIndex].sceneName != activeScene)
+        {
+            for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+            {
+                if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    zoneIndex = i;
+                    break;
+                }
+            }
+        }
 
         if (!ZoneConfig.IsValidZone(zoneIndex))
         {

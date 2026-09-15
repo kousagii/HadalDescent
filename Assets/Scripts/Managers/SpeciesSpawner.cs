@@ -42,6 +42,7 @@ public class SpeciesSpawner : MonoBehaviour
 
     private ZoneDefinition _zoneDef;
     private List<Vector3>  _usedPositions = new List<Vector3>();
+    private readonly List<Vector3> _anemonePositions = new List<Vector3>();
     private bool           _hasSpawned = false;
 
     // -----------------------------------------------------------------------
@@ -65,6 +66,7 @@ public class SpeciesSpawner : MonoBehaviour
         if (!ZoneConfig.IsValidZone(zoneIndex)) return;
         _zoneDef = ZoneConfig.Zones[zoneIndex];
         _usedPositions.Clear();
+        _anemonePositions.Clear();
 
         if (registry == null)
         {
@@ -88,8 +90,19 @@ public class SpeciesSpawner : MonoBehaviour
         ClearExistingCreatures();
 
         var allSpecies = registry.GetSpeciesAvailableForZone(zoneIndex);
+
+        // Sort so benthic host species (e.g. Sea Anemone) spawn before their symbiotic partners (Clownfish)
+        var sortedSpecies = new List<SpeciesData>(allSpecies);
+        sortedSpecies.Sort((a, b) =>
+        {
+            if (a == null || b == null) return 0;
+            if (a.isStationary != b.isStationary)
+                return b.isStationary.CompareTo(a.isStationary);
+            return 0;
+        });
+
         int totalSpawned = 0;
-        foreach (var data in allSpecies)
+        foreach (var data in sortedSpecies)
         {
             if (data != null)
                 totalSpawned += SpawnSpecies(data);
@@ -110,12 +123,18 @@ public class SpeciesSpawner : MonoBehaviour
     private int SpawnSpecies(SpeciesData data)
     {
         int spawned = 0;
+        bool isAnemone = data.speciesId == "anemone_001" || data.commonName.ToLower().Contains("anemone");
+
         for (int i = 0; i < data.instanceCount; i++)
         {
             if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot))
             {
                 SpawnInstance(data, pos, rot);
                 _usedPositions.Add(pos);
+                if (isAnemone)
+                {
+                    _anemonePositions.Add(pos);
+                }
                 spawned++;
             }
         }
@@ -132,6 +151,18 @@ public class SpeciesSpawner : MonoBehaviour
 
         resultPos = Vector3.zero;
         resultRot = Quaternion.identity;
+
+        bool isClownfish = data.speciesId == "clownfish_001" || data.commonName.ToLower().Contains("clownfish");
+        if (isClownfish && _anemonePositions.Count > 0)
+        {
+            // Biological Symbiosis: Clownfish spawn directly hovering above/around host Sea Anemones
+            Vector3 anemonePos = _anemonePositions[Random.Range(0, _anemonePositions.Count)];
+            Vector2 hOffset = Random.insideUnitCircle * Random.Range(0.6f, 2.2f);
+            float yOffset = Random.Range(0.8f, 2.2f);
+            resultPos = new Vector3(anemonePos.x + hOffset.x, anemonePos.y + yOffset, anemonePos.z + hOffset.y);
+            resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            return true;
+        }
 
         int terrainLayerMask = LayerMask.GetMask("Terrain", "Default");
         if (terrainLayerMask == 0) terrainLayerMask = ~0;

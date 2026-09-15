@@ -53,6 +53,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private RectTransform _rootPanel;
+    private CanvasGroup   _canvasGroup;
     private Button[]      _tileButtons;
     private TMP_Text[]    _tileTMP;
     private Image[]       _tileImages;
@@ -85,6 +86,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     public void Show()
     {
         StopAllCoroutines();
+        UIManager.Instance?.SetExplorationHUDVisible(false);
         _n             = GridSizes[_zoneIndex];
         _totalTime     = Timers[_zoneIndex];
         _timeRemaining = _totalTime;
@@ -109,6 +111,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private void Update()
     {
         if (_finished || _rootPanel == null || !_rootPanel.gameObject.activeSelf) return;
+
+        bool isPaused = PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused;
+        if (_canvasGroup != null) _canvasGroup.blocksRaycasts = !isPaused;
+        if (isPaused) return;
 
         _timeRemaining -= Time.unscaledDeltaTime;
 
@@ -155,6 +161,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private void OnTileTapped(int idx)
     {
         if (_finished) return;
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
         if (!IsAdjacentToEmpty(idx)) return;
         SwapTiles(idx, _emptyIdx);
         RefreshTileDisplay();
@@ -199,9 +206,27 @@ public class ReconstructionScanMinigame : MonoBehaviour
     // Hint (shows solved overlay briefly)
     // -----------------------------------------------------------------------
 
+    public void CancelMinigame()
+    {
+        StopAllCoroutines();
+        _finished = true;
+        if (_rootPanel != null)
+        {
+            Destroy(_rootPanel.gameObject);
+            _rootPanel = null;
+        }
+        CleanupSlices();
+        UIManager.Instance?.SetExplorationHUDVisible(true);
+    }
+
+    private void OnDisable()
+    {
+        CancelMinigame();
+    }
+
     private void OnDestroy()
     {
-        CleanupSlices();
+        CancelMinigame();
     }
 
     private void PrepareSpeciesSlices()
@@ -320,6 +345,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(1.3f);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
+        UIManager.Instance?.SetExplorationHUDVisible(true);
         if (success) _onSuccess?.Invoke();
         else         _onFail?.Invoke();
     }
@@ -384,17 +410,18 @@ public class ReconstructionScanMinigame : MonoBehaviour
             _rootPanel = null;
         }
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = UIManager.GetExplorationCanvas();
         if (canvas == null) return;
 
-        // Root panel - transparent background so exploration HUD and 3D scene remain completely visible (just like in the first pic)
-        var rootGO = new GameObject("ReconMinigame", typeof(RectTransform), typeof(Image));
+        // Root panel - transparent background so 3D scene remains visible
+        var rootGO = new GameObject("ReconMinigame", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
         rootGO.transform.SetParent(canvas.transform, false);
         _rootPanel = rootGO.GetComponent<RectTransform>();
+        _canvasGroup = rootGO.GetComponent<CanvasGroup>();
         _rootPanel.anchorMin = Vector2.zero;
         _rootPanel.anchorMax = Vector2.one;
         _rootPanel.sizeDelta = Vector2.zero;
-        rootGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.0f); // Transparent so HUD is never hidden or dimmed
+        rootGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.0f);
         _rootPanel.SetAsLastSibling();
 
         var font = UIThemeManager.AlohaFont;
@@ -613,6 +640,8 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _resultText.fontStyle = FontStyles.Bold;
         _resultText.alignment = TextAlignmentOptions.Center;
         _resultText.gameObject.SetActive(false);
+
+        UIManager.CreateMinigamePauseButton(_rootPanel);
 
         _rootPanel.gameObject.SetActive(false);
     }

@@ -37,12 +37,28 @@ public class ZoneManager : MonoBehaviour
         private set => _instance = value;
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void BootstrapZoneManager()
+    {
+        _ = Instance;
+    }
+
     // -----------------------------------------------------------------------
     // Zone state (static so DepthTracker can read without a reference)
     // -----------------------------------------------------------------------
 
     /// <summary>Index into ZoneConfig.Zones for the currently loaded zone.</summary>
     public static int CurrentZoneIndex { get; private set; } = 0;
+
+    /// <summary>Sets the current zone index and notifies UI/sensors.</summary>
+    public static void SetCurrentZone(int zoneIndex)
+    {
+        if (ZoneConfig.IsValidZone(zoneIndex))
+        {
+            CurrentZoneIndex = zoneIndex;
+            UIManager.Instance?.RefreshHUD();
+        }
+    }
 
     /// <summary>
     /// True when the player arrived from above (entered at zone top).
@@ -82,6 +98,7 @@ public class ZoneManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         // Detect which zone scene is *already* active when PersistentManagers
@@ -89,10 +106,11 @@ public class ZoneManager : MonoBehaviour
         string activeName = SceneManager.GetActiveScene().name;
         for (int i = 0; i < ZoneConfig.ZoneCount; i++)
         {
-            if (ZoneConfig.Zones[i].sceneName == activeName)
+            if (ZoneConfig.Zones[i].sceneName.Equals(activeName, System.StringComparison.OrdinalIgnoreCase))
             {
                 CurrentZoneIndex = i;
                 Debug.Log($"[ZoneManager] Detected active zone scene '{activeName}' → CurrentZoneIndex = {i} ({ZoneConfig.Zones[i].zoneName})");
+                UIManager.Instance?.RefreshHUD();
                 break;
             }
         }
@@ -109,10 +127,12 @@ public class ZoneManager : MonoBehaviour
         bool isZoneScene = false;
         for (int i = 0; i < ZoneConfig.ZoneCount; i++)
         {
-            if (ZoneConfig.Zones[i].sceneName == scene.name)
+            if (ZoneConfig.Zones[i].sceneName.Equals(scene.name, System.StringComparison.OrdinalIgnoreCase))
             {
                 isZoneScene = true;
                 CurrentZoneIndex = i;
+                Debug.Log($"[ZoneManager] Scene loaded '{scene.name}' → CurrentZoneIndex = {i} ({ZoneConfig.Zones[i].zoneName})");
+                UIManager.Instance?.RefreshHUD();
                 break;
             }
         }
@@ -185,6 +205,10 @@ public class ZoneManager : MonoBehaviour
 
         // 1. Apply atmosphere
         ApplyAtmosphere(zone);
+        if (CurrentZoneIndex == 0)
+        {
+            SunlightAtmosphereVFX.EnsureInstance();
+        }
 
         // 2. Find spawn tags, fall back to computed defaults
         FindSpawnPoints(zone);

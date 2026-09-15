@@ -69,6 +69,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     private Image         _meniscusLineImage;
     private Image         _redFlash;
     private TMP_Text      _resultText;
+    private CanvasGroup   _canvasGroup;
     private float         _barH;
 
     // -----------------------------------------------------------------------
@@ -89,6 +90,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     public void Show()
     {
         StopAllCoroutines();
+        UIManager.Instance?.SetExplorationHUDVisible(false);
         BuildUI();
         int tier = GetScannerTier();
         float zoneSize = GetScannerFocusWidth(tier);
@@ -121,6 +123,12 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     private bool IsHoldInputActive()
     {
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+        {
+            _holding = false;
+            return false;
+        }
+
         // Direct hardware input check
         bool touchPress = Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed;
         bool mousePress = Mouse.current != null && Mouse.current.leftButton.isPressed;
@@ -165,6 +173,14 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     private void Update()
     {
         if (_finished || _rootPanel == null || !_rootPanel.gameObject.activeSelf) return;
+
+        bool isPaused = PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused;
+        if (_canvasGroup != null) _canvasGroup.blocksRaycasts = !isPaused;
+        if (isPaused)
+        {
+            _holding = false;
+            return;
+        }
 
         float dt   = Time.unscaledDeltaTime;
         if (dt <= 0f || dt > 0.1f) dt = 0.016f; // Unscaled delta time safety clamp
@@ -337,9 +353,33 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(1.2f);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
+        UIManager.Instance?.SetExplorationHUDVisible(true);
 
         if (success) _onSuccess?.Invoke();
         else         _onFail?.Invoke();
+    }
+
+    public void CancelMinigame()
+    {
+        StopAllCoroutines();
+        _finished = true;
+        _holding = false;
+        if (_rootPanel != null)
+        {
+            Destroy(_rootPanel.gameObject);
+            _rootPanel = null;
+        }
+        UIManager.Instance?.SetExplorationHUDVisible(true);
+    }
+
+    private void OnDisable()
+    {
+        CancelMinigame();
+    }
+
+    private void OnDestroy()
+    {
+        CancelMinigame();
     }
 
     // -----------------------------------------------------------------------
@@ -350,14 +390,15 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     {
         if (_rootPanel != null) return;
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = UIManager.GetExplorationCanvas();
         if (canvas == null) return;
 
         // Fullscreen touch capture panel
         var rootGO = new GameObject("CaptureMinigame",
-            typeof(RectTransform), typeof(Image));
+            typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
         rootGO.transform.SetParent(canvas.transform, false);
         _rootPanel = rootGO.GetComponent<RectTransform>();
+        _canvasGroup = rootGO.GetComponent<CanvasGroup>();
         _rootPanel.anchorMin = Vector2.zero; _rootPanel.anchorMax = Vector2.one; _rootPanel.sizeDelta = Vector2.zero;
 
         var rootImage = rootGO.GetComponent<Image>();
@@ -527,6 +568,8 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         _resultText.raycastTarget = false;
         _resultText.gameObject.SetActive(false);
 
+        UIManager.CreateMinigamePauseButton(_rootPanel);
+
         _rootPanel.gameObject.SetActive(false);
     }
 
@@ -568,6 +611,7 @@ public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPoint
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
         if (_minigame != null) _minigame.SetHolding(true);
     }
 

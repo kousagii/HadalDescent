@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Singleton that orchestrates species scan minigames and environmental cleanup minigames.
@@ -42,6 +43,7 @@ public class MinigameManager : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private bool _minigameActive = false;
+    public bool IsMinigameActive => _minigameActive;
 
     [Header("Minigame Component References (Auto-found if unassigned)")]
     [SerializeField] private CaptureAndFocusMinigame      _mg1;
@@ -62,7 +64,20 @@ public class MinigameManager : MonoBehaviour
         if (_instance != null && _instance != this) { Destroy(gameObject); return; }
         _instance = this;
 
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         EnsureMinigameComponents();
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        CancelActiveMinigame();
     }
 
     private void Start()
@@ -71,6 +86,24 @@ public class MinigameManager : MonoBehaviour
         _touchDragZone  = FindFirstObjectByType<TouchDragZone>();
 
         EnsureMinigameComponents();
+    }
+
+    /// <summary>
+    /// Forcibly aborts any active minigame, destroys minigame UI panels,
+    /// re-enables submarine movement and camera drag, and restores normal time scale.
+    /// </summary>
+    public void CancelActiveMinigame()
+    {
+        _minigameActive = false;
+        Time.timeScale = 1f;
+
+        EnableControls();
+        UIManager.Instance?.SetExplorationHUDVisible(true);
+
+        if (_mg1 != null) _mg1.CancelMinigame();
+        if (_mg2 != null) _mg2.CancelMinigame();
+        if (_mg3 != null) _mg3.CancelMinigame();
+        if (_mg4 != null) _mg4.CancelMinigame();
     }
 
     private void EnsureMinigameComponents()
@@ -142,6 +175,7 @@ public class MinigameManager : MonoBehaviour
         _minigameActive = true;
         DisableControls();
         Time.timeScale = 0f;
+        UIManager.Instance?.SetExplorationHUDVisible(false);
 
         Action wrappedSuccess = () =>
         {
@@ -255,18 +289,12 @@ public class MinigameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Call when scene is being unloaded to cleanly abort any running minigame.
+    /// Call when scene is being unloaded or reset to cleanly abort any running minigame.
     /// </summary>
     public void AbortCurrentMinigame()
     {
-        if (!_minigameActive) return;
-        Time.timeScale = 1f;
-        _minigameActive = false;
-        EnableControls();
-        UIManager.Instance?.SetExplorationHUDVisible(true);
+        CancelActiveMinigame();
     }
-
-    public bool IsMinigameActive => _minigameActive;
 
     // -----------------------------------------------------------------------
     // Minigame selection

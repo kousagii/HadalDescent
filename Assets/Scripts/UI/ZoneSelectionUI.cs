@@ -19,6 +19,13 @@ public class ZoneSelectionUI : MonoBehaviour
 {
     public static ZoneSelectionUI Instance { get; private set; }
 
+    /// <summary>
+    /// When set to true (e.g. upon completing or skipping the tutorial),
+    /// the active zone card action button displays "PROCEED" instead of "◀ GO BACK".
+    /// Automatically resets to false as soon as the user selects a zone or closes the menu.
+    /// </summary>
+    public static bool IsAfterTutorialFlow { get; set; } = false;
+
     [System.Serializable]
     public class ZoneCardBinding
     {
@@ -194,6 +201,7 @@ public class ZoneSelectionUI : MonoBehaviour
 
     public void CloseZoneSelection()
     {
+        IsAfterTutorialFlow = false;
         if (customRoot != null) customRoot.SetActive(false);
         if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
         if (customWarningModal != null) customWarningModal.SetActive(false);
@@ -245,8 +253,26 @@ public class ZoneSelectionUI : MonoBehaviour
         string curScene = SceneManager.GetActiveScene().name;
         bool isCurZone = curScene == zone.sceneName;
 
-        string btnText = isCurZone ? "◀ GO BACK" : (isUnlocked ? "ENTER ZONE" : "LOCKED 🔒");
-        Color btnColor = isCurZone ? new Color(0.12f, 0.48f, 0.70f) : (isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f));
+        string btnText;
+        Color btnColor;
+        if (isCurZone)
+        {
+            if (IsAfterTutorialFlow)
+            {
+                btnText = "PROCEED";
+                btnColor = new Color(0.08f, 0.65f, 0.55f);
+            }
+            else
+            {
+                btnText = "GO BACK";
+                btnColor = new Color(0.12f, 0.48f, 0.70f);
+            }
+        }
+        else
+        {
+            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED 🔒";
+            btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
+        }
 
         string reqText = zoneIndex == 0 ? "DEFAULT ACCESS" : (isUnlocked ? "HULL REQUIREMENT MET" : $"REQ: HULL TIER {zone.requiredHullTier}");
         Color reqColor = isUnlocked ? new Color(0.10f, 0.44f, 0.34f) : new Color(0.65f, 0.20f, 0.20f);
@@ -322,6 +348,21 @@ public class ZoneSelectionUI : MonoBehaviour
                     card.enterButtonText.fontSizeMin = 24f;
                     card.enterButtonText.fontSizeMax = 32f;
                     card.enterButtonText.text = btnText;
+                    card.enterButtonText.alignment = TextAlignmentOptions.Center;
+                    card.enterButtonText.horizontalAlignment = HorizontalAlignmentOptions.Center;
+                    card.enterButtonText.verticalAlignment = VerticalAlignmentOptions.Middle;
+                    card.enterButtonText.margin = Vector4.zero;
+
+                    var textRt = card.enterButtonText.rectTransform;
+                    if (textRt != null)
+                    {
+                        textRt.anchorMin = Vector2.zero;
+                        textRt.anchorMax = Vector2.one;
+                        textRt.offsetMin = Vector2.zero;
+                        textRt.offsetMax = Vector2.zero;
+                        textRt.anchoredPosition = Vector2.zero;
+                        textRt.sizeDelta = Vector2.zero;
+                    }
                 }
                 var img = card.enterButton.GetComponent<Image>();
                 if (img != null) img.color = btnColor;
@@ -344,7 +385,8 @@ public class ZoneSelectionUI : MonoBehaviour
         string currentScene = SceneManager.GetActiveScene().name;
         if (ZoneConfig.IsValidZone(zoneIndex) && currentScene == ZoneConfig.Zones[zoneIndex].sceneName)
         {
-            // Player chose "GO BACK" to resume current dive
+            IsAfterTutorialFlow = false;
+            // Player chose "GO BACK" or "PROCEED" to resume dive
             Time.timeScale = 1f;
             CloseZoneSelection();
 
@@ -367,7 +409,12 @@ public class ZoneSelectionUI : MonoBehaviour
 
     private void EnterZone(int zoneIndex)
     {
+        IsAfterTutorialFlow = false;
         if (!ZoneConfig.IsValidZone(zoneIndex)) return;
+
+        MinigameManager.Instance?.CancelActiveMinigame();
+
+        ZoneManager.SetCurrentZone(zoneIndex);
 
         string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
         Debug.Log($"[ZoneSelectionUI] Entering Zone {zoneIndex} ('{sceneName}')...");
@@ -768,14 +815,36 @@ public class ZoneSelectionUI : MonoBehaviour
         string currentScene = SceneManager.GetActiveScene().name;
         bool isCurrentZone = (currentScene == zone.sceneName);
 
-        string btnText = isCurrentZone ? "◀ GO BACK" : (isUnlocked ? "ENTER ZONE" : "LOCKED 🔒");
-        Color btnColor = isCurrentZone ? new Color(0.12f, 0.48f, 0.70f) : (isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f));
+        string btnText;
+        Color btnColor;
+        if (isCurrentZone)
+        {
+            if (IsAfterTutorialFlow)
+            {
+                btnText = "PROCEED";
+                btnColor = new Color(0.08f, 0.65f, 0.55f);
+            }
+            else
+            {
+                btnText = "GO BACK";
+                btnColor = new Color(0.12f, 0.48f, 0.70f);
+            }
+        }
+        else
+        {
+            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED 🔒";
+            btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
+        }
 
         int idx = zoneIndex;
         binding.enterButton = CreateButton("ActionBtn", btnText, new Vector2(0f, 35f), new Vector2(330f, 76f), btnColor, () => OnZoneCardClicked(idx), cardGO.transform, font, 32f, out binding.enterButtonText, new Vector2(0.5f, 0f));
         binding.enterButtonText.enableAutoSizing = true;
         binding.enterButtonText.fontSizeMin = 24f;
         binding.enterButtonText.fontSizeMax = 32f;
+        binding.enterButtonText.alignment = TextAlignmentOptions.Center;
+        binding.enterButtonText.horizontalAlignment = HorizontalAlignmentOptions.Center;
+        binding.enterButtonText.verticalAlignment = VerticalAlignmentOptions.Middle;
+        binding.enterButtonText.margin = Vector4.zero;
 
         _proceduralCards.Add(binding);
     }

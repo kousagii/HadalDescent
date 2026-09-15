@@ -443,6 +443,7 @@ public class HazardDodgeMinigame : MonoBehaviour
     private void Update()
     {
         if (_isFinished) return;
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
 
         HandleInput();
 
@@ -1190,6 +1191,35 @@ public class HazardDodgeMinigame : MonoBehaviour
         }
     }
 
+    public void CancelMinigame()
+    {
+        StopAllCoroutines();
+        _isFinished = true;
+        _isRunning  = false;
+        _isActive   = false;
+
+        CleanupStage();
+
+        if (_rootUI != null)
+        {
+            Destroy(_rootUI);
+            _rootUI = null;
+        }
+
+        if (customUIRoot != null)
+        {
+            customUIRoot.SetActive(false);
+        }
+
+        RestoreSceneCamera();
+        SetExplorationHUDActive(true);
+    }
+
+    private void OnDisable()
+    {
+        if (_isActive) CancelMinigame();
+    }
+
     // -----------------------------------------------------------------------
     // UI Construction
     // -----------------------------------------------------------------------
@@ -1309,6 +1339,27 @@ public class HazardDodgeMinigame : MonoBehaviour
             {
                 customWarningBanner.SetActive(false);
             }
+
+            var rdpTr = customUIRoot.transform.Find("RDP") ?? customUIRoot.transform.Find("RdpText");
+            if (rdpTr != null)
+            {
+                var rRt = rdpTr.GetComponent<RectTransform>();
+                if (rRt != null && rRt.anchoredPosition.x > -190f)
+                {
+                    rRt.anchoredPosition = new Vector2(-190f, rRt.anchoredPosition.y);
+                }
+            }
+            var distTr = customUIRoot.transform.Find("Distance") ?? customUIRoot.transform.Find("DistanceText");
+            if (distTr != null)
+            {
+                var dRt = distTr.GetComponent<RectTransform>();
+                if (dRt != null && dRt.anchoredPosition.x > -590f)
+                {
+                    dRt.anchoredPosition = new Vector2(-590f, dRt.anchoredPosition.y);
+                }
+            }
+
+            UIManager.CreateMinigamePauseButton(customUIRoot.transform);
 
             return;
         }
@@ -1436,6 +1487,8 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // Ensure banners exist for procedural HUD
         EnsureBanners(canvas, font);
+
+        UIManager.CreateMinigamePauseButton(_rootUI);
 
         _rootUI.gameObject.SetActive(false);
     }
@@ -1912,6 +1965,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void OnDestroy()
     {
+        CancelMinigame();
         RestoreSceneCamera();
         SetExplorationHUDActive(true);
         HideAllBanners();

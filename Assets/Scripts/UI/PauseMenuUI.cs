@@ -186,6 +186,8 @@ public class PauseMenuUI : MonoBehaviour
     // Pause / Resume Logic
     // -----------------------------------------------------------------------
 
+    private float _timeScaleBeforePause = 1f;
+
     public void TogglePause()
     {
         if (_isPaused) ResumeGame();
@@ -195,11 +197,21 @@ public class PauseMenuUI : MonoBehaviour
     public void PauseGame()
     {
         _isPaused = true;
+        _timeScaleBeforePause = Time.timeScale;
         Time.timeScale = 0f;
 
         if (customPauseRoot != null)
         {
             customPauseRoot.SetActive(true);
+            customPauseRoot.transform.SetAsLastSibling();
+
+            var canvas = customPauseRoot.GetComponent<Canvas>() ?? customPauseRoot.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 32767;
+
+            var raycaster = customPauseRoot.GetComponent<GraphicRaycaster>() ?? customPauseRoot.AddComponent<GraphicRaycaster>();
+            raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
             if (customMainPausePanel != null) customMainPausePanel.SetActive(true);
             if (customSettingsPanel != null)  customSettingsPanel.SetActive(false);
         }
@@ -208,7 +220,19 @@ public class PauseMenuUI : MonoBehaviour
             if (_proceduralRoot == null) BuildProceduralUI();
             if (_proceduralRoot != null)
             {
+                if (_proceduralCanvasGO != null)
+                {
+                    _proceduralCanvasGO.SetActive(true);
+                    _proceduralCanvasGO.transform.SetAsLastSibling();
+                    var c = _proceduralCanvasGO.GetComponent<Canvas>();
+                    if (c != null)
+                    {
+                        c.overrideSorting = true;
+                        c.sortingOrder = 32767;
+                    }
+                }
                 _proceduralRoot.SetActive(true);
+                _proceduralRoot.transform.SetAsLastSibling();
                 if (_mainPausePanel != null) _mainPausePanel.SetActive(true);
                 if (_settingsPanel != null)  _settingsPanel.SetActive(false);
             }
@@ -222,7 +246,7 @@ public class PauseMenuUI : MonoBehaviour
     public void ResumeGame()
     {
         _isPaused = false;
-        Time.timeScale = 1f;
+        Time.timeScale = _timeScaleBeforePause;
 
         if (customPauseRoot != null)
         {
@@ -341,10 +365,13 @@ public class PauseMenuUI : MonoBehaviour
         Time.timeScale = 1f;
         _isPaused = false;
 
+        // Cancel any active minigame so no lingering minigame state is saved or restored
+        MinigameManager.Instance?.CancelActiveMinigame();
+
         if (customPauseRoot != null) customPauseRoot.SetActive(false);
         if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
 
-        // Auto save on exit
+        // Auto save on exit (saves safe exploration state)
         GameManager.Instance?.SaveGame();
 
         // Load Main Menu Scene
@@ -522,11 +549,16 @@ public class PauseMenuUI : MonoBehaviour
 
         var font = GetAlohaFont();
 
-        // Dedicated Pause Menu Canvas with Top Sorting Order
+        // Dedicated Pause Menu Canvas with Top Sorting Order (32767 = max allowed by Unity)
         _proceduralCanvasGO = new GameObject("PauseMenu_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        _proceduralCanvasGO.layer = LayerMask.NameToLayer("UI");
         var canvas = _proceduralCanvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 9999;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 32767;
+
+        var raycaster = _proceduralCanvasGO.GetComponent<GraphicRaycaster>();
+        raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
 
         var scaler = _proceduralCanvasGO.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -535,6 +567,7 @@ public class PauseMenuUI : MonoBehaviour
 
         // Root overlay
         _proceduralRoot = new GameObject("PauseMenu_Root", typeof(RectTransform), typeof(Image));
+        _proceduralRoot.layer = LayerMask.NameToLayer("UI");
         _proceduralRoot.transform.SetParent(canvas.transform, false);
 
         var rootRect = _proceduralRoot.GetComponent<RectTransform>();
@@ -672,6 +705,7 @@ public class PauseMenuUI : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white;
         tmp.text = label;
+        tmp.raycastTarget = false;
 
         return btn;
     }

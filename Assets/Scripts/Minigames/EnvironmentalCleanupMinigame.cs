@@ -745,15 +745,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customTimerText == null) customTimerText = FindDeepChild<TMP_Text>(customUIRoot, "Timer", "TimerText", "Time");
             if (customTimerTextLegacy == null && customTimerText == null) customTimerTextLegacy = FindDeepChild<Text>(customUIRoot, "Timer", "TimerText", "Time");
 
-            // Ensure timer text is correctly anchored & pivoted so it is never cut off on wide aspect ratios
+            // Ensure timer text is correctly anchored & pivoted so it is never cut off on wide aspect ratios, leaving room for pause button
             if (customTimerText != null)
             {
                 var tRect = customTimerText.GetComponent<RectTransform>();
                 if (tRect != null && tRect.anchorMin.x >= 0.8f)
                 {
                     tRect.pivot = new Vector2(1f, tRect.pivot.y);
-                    if (tRect.anchoredPosition.x > -50f)
-                        tRect.anchoredPosition = new Vector2(-50f, tRect.anchoredPosition.y);
+                    if (tRect.anchoredPosition.x > -190f)
+                        tRect.anchoredPosition = new Vector2(-190f, tRect.anchoredPosition.y);
                     customTimerText.alignment = TextAlignmentOptions.Right;
                 }
             }
@@ -840,6 +840,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             _dropButton = customDropClawButton;
             _joystickHandle = customJoystickHandle;
             _joystickBackground = customJoystickBackground;
+
+            UIManager.CreateMinigamePauseButton(_dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : customUIRoot.transform);
             return;
         }
 
@@ -858,6 +860,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         BuildVirtualJoystick();
 
         _dropButton = CreateUIButton(_dedicatedCanvasGO.transform, "BtnDropClaw", "⬇ TAP TO\nDROP CLAW", new Vector2(0.85f, 0.18f), new Vector2(230f, 120f), OnDropClawPressed, new Color(0f, 0.72f, 0.65f, 0.95f));
+
+        UIManager.CreateMinigamePauseButton(_dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : (customUIRoot != null ? customUIRoot.transform : transform));
     }
 
     private void BuildVirtualJoystick()
@@ -1063,6 +1067,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         while (_phaseTimeRemaining > 0f && _spawnedDebris.Count > 0)
         {
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             _phaseTimeRemaining -= Time.deltaTime;
             int seconds = Mathf.CeilToInt(_phaseTimeRemaining);
             SetText(customTimerText, customTimerTextLegacy, $"Time: 0:{seconds:00}");
@@ -1439,6 +1449,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             _targetCluster = null;
         }
 
+        CancelMinigame();
+        _onSuccess?.Invoke();
+    }
+
+    public void CancelMinigame()
+    {
+        StopAllCoroutines();
+        _isActive = false;
+
         if (customUIRoot != null) 
         {
             customUIRoot.SetActive(false);
@@ -1467,11 +1486,17 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         }
 
         RestoreSceneCamera();
-
-        // Restore main exploration HUD
         UIManager.Instance?.SetExplorationHUDVisible(true);
+    }
 
-        _onSuccess?.Invoke();
+    private void OnDisable()
+    {
+        if (_isActive) CancelMinigame();
+    }
+
+    private void OnDestroy()
+    {
+        CancelMinigame();
     }
 
     // -----------------------------------------------------------------------

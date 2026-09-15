@@ -50,6 +50,9 @@ public class EnvPropSet : ScriptableObject
         [Tooltip("Non-uniform axis scale formula from the Environment Blueprint (e.g. (3.0, 0.4, 3.0) for flat reef ledges, (1.0, 1.2, 1.0) for spires).")]
         public Vector3 scaleMultiplier = Vector3.one;
 
+        [Tooltip("Euler rotation offset applied to align models upright (e.g. models exported with non-standard axes).")]
+        public Vector3 rotationOffset = Vector3.zero;
+
         [Tooltip("Specific material recipe override for this prop (e.g. Sun-bleached limestone, Granite, Obsidian).")]
         public Material materialOverride;
 
