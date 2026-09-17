@@ -63,9 +63,18 @@ public class PauseMenuUI : MonoBehaviour
     [Header("Notification Text")]
     [SerializeField] private TMP_Text customSaveNotificationText;
 
+    [Header("Custom Exit Confirmation Popup (Optional)")]
+    [Tooltip("Custom popup root GameObject to show when confirming exit.")]
+    [SerializeField] private GameObject customExitConfirmPopupRoot;
+    [Tooltip("Button in custom popup to confirm exiting game.")]
+    [SerializeField] private Button     customExitConfirmButton;
+    [Tooltip("Button in custom popup to cancel exiting game.")]
+    [SerializeField] private Button     customExitCancelButton;
+
     // Procedural UI References
     private GameObject _proceduralCanvasGO;
     private GameObject _proceduralRoot;
+    private GameObject _proceduralExitConfirmModal;
     private GameObject _mainPausePanel;
     private GameObject _settingsPanel;
     private TMP_Text   _saveNotification;
@@ -112,6 +121,9 @@ public class PauseMenuUI : MonoBehaviour
                 Instance.customInvertPitchToggle = customInvertPitchToggle;
                 Instance.customSettingsBackButton = customSettingsBackButton;
                 Instance.customSaveNotificationText = customSaveNotificationText;
+                Instance.customExitConfirmPopupRoot = customExitConfirmPopupRoot;
+                Instance.customExitConfirmButton = customExitConfirmButton;
+                Instance.customExitCancelButton = customExitCancelButton;
                 Instance.WireCustomControls();
             }
             Destroy(gameObject);
@@ -144,6 +156,11 @@ public class PauseMenuUI : MonoBehaviour
             Destroy(_proceduralCanvasGO);
             _proceduralCanvasGO = null;
         }
+        if (_proceduralExitConfirmModal != null)
+        {
+            Destroy(_proceduralExitConfirmModal);
+            _proceduralExitConfirmModal = null;
+        }
         _proceduralRoot = null;
         _mainPausePanel = null;
         _settingsPanel = null;
@@ -154,6 +171,10 @@ public class PauseMenuUI : MonoBehaviour
         {
             customPauseRoot.SetActive(false);
             WireCustomControls();
+        }
+        if (customExitConfirmPopupRoot != null)
+        {
+            customExitConfirmPopupRoot.SetActive(false);
         }
 
         LoadSettingsToUI();
@@ -178,7 +199,22 @@ public class PauseMenuUI : MonoBehaviour
         // Toggle pause on Escape key (New Input System)
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            TogglePause();
+            if (_proceduralExitConfirmModal != null && _proceduralExitConfirmModal.activeSelf)
+            {
+                OnCancelExitGame();
+            }
+            else if (customExitConfirmPopupRoot != null && customExitConfirmPopupRoot.activeSelf)
+            {
+                OnCancelExitGame();
+            }
+            else if (_settingsPanel != null && _settingsPanel.activeSelf)
+            {
+                OnSettingsBackClicked();
+            }
+            else
+            {
+                TogglePause();
+            }
         }
     }
 
@@ -256,6 +292,16 @@ public class PauseMenuUI : MonoBehaviour
         if (_proceduralRoot != null)
         {
             _proceduralRoot.SetActive(false);
+        }
+
+        if (_proceduralExitConfirmModal != null)
+        {
+            _proceduralExitConfirmModal.SetActive(false);
+        }
+
+        if (customExitConfirmPopupRoot != null)
+        {
+            customExitConfirmPopupRoot.SetActive(false);
         }
 
         AudioManager.Instance?.PlayButtonClick();
@@ -362,8 +408,38 @@ public class PauseMenuUI : MonoBehaviour
     public void OnExitGameClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
+        ShowExitConfirmation();
+    }
+
+    public void ShowExitConfirmation()
+    {
+        if (customExitConfirmPopupRoot != null)
+        {
+            customExitConfirmPopupRoot.transform.SetAsLastSibling();
+            customExitConfirmPopupRoot.SetActive(true);
+            return;
+        }
+
+        if (_proceduralExitConfirmModal == null)
+        {
+            BuildProceduralExitConfirmModal();
+        }
+
+        if (_proceduralExitConfirmModal != null)
+        {
+            _proceduralExitConfirmModal.transform.SetAsLastSibling();
+            _proceduralExitConfirmModal.SetActive(true);
+        }
+    }
+
+    public void OnConfirmExitGame()
+    {
+        AudioManager.Instance?.PlayButtonClick();
         Time.timeScale = 1f;
         _isPaused = false;
+
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
 
         // Cancel any active minigame so no lingering minigame state is saved or restored
         MinigameManager.Instance?.CancelActiveMinigame();
@@ -376,6 +452,13 @@ public class PauseMenuUI : MonoBehaviour
 
         // Load Main Menu Scene
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void OnCancelExitGame()
+    {
+        AudioManager.Instance?.PlayButtonClick();
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
     }
 
     // -----------------------------------------------------------------------
@@ -479,6 +562,18 @@ public class PauseMenuUI : MonoBehaviour
         {
             customExitGameButton.onClick.RemoveListener(OnExitGameClicked);
             customExitGameButton.onClick.AddListener(OnExitGameClicked);
+        }
+
+        if (customExitConfirmButton != null)
+        {
+            customExitConfirmButton.onClick.RemoveListener(OnConfirmExitGame);
+            customExitConfirmButton.onClick.AddListener(OnConfirmExitGame);
+        }
+
+        if (customExitCancelButton != null)
+        {
+            customExitCancelButton.onClick.RemoveListener(OnCancelExitGame);
+            customExitCancelButton.onClick.AddListener(OnCancelExitGame);
         }
 
         if (customSettingsBackButton != null)
@@ -865,6 +960,152 @@ public class PauseMenuUI : MonoBehaviour
         toggle.onValueChanged.AddListener(onToggleChanged);
 
         return toggle;
+    }
+
+    // -----------------------------------------------------------------------
+    // Procedural Exit Confirmation Modal Fallback (Matches Overwrite Modal Layout)
+    // -----------------------------------------------------------------------
+
+    private void BuildProceduralExitConfirmModal()
+    {
+        Transform parentTransform = null;
+        if (_proceduralCanvasGO != null)
+        {
+            parentTransform = _proceduralCanvasGO.transform;
+        }
+        else if (customPauseRoot != null)
+        {
+            var c = customPauseRoot.GetComponentInParent<Canvas>() ?? customPauseRoot.GetComponent<Canvas>();
+            parentTransform = c != null ? c.transform : customPauseRoot.transform;
+        }
+        else
+        {
+            var c = UIManager.GetExplorationCanvas();
+            if (c != null) parentTransform = c.transform;
+        }
+
+        if (parentTransform == null) return;
+
+        var font = GetAlohaFont();
+
+        // Dark background overlay
+        _proceduralExitConfirmModal = new GameObject("PauseExitConfirmModal", typeof(RectTransform), typeof(Image));
+        _proceduralExitConfirmModal.layer = LayerMask.NameToLayer("UI");
+        _proceduralExitConfirmModal.transform.SetParent(parentTransform, false);
+        _proceduralExitConfirmModal.transform.SetAsLastSibling();
+
+        var bgRect = _proceduralExitConfirmModal.GetComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.sizeDelta = Vector2.zero;
+        _proceduralExitConfirmModal.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.08f, 0.88f);
+
+        // Dialog Card (matching overwrite new game modal styling)
+        var cardGO = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(_proceduralExitConfirmModal.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot     = new Vector2(0.5f, 0.5f);
+        cardRect.sizeDelta = new Vector2(980f, 580f);
+        cardGO.GetComponent<Image>().color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+
+        // Title (Top positioned with zero overlap)
+        var titleGO = new GameObject("Title", typeof(RectTransform));
+        titleGO.transform.SetParent(cardGO.transform, false);
+        var titleRect = titleGO.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot     = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -36f);
+        titleRect.sizeDelta = new Vector2(900f, 55f);
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) titleTMP.font = font;
+        titleTMP.fontSize = 34;
+        titleTMP.fontStyle = FontStyles.Bold;
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = new Color(1f, 0.35f, 0.35f);
+        titleTMP.text = "⚠️ EXIT TO MAIN MENU?";
+
+        // Description (Strictly top-anchored below title with zero overlap)
+        var descGO = new GameObject("Description", typeof(RectTransform));
+        descGO.transform.SetParent(cardGO.transform, false);
+        var descRect = descGO.GetComponent<RectTransform>();
+        descRect.anchorMin = new Vector2(0.5f, 1f);
+        descRect.anchorMax = new Vector2(0.5f, 1f);
+        descRect.pivot     = new Vector2(0.5f, 1f);
+        descRect.anchoredPosition = new Vector2(0f, -115f);
+        descRect.sizeDelta = new Vector2(900f, 280f);
+        var descTMP = descGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) descTMP.font = font;
+        descTMP.fontSize = 32;
+        descTMP.alignment = TextAlignmentOptions.Top;
+        descTMP.lineSpacing = 6f;
+        descTMP.paragraphSpacing = 8f;
+        descTMP.enableAutoSizing = true;
+        descTMP.fontSizeMin = 26f;
+        descTMP.fontSizeMax = 32f;
+        descTMP.color = new Color(0.9f, 0.92f, 0.95f);
+        descTMP.text = "Are you sure you want to return to the Main Menu?\n\nYour current expedition progress will be <color=#00e6a0><b>saved</b></color> automatically.\n\nDo you wish to proceed?";
+
+        // Buttons Container (Bottom positioned with generous margin)
+        var btnContainer = new GameObject("BtnContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        btnContainer.transform.SetParent(cardGO.transform, false);
+        var bcRect = btnContainer.GetComponent<RectTransform>();
+        bcRect.anchorMin = new Vector2(0.5f, 0f);
+        bcRect.anchorMax = new Vector2(0.5f, 0f);
+        bcRect.pivot     = new Vector2(0.5f, 0f);
+        bcRect.anchoredPosition = new Vector2(0f, 36f);
+        bcRect.sizeDelta = new Vector2(860f, 100f);
+
+        var hlg = btnContainer.GetComponent<HorizontalLayoutGroup>();
+        hlg.childAlignment = TextAnchor.MiddleCenter;
+        hlg.spacing = 28f;
+        hlg.childControlWidth = false;
+        hlg.childControlHeight = false;
+
+        // Yes Button (Exit To Menu)
+        CreateDialogButton("ConfirmExitBtn", "EXIT TO MENU", new Color(0.75f, 0.18f, 0.18f), OnConfirmExitGame, btnContainer.transform, font, new Vector2(340f, 80f), 30f);
+
+        // Cancel Button (Stay in Pause Menu)
+        CreateDialogButton("CancelExitBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelExitGame, btnContainer.transform, font, new Vector2(300f, 80f), 32f);
+    }
+
+    private void CreateDialogButton(string name, string label, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, Vector2 size, float fontSize = 32f)
+    {
+        var btnGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+        btnGO.transform.SetParent(parent, false);
+        var r = btnGO.GetComponent<RectTransform>();
+        r.sizeDelta = size;
+
+        btnGO.GetComponent<Image>().color = color;
+        var btn = btnGO.GetComponent<Button>();
+        btn.onClick.AddListener(action);
+
+        var lblGO = new GameObject("Label", typeof(RectTransform));
+        lblGO.transform.SetParent(btnGO.transform, false);
+        var lblR = lblGO.GetComponent<RectTransform>();
+        lblR.anchorMin = Vector2.zero;
+        lblR.anchorMax = Vector2.one;
+        lblR.sizeDelta = Vector2.zero;
+
+        var tmp = lblGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) tmp.font = font;
+        tmp.fontSize = fontSize;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.lineSpacing = 0f;
+        tmp.color = Color.white;
+        tmp.text = label;
+    }
+
+    private void OnDestroy()
+    {
+        if (_proceduralExitConfirmModal != null)
+        {
+            Destroy(_proceduralExitConfirmModal);
+            _proceduralExitConfirmModal = null;
+        }
     }
 }
 

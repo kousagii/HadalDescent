@@ -603,11 +603,21 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // 5. Clean up any stray MainMenu overwrite modals or boundary popups that could have attached to PersistentCanvasUI
+        // 5. Clean up any stray MainMenu overwrite/exit modals or boundary popups that could have attached to PersistentCanvasUI
         var orphanModal = FindChildRecursive(root, "OverwriteConfirmModal");
         if (orphanModal != null)
         {
             Destroy(orphanModal.gameObject);
+        }
+        var orphanExitModal = FindChildRecursive(root, "ExitConfirmModal");
+        if (orphanExitModal != null)
+        {
+            Destroy(orphanExitModal.gameObject);
+        }
+        var orphanPauseExitModal = FindChildRecursive(root, "PauseExitConfirmModal");
+        if (orphanPauseExitModal != null)
+        {
+            Destroy(orphanPauseExitModal.gameObject);
         }
         var orphanBoundary = FindChildRecursive(root, "BoundaryPopup_Auto");
         if (orphanBoundary != null)
@@ -1099,7 +1109,7 @@ public class UIManager : MonoBehaviour
         if (buttonGO.name.IndexOf("Pause", StringComparison.OrdinalIgnoreCase) >= 0)
         {
             var pRt = buttonGO.GetComponent<RectTransform>();
-            if (pRt != null) pRt.sizeDelta = new Vector2(125f, 125f);
+            if (pRt != null) pRt.sizeDelta = new Vector2(150f, 150f);
         }
 
         if (iconImg != null)
@@ -1183,9 +1193,10 @@ public class UIManager : MonoBehaviour
     private static Sprite _cachedPauseIconSprite;
     public static Sprite GetPauseButtonSprite()
     {
-        if (_cachedPauseIconSprite != null) return _cachedPauseIconSprite;
+        if (_cachedPauseIconSprite != null && _cachedPauseIconSprite.name != "buttons-prototype_8" && _cachedPauseIconSprite.name != "buttons-prototype_2")
+            return _cachedPauseIconSprite;
 
-        // 1. Direct search for authentic pause sprite: buttons-prototype 1_6
+        // 1. Search for pause sprite asset in Resources
         var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
         foreach (var s in allSprites)
         {
@@ -1228,22 +1239,20 @@ public class UIManager : MonoBehaviour
     {
         if (Instance != null)
         {
-            var c = Instance.GetComponentInParent<Canvas>() ?? Instance.GetComponent<Canvas>();
-            if (c != null && c.gameObject.name != "PauseMenu_Canvas") return c;
+            var c = Instance.GetComponentInParent<Canvas>();
+            if (c != null && c.name != "PauseMenu_Canvas") return c;
         }
-
-        var allCanvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var c in allCanvases)
         {
-            if (c.gameObject.name != "PauseMenu_Canvas" && !c.gameObject.name.Contains("DedicatedCanvas") && !c.gameObject.name.Contains("Minigame"))
-                return c;
+            if (c.name != "PauseMenu_Canvas" && c.name != "PauseCanvas") return c;
         }
         return allCanvases.Length > 0 ? allCanvases[0] : null;
     }
 
     /// <summary>
     /// Creates and configures a Pause button on a minigame canvas / panel at the exact same screen position
-    /// and style as the main exploration HUD pause button (Top-Right: -50px, -50px, size 125x125, outer ring + inner glow + pause icon).
+    /// and style as the main exploration HUD pause button (Top-Right: -50px, -50px, size 150x150, outer ring + inner glow + pause icon matching Shop & Bestiary).
     /// </summary>
     public static GameObject CreateMinigamePauseButton(Transform parentTransform)
     {
@@ -1254,6 +1263,8 @@ public class UIManager : MonoBehaviour
         {
             existing.gameObject.SetActive(true);
             existing.SetAsLastSibling();
+            var existingRt = existing.GetComponent<RectTransform>();
+            if (existingRt != null) existingRt.sizeDelta = new Vector2(150f, 150f);
             return existing.gameObject;
         }
 
@@ -1266,7 +1277,7 @@ public class UIManager : MonoBehaviour
         rt.anchorMax = new Vector2(1f, 1f);
         rt.pivot     = new Vector2(1f, 1f);
         rt.anchoredPosition = new Vector2(-50f, -50f);
-        rt.sizeDelta = new Vector2(125f, 125f);
+        rt.sizeDelta = new Vector2(150f, 150f);
 
         var ringImg = pauseGO.GetComponent<Image>();
         var ringSprite = GetOuterRingSprite();
@@ -1285,7 +1296,7 @@ public class UIManager : MonoBehaviour
         var iconRt = iconGO.GetComponent<RectTransform>();
         iconRt.anchorMin = iconRt.anchorMax = new Vector2(0.5f, 0.5f);
         iconRt.pivot = new Vector2(0.5f, 0.5f);
-        iconRt.sizeDelta = new Vector2(125f * 0.55f, 125f * 0.55f);
+        iconRt.sizeDelta = new Vector2(150f * 0.55f, 150f * 0.55f);
         iconRt.anchoredPosition = Vector2.zero;
 
         var iconImg = iconGO.GetComponent<Image>();
@@ -1304,7 +1315,7 @@ public class UIManager : MonoBehaviour
             var txt = iconGO.AddComponent<TextMeshProUGUI>();
             txt.text = "❚❚";
             txt.font = UIThemeManager.AlohaFont;
-            txt.fontSize = 38f;
+            txt.fontSize = 44f;
             txt.alignment = TextAlignmentOptions.Center;
             txt.color = BtnDefault;
             txt.raycastTarget = false;

@@ -31,14 +31,25 @@ public class MainMenuController : MonoBehaviour
     [Tooltip("Button in custom popup to cancel.")]
     [SerializeField] private Button     customCancelButton;
 
-    // Procedural Confirmation Modal Fallback
+    [Header("Custom Exit Confirmation Popup (Optional)")]
+    [Tooltip("Custom popup root GameObject to show when confirming exit.")]
+    [SerializeField] private GameObject customExitConfirmPopupRoot;
+    [Tooltip("Button in custom popup to confirm exiting game.")]
+    [SerializeField] private Button     customExitConfirmButton;
+    [Tooltip("Button in custom popup to cancel exiting game.")]
+    [SerializeField] private Button     customExitCancelButton;
+
+    // Procedural Confirmation Modal Fallbacks
     private GameObject _proceduralConfirmModal;
+    private GameObject _proceduralExitConfirmModal;
 
     private void Awake()
     {
         AutoFindButtons();
         if (customConfirmPopupRoot != null)
             customConfirmPopupRoot.SetActive(false);
+        if (customExitConfirmPopupRoot != null)
+            customExitConfirmPopupRoot.SetActive(false);
 
         UIManager.Instance?.SetExplorationHUDVisible(false);
     }
@@ -122,6 +133,41 @@ public class MainMenuController : MonoBehaviour
             customCancelButton.onClick.RemoveListener(OnCancelNewGame);
             customCancelButton.onClick.AddListener(OnCancelNewGame);
         }
+
+        if (customExitConfirmButton != null)
+        {
+            customExitConfirmButton.onClick.RemoveListener(OnConfirmExitGame);
+            customExitConfirmButton.onClick.AddListener(OnConfirmExitGame);
+        }
+
+        if (customExitCancelButton != null)
+        {
+            customExitCancelButton.onClick.RemoveListener(OnCancelExitGame);
+            customExitCancelButton.onClick.AddListener(OnCancelExitGame);
+        }
+    }
+
+    private void Update()
+    {
+        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (_proceduralExitConfirmModal != null && _proceduralExitConfirmModal.activeSelf)
+            {
+                OnCancelExitGame();
+            }
+            else if (customExitConfirmPopupRoot != null && customExitConfirmPopupRoot.activeSelf)
+            {
+                OnCancelExitGame();
+            }
+            else if (_proceduralConfirmModal != null && _proceduralConfirmModal.activeSelf)
+            {
+                OnCancelNewGame();
+            }
+            else if (customConfirmPopupRoot != null && customConfirmPopupRoot.activeSelf)
+            {
+                OnCancelNewGame();
+            }
+        }
     }
 
     /// <summary>
@@ -191,6 +237,8 @@ public class MainMenuController : MonoBehaviour
         AudioManager.Instance?.PlayButtonClick();
         if (customConfirmPopupRoot != null) customConfirmPopupRoot.SetActive(false);
         if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
         GameManager.Instance.LoadGame();
 
         int savedZone = PlayerPrefs.GetInt("Save_CurrentZone", 0);
@@ -275,6 +323,11 @@ public class MainMenuController : MonoBehaviour
     {
         AudioManager.Instance?.PlayButtonClick();
 
+        if (customConfirmPopupRoot != null) customConfirmPopupRoot.SetActive(false);
+        if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
+
         if (PauseMenuUI.Instance != null)
         {
             PauseMenuUI.Instance.OpenSettingsFromMainMenu();
@@ -290,9 +343,58 @@ public class MainMenuController : MonoBehaviour
     public void OnQuitClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
+        ShowExitConfirmation();
+    }
 
-        Debug.Log("[MainMenuController] Quit Game Requested.");
+    // -----------------------------------------------------------------------
+    // Exit Confirmation Dialog
+    // -----------------------------------------------------------------------
+
+    public void ShowExitConfirmation()
+    {
+        // Dismiss overwrite modal if open
+        if (customConfirmPopupRoot != null) customConfirmPopupRoot.SetActive(false);
+        if (_proceduralConfirmModal != null) _proceduralConfirmModal.SetActive(false);
+
+        if (customExitConfirmPopupRoot != null)
+        {
+            customExitConfirmPopupRoot.transform.SetAsLastSibling();
+            customExitConfirmPopupRoot.SetActive(true);
+            return;
+        }
+
+        if (_proceduralExitConfirmModal == null)
+        {
+            BuildProceduralExitConfirmModal();
+        }
+
+        if (_proceduralExitConfirmModal != null)
+        {
+            _proceduralExitConfirmModal.transform.SetAsLastSibling();
+            _proceduralExitConfirmModal.SetActive(true);
+        }
+    }
+
+    public void OnConfirmExitGame()
+    {
+        AudioManager.Instance?.PlayButtonClick();
+
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
+
+        Debug.Log("[MainMenuController] Quit Game Confirmed.");
         Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+    }
+
+    public void OnCancelExitGame()
+    {
+        AudioManager.Instance?.PlayButtonClick();
+
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
     }
 
     // -----------------------------------------------------------------------
@@ -301,6 +403,10 @@ public class MainMenuController : MonoBehaviour
 
     private void ShowOverwriteConfirmation()
     {
+        // Dismiss exit modal if open
+        if (customExitConfirmPopupRoot != null) customExitConfirmPopupRoot.SetActive(false);
+        if (_proceduralExitConfirmModal != null) _proceduralExitConfirmModal.SetActive(false);
+
         if (customConfirmPopupRoot != null)
         {
             customConfirmPopupRoot.transform.SetAsLastSibling();
@@ -344,6 +450,11 @@ public class MainMenuController : MonoBehaviour
         {
             Destroy(_proceduralConfirmModal);
             _proceduralConfirmModal = null;
+        }
+        if (_proceduralExitConfirmModal != null)
+        {
+            Destroy(_proceduralExitConfirmModal);
+            _proceduralExitConfirmModal = null;
         }
     }
 
@@ -463,6 +574,99 @@ public class MainMenuController : MonoBehaviour
 
         // Cancel Button (Keep Save) - 1 line: kept standard size
         CreateDialogButton("CancelBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelNewGame, btnContainer.transform, font, new Vector2(300f, 70f), 32f);
+    }
+
+    // -----------------------------------------------------------------------
+    // Procedural Exit Confirmation Modal Fallback (Matches Overwrite Modal Layout)
+    // -----------------------------------------------------------------------
+
+    private void BuildProceduralExitConfirmModal()
+    {
+        Canvas canvas = GetMainMenuCanvas();
+        if (canvas == null) return;
+
+        var font = UIThemeManager.AlohaFont;
+
+        // Dark background overlay
+        _proceduralExitConfirmModal = new GameObject("ExitConfirmModal", typeof(RectTransform), typeof(Image));
+        _proceduralExitConfirmModal.transform.SetParent(canvas.transform, false);
+        _proceduralExitConfirmModal.transform.SetAsLastSibling();
+
+        var bgRect = _proceduralExitConfirmModal.GetComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.sizeDelta = Vector2.zero;
+        _proceduralExitConfirmModal.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.08f, 0.88f);
+
+        // Dialog Card (matching overwrite new game modal styling)
+        var cardGO = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
+        cardGO.transform.SetParent(_proceduralExitConfirmModal.transform, false);
+        var cardRect = cardGO.GetComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot     = new Vector2(0.5f, 0.5f);
+        cardRect.sizeDelta = new Vector2(980f, 580f);
+        cardGO.GetComponent<Image>().color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+
+        // Title (Top positioned with zero overlap)
+        var titleGO = new GameObject("Title", typeof(RectTransform));
+        titleGO.transform.SetParent(cardGO.transform, false);
+        var titleRect = titleGO.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot     = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -36f);
+        titleRect.sizeDelta = new Vector2(900f, 55f);
+        var titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) titleTMP.font = font;
+        titleTMP.fontSize = 34;
+        titleTMP.fontStyle = FontStyles.Bold;
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = new Color(1f, 0.35f, 0.35f);
+        titleTMP.text = "⚠️ QUIT GAME?";
+
+        // Description (Strictly top-anchored below title with zero overlap)
+        var descGO = new GameObject("Description", typeof(RectTransform));
+        descGO.transform.SetParent(cardGO.transform, false);
+        var descRect = descGO.GetComponent<RectTransform>();
+        descRect.anchorMin = new Vector2(0.5f, 1f);
+        descRect.anchorMax = new Vector2(0.5f, 1f);
+        descRect.pivot     = new Vector2(0.5f, 1f);
+        descRect.anchoredPosition = new Vector2(0f, -115f);
+        descRect.sizeDelta = new Vector2(900f, 280f);
+        var descTMP = descGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) descTMP.font = font;
+        descTMP.fontSize = 32;
+        descTMP.alignment = TextAlignmentOptions.Top;
+        descTMP.lineSpacing = 6f;
+        descTMP.paragraphSpacing = 8f;
+        descTMP.enableAutoSizing = true;
+        descTMP.fontSizeMin = 26f;
+        descTMP.fontSizeMax = 32f;
+        descTMP.color = new Color(0.9f, 0.92f, 0.95f);
+        descTMP.text = "Are you sure you want to quit Hadal Descent?\n\nDo you wish to exit?";
+
+        // Buttons Container (Bottom positioned with generous margin)
+        var btnContainer = new GameObject("BtnContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        btnContainer.transform.SetParent(cardGO.transform, false);
+        var bcRect = btnContainer.GetComponent<RectTransform>();
+        bcRect.anchorMin = new Vector2(0.5f, 0f);
+        bcRect.anchorMax = new Vector2(0.5f, 0f);
+        bcRect.pivot     = new Vector2(0.5f, 0f);
+        bcRect.anchoredPosition = new Vector2(0f, 36f);
+        bcRect.sizeDelta = new Vector2(860f, 100f);
+
+        var hlg = btnContainer.GetComponent<HorizontalLayoutGroup>();
+        hlg.childAlignment = TextAnchor.MiddleCenter;
+        hlg.spacing = 28f;
+        hlg.childControlWidth = false;
+        hlg.childControlHeight = false;
+
+        // Yes Button (Quit Game)
+        CreateDialogButton("ConfirmExitBtn", "QUIT GAME", new Color(0.75f, 0.18f, 0.18f), OnConfirmExitGame, btnContainer.transform, font, new Vector2(340f, 80f), 30f);
+
+        // Cancel Button (Stay in Main Menu)
+        CreateDialogButton("CancelExitBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelExitGame, btnContainer.transform, font, new Vector2(300f, 80f), 32f);
     }
 
     private void CreateDialogButton(string name, string label, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, Vector2 size, float fontSize = 32f)

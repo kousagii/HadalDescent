@@ -752,8 +752,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 if (tRect != null && tRect.anchorMin.x >= 0.8f)
                 {
                     tRect.pivot = new Vector2(1f, tRect.pivot.y);
-                    if (tRect.anchoredPosition.x > -190f)
-                        tRect.anchoredPosition = new Vector2(-190f, tRect.anchoredPosition.y);
+                    if (tRect.anchoredPosition.x > -230f)
+                        tRect.anchoredPosition = new Vector2(-230f, tRect.anchoredPosition.y);
                     customTimerText.alignment = TextAlignmentOptions.Right;
                 }
             }

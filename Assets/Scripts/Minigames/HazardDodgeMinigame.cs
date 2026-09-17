@@ -1291,13 +1291,20 @@ public class HazardDodgeMinigame : MonoBehaviour
             }
 
             // Configure HorizontalLayoutGroup so pips stay crisp, fixed-size badges next to Hull text
-            var customHlg = customHullText != null ? customHullText.GetComponentInParent<HorizontalLayoutGroup>() : null;
-            if (customHlg != null)
+            if (customHullText != null)
             {
-                customHlg.childForceExpandWidth = false;
-                customHlg.childControlWidth = false;
-                customHlg.spacing = 10f;
-                customHlg.childAlignment = TextAnchor.MiddleRight;
+                if (customHullText.rectTransform.sizeDelta.x <= 10f)
+                {
+                    customHullText.rectTransform.sizeDelta = new Vector2(450f, 50f);
+                }
+                var customHlg = customHullText.GetComponentInParent<HorizontalLayoutGroup>();
+                if (customHlg != null)
+                {
+                    customHlg.childForceExpandWidth = false;
+                    customHlg.childControlWidth = false;
+                    customHlg.spacing = 10f;
+                    customHlg.childAlignment = (customHullText.rectTransform.anchorMin.x >= 0.8f) ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
+                }
             }
 
             if (customHullPipImages != null)
@@ -1344,18 +1351,18 @@ public class HazardDodgeMinigame : MonoBehaviour
             if (rdpTr != null)
             {
                 var rRt = rdpTr.GetComponent<RectTransform>();
-                if (rRt != null && rRt.anchoredPosition.x > -190f)
+                if (rRt != null && rRt.anchorMin.x >= 0.8f && rRt.anchoredPosition.x > -230f)
                 {
-                    rRt.anchoredPosition = new Vector2(-190f, rRt.anchoredPosition.y);
+                    rRt.anchoredPosition = new Vector2(-230f, rRt.anchoredPosition.y);
                 }
             }
             var distTr = customUIRoot.transform.Find("Distance") ?? customUIRoot.transform.Find("DistanceText");
             if (distTr != null)
             {
                 var dRt = distTr.GetComponent<RectTransform>();
-                if (dRt != null && dRt.anchoredPosition.x > -590f)
+                if (dRt != null && dRt.anchorMin.x >= 0.8f && dRt.anchoredPosition.x > -630f)
                 {
-                    dRt.anchoredPosition = new Vector2(-590f, dRt.anchoredPosition.y);
+                    dRt.anchoredPosition = new Vector2(-630f, dRt.anchoredPosition.y);
                 }
             }
 

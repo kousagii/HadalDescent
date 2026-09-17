@@ -34,6 +34,11 @@ public class ZoneSelectionUI : MonoBehaviour
         public TMP_Text   titleText;
         public TMP_Text   depthText;
         public TMP_Text   descText;
+        public Image      zoneScreenshotImage;
+        public GameObject zoneScreenshotPlaceholder;
+        public RectTransform infoContainer;
+        public RectTransform accessSpan;
+        public RectTransform progressSpan;
         public TMP_Text   speciesProgressText;
         public Slider     progressBar;
         public Image      progressFill;
@@ -47,6 +52,10 @@ public class ZoneSelectionUI : MonoBehaviour
     [Header("Typography")]
     [Tooltip("Aloha font asset (AlohaPop SDF) used across the entire Zone Selection UI.")]
     [SerializeField] private TMP_FontAsset alohaFontAsset;
+
+    [Header("Zone Screenshots (Optional)")]
+    [Tooltip("Optional screenshots for each zone (0 = Sunlight, 1 = Twilight, 2 = Midnight, 3 = Abyss, 4 = Hadal). If not assigned in Inspector, the UI will attempt to load from Resources/UI/ZoneScreenshots/")]
+    [SerializeField] private Sprite[] zoneScreenshots = new Sprite[ZoneConfig.ZoneCount];
 
     [Header("Custom UI Elements (Optional)")]
     [SerializeField] private GameObject customRoot;
@@ -85,6 +94,37 @@ public class ZoneSelectionUI : MonoBehaviour
 
         alohaFontAsset = UIThemeManager.AntoneFont;
         return alohaFontAsset;
+    }
+
+    public Sprite GetZoneScreenshot(int zoneIndex)
+    {
+        if (zoneScreenshots != null && zoneIndex >= 0 && zoneIndex < zoneScreenshots.Length && zoneScreenshots[zoneIndex] != null)
+        {
+            return zoneScreenshots[zoneIndex];
+        }
+
+        if (ZoneConfig.IsValidZone(zoneIndex))
+        {
+            string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
+            // 1. Check Resources/UI/ZoneScreenshots/{sceneName} (e.g. SunlightZone)
+            Sprite resSprite = Resources.Load<Sprite>($"UI/ZoneScreenshots/{sceneName}");
+            if (resSprite != null) return resSprite;
+
+            // 2. Check Resources/UI/ZoneScreenshots/Zone_{zoneIndex} (e.g. Zone_0)
+            resSprite = Resources.Load<Sprite>($"UI/ZoneScreenshots/Zone_{zoneIndex}");
+            if (resSprite != null) return resSprite;
+
+            // 3. Check Resources/UI/ZoneScreenshots/{zoneName} without spaces (e.g. SunlightZone)
+            string strippedName = ZoneConfig.Zones[zoneIndex].zoneName.Replace(" ", "");
+            resSprite = Resources.Load<Sprite>($"UI/ZoneScreenshots/{strippedName}");
+            if (resSprite != null) return resSprite;
+
+            // 4. Check Resources/ZoneScreenshots/{sceneName}
+            resSprite = Resources.Load<Sprite>($"ZoneScreenshots/{sceneName}");
+            if (resSprite != null) return resSprite;
+        }
+
+        return null;
     }
 
     private void Awake()
@@ -291,21 +331,49 @@ public class ZoneSelectionUI : MonoBehaviour
             if (card.titleText != null)
             {
                 card.titleText.font = font;
-                card.titleText.fontSize = 34f;
+                card.titleText.fontSize = 30f;
                 card.titleText.enableAutoSizing = true;
-                card.titleText.fontSizeMin = 26f;
-                card.titleText.fontSizeMax = 34f;
+                card.titleText.fontSizeMin = 22f;
+                card.titleText.fontSizeMax = 30f;
+                card.titleText.textWrappingMode = TextWrappingModes.NoWrap;
                 card.titleText.text = zone.zoneName.ToUpper();
+                card.titleText.color = Color.white;
             }
             if (card.depthText != null)
             {
                 card.depthText.font = font;
-                card.depthText.fontSize = 32f;
+                card.depthText.fontSize = 28f;
                 card.depthText.enableAutoSizing = true;
-                card.depthText.fontSizeMin = 24f;
-                card.depthText.fontSizeMax = 32f;
+                card.depthText.fontSizeMin = 20f;
+                card.depthText.fontSizeMax = 28f;
                 card.depthText.textWrappingMode = TextWrappingModes.NoWrap;
                 card.depthText.text = $"{zone.displayDepthMin:F0} - {zone.displayDepthMax:F0} M";
+                card.depthText.color = isUnlocked ? new Color(0.35f, 0.90f, 1f) : new Color(0.6f, 0.72f, 0.8f);
+            }
+            if (card.zoneScreenshotImage != null)
+            {
+                Sprite screenshot = GetZoneScreenshot(zoneIndex);
+                if (screenshot != null)
+                {
+                    card.zoneScreenshotImage.sprite = screenshot;
+                    card.zoneScreenshotImage.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.8f);
+                    if (card.zoneScreenshotPlaceholder != null)
+                    {
+                        card.zoneScreenshotPlaceholder.SetActive(false);
+                    }
+                }
+                else
+                {
+                    card.zoneScreenshotImage.sprite = null;
+                    Color atmosphericTint = isUnlocked 
+                        ? Color.Lerp(zone.fogColor, new Color(0.05f, 0.12f, 0.22f), 0.5f) 
+                        : new Color(0.05f, 0.08f, 0.12f, 0.8f);
+                    card.zoneScreenshotImage.color = atmosphericTint;
+                    if (card.zoneScreenshotPlaceholder != null)
+                    {
+                        card.zoneScreenshotPlaceholder.SetActive(true);
+                    }
+                }
             }
             if (card.descText != null)
             {
@@ -315,10 +383,10 @@ public class ZoneSelectionUI : MonoBehaviour
             if (card.speciesProgressText != null)
             {
                 card.speciesProgressText.font = font;
-                card.speciesProgressText.fontSize = 32f;
+                card.speciesProgressText.fontSize = 30f;
                 card.speciesProgressText.enableAutoSizing = true;
-                card.speciesProgressText.fontSizeMin = 24f;
-                card.speciesProgressText.fontSizeMax = 32f;
+                card.speciesProgressText.fontSizeMin = 22f;
+                card.speciesProgressText.fontSizeMax = 30f;
                 card.speciesProgressText.text = $"SPECIES: {discovered} / {total}";
             }
             if (card.progressBar != null) card.progressBar.value = progressFrac;
@@ -329,10 +397,10 @@ public class ZoneSelectionUI : MonoBehaviour
             if (card.hullReqText != null)
             {
                 card.hullReqText.font = font;
-                card.hullReqText.fontSize = 30f;
+                card.hullReqText.fontSize = 26f;
                 card.hullReqText.enableAutoSizing = true;
-                card.hullReqText.fontSizeMin = 22f;
-                card.hullReqText.fontSizeMax = 30f;
+                card.hullReqText.fontSizeMin = 20f;
+                card.hullReqText.fontSizeMax = 26f;
                 card.hullReqText.text = reqText;
             }
             if (card.hullReqBg != null) card.hullReqBg.color = reqColor;
@@ -746,7 +814,7 @@ public class ZoneSelectionUI : MonoBehaviour
             cardRoot = cardGO
         };
 
-        // 1. Zone Depth Banner (Top: Y 0 to -80, Aloha, 36px)
+        // 1. Zone Title Banner (Top: Y 0 to -80, Aloha, 30px Bold)
         var topBanner = new GameObject("TopBanner", typeof(RectTransform), typeof(Image));
         topBanner.transform.SetParent(cardGO.transform, false);
         var tbR = topBanner.GetComponent<RectTransform>();
@@ -757,48 +825,148 @@ public class ZoneSelectionUI : MonoBehaviour
         tbR.sizeDelta = new Vector2(0f, 80f);
         topBanner.GetComponent<Image>().color = isUnlocked ? new Color(0.08f, 0.38f, 0.48f) : new Color(0.14f, 0.17f, 0.22f);
 
-        binding.depthText = CreateText("Depth", $"{zone.displayDepthMin:F0} - {zone.displayDepthMax:F0} M", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 60f), 32f, FontStyles.Bold, Color.white, topBanner.transform, font);
+        binding.titleText = CreateText("Title", zone.zoneName.ToUpper(), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 60f), 30f, FontStyles.Bold, Color.white, topBanner.transform, font);
+        binding.titleText.enableAutoSizing = true;
+        binding.titleText.fontSizeMin = 22f;
+        binding.titleText.fontSizeMax = 30f;
+        binding.titleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        // 2. Depth Range (Below Title Banner, Y: -88f, 28px Bold)
+        Color depthCol = isUnlocked ? new Color(0.35f, 0.90f, 1f) : new Color(0.6f, 0.72f, 0.8f);
+        binding.depthText = CreateText("Depth", $"{zone.displayDepthMin:F0} - {zone.displayDepthMax:F0} M", new Vector2(0.5f, 1f), new Vector2(0f, -88f), new Vector2(340f, 40f), 28f, FontStyles.Bold, depthCol, cardGO.transform, font);
         binding.depthText.enableAutoSizing = true;
-        binding.depthText.fontSizeMin = 24f;
-        binding.depthText.fontSizeMax = 32f;
+        binding.depthText.fontSizeMin = 20f;
+        binding.depthText.fontSizeMax = 28f;
         binding.depthText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        // 2. Zone Title (Y: -105f, 34px Bold, auto-sizing)
-        Color titleCol = isUnlocked ? new Color(0.3f, 0.92f, 1f) : new Color(0.6f, 0.65f, 0.72f);
-        binding.titleText = CreateText("Title", zone.zoneName.ToUpper(), new Vector2(0.5f, 1f), new Vector2(0f, -105f), new Vector2(360f, 85f), 34f, FontStyles.Bold, titleCol, cardGO.transform, font);
-        binding.titleText.enableAutoSizing = true;
-        binding.titleText.fontSizeMin = 26f;
-        binding.titleText.fontSizeMax = 34f;
+        // 3. Screenshot Preview Container (Y: -138f, size 344x230)
+        var ssFrame = new GameObject("ScreenshotFrame", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+        ssFrame.transform.SetParent(cardGO.transform, false);
+        var ssFrameR = ssFrame.GetComponent<RectTransform>();
+        ssFrameR.anchorMin = new Vector2(0.5f, 1f);
+        ssFrameR.anchorMax = new Vector2(0.5f, 1f);
+        ssFrameR.pivot     = new Vector2(0.5f, 1f);
+        ssFrameR.anchoredPosition = new Vector2(0f, -138f);
+        ssFrameR.sizeDelta = new Vector2(344f, 230f);
+        ssFrame.GetComponent<Image>().color = new Color(0.02f, 0.05f, 0.09f, 0.95f);
 
-        // (Zone description is REMOVED as requested, leaving generous breathing room so nothing overlaps)
+        var ssImgGO = new GameObject("ScreenshotImage", typeof(RectTransform), typeof(Image));
+        ssImgGO.transform.SetParent(ssFrame.transform, false);
+        var ssImgR = ssImgGO.GetComponent<RectTransform>();
+        ssImgR.anchorMin = Vector2.zero;
+        ssImgR.anchorMax = Vector2.one;
+        ssImgR.sizeDelta = Vector2.zero;
+        var ssImg = ssImgGO.GetComponent<Image>();
+        ssImg.preserveAspect = false;
 
-        // 3. Requirement Badge (Y: -225f, 30px Bold)
+        Sprite zoneSprite = GetZoneScreenshot(zoneIndex);
+        if (zoneSprite != null)
+        {
+            ssImg.sprite = zoneSprite;
+            ssImg.color = isUnlocked ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.8f);
+        }
+        else
+        {
+            ssImg.sprite = null;
+            Color atmosphericTint = isUnlocked 
+                ? Color.Lerp(zone.fogColor, new Color(0.05f, 0.12f, 0.22f), 0.5f) 
+                : new Color(0.05f, 0.08f, 0.12f, 0.8f);
+            ssImg.color = atmosphericTint;
+        }
+        binding.zoneScreenshotImage = ssImg;
+
+        // Placeholder text if no sprite assigned
+        var ssPlaceholder = new GameObject("PlaceholderText", typeof(RectTransform));
+        ssPlaceholder.transform.SetParent(ssFrame.transform, false);
+        var phR = ssPlaceholder.GetComponent<RectTransform>();
+        phR.anchorMin = Vector2.zero;
+        phR.anchorMax = Vector2.one;
+        phR.sizeDelta = Vector2.zero;
+        var phText = ssPlaceholder.AddComponent<TextMeshProUGUI>();
+        if (font != null) phText.font = font;
+        phText.fontSize = 20f;
+        phText.fontStyle = FontStyles.Bold;
+        phText.alignment = TextAlignmentOptions.Center;
+        phText.color = new Color(0.4f, 0.65f, 0.8f, 0.5f);
+        phText.text = "ZONE PREVIEW";
+        ssPlaceholder.SetActive(zoneSprite == null);
+        binding.zoneScreenshotPlaceholder = ssPlaceholder;
+
+        // 4. Info & Progress Container (Code-only non-visual container spanning between screenshot and action button)
+        var infoContainer = new GameObject("InfoContainer", typeof(RectTransform));
+        infoContainer.transform.SetParent(cardGO.transform, false);
+        var icR = infoContainer.GetComponent<RectTransform>();
+        icR.anchorMin = new Vector2(0.5f, 1f);
+        icR.anchorMax = new Vector2(0.5f, 1f);
+        icR.pivot     = new Vector2(0.5f, 1f);
+        icR.anchoredPosition = new Vector2(0f, -374f);
+        icR.sizeDelta = new Vector2(344f, 266f);
+        binding.infoContainer = icR;
+
+        // 4a. Upper Span: Access State Display (Spans top 50% of container)
+        var accessSpan = new GameObject("AccessSpan", typeof(RectTransform));
+        accessSpan.transform.SetParent(infoContainer.transform, false);
+        var asR = accessSpan.GetComponent<RectTransform>();
+        asR.anchorMin = new Vector2(0f, 0.5f);
+        asR.anchorMax = new Vector2(1f, 1f);
+        asR.pivot     = new Vector2(0.5f, 0.5f);
+        asR.anchoredPosition = Vector2.zero;
+        asR.sizeDelta = Vector2.zero;
+        binding.accessSpan = asR;
+
         string reqText = zoneIndex == 0 ? "DEFAULT ACCESS" : (isUnlocked ? "HULL REQUIREMENT MET" : $"REQ: HULL TIER {zone.requiredHullTier}");
         Color reqColor = isUnlocked ? new Color(0.10f, 0.44f, 0.34f) : new Color(0.65f, 0.20f, 0.20f);
-        binding.hullReqText = CreateBadgeCard(cardGO.transform, reqText, new Vector2(0f, -225f), reqColor, font, 30f, out binding.hullReqBg);
+        binding.hullReqText = CreateBadgeCard(accessSpan.transform, reqText, Vector2.zero, reqColor, font, 26f, out binding.hullReqBg, new Vector2(0f, 68f), new Vector2(0f, 0.5f), new Vector2(1f, 0.5f));
         binding.hullReqText.enableAutoSizing = true;
-        binding.hullReqText.fontSizeMin = 22f;
-        binding.hullReqText.fontSizeMax = 30f;
+        binding.hullReqText.fontSizeMin = 20f;
+        binding.hullReqText.fontSizeMax = 26f;
 
-        // 4. Species Progress Section (Y: -330f, 32px Bold)
+        // 4b. Lower Span: Species Progress Section (Spans bottom 50% of container)
+        var progressSpan = new GameObject("ProgressSpan", typeof(RectTransform));
+        progressSpan.transform.SetParent(infoContainer.transform, false);
+        var psR = progressSpan.GetComponent<RectTransform>();
+        psR.anchorMin = new Vector2(0f, 0f);
+        psR.anchorMax = new Vector2(1f, 0.5f);
+        psR.pivot     = new Vector2(0.5f, 0.5f);
+        psR.anchoredPosition = Vector2.zero;
+        psR.sizeDelta = Vector2.zero;
+        binding.progressSpan = psR;
+
         int discovered = GameManager.Instance != null ? GameManager.Instance.GetDiscoveredCountInZone(zoneIndex) : 0;
         int total = zone.totalSpeciesCount;
         float progressFrac = (float)discovered / Mathf.Max(1, total);
 
-        binding.speciesProgressText = CreateText("SpeciesLbl", $"SPECIES: {discovered} / {total}", new Vector2(0.5f, 1f), new Vector2(0f, -330f), new Vector2(360f, 50f), 32f, FontStyles.Bold, Color.white, cardGO.transform, font);
-        binding.speciesProgressText.enableAutoSizing = true;
-        binding.speciesProgressText.fontSizeMin = 24f;
-        binding.speciesProgressText.fontSizeMax = 32f;
+        // Species Progress Label (Top half of ProgressSpan)
+        var spGO = new GameObject("SpeciesLbl", typeof(RectTransform));
+        spGO.transform.SetParent(progressSpan.transform, false);
+        var spR = spGO.GetComponent<RectTransform>();
+        spR.anchorMin = new Vector2(0f, 0.48f);
+        spR.anchorMax = new Vector2(1f, 1f);
+        spR.pivot     = new Vector2(0.5f, 0.5f);
+        spR.anchoredPosition = Vector2.zero;
+        spR.sizeDelta = Vector2.zero;
+        var spTmp = spGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) spTmp.font = font;
+        spTmp.fontSize = 30f;
+        spTmp.fontStyle = FontStyles.Bold;
+        spTmp.alignment = TextAlignmentOptions.Center;
+        spTmp.verticalAlignment = VerticalAlignmentOptions.Middle;
+        spTmp.color = Color.white;
+        spTmp.text = $"SPECIES: {discovered} / {total}";
+        spTmp.enableAutoSizing = true;
+        spTmp.fontSizeMin = 22f;
+        spTmp.fontSizeMax = 30f;
+        binding.speciesProgressText = spTmp;
 
-        // Progress Bar Track & Fill (Y: -395f, size 320x22)
+        // Progress Bar Track & Fill (Bottom half of ProgressSpan, spans full width with 6px padding)
         var barTrackGO = new GameObject("ProgressBarTrack", typeof(RectTransform), typeof(Image));
-        barTrackGO.transform.SetParent(cardGO.transform, false);
+        barTrackGO.transform.SetParent(progressSpan.transform, false);
         var btR = barTrackGO.GetComponent<RectTransform>();
-        btR.anchorMin = new Vector2(0.5f, 1f);
-        btR.anchorMax = new Vector2(0.5f, 1f);
-        btR.pivot     = new Vector2(0.5f, 1f);
-        btR.anchoredPosition = new Vector2(0f, -395f);
-        btR.sizeDelta = new Vector2(320f, 22f);
+        btR.anchorMin = new Vector2(0f, 0.12f);
+        btR.anchorMax = new Vector2(1f, 0.38f);
+        btR.pivot     = new Vector2(0.5f, 0.5f);
+        btR.anchoredPosition = Vector2.zero;
+        btR.sizeDelta = new Vector2(-12f, 0f);
         barTrackGO.GetComponent<Image>().color = new Color(0.06f, 0.12f, 0.18f, 0.9f);
 
         var barFillGO = new GameObject("Fill", typeof(RectTransform), typeof(Image));
@@ -959,16 +1127,16 @@ public class ZoneSelectionUI : MonoBehaviour
         return tmp;
     }
 
-    private TMP_Text CreateBadgeCard(Transform parent, string text, Vector2 pos, Color color, TMP_FontAsset font, float fontSize, out Image bgImage)
+    private TMP_Text CreateBadgeCard(Transform parent, string text, Vector2 pos, Color color, TMP_FontAsset font, float fontSize, out Image bgImage, Vector2? size = null, Vector2? anchorMin = null, Vector2? anchorMax = null)
     {
         var badgeGO = new GameObject("ReqBadge", typeof(RectTransform), typeof(Image));
         badgeGO.transform.SetParent(parent, false);
         var r = badgeGO.GetComponent<RectTransform>();
-        r.anchorMin = new Vector2(0.5f, 1f);
-        r.anchorMax = new Vector2(0.5f, 1f);
-        r.pivot     = new Vector2(0.5f, 1f);
+        r.anchorMin = anchorMin ?? new Vector2(0.5f, 1f);
+        r.anchorMax = anchorMax ?? new Vector2(0.5f, 1f);
+        r.pivot     = new Vector2(0.5f, 0.5f);
         r.anchoredPosition = pos;
-        r.sizeDelta = new Vector2(340f, 66f);
+        r.sizeDelta = size ?? new Vector2(340f, 58f);
         bgImage = badgeGO.GetComponent<Image>();
         bgImage.color = color;
 
@@ -984,6 +1152,7 @@ public class ZoneSelectionUI : MonoBehaviour
         tmp.fontSize = fontSize;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
+        tmp.verticalAlignment = VerticalAlignmentOptions.Middle;
         tmp.color = Color.white;
         tmp.text = text;
 
