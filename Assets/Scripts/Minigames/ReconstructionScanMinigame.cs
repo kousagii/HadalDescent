@@ -59,6 +59,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private Image[]       _tileImages;
     private TMP_Text      _timerText;
     private Image         _timerFill;
+    private GameObject    _resultBox;
+    private RectTransform _resultBoxRect;
+    private Image         _resultBorder;
+    private Image         _resultTopStripe;
     private TMP_Text      _resultText;
     private GameObject    _hintOverlay;
     private Image         _hintImage;
@@ -66,6 +70,17 @@ public class ReconstructionScanMinigame : MonoBehaviour
     // Species photo slices (cropped with minimum cutoff to 1:1 square, then sliced into N x N grid)
     private Sprite[]      _tileSlices;
     private Sprite        _fullCroppedSprite;
+
+    // Scanner Upgrade Perks (Tier 2: +10s, Tier 3: Move Guide, Tier 4: 1x Swap, Tier 5: 2x Swaps & +15s)
+    private Image[]       _tileBorderImages;
+    private int           _swapsRemaining;
+    private bool          _swapModeActive;
+    private int           _firstSwapIdx = -1;
+    private GameObject    _swapButtonGO;
+    private Button        _swapButton;
+    private Image         _swapButtonBg;
+    private Image         _swapButtonBorder;
+    private TMP_Text      _swapButtonTMP;
 
     private float _timeRemaining;
     private float _totalTime;   
@@ -83,20 +98,35 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _onFail    = onFail;
     }
 
+    private int GetScannerTier()
+    {
+        if (GameManager.Instance == null) return 1;
+        return Mathf.Clamp(GameManager.Instance.ScannerTier, 1, 5);
+    }
+
     public void Show()
     {
         StopAllCoroutines();
         UIManager.Instance?.SetExplorationHUDVisible(false);
-        _n             = GridSizes[_zoneIndex];
-        _totalTime     = Timers[_zoneIndex];
+        _n = GridSizes[_zoneIndex];
+
+        int tier = GetScannerTier();
+        float bonusTime = (tier >= 5) ? 35f : (tier >= 3 ? 20f : (tier >= 2 ? 10f : 0f));
+        _totalTime     = Timers[_zoneIndex] + bonusTime;
         _timeRemaining = _totalTime;
         _hintShown     = false;
         _finished      = false;
 
+        _swapsRemaining = (tier >= 5) ? 2 : (tier >= 4 ? 1 : 0);
+        _swapModeActive = false;
+        _firstSwapIdx   = -1;
+
         PrepareSpeciesSlices();
         BuildUI();
         InitPuzzle();
-        if (_resultText != null) _resultText.gameObject.SetActive(false);
+        UpdateSwapButtonUI();
+        if (_resultBox != null) _resultBox.SetActive(false);
+        else if (_resultText != null) _resultText.gameObject.SetActive(false);
         if (_rootPanel != null)
         {
             _rootPanel.gameObject.SetActive(true);
@@ -162,6 +192,41 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         if (_finished) return;
         if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
+
+        // Direct Tile Swap Mode (Tier 4 & 5 perk: tap any two tiles to swap positions directly)
+        if (_swapModeActive)
+        {
+            if (_tiles[idx] == 0) return; // Cannot swap empty slot
+
+            if (_firstSwapIdx < 0)
+            {
+                _firstSwapIdx = idx;
+                UpdateSwapButtonUI();
+                RefreshTileDisplay();
+            }
+            else if (_firstSwapIdx == idx)
+            {
+                // Tapping same tile deselects
+                _firstSwapIdx = -1;
+                UpdateSwapButtonUI();
+                RefreshTileDisplay();
+            }
+            else
+            {
+                // Execute direct swap between the two chosen tiles
+                SwapTiles(_firstSwapIdx, idx);
+                _firstSwapIdx = -1;
+                _swapsRemaining--;
+                _swapModeActive = false;
+
+                UpdateSwapButtonUI();
+                RefreshTileDisplay();
+
+                if (IsSolved()) Finish(true);
+            }
+            return;
+        }
+
         if (!IsAdjacentToEmpty(idx)) return;
         SwapTiles(idx, _emptyIdx);
         RefreshTileDisplay();
@@ -202,6 +267,49 @@ public class ReconstructionScanMinigame : MonoBehaviour
         return _tiles[total - 1] == 0;
     }
 
+    /// <summary>
+    /// Evaluates adjacent moves to find the one that best minimizes total Manhattan distance to solved positions.
+    /// Used by Next-Move Guide (Tier >= 3).
+    /// </summary>
+    private int GetOptimalNextMove()
+    {
+        if (_tiles == null || _emptyIdx < 0 || _n <= 0) return -1;
+        int[] neighbors = GetNeighbors(_emptyIdx);
+        if (neighbors == null || neighbors.Length == 0) return -1;
+
+        int bestNeighbor = neighbors[0];
+        int bestScore = int.MaxValue;
+
+        for (int i = 0; i < neighbors.Length; i++)
+        {
+            int cand = neighbors[i];
+            int val = _tiles[cand];
+            if (val == 0) continue;
+
+            int goalIdx = val - 1;
+            int goalRow = goalIdx / _n;
+            int goalCol = goalIdx % _n;
+
+            int oldDist = Mathf.Abs(cand / _n - goalRow) + Mathf.Abs(cand % _n - goalCol);
+            int newDist = Mathf.Abs(_emptyIdx / _n - goalRow) + Mathf.Abs(_emptyIdx % _n - goalCol);
+            int delta   = newDist - oldDist;
+
+            // Lower score is better:
+            int score = delta * 1000;
+            if (newDist == 0) score -= 400; // Bonus: moved into correct slot
+            if (oldDist == 0) score += 800; // Penalty: displaced already-correct tile
+            score += goalRow * 50;           // Tie-breaker: prioritize earlier rows
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestNeighbor = cand;
+            }
+        }
+
+        return bestNeighbor;
+    }
+
     // -----------------------------------------------------------------------
     // Hint (shows solved overlay briefly)
     // -----------------------------------------------------------------------
@@ -210,6 +318,9 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         StopAllCoroutines();
         _finished = true;
+        _swapModeActive = false;
+        _firstSwapIdx = -1;
+        _swapButtonGO = null;
         if (_rootPanel != null)
         {
             Destroy(_rootPanel.gameObject);
@@ -308,6 +419,9 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         if (_finished) return;
         _finished = true;
+        _swapModeActive = false;
+        _firstSwapIdx = -1;
+        if (_swapButtonGO != null) _swapButtonGO.SetActive(false);
 
         if (success)
         {
@@ -318,6 +432,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
                 _tileImages[_emptyIdx].sprite = _tileSlices[_tiles.Length - 1];
                 _tileImages[_emptyIdx].color  = Color.white;
             }
+            if (_tileBorderImages != null && _emptyIdx >= 0 && _emptyIdx < _tileBorderImages.Length && _tileBorderImages[_emptyIdx] != null)
+            {
+                _tileBorderImages[_emptyIdx].color = new Color(0.18f, 0.95f, 0.82f, 0.95f);
+            }
             if (_tileTMP != null && _emptyIdx >= 0 && _emptyIdx < _tileTMP.Length)
             {
                 _tileTMP[_emptyIdx].enabled = false;
@@ -326,16 +444,36 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
         if (_resultText != null)
         {
-            _resultText.gameObject.SetActive(true);
             string speciesName = _data != null && !string.IsNullOrEmpty(_data.commonName)
                 ? _data.commonName.ToUpper()
                 : "SPECIES";
             _resultText.text  = success
-                ? $"<b>SCAN COMPLETE!\n<size=24><color=#ffffff>{speciesName} RECONSTRUCTED</color></size></b>"
-                : "<b>TARGET LOST</b>";
+                ? $"<b>SCAN COMPLETED!\n<size=32><color=#ffffff>{speciesName} CAPTURED</color></size></b>"
+                : "<b>FOCUS LOST</b>";
             _resultText.color = success
                 ? new Color(0.20f, 0.90f, 0.78f)
-                : new Color(1f, 0.30f, 0.30f);
+                : new Color(1f, 0.35f, 0.35f);
+
+            if (_resultBorder != null)
+                _resultBorder.color = success ? new Color(0.15f, 0.85f, 0.80f, 0.95f) : new Color(0.95f, 0.25f, 0.25f, 0.95f);
+
+            if (_resultTopStripe != null)
+                _resultTopStripe.color = success ? new Color(0.20f, 0.92f, 0.82f, 0.95f) : new Color(1f, 0.35f, 0.35f, 0.95f);
+
+            _resultText.ForceMeshUpdate();
+            float textW = _resultText.preferredWidth;
+            float textH = _resultText.preferredHeight;
+            if (_resultBoxRect != null)
+            {
+                _resultBoxRect.sizeDelta = new Vector2(Mathf.Max(380f, textW + 64f), Mathf.Max(84f, textH + 32f));
+            }
+
+            if (_resultBox != null)
+            {
+                _resultBox.transform.SetAsLastSibling();
+                _resultBox.SetActive(true);
+            }
+            _resultText.gameObject.SetActive(true);
         }
 
         StartCoroutine(DelayedClose(success));
@@ -367,7 +505,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
                 if (isEmpty)
                 {
                     _tileImages[i].sprite = null;
-                    _tileImages[i].color  = new Color(0.02f, 0.05f, 0.08f, 0.95f);
+                    _tileImages[i].color  = new Color(0.01f, 0.03f, 0.06f, 0.98f);
                 }
                 else if (hasSlices)
                 {
@@ -379,6 +517,26 @@ public class ReconstructionScanMinigame : MonoBehaviour
                 {
                     _tileImages[i].sprite = null;
                     _tileImages[i].color  = new Color(0.12f, 0.25f, 0.40f, 1f);
+                }
+            }
+
+            if (_tileBorderImages != null && i < _tileBorderImages.Length && _tileBorderImages[i] != null)
+            {
+                if (isEmpty)
+                {
+                    _tileBorderImages[i].color = new Color(0.01f, 0.03f, 0.06f, 0.4f);
+                }
+                else if (_swapModeActive && i == _firstSwapIdx)
+                {
+                    _tileBorderImages[i].color = new Color(1.0f, 0.82f, 0.20f, 1.0f); // Selected swap tile (Bright Gold)
+                }
+                else if (_swapModeActive)
+                {
+                    _tileBorderImages[i].color = new Color(0.85f, 0.65f, 0.15f, 0.45f); // Swap target candidate
+                }
+                else
+                {
+                    _tileBorderImages[i].color = new Color(0.12f, 0.22f, 0.32f, 0.80f); // Default tech border
                 }
             }
 
@@ -533,9 +691,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
         gridGO.GetComponent<Image>().color = new Color(0.01f, 0.03f, 0.06f, 0.92f); // Dark backing plate so seams look high-tech
 
         int total = _n * _n;
-        _tileButtons = new Button[total];
-        _tileTMP     = new TMP_Text[total];
-        _tileImages  = new Image[total];
+        _tileButtons      = new Button[total];
+        _tileTMP          = new TMP_Text[total];
+        _tileImages       = new Image[total];
+        _tileBorderImages = new Image[total];
 
         float gap = 4f;
         float sz  = (gridAreaW - gap * (_n + 1)) / _n;
@@ -546,6 +705,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
             float x = gap + col * (sz + gap) + sz * 0.5f - gridAreaW * 0.5f;
             float y = gridAreaH - (gap + row * (sz + gap) + sz * 0.5f);
 
+            // Outer frame / border
             var tileGO = new GameObject($"Tile{i}", typeof(RectTransform), typeof(Image), typeof(Button));
             tileGO.transform.SetParent(gridGO.transform, false);
             var tr = tileGO.GetComponent<RectTransform>();
@@ -553,11 +713,26 @@ public class ReconstructionScanMinigame : MonoBehaviour
             tr.sizeDelta = new Vector2(sz, sz);
             tr.anchoredPosition = new Vector2(x, y - gridAreaH * 0.5f);
 
-            _tileImages[i] = tileGO.GetComponent<Image>();
+            var tileBorderImg = tileGO.GetComponent<Image>();
+            tileBorderImg.sprite = CaptureAndFocusMinigame.WhiteSprite;
+            tileBorderImg.color = new Color(0.12f, 0.22f, 0.32f, 0.80f);
+            _tileBorderImages[i] = tileBorderImg;
+
+            // Inner image (inset 2.5px to show outer border frame)
+            var innerGO = new GameObject("InnerImg", typeof(RectTransform), typeof(Image));
+            innerGO.transform.SetParent(tileGO.transform, false);
+            var ir = innerGO.GetComponent<RectTransform>();
+            ir.anchorMin = Vector2.zero;
+            ir.anchorMax = Vector2.one;
+            ir.offsetMin = new Vector2(2.5f, 2.5f);
+            ir.offsetMax = new Vector2(-2.5f, -2.5f);
+
+            _tileImages[i] = innerGO.GetComponent<Image>();
             _tileImages[i].color = new Color(0.12f, 0.25f, 0.40f, 1f);
+            _tileImages[i].raycastTarget = false;
 
             var numGO = new GameObject("Num", typeof(RectTransform));
-            numGO.transform.SetParent(tileGO.transform, false);
+            numGO.transform.SetParent(innerGO.transform, false);
             var nr = numGO.GetComponent<RectTransform>();
             bool hasSlices = _tileSlices != null && _tileSlices.Length == total;
             if (hasSlices)
@@ -581,6 +756,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
             _tileTMP[i].alignment = hasSlices ? TextAlignmentOptions.TopLeft : TextAlignmentOptions.Center;
             _tileTMP[i].outlineColor = new Color(0f, 0f, 0f, 0.85f);
             _tileTMP[i].outlineWidth = 0.25f;
+            _tileTMP[i].raycastTarget = false;
 
             int captured = i;
             _tileButtons[i] = tileGO.GetComponent<Button>();
@@ -625,24 +801,186 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _hintOverlay = hintGO;
         hintGO.SetActive(false);
 
-        // Result text
-        var resultGO = new GameObject("Result", typeof(RectTransform));
-        resultGO.transform.SetParent(_rootPanel, false);
+        // Direct Tile Swap Button (Tier >= 4 perk: tap any 2 tiles to swap)
+        if (GetScannerTier() >= 4)
+        {
+            float btnW = Mathf.Clamp(Mathf.Max(gridAreaW * 1.15f, 420f), 380f, 540f);
+            float btnH = 56f;
+            float swapBtnY = midY - gridAreaH * 0.5f - btnH * 0.5f - 24f;
+
+            _swapButtonGO = new GameObject("SwapButtonFrame", typeof(RectTransform), typeof(Image), typeof(Button));
+            _swapButtonGO.transform.SetParent(_rootPanel, false);
+            var srect = _swapButtonGO.GetComponent<RectTransform>();
+            srect.anchorMin = new Vector2(0.5f, 0.5f);
+            srect.anchorMax = new Vector2(0.5f, 0.5f);
+            srect.pivot     = new Vector2(0.5f, 0.5f);
+            srect.anchoredPosition = new Vector2(0f, swapBtnY);
+            srect.sizeDelta = new Vector2(btnW, btnH);
+
+            _swapButtonBorder = _swapButtonGO.GetComponent<Image>();
+            _swapButtonBorder.sprite = CaptureAndFocusMinigame.WhiteSprite;
+            _swapButtonBorder.color = new Color(0.20f, 0.75f, 0.90f, 0.95f);
+
+            var swapInnerGO = new GameObject("SwapInner", typeof(RectTransform), typeof(Image));
+            swapInnerGO.transform.SetParent(_swapButtonGO.transform, false);
+            var sirect = swapInnerGO.GetComponent<RectTransform>();
+            sirect.anchorMin = Vector2.zero;
+            sirect.anchorMax = Vector2.one;
+            sirect.offsetMin = new Vector2(3f, 3f);
+            sirect.offsetMax = new Vector2(-3f, -3f);
+            _swapButtonBg = swapInnerGO.GetComponent<Image>();
+            _swapButtonBg.sprite = CaptureAndFocusMinigame.WhiteSprite;
+            _swapButtonBg.color = new Color(0.02f, 0.08f, 0.14f, 0.95f);
+            _swapButtonBg.raycastTarget = false;
+
+            var swapTextGO = new GameObject("SwapText", typeof(RectTransform));
+            swapTextGO.transform.SetParent(swapInnerGO.transform, false);
+            var stextRect = swapTextGO.GetComponent<RectTransform>();
+            stextRect.anchorMin = Vector2.zero;
+            stextRect.anchorMax = Vector2.one;
+            stextRect.offsetMin = new Vector2(16f, 4f);
+            stextRect.offsetMax = new Vector2(-16f, -4f);
+            _swapButtonTMP = swapTextGO.AddComponent<TextMeshProUGUI>();
+            if (font != null) _swapButtonTMP.font = font;
+            _swapButtonTMP.enableAutoSizing = true;
+            _swapButtonTMP.fontSizeMin = 14f;
+            _swapButtonTMP.fontSizeMax = 22f;
+            _swapButtonTMP.textWrappingMode = TextWrappingModes.NoWrap; // Strictly single line
+            _swapButtonTMP.overflowMode = TextOverflowModes.Ellipsis;
+            _swapButtonTMP.fontStyle = FontStyles.Bold;
+            _swapButtonTMP.alignment = TextAlignmentOptions.Center;
+            _swapButtonTMP.color = Color.white;
+            _swapButtonTMP.raycastTarget = false;
+
+            _swapButton = _swapButtonGO.GetComponent<Button>();
+            _swapButton.onClick.AddListener(OnSwapButtonClicked);
+        }
+
+        // Result dialog card box (Confirmation popup style, compact and sized to fit text perfectly)
+        _resultBox = new GameObject("ResultCardBox", typeof(RectTransform), typeof(Image));
+        _resultBox.transform.SetParent(_rootPanel, false);
+        _resultBoxRect = _resultBox.GetComponent<RectTransform>();
+        _resultBoxRect.anchorMin = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.anchorMax = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.pivot     = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.anchoredPosition = new Vector2(0f, midY);
+        _resultBoxRect.sizeDelta = new Vector2(480f, 96f);
+
+        _resultBorder = _resultBox.GetComponent<Image>();
+        _resultBorder.sprite = CaptureAndFocusMinigame.WhiteSprite;
+        _resultBorder.color = new Color(0.95f, 0.25f, 0.25f, 0.95f);
+        _resultBorder.raycastTarget = false;
+
+        // Inner Dialog Card (inset 3px for glowing border frame, matching confirmation popup DialogCard color)
+        var innerCardGO = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
+        innerCardGO.transform.SetParent(_resultBox.transform, false);
+        var innerCardRect = innerCardGO.GetComponent<RectTransform>();
+        innerCardRect.anchorMin = Vector2.zero;
+        innerCardRect.anchorMax = Vector2.one;
+        innerCardRect.offsetMin = new Vector2(3f, 3f);
+        innerCardRect.offsetMax = new Vector2(-3f, -3f);
+        var innerCardImg = innerCardGO.GetComponent<Image>();
+        innerCardImg.sprite = CaptureAndFocusMinigame.WhiteSprite;
+        innerCardImg.color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+        innerCardImg.raycastTarget = false;
+
+        // Top accent line
+        var topStripeGO = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripeGO.transform.SetParent(innerCardGO.transform, false);
+        var tsRect = topStripeGO.GetComponent<RectTransform>();
+        tsRect.anchorMin = new Vector2(0f, 1f);
+        tsRect.anchorMax = new Vector2(1f, 1f);
+        tsRect.pivot     = new Vector2(0.5f, 1f);
+        tsRect.sizeDelta = new Vector2(0f, 3.5f);
+        _resultTopStripe = topStripeGO.GetComponent<Image>();
+        _resultTopStripe.sprite = CaptureAndFocusMinigame.WhiteSprite;
+        _resultTopStripe.color = new Color(1f, 0.35f, 0.35f, 0.95f);
+        _resultTopStripe.raycastTarget = false;
+
+        // Result label inside DialogCard
+        var resultGO = new GameObject("ResultText", typeof(RectTransform));
+        resultGO.transform.SetParent(innerCardGO.transform, false);
         var rr = resultGO.GetComponent<RectTransform>();
-        rr.anchorMin = new Vector2(0.5f, 0.5f);
-        rr.anchorMax = new Vector2(0.5f, 0.5f);
-        rr.pivot     = new Vector2(0.5f, 0.5f);
-        rr.anchoredPosition = new Vector2(0f, midY);
-        rr.sizeDelta = new Vector2(gridAreaW + 100f, 120f);
+        rr.anchorMin = Vector2.zero;
+        rr.anchorMax = Vector2.one;
+        rr.offsetMin = new Vector2(24f, 12f);
+        rr.offsetMax = new Vector2(-24f, -12f);
         _resultText = resultGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _resultText.font = font;
         _resultText.fontSize = 36;
         _resultText.fontStyle = FontStyles.Bold;
         _resultText.alignment = TextAlignmentOptions.Center;
-        _resultText.gameObject.SetActive(false);
+        _resultText.raycastTarget = false;
+
+        _resultBox.SetActive(false);
 
         UIManager.CreateMinigamePauseButton(_rootPanel);
 
         _rootPanel.gameObject.SetActive(false);
+    }
+
+    // -----------------------------------------------------------------------
+    // Direct Tile Swap Actions (Scanner Tier 4 & 5)
+    // -----------------------------------------------------------------------
+
+    private void OnSwapButtonClicked()
+    {
+        if (_finished || _swapsRemaining <= 0) return;
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
+
+        _swapModeActive = !_swapModeActive;
+        _firstSwapIdx = -1;
+        UpdateSwapButtonUI();
+        RefreshTileDisplay();
+    }
+
+    private void UpdateSwapButtonUI()
+    {
+        if (_swapButtonGO == null) return;
+
+        if (GetScannerTier() < 4)
+        {
+            _swapButtonGO.SetActive(false);
+            return;
+        }
+
+        _swapButtonGO.SetActive(true);
+
+        if (_swapsRemaining <= 0)
+        {
+            if (_swapButton != null) _swapButton.interactable = false;
+            if (_swapButtonBg != null) _swapButtonBg.color = new Color(0.04f, 0.06f, 0.09f, 0.70f);
+            if (_swapButtonBorder != null) _swapButtonBorder.color = new Color(0.25f, 0.30f, 0.35f, 0.50f);
+            if (_swapButtonTMP != null)
+            {
+                _swapButtonTMP.text = "DIRECT SWAPS DEPLETED";
+                _swapButtonTMP.color = new Color(0.5f, 0.55f, 0.6f, 0.7f);
+            }
+        }
+        else if (_swapModeActive)
+        {
+            if (_swapButton != null) _swapButton.interactable = true;
+            if (_swapButtonBg != null) _swapButtonBg.color = new Color(0.18f, 0.12f, 0.02f, 0.98f);
+            if (_swapButtonBorder != null) _swapButtonBorder.color = new Color(1.0f, 0.80f, 0.20f, 1.0f);
+            if (_swapButtonTMP != null)
+            {
+                _swapButtonTMP.text = _firstSwapIdx < 0
+                    ? "TAP 1ST TILE TO SWAP (CANCEL)"
+                    : "TAP 2ND TILE TO SWAP (CANCEL)";
+                _swapButtonTMP.color = new Color(1f, 0.88f, 0.30f);
+            }
+        }
+        else
+        {
+            if (_swapButton != null) _swapButton.interactable = true;
+            if (_swapButtonBg != null) _swapButtonBg.color = new Color(0.02f, 0.08f, 0.14f, 0.95f);
+            if (_swapButtonBorder != null) _swapButtonBorder.color = new Color(0.20f, 0.75f, 0.90f, 0.95f);
+            if (_swapButtonTMP != null)
+            {
+                string swapWord = _swapsRemaining == 1 ? "SWAP" : "SWAPS";
+                _swapButtonTMP.text = $"DIRECT TILE SWAP ({_swapsRemaining} {swapWord})";
+                _swapButtonTMP.color = Color.white;
+            }
+        }
     }
 }

@@ -197,7 +197,7 @@ public class MinigameManager : MonoBehaviour
         int zone = ZoneManager.CurrentZoneIndex;
         int pick = ChooseMinigame(zone);
 
-        if (pick == 1 || forceMG1)
+        if ((pick == 1 || forceMG1) && !forceMG2)
         {
             _mg1.Initialize(data, zone, wrappedSuccess, wrappedFail);
             _mg1.Show();
@@ -208,6 +208,27 @@ public class MinigameManager : MonoBehaviour
             _mg2.Show();
         }
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug: Test Minigame 2 (Reconstruction Scan)")]
+    public void DebugTestMinigame2()
+    {
+        EnsureMinigameComponents();
+        SpeciesData dummy = ScriptableObject.CreateInstance<SpeciesData>();
+        dummy.commonName = "Test Specimen";
+        TriggerScanMinigame(dummy, () => Debug.Log("[Test] Won Minigame 2!"), () => Debug.Log("[Test] Failed Minigame 2!"));
+    }
+
+    [ContextMenu("Debug: Test Minigame 1 (Capture & Focus)")]
+    public void DebugTestMinigame1()
+    {
+        EnsureMinigameComponents();
+        SpeciesData dummy = ScriptableObject.CreateInstance<SpeciesData>();
+        dummy.commonName = "Test Specimen";
+        _mg1.Initialize(dummy, ZoneManager.CurrentZoneIndex, () => Debug.Log("[Test] Won Minigame 1!"), () => Debug.Log("[Test] Failed Minigame 1!"));
+        _mg1.Show();
+    }
+#endif
 
     // -----------------------------------------------------------------------
     // Public API - Environmental Cleanup Minigame (MG3)

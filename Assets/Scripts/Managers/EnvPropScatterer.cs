@@ -85,36 +85,42 @@ public class EnvPropScatterer : MonoBehaviour
         float halfW = width  * 0.42f;
         float halfL = length * 0.42f;
 
-        // Categorize props by biome
+        // Categorize props by biome and type
         var hardProps = new List<EnvPropSet.PropEntry>();
         var hardFoundationProps = new List<EnvPropSet.PropEntry>();
         var hardCoralProps = new List<EnvPropSet.PropEntry>();
         var rockProps = new List<EnvPropSet.PropEntry>();
-        var softMeadowProps = new List<EnvPropSet.PropEntry>();
+        var seagrassProps = new List<EnvPropSet.PropEntry>();
+        var clamProps = new List<EnvPropSet.PropEntry>();
         var softDuneProps = new List<EnvPropSet.PropEntry>();
 
         foreach (var p in propSet.props)
         {
             if (p == null || p.prefab == null) continue;
             string n = p.prefab.name.ToLower();
-            if (p.targetBiome == BiomeBand.Hard)
+            if (n.Contains("seagrass"))
+            {
+                seagrassProps.Add(p);
+            }
+            else if (n.Contains("clam") || n.Contains("shell"))
+            {
+                clamProps.Add(p);
+            }
+            else if (n.Contains("ripple") || n.Contains("sand"))
+            {
+                softDuneProps.Add(p);
+            }
+            else if (p.targetBiome == BiomeBand.Rock || n.Contains("rock") || n.Contains("boulder") || n.Contains("bisect"))
+            {
+                rockProps.Add(p);
+            }
+            else if (p.targetBiome == BiomeBand.Hard)
             {
                 hardProps.Add(p);
                 if (n.Contains("cube") || n.Contains("cone") || n.Contains("plateau") || n.Contains("pinnacle") || n.Contains("rock"))
                     hardFoundationProps.Add(p);
                 else
                     hardCoralProps.Add(p);
-            }
-            else if (p.targetBiome == BiomeBand.Rock)
-            {
-                rockProps.Add(p);
-            }
-            else if (p.targetBiome == BiomeBand.Soft)
-            {
-                if (n.Contains("seagrass") || n.Contains("clam") || n.Contains("shell"))
-                    softMeadowProps.Add(p);
-                else
-                    softDuneProps.Add(p);
             }
         }
 
@@ -137,7 +143,7 @@ public class EnvPropScatterer : MonoBehaviour
             if (biome == BiomeBand.Hard)
             {
                 // ── REEF COMPLEX (Hard Biome) ─────────────────────────────
-                // 1. Center Foundation: Rock / Plateau / Pinnacle
+                // 1. Center Foundation: Rock / Plateau / Slab
                 var foundationEntry = PickRandomFromList(hardFoundationProps);
                 if (foundationEntry != null)
                 {
@@ -159,67 +165,141 @@ public class EnvPropScatterer : MonoBehaviour
 
                     // Neighboring corals alternate colors across the 6-color palette
                     int colorIdx = (coralColorSequence++) % CoralPalette.Length;
-                    // Tight spacing within reef allows corals to crowd and interlock naturally
                     if (TryPlacePropInstance(meshGen, propSet, coralEntry, px, pz, placedPositions, minCoralSpacing, colorIdx))
                         placedCount++;
                 }
             }
             else if (biome == BiomeBand.Rock)
             {
-                // ── ROCK OUTCROP (Rock Biome) ──────────────────────────────
-                int boulderCount = Random.Range(6, 12);
-                float outcropRadius = Random.Range(6.0f, 13.0f);
-                for (int i = 0; i < boulderCount; i++)
+                // ── ROCK CLUSTER & SEPARATED OUTCROP (Rock Biome) ───────────
+                // 1. Primary Rock Cluster Formation: 1 Anchor Boulder + 3-6 tight companion rocks
+                var anchorEntry = PickRandomFromList(rockProps);
+                if (anchorEntry != null)
                 {
-                    Vector2 offset = Random.insideUnitCircle * outcropRadius;
+                    if (TryPlacePropInstance(meshGen, propSet, anchorEntry, cx, cz, placedPositions, 1.8f, -1, 1.4f))
+                        placedCount++;
+                }
+
+                // Tight satellite companions nestled against the anchor boulder
+                int companionCount = Random.Range(3, 7);
+                float clusterTightRadius = Random.Range(1.2f, 2.8f);
+                for (int i = 0; i < companionCount; i++)
+                {
+                    Vector2 offset = Random.insideUnitCircle * clusterTightRadius;
                     float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
                     float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
 
                     var rockEntry = PickRandomFromList(rockProps);
-                    if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 2.2f, -1))
+                    // Tight clearance (0.75m) lets rocks nestle, touch, and form natural rock piles
+                    if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 0.75f, -1, Random.Range(0.45f, 0.95f)))
+                        placedCount++;
+                }
+
+                // 2. Separated Companion Rocks (2 to 4 loose outlying rocks around the cluster)
+                int outlierCount = Random.Range(2, 5);
+                float outlierRadius = Random.Range(4.5f, 10.0f);
+                for (int i = 0; i < outlierCount; i++)
+                {
+                    Vector2 offset = Random.insideUnitCircle * outlierRadius;
+                    if (offset.magnitude < 3.5f) offset = offset.normalized * 3.5f;
+                    float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                    float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+
+                    var rockEntry = PickRandomFromList(rockProps);
+                    if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 2.2f, -1, Random.Range(0.6f, 1.2f)))
                         placedCount++;
                 }
             }
             else // BiomeBand.Soft
             {
-                // ── SEAGRASS MEADOW / CLAM BED (Soft Biome) ────────────────
-                int softCount = Random.Range(12, 24);
-                float meadowRadius = Random.Range(5.0f, 10.0f);
-                for (int i = 0; i < softCount; i++)
+                // ── DENSE SEAGRASS MEADOW & CLAM BED (Soft Biome) ───────────
+                // 1. Dense, lush continuous seagrass carpet
+                if (seagrassProps.Count > 0)
                 {
-                    Vector2 offset = Random.insideUnitCircle * meadowRadius;
-                    float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
-                    float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+                    int grassCount = Random.Range(38, 65);
+                    float meadowRadius = Random.Range(6.5f, 11.5f);
+                    for (int i = 0; i < grassCount; i++)
+                    {
+                        // 70% in lush central bed, 30% in natural undulating runners
+                        float dist = (i < grassCount * 0.7f) 
+                            ? Mathf.Sqrt(Random.value) * (meadowRadius * 0.65f) 
+                            : Random.Range(meadowRadius * 0.5f, meadowRadius * 1.25f);
+                        float angle = Random.Range(0f, Mathf.PI * 2f);
+                        Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
 
-                    var meadowEntry = PickRandomFromList(softMeadowProps);
-                    if (meadowEntry != null && TryPlacePropInstance(meshGen, propSet, meadowEntry, px, pz, placedPositions, 1.1f, -1))
-                        placedCount++;
+                        float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+
+                        var grassEntry = PickRandomFromList(seagrassProps);
+                        // Tight 0.45m spacing allows lush overlapping grass blades
+                        if (grassEntry != null && TryPlacePropInstance(meshGen, propSet, grassEntry, px, pz, placedPositions, 0.45f, -1))
+                            placedCount++;
+                    }
+                }
+
+                // 2. Natural Clam Shell Bed (2 to 5 shells resting flat near/on sand clearing)
+                if (clamProps.Count > 0)
+                {
+                    int clamCount = Random.Range(2, 6);
+                    float clamRadius = Random.Range(2.0f, 5.5f);
+                    for (int i = 0; i < clamCount; i++)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * clamRadius;
+                        float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+
+                        var clamEntry = PickRandomFromList(clamProps);
+                        if (clamEntry != null && TryPlacePropInstance(meshGen, propSet, clamEntry, px, pz, placedPositions, 0.85f, -1))
+                            placedCount++;
+                    }
                 }
             }
         }
 
-        // ── Phase 2: Solitary Sand Ripples & Lone Dune Props ───────────────
-        // Strictly exclude corals so empty sand dunes remain natural
-        int solitaryCount = Mathf.RoundToInt(width * length / 400f * propSet.propDensity);
+        // ── Phase 2: Solitary Props, Separated Rocks & Stray Grass Tufts ───
+        int solitaryCount = Mathf.RoundToInt(width * length / 350f * propSet.propDensity);
         for (int s = 0; s < solitaryCount; s++)
         {
             float sx = Random.Range(-halfW, halfW);
             float sz = Random.Range(-halfL, halfL);
             BiomeBand biome = terrain != null ? terrain.GetBiomeAt(sx, sz) : BiomeBand.Soft;
 
-            EnvPropSet.PropEntry solitaryEntry = null;
             if (biome == BiomeBand.Soft)
             {
-                solitaryEntry = softDuneProps.Count > 0 ? PickRandomFromList(softDuneProps) : PickRandomFromList(softMeadowProps);
+                // Random stray grass tuft, flat clam, or sand ripple
+                float roll = Random.value;
+                if (roll < 0.50f && seagrassProps.Count > 0)
+                {
+                    // Small stray grass tuft (2 to 4 patches clustered together)
+                    int tuftSize = Random.Range(2, 5);
+                    for (int t = 0; t < tuftSize; t++)
+                    {
+                        Vector2 tOff = Random.insideUnitCircle * 1.5f;
+                        float px = Mathf.Clamp(sx + tOff.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(sz + tOff.y, -halfL, halfL);
+                        var grassEntry = PickRandomFromList(seagrassProps);
+                        if (grassEntry != null && TryPlacePropInstance(meshGen, propSet, grassEntry, px, pz, placedPositions, 0.45f, -1))
+                            placedCount++;
+                    }
+                }
+                else if (roll < 0.75f && clamProps.Count > 0)
+                {
+                    var clamEntry = PickRandomFromList(clamProps);
+                    if (clamEntry != null && TryPlacePropInstance(meshGen, propSet, clamEntry, sx, sz, placedPositions, 1.8f, -1))
+                        placedCount++;
+                }
+                else if (softDuneProps.Count > 0)
+                {
+                    var duneEntry = PickRandomFromList(softDuneProps);
+                    if (duneEntry != null && TryPlacePropInstance(meshGen, propSet, duneEntry, sx, sz, placedPositions, 3.5f, -1))
+                        placedCount++;
+                }
             }
-            else if (biome == BiomeBand.Rock && rockProps.Count > 0)
+            else if (rockProps.Count > 0)
             {
-                solitaryEntry = PickRandomFromList(rockProps);
-            }
-
-            if (solitaryEntry != null)
-            {
-                if (TryPlacePropInstance(meshGen, propSet, solitaryEntry, sx, sz, placedPositions, 3.5f, -1))
+                // Separated lone rock / solitary stone across the landscape
+                var rockEntry = PickRandomFromList(rockProps);
+                if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, sx, sz, placedPositions, 4.0f, -1, Random.Range(0.6f, 1.4f)))
                     placedCount++;
             }
         }
@@ -240,7 +320,8 @@ public class EnvPropScatterer : MonoBehaviour
 
     private bool TryPlacePropInstance(OceanFloorMeshGenerator meshGen, EnvPropSet propSet,
                                       EnvPropSet.PropEntry entry, float px, float pz,
-                                      List<Vector3> placedPositions, float minDistance, int coralColorIndex)
+                                      List<Vector3> placedPositions, float minDistance, int coralColorIndex,
+                                      float scaleOverride = 1.0f)
     {
         if (entry == null || entry.prefab == null) return false;
 
@@ -257,41 +338,70 @@ public class EnvPropScatterer : MonoBehaviour
         float floorY = meshGen.SampleHeight(px, pz);
         Vector3 normal = meshGen.SampleNormal(px, pz);
 
+        string prefabName = entry.prefab.name.ToLower();
+        bool isClam = prefabName.Contains("clam") || prefabName.Contains("shell");
+        bool isRock = entry.targetBiome == BiomeBand.Rock || prefabName.Contains("rock") || prefabName.Contains("boulder") || prefabName.Contains("cone") || prefabName.Contains("cube") || prefabName.Contains("sphere") || prefabName.Contains("bisect");
+        bool isSeagrass = prefabName.Contains("seagrass");
+
         // Rotation & Scale with globalScaleMultiplier and non-uniform scale matrix
         float mult = propSet != null ? Mathf.Max(0.1f, propSet.globalScaleMultiplier) : 1f;
-        float randomScale = Random.Range(entry.minScale, entry.maxScale) * mult;
+        float randomScale = Random.Range(entry.minScale, entry.maxScale) * mult * scaleOverride;
         Vector3 scaleAxis = entry.scaleMultiplier != Vector3.zero ? entry.scaleMultiplier : Vector3.one;
+
+        // Rocks: use natural proportions without non-uniform skewing
+        if (isRock)
+        {
+            scaleAxis = Vector3.one;
+        }
+
         Vector3 finalScale = Vector3.Scale(scaleAxis, Vector3.one * randomScale);
 
         Quaternion rot = Quaternion.identity;
-        if (entry.alignToSurface)
+        Quaternion slopeAlign = Quaternion.FromToRotation(Vector3.up, normal);
+        Quaternion randomSpin = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+        if (isClam)
+        {
+            // Clam shells lay completely flat on the sand dunes, smoothly conforming to seabed slope
+            Quaternion clamTilt = Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f));
+            rot = slopeAlign * randomSpin * clamTilt;
+        }
+        else if (isRock)
+        {
+            // Initial spawn rotation is Identity; OrientRockFlat will dynamically align its shortest axis to the normal
+            rot = Quaternion.identity;
+        }
+        else if (entry.alignToSurface)
         {
             // Slerp towards surface normal based on surfaceTiltStrength
-            Quaternion slopeAlign = Quaternion.FromToRotation(Vector3.up, normal);
-            Quaternion randomSpin = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             float tilt = Mathf.Clamp01(entry.surfaceTiltStrength);
             rot = Quaternion.Slerp(randomSpin, slopeAlign * randomSpin, tilt);
         }
         else
         {
-            rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            rot = randomSpin;
         }
 
         // Apply custom rotation offset if specified (e.g. for models with non-standard export axes)
-        if (entry.rotationOffset != Vector3.zero)
+        if (!isRock && entry.rotationOffset != Vector3.zero)
         {
             rot = rot * Quaternion.Euler(entry.rotationOffset);
         }
 
-        // Multiply by the prefab's native author-configured rotation so models imported with non-zero
-        // Euler rotations (e.g. prop_sun_seagrass_patch +90° X, sand ripples -90° X) maintain their correct upright orientation.
+        // Multiply by the prefab's native author-configured rotation
         Quaternion prefabRot = entry.prefab != null ? entry.prefab.transform.rotation : Quaternion.identity;
-        Quaternion finalRot = rot * prefabRot;
+        Quaternion finalRot = isRock ? prefabRot : (rot * prefabRot);
 
-        // Spawn instance at floorY with finalRot preserving prefab authored orientation
+        // Spawn instance at floorY with finalRot
         Vector3 spawnPos = new Vector3(px, floorY, pz);
         GameObject go = Instantiate(entry.prefab, spawnPos, finalRot, _propParent);
         go.transform.localScale = finalScale;
+
+        // For rocks: Orient dynamically so the longer width lays flat on the surface
+        if (isRock)
+        {
+            OrientRockFlat(go, normal);
+        }
 
         // Dynamic Coral Color Variation
         if (go.name.IndexOf("coral", System.StringComparison.OrdinalIgnoreCase) >= 0)
@@ -315,6 +425,54 @@ public class EnvPropScatterer : MonoBehaviour
 
         placedPositions.Add(new Vector3(px, floorY, pz));
         return true;
+    }
+
+    /// <summary>
+    /// Mathematically guarantees that any rock lays flat on the seabed with its longer dimensions
+    /// (length and width) resting parallel to the surface, and its shortest dimension (thickness)
+    /// pointing upward along the seabed normal. Prevents any rocks from standing upright on end.
+    /// </summary>
+    private void OrientRockFlat(GameObject go, Vector3 normal)
+    {
+        var mf = go.GetComponentInChildren<MeshFilter>();
+        if (mf != null && mf.sharedMesh != null)
+        {
+            Vector3 meshSize = mf.sharedMesh.bounds.size;
+            Vector3 lossy = mf.transform.lossyScale;
+            float lenX = Mathf.Abs(meshSize.x * lossy.x);
+            float lenY = Mathf.Abs(meshSize.y * lossy.y);
+            float lenZ = Mathf.Abs(meshSize.z * lossy.z);
+
+            // Identify which local axis of the mesh is the shortest (thickness/height)
+            Vector3 shortestLocalAxis;
+            if (lenX <= lenY && lenX <= lenZ)
+                shortestLocalAxis = Vector3.right;
+            else if (lenY <= lenX && lenY <= lenZ)
+                shortestLocalAxis = Vector3.up;
+            else
+                shortestLocalAxis = Vector3.forward;
+
+            // Transform the shortest axis into world space
+            Vector3 shortestWorldDir = mf.transform.TransformDirection(shortestLocalAxis);
+            if (Vector3.Dot(shortestWorldDir, normal) < 0f)
+                shortestWorldDir = -shortestWorldDir;
+
+            // Rotate so the shortest axis aligns with the seabed normal.
+            // This guarantees the longer dimensions (length & width) lie flat in the seabed plane!
+            Quaternion alignFlat = Quaternion.FromToRotation(shortestWorldDir, normal);
+            go.transform.rotation = alignFlat * go.transform.rotation;
+
+            // Random yaw spin around the seabed normal (0 to 360 degrees) so rocks face random directions
+            float yaw = Random.Range(0f, 360f);
+            go.transform.rotation = Quaternion.AngleAxis(yaw, normal) * go.transform.rotation;
+
+            // Subtle natural tilt wobble (+/- 4 degrees) so rocks settle organically on undulating terrain
+            Vector3 wobbleAxis = Vector3.Cross(normal, Random.onUnitSphere).normalized;
+            if (wobbleAxis.sqrMagnitude > 0.05f)
+            {
+                go.transform.rotation = Quaternion.AngleAxis(Random.Range(-4f, 4f), wobbleAxis) * go.transform.rotation;
+            }
+        }
     }
 
     /// <summary>
@@ -348,9 +506,30 @@ public class EnvPropScatterer : MonoBehaviour
             float pivotY = go.transform.position.y;
 
             float bottomOffset = pivotY - bottomY;
-            bool isSeagrass = go.name.IndexOf("seagrass", System.StringComparison.OrdinalIgnoreCase) >= 0;
-            // Seagrass embeds slightly at its base without sinking deep or clipping into the floor
-            float sink = isSeagrass ? 0.02f : height * naturalSinkFraction;
+
+            string objName = go.name.ToLower();
+            bool isSeagrass = objName.Contains("seagrass");
+            bool isClam = objName.Contains("clam") || objName.Contains("shell");
+            bool isRock = objName.Contains("rock") || objName.Contains("boulder") || objName.Contains("cone") || objName.Contains("cube") || objName.Contains("sphere") || objName.Contains("bisect");
+
+            float sink;
+            if (isSeagrass)
+            {
+                sink = 0.02f; // Seagrass anchored right at the seabed base
+            }
+            else if (isClam)
+            {
+                sink = height * 0.48f; // Clam shell semi-buried flat in the sand, bottom half submerged
+            }
+            else if (isRock)
+            {
+                sink = height * Random.Range(0.28f, 0.38f); // Rocks firmly embedded into sediment
+            }
+            else
+            {
+                sink = height * naturalSinkFraction;
+            }
+
             float targetY = trueFloorY + bottomOffset - sink;
 
             // Safety floor clamp: Ensure no prop base penetrates beyond/below the ocean floor

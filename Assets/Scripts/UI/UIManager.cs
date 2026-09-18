@@ -1056,11 +1056,26 @@ public class UIManager : MonoBehaviour
         var baseImg = buttonGO.GetComponent<Image>();
 
         // 2. Setup or preserve child Icon GameObject
+        bool isShop = buttonGO.name.IndexOf("Shop", StringComparison.OrdinalIgnoreCase) >= 0;
+        float iconScale = isShop ? 0.75f : 0.60f;
+
+        var parentRt = buttonGO.GetComponent<RectTransform>();
+        float w = parentRt != null && parentRt.rect.width > 0 ? parentRt.rect.width : 125f;
+        float h = parentRt != null && parentRt.rect.height > 0 ? parentRt.rect.height : 125f;
+
         var iconTr = buttonGO.transform.Find("Icon");
         Image iconImg = null;
         if (iconTr != null)
         {
             iconImg = iconTr.GetComponent<Image>();
+            var rt = iconTr.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(w * iconScale, h * iconScale);
+                rt.anchoredPosition = Vector2.zero;
+            }
         }
         else
         {
@@ -1076,11 +1091,7 @@ public class UIManager : MonoBehaviour
             var rt = iconGO.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-
-            var parentRt = buttonGO.GetComponent<RectTransform>();
-            float w = parentRt != null && parentRt.rect.width > 0 ? parentRt.rect.width : 125f;
-            float h = parentRt != null && parentRt.rect.height > 0 ? parentRt.rect.height : 125f;
-            rt.sizeDelta = new Vector2(w * 0.55f, h * 0.55f);
+            rt.sizeDelta = new Vector2(w * iconScale, h * iconScale);
             rt.anchoredPosition = Vector2.zero;
 
             iconImg = iconGO.GetComponent<Image>();
@@ -1098,7 +1109,7 @@ public class UIManager : MonoBehaviour
             }
             else if (buttonGO.name.IndexOf("Shop", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                foreach (var s in allSprites) { if (s.name.IndexOf("arrow", StringComparison.OrdinalIgnoreCase) >= 0 || s.name == "buttons-prototype_12") { iconImg.sprite = s; break; } }
+                foreach (var s in allSprites) { if (s.name.IndexOf("shop", StringComparison.OrdinalIgnoreCase) >= 0 || s.name.IndexOf("arrow", StringComparison.OrdinalIgnoreCase) >= 0 || s.name == "buttons-prototype_12") { iconImg.sprite = s; break; } }
             }
             else if (buttonGO.name.IndexOf("Pause", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -1112,12 +1123,6 @@ public class UIManager : MonoBehaviour
             if (pRt != null) pRt.sizeDelta = new Vector2(150f, 150f);
         }
 
-        if (iconImg != null)
-        {
-            iconImg.preserveAspect = true;
-            iconImg.color = BtnDefault;
-        }
-
         // 3. Make base image the circular outer ring background
         if (baseImg != null)
         {
@@ -1125,6 +1130,14 @@ public class UIManager : MonoBehaviour
             baseImg.color = BtnDefault;
             baseImg.type = Image.Type.Simple;
             baseImg.preserveAspect = true;
+        }
+
+        // Match icon color exactly to border (baseImg.color)
+        Color borderColor = baseImg != null ? baseImg.color : BtnDefault;
+        if (iconImg != null)
+        {
+            iconImg.preserveAspect = true;
+            iconImg.color = borderColor;
         }
 
         // 4. Inner radial gradient glow
@@ -1159,7 +1172,7 @@ public class UIManager : MonoBehaviour
             var pUp = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
             pUp.callback.AddListener((_) =>
             {
-                if (iconImg != null) iconImg.color = BtnDefault;
+                if (iconImg != null) iconImg.color = (baseImg != null ? baseImg.color : borderColor);
                 if (innerGlow != null) innerGlow.color = InnerGlowIdle;
             });
             trigger.triggers.Add(pUp);

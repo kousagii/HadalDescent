@@ -137,11 +137,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Reinforced Hull",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "Sunlight Zone (0 m depth rated) • Standard pressure hull"),
-                    new UpgradeTierInfo(2, 350,  "Twilight Zone (200 m depth rated) • Unlocks Zone 2 descent"),
-                    new UpgradeTierInfo(3, 900,  "Midnight Zone (1,000 m depth rated) • Unlocks Zone 3 descent"),
-                    new UpgradeTierInfo(4, 1800, "Abyssal Zone (4,000 m depth rated) • Unlocks Zone 4 descent"),
-                    new UpgradeTierInfo(5, 3200, "Hadal Zone (6,000 m depth rated) • Maximum trench pressure rating")
+                    new UpgradeTierInfo(1, 0,    "Sunlight Zone (0 m depth rated) \nStandard pressure hull"),
+                    new UpgradeTierInfo(2, 350,  "Twilight Zone (200 m depth rated) \nUnlocks Zone 2 descent"),
+                    new UpgradeTierInfo(3, 900,  "Midnight Zone (1,000 m depth rated) \nUnlocks Zone 3 descent"),
+                    new UpgradeTierInfo(4, 1800, "Abyssal Zone (4,000 m depth rated) \nUnlocks Zone 4 descent"),
+                    new UpgradeTierInfo(5, 3200, "Hadal Zone (6,000 m depth rated) \nMaximum trench pressure rating")
                 }
             },
 
@@ -152,11 +152,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Active Sonar Array",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "50 m detection radius • Basic dot blips"),
-                    new UpgradeTierInfo(2, 150,  "100 m detection radius • Category icons (fish, debris, hazard)"),
-                    new UpgradeTierInfo(3, 350,  "150 m detection radius • Elevation indicators (▲ / ▼)"),
-                    new UpgradeTierInfo(4, 750,  "200 m detection radius • Faster sweep & pulse glow"),
-                    new UpgradeTierInfo(5, 1500, "250 m detection radius • Maximum range coverage")
+                    new UpgradeTierInfo(1, 0,    "50 m detection radius \nBasic dot blips"),
+                    new UpgradeTierInfo(2, 150,  "100 m detection radius \nCategory icons (fish, debris, hazard)"),
+                    new UpgradeTierInfo(3, 350,  "150 m detection radius \nElevation indicators (▲ / ▼)"),
+                    new UpgradeTierInfo(4, 750,  "200 m detection radius \nFaster sweep & pulse glow"),
+                    new UpgradeTierInfo(5, 1500, "250 m detection radius \nMaximum range coverage")
                 }
             },
 
@@ -167,11 +167,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Research Scanner",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "Base focus bar width (15%) • Standard lock-on speed"),
-                    new UpgradeTierInfo(2, 150,  "25% focus bar width • Minor stabilization against creature movement"),
-                    new UpgradeTierInfo(3, 350,  "30% focus bar width • +15% lock-on meter fill speed from base"),
-                    new UpgradeTierInfo(4, 750,  "30% focus bar width • +30% lock-on meter fill speed from base"),
-                    new UpgradeTierInfo(5, 1500, "35% focus bar width • Halves lock-on progress decay when off-target")
+                    new UpgradeTierInfo(1, 0,    "Base focus bar width (15%) \nStandard lock-on speed"),
+                    new UpgradeTierInfo(2, 150,  "2% focus bar width \nMinor stabilization against creature movement"),
+                    new UpgradeTierInfo(3, 350,  "30% focus bar width \n+15% lock-on meter fill speed from base"),
+                    new UpgradeTierInfo(4, 750,  "35% focus bar width \n+30% lock-on meter fill speed from base"),
+                    new UpgradeTierInfo(5, 1500, "40% focus bar width \nHalves lock-on progress decay when off-target")
                 }
             },
 
@@ -182,11 +182,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Propulsion Engine",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "Base exploration speed • Standard turning response"),
-                    new UpgradeTierInfo(2, 150,  "+20% speed • Faster vertical ascent and descent"),
-                    new UpgradeTierInfo(3, 350,  "+40% speed • Improved current resistance"),
-                    new UpgradeTierInfo(4, 750,  "+65% speed • +25% lane-shift speed in Hazard Dodge"),
-                    new UpgradeTierInfo(5, 1500, "+100% speed • Boost burst against strong underwater currents")
+                    new UpgradeTierInfo(1, 0,    "Base exploration speed \nStandard turning response"),
+                    new UpgradeTierInfo(2, 150,  "+20% speed \nFaster vertical ascent and descent"),
+                    new UpgradeTierInfo(3, 350,  "+40% speed \nImproved current resistance"),
+                    new UpgradeTierInfo(4, 750,  "+65% speed \n+25% lane-shift speed in Hazard Dodge"),
+                    new UpgradeTierInfo(5, 1500, "+100% speed \nBoost burst against strong underwater currents")
                 }
             },
 
@@ -197,11 +197,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Submersible Floodlights",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "25 m illumination reach • Narrow halogen beam (Sunlight Zone)"),
-                    new UpgradeTierInfo(2, 150,  "50 m illumination reach • High-intensity LED beam (45° angle)"),
-                    new UpgradeTierInfo(3, 350,  "80 m illumination reach • Wide floodlight matrix (75° angle)"),
-                    new UpgradeTierInfo(4, 750,  "120 m illumination reach • Deep-penetrating xenon spotlights (100° angle)"),
-                    new UpgradeTierInfo(5, 1500, "170 m illumination reach • Full-field visibility")
+                    new UpgradeTierInfo(1, 0,    "25 m illumination reach \nNarrow halogen beam (Sunlight Zone)"),
+                    new UpgradeTierInfo(2, 150,  "50 m illumination reach \nHigh-intensity LED beam (45° angle)"),
+                    new UpgradeTierInfo(3, 350,  "80 m illumination reach \nWide floodlight matrix (75° angle)"),
+                    new UpgradeTierInfo(4, 750,  "120 m illumination reach \nDeep-penetrating xenon spotlights (100° angle)"),
+                    new UpgradeTierInfo(5, 1500, "170 m illumination reach \nFull-field visibility")
                 }
             },
 
@@ -212,11 +212,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Utilities & Extraction Arm",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "Mechanical claw • Single-slot debris collection"),
-                    new UpgradeTierInfo(2, 150,  "Hydraulic suction • +25% claw drop and retrieval speed"),
-                    new UpgradeTierInfo(3, 350,  "Multi-grip arm • Collects up to 2 items per drop"),
-                    new UpgradeTierInfo(4, 750,  "Auto-sort scanner • Highlights correct bins in sorting UI"),
-                    new UpgradeTierInfo(5, 1500, "Magnetic extraction • Cleans clusters of debris simultaneously")
+                    new UpgradeTierInfo(1, 0,    "Mechanical claw \nSingle-slot debris collection"),
+                    new UpgradeTierInfo(2, 150,  "Hydraulic suction \n+25% claw drop and retrieval speed"),
+                    new UpgradeTierInfo(3, 350,  "Multi-grip arm \nCollects up to 2 items per drop"),
+                    new UpgradeTierInfo(4, 750,  "Auto-sort scanner\nHighlights correct bins in sorting UI"),
+                    new UpgradeTierInfo(5, 1500, "Magnetic extraction \nCleans clusters of debris simultaneously")
                 }
             }
         };

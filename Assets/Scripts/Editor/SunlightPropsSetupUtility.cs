@@ -114,9 +114,9 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = seagrassPrefab,
                 targetBiome         = BiomeBand.Soft,
-                weight              = 4.5f,
-                minScale            = 1.4f,
-                maxScale            = 2.2f,
+                weight              = 6.0f,
+                minScale            = 1.8f,
+                maxScale            = 3.2f,
                 scaleMultiplier     = Vector3.one,
                 rotationOffset      = Vector3.zero,
                 alignToSurface      = false,
@@ -131,12 +131,13 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = clamShellPrefab,
                 targetBiome         = BiomeBand.Soft,
-                weight              = 2.5f,
-                minScale            = 5.0f,
-                maxScale            = 9.0f,
-                scaleMultiplier     = Vector3.one,
+                weight              = 3.0f,
+                minScale            = 4.5f,
+                maxScale            = 8.0f,
+                scaleMultiplier     = new Vector3(1.0f, 0.65f, 1.0f),
+                rotationOffset      = Vector3.zero,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.8f,
+                surfaceTiltStrength = 0.85f,
                 isObstacle          = false
             });
         }
@@ -150,7 +151,7 @@ public static class SunlightPropsSetupUtility
                 weight              = 2.0f,
                 minScale            = 1.2f,
                 maxScale            = 2.2f,
-                scaleMultiplier     = new Vector3(3.5f, 0.35f, 2.0f),
+                scaleMultiplier     = new Vector3(3.5f, 0.25f, 2.0f),
                 alignToSurface      = true,
                 surfaceTiltStrength = 0.4f,
                 isObstacle          = false
@@ -213,12 +214,13 @@ public static class SunlightPropsSetupUtility
                 prefab              = conePinnacle1,
                 targetBiome         = BiomeBand.Hard,
                 weight              = 2.2f,
-                minScale            = 25.0f,
-                maxScale            = 50.0f,
-                scaleMultiplier     = new Vector3(1.0f, 1.5f, 1.0f),
+                minScale            = 20.0f,
+                maxScale            = 35.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = limestoneMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.35f,
+                surfaceTiltStrength = 0.75f,
                 isObstacle          = true
             });
         }
@@ -230,12 +232,13 @@ public static class SunlightPropsSetupUtility
                 prefab              = conePinnacle2,
                 targetBiome         = BiomeBand.Hard,
                 weight              = 1.8f,
-                minScale            = 20.0f,
-                maxScale            = 40.0f,
-                scaleMultiplier     = new Vector3(0.9f, 1.6f, 0.9f),
+                minScale            = 18.0f,
+                maxScale            = 32.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = limestoneMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.35f,
+                surfaceTiltStrength = 0.75f,
                 isObstacle          = true
             });
         }
@@ -248,11 +251,12 @@ public static class SunlightPropsSetupUtility
                 targetBiome         = BiomeBand.Hard,
                 weight              = 2.2f,
                 minScale            = 25.0f,
-                maxScale            = 50.0f,
-                scaleMultiplier     = new Vector3(2.2f, 0.45f, 2.2f),
+                maxScale            = 45.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = algaeLimestoneMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.65f,
+                surfaceTiltStrength = 0.75f,
                 isObstacle          = true
             });
         }
@@ -264,13 +268,14 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = icoBoulder1,
                 targetBiome         = BiomeBand.Rock,
-                weight              = 3.0f,
-                minScale            = 25.0f,
-                maxScale            = 50.0f,
-                scaleMultiplier     = new Vector3(1.2f, 1.2f, 1.2f),
+                weight              = 3.2f,
+                minScale            = 20.0f,
+                maxScale            = 45.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.75f,
+                surfaceTiltStrength = 0.85f,
                 isObstacle          = true
             });
         }
@@ -281,13 +286,14 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = icoBoulder3,
                 targetBiome         = BiomeBand.Rock,
-                weight              = 2.5f,
-                minScale            = 30.0f,
-                maxScale            = 60.0f,
-                scaleMultiplier     = new Vector3(1.2f, 1.2f, 1.2f),
+                weight              = 2.8f,
+                minScale            = 22.0f,
+                maxScale            = 48.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.7f,
+                surfaceTiltStrength = 0.85f,
                 isObstacle          = true
             });
         }
@@ -295,18 +301,18 @@ public static class SunlightPropsSetupUtility
         if (sphereBoulder != null)
         {
             // Sphere_002 is exported in meters (3.77m x 2.22m x 0.40m).
-            // Tuned to 0.45x - 0.85x so it forms a natural 1.7m - 3.2m reef boulder outcrop.
             entries.Add(new EnvPropSet.PropEntry
             {
                 prefab              = sphereBoulder,
                 targetBiome         = BiomeBand.Rock,
-                weight              = 2.0f,
-                minScale            = 0.45f,
-                maxScale            = 0.85f,
-                scaleMultiplier     = new Vector3(1.0f, 1.0f, 1.5f),
+                weight              = 2.5f,
+                minScale            = 0.5f,
+                maxScale            = 0.9f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.8f,
+                surfaceTiltStrength = 0.85f,
                 isObstacle          = true
             });
         }
@@ -317,13 +323,14 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = cubeCrevice,
                 targetBiome         = BiomeBand.Rock,
-                weight              = 2.2f,
-                minScale            = 20.0f,
-                maxScale            = 40.0f,
-                scaleMultiplier     = new Vector3(1.5f, 1.2f, 1.8f),
+                weight              = 2.4f,
+                minScale            = 18.0f,
+                maxScale            = 36.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.7f,
+                surfaceTiltStrength = 0.80f,
                 isObstacle          = true
             });
         }
@@ -335,12 +342,13 @@ public static class SunlightPropsSetupUtility
                 prefab              = cubePillar,
                 targetBiome         = BiomeBand.Rock,
                 weight              = 2.0f,
-                minScale            = 25.0f,
-                maxScale            = 50.0f,
-                scaleMultiplier     = new Vector3(1.2f, 1.6f, 1.2f),
+                minScale            = 20.0f,
+                maxScale            = 40.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.6f,
+                surfaceTiltStrength = 0.80f,
                 isObstacle          = true
             });
         }
@@ -351,13 +359,14 @@ public static class SunlightPropsSetupUtility
             {
                 prefab              = bisectSlab,
                 targetBiome         = BiomeBand.Rock,
-                weight              = 1.8f,
-                minScale            = 20.0f,
-                maxScale            = 40.0f,
-                scaleMultiplier     = new Vector3(2.0f, 0.35f, 1.8f),
+                weight              = 2.2f,
+                minScale            = 18.0f,
+                maxScale            = 36.0f,
+                scaleMultiplier     = Vector3.one,
+                rotationOffset      = Vector3.zero,
                 materialOverride    = graniteMat,
                 alignToSurface      = true,
-                surfaceTiltStrength = 0.5f,
+                surfaceTiltStrength = 0.80f,
                 isObstacle          = true
             });
         }

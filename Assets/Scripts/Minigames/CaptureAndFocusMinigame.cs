@@ -68,6 +68,10 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     private RectTransform _meniscusLineRect;
     private Image         _meniscusLineImage;
     private Image         _redFlash;
+    private GameObject    _resultBox;
+    private RectTransform _resultBoxRect;
+    private Image         _resultBorder;
+    private Image         _resultTopStripe;
     private TMP_Text      _resultText;
     private CanvasGroup   _canvasGroup;
     private float         _barH;
@@ -106,7 +110,8 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         _holding         = false;
         _finished        = false;
 
-        if (_resultText != null) _resultText.gameObject.SetActive(false);
+        if (_resultBox != null) _resultBox.SetActive(false);
+        else if (_resultText != null) _resultText.gameObject.SetActive(false);
         if (_rootPanel != null)
         {
             _rootPanel.SetAsLastSibling();
@@ -151,7 +156,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     /// <summary>
     /// Scanner Spec focus bar width per tier:
-    /// Tier 1: 15% (Base), Tier 2: 20%, Tier 3: 25%, Tier 4: 30%, Tier 5: 35%
+    /// Tier 1: 15% (Base), Tier 2: 20%, Tier 3: 30%, Tier 4: 40%, Tier 5: 50%
     /// </summary>
     private float GetScannerFocusWidth(int tier)
     {
@@ -159,9 +164,9 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         {
             1 => 0.15f,
             2 => 0.20f,
-            3 => 0.25f,
-            4 => 0.30f,
-            5 => 0.35f,
+            3 => 0.30f,
+            4 => 0.40f,
+            5 => 0.50f,
             _ => 0.15f
         };
     }
@@ -211,9 +216,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
             _targetTimer    = UnityEngine.Random.Range(0.8f, 1.8f);
         }
 
-        // Scanner Perk: Tier >= 2 provides stabilization (reduces creature jerk / twitch speed by 25%)
-        float stabMultiplier = (tier >= 2) ? 0.75f : 1.0f;
-        float spring = CreatureSpeed[d] * 5.5f * stabMultiplier;
+        float spring = CreatureSpeed[d] * 5.5f;
         _creatureVel += (_creatureTarget - _creaturePos) * spring * dt;
         _creatureVel -= _creatureVel * 4.0f * dt;
         _creaturePos += _creatureVel * dt;
@@ -222,24 +225,14 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         // 4. Calculate zone alignment
         bool inZone = Mathf.Abs(_zonePos - _creaturePos) <= halfZone;
 
-        // 5. Update lock-on meter with Tier Perks
-        // Tier 1 & 2: Standard lock-on speed (1.0x)
-        // Tier 3: +15% fill speed (1.15x)
-        // Tier 4 & 5: +30% fill speed (1.30x)
-        float fillSpeedMultiplier = 1.0f;
-        if (tier == 3) fillSpeedMultiplier = 1.15f;
-        else if (tier >= 4) fillSpeedMultiplier = 1.30f;
-
-        // Tier 5: Halves lock-on progress decay when off-target
-        float drainMultiplier = (tier >= 5) ? 0.50f : 1.0f;
-
+        // 5. Update lock-on meter
         if (inZone)
         {
-            _meter += (BaseFillRate * fillSpeedMultiplier) * dt;
+            _meter += BaseFillRate * dt;
         }
         else if (_startGraceTimer <= 0f)
         {
-            _meter -= (BaseDrainRate * drainMultiplier) * dt;
+            _meter -= BaseDrainRate * dt;
         }
         _meter = Mathf.Clamp01(_meter);
 
@@ -339,11 +332,40 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         if (_finished) return;
         _finished = true;
 
+        if (_redFlash != null)
+        {
+            _redFlash.color = new Color(1f, 0.08f, 0.08f, 0f);
+        }
+
+        string speciesName = _data != null && !string.IsNullOrEmpty(_data.commonName)
+                ? _data.commonName.ToUpper()
+                : "SPECIES";
+
         if (_resultText != null)
         {
+            _resultText.text  = success ? $"<b>SCAN COMPLETED!\n<size=32><color=#ffffff>{speciesName} CAPTURED</color></size></b>" : "<b>FOCUS LOST</b>";
+            _resultText.color = success ? new Color(0.20f, 0.92f, 0.80f) : new Color(1f, 0.35f, 0.35f);
+
+            if (_resultBorder != null)
+                _resultBorder.color = success ? new Color(0.15f, 0.85f, 0.80f, 0.95f) : new Color(0.95f, 0.25f, 0.25f, 0.95f);
+
+            if (_resultTopStripe != null)
+                _resultTopStripe.color = success ? new Color(0.20f, 0.92f, 0.82f, 0.95f) : new Color(1f, 0.35f, 0.35f, 0.95f);
+
+            _resultText.ForceMeshUpdate();
+            float textW = _resultText.preferredWidth;
+            float textH = _resultText.preferredHeight;
+            if (_resultBoxRect != null)
+            {
+                _resultBoxRect.sizeDelta = new Vector2(Mathf.Max(380f, textW + 64f), Mathf.Max(84f, textH + 32f));
+            }
+
+            if (_resultBox != null)
+            {
+                _resultBox.transform.SetAsLastSibling();
+                _resultBox.SetActive(true);
+            }
             _resultText.gameObject.SetActive(true);
-            _resultText.text  = success ? "<b>RESEARCH SCAN COMPLETE!</b>" : "<b>TARGET LOST</b>";
-            _resultText.color = success ? new Color(0.20f, 0.92f, 0.80f) : new Color(1f, 0.30f, 0.30f);
         }
 
         StartCoroutine(DelayedClose(success));
@@ -556,17 +578,63 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         it.textWrappingMode = TextWrappingModes.NoWrap;
         it.overflowMode = TextOverflowModes.Overflow;
 
-        // Result label
-        var resultGO = new GameObject("Result", typeof(RectTransform));
-        resultGO.transform.SetParent(_rootPanel, false);
+        // Result dialog card box (Confirmation popup style, compact and sized to fit text perfectly)
+        _resultBox = new GameObject("ResultCardBox", typeof(RectTransform), typeof(Image));
+        _resultBox.transform.SetParent(_rootPanel, false);
+        _resultBoxRect = _resultBox.GetComponent<RectTransform>();
+        _resultBoxRect.anchorMin = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.anchorMax = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.pivot     = new Vector2(0.5f, 0.5f);
+        _resultBoxRect.anchoredPosition = Vector2.zero;
+        _resultBoxRect.sizeDelta = new Vector2(480f, 96f);
+
+        _resultBorder = _resultBox.GetComponent<Image>();
+        _resultBorder.sprite = WhiteSprite;
+        _resultBorder.color = new Color(0.95f, 0.25f, 0.25f, 0.95f);
+        _resultBorder.raycastTarget = false;
+
+        // Inner Dialog Card (inset 3px for glowing border frame, matching confirmation popup DialogCard color)
+        var innerCardGO = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
+        innerCardGO.transform.SetParent(_resultBox.transform, false);
+        var innerCardRect = innerCardGO.GetComponent<RectTransform>();
+        innerCardRect.anchorMin = Vector2.zero;
+        innerCardRect.anchorMax = Vector2.one;
+        innerCardRect.offsetMin = new Vector2(3f, 3f);
+        innerCardRect.offsetMax = new Vector2(-3f, -3f);
+        var innerCardImg = innerCardGO.GetComponent<Image>();
+        innerCardImg.sprite = WhiteSprite;
+        innerCardImg.color = new Color(0.04f, 0.08f, 0.15f, 0.98f);
+        innerCardImg.raycastTarget = false;
+
+        // Top accent line
+        var topStripeGO = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
+        topStripeGO.transform.SetParent(innerCardGO.transform, false);
+        var tsRect = topStripeGO.GetComponent<RectTransform>();
+        tsRect.anchorMin = new Vector2(0f, 1f);
+        tsRect.anchorMax = new Vector2(1f, 1f);
+        tsRect.pivot     = new Vector2(0.5f, 1f);
+        tsRect.sizeDelta = new Vector2(0f, 3.5f);
+        _resultTopStripe = topStripeGO.GetComponent<Image>();
+        _resultTopStripe.sprite = WhiteSprite;
+        _resultTopStripe.color = new Color(1f, 0.35f, 0.35f, 0.95f);
+        _resultTopStripe.raycastTarget = false;
+
+        // Result label inside DialogCard
+        var resultGO = new GameObject("ResultText", typeof(RectTransform));
+        resultGO.transform.SetParent(innerCardGO.transform, false);
         var rr = resultGO.GetComponent<RectTransform>();
-        rr.anchorMin = new Vector2(0.1f, 0.44f); rr.anchorMax = new Vector2(0.90f, 0.60f); rr.sizeDelta = Vector2.zero;
+        rr.anchorMin = Vector2.zero;
+        rr.anchorMax = Vector2.one;
+        rr.offsetMin = new Vector2(24f, 12f);
+        rr.offsetMax = new Vector2(-24f, -12f);
         _resultText = resultGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _resultText.font = font;
-        _resultText.fontSize = 36; _resultText.fontStyle = FontStyles.Bold;
+        _resultText.fontSize = 36;
+        _resultText.fontStyle = FontStyles.Bold;
         _resultText.alignment = TextAlignmentOptions.Center;
         _resultText.raycastTarget = false;
-        _resultText.gameObject.SetActive(false);
+
+        _resultBox.SetActive(false);
 
         UIManager.CreateMinigamePauseButton(_rootPanel);
 
