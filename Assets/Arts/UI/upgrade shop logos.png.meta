@@ -139,10 +139,10 @@ TextureImporter:
       name: upgrade shop logos_0
       rect:
         serializedVersion: 2
-        x: 42
+        x: 43
         y: 501
         width: 263
-        height: 262
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -151,8 +151,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6de861f2bee71ef43b8fc9579173fcf4
-      internalID: 618878339
+      spriteID: 6269ec5bf4adc5a47bd3e268e39297c5
+      internalID: -1563535508
       vertices: []
       indices: 
       edges: []
@@ -164,7 +164,7 @@ TextureImporter:
         x: 381
         y: 505
         width: 263
-        height: 262
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -173,8 +173,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: db77cba4614f1784b9792f97db7cb7a0
-      internalID: 1541700933
+      spriteID: 2b49e8a7f62d7034cb6f3e4089f3e8b7
+      internalID: 1443859297
       vertices: []
       indices: 
       edges: []
@@ -184,9 +184,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 720
-        y: 504
-        width: 270
-        height: 270
+        y: 505
+        width: 263
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -195,8 +195,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3b3ce1d9ce0cebe4ab8f55730d1f5652
-      internalID: -1893212143
+      spriteID: ca443ee24a0f03143a3a52cbc1f8d5f4
+      internalID: 2042627907
       vertices: []
       indices: 
       edges: []
@@ -205,10 +205,10 @@ TextureImporter:
       name: upgrade shop logos_3
       rect:
         serializedVersion: 2
-        x: 37
-        y: 204
-        width: 269
-        height: 270
+        x: 42
+        y: 207
+        width: 263
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -217,8 +217,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: aa2083a1444dc4241b90b0a5817b64ea
-      internalID: 1171942155
+      spriteID: beea85bc527a0f84ca1d4078fdccf9cc
+      internalID: -304691127
       vertices: []
       indices: 
       edges: []
@@ -227,10 +227,10 @@ TextureImporter:
       name: upgrade shop logos_4
       rect:
         serializedVersion: 2
-        x: 378
-        y: 210
-        width: 270
-        height: 270
+        x: 381
+        y: 215
+        width: 263
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -239,8 +239,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8e62a8fcf1d4c2d4492c9ebf7316646e
-      internalID: 1204995908
+      spriteID: 4cd2bf9caa2cf404a8620ee50ced3761
+      internalID: -465598436
       vertices: []
       indices: 
       edges: []
@@ -249,10 +249,10 @@ TextureImporter:
       name: upgrade shop logos_5
       rect:
         serializedVersion: 2
-        x: 720
-        y: 210
-        width: 268
-        height: 270
+        x: 721
+        y: 216
+        width: 263
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -261,8 +261,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 52b0b779f8b9e494fa7090664ec8d719
-      internalID: -1906963199
+      spriteID: a84a68aac0a4fa841a9d3b138eb13d69
+      internalID: -888257469
       vertices: []
       indices: 
       edges: []
@@ -271,7 +271,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 840bfcb6644ff234c98235a89a7fe370
+    spriteID: 9b733c31bbd7c264ea2ca02b0e3c9825
     internalID: 0
     vertices: []
     indices: 
@@ -283,12 +283,12 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      upgrade shop logos_0: 618878339
-      upgrade shop logos_1: 1541700933
-      upgrade shop logos_2: -1893212143
-      upgrade shop logos_3: 1171942155
-      upgrade shop logos_4: 1204995908
-      upgrade shop logos_5: -1906963199
+      upgrade shop logos_0: -1563535508
+      upgrade shop logos_1: 1443859297
+      upgrade shop logos_2: 2042627907
+      upgrade shop logos_3: -304691127
+      upgrade shop logos_4: -465598436
+      upgrade shop logos_5: -888257469
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

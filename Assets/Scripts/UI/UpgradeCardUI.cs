@@ -10,6 +10,7 @@ using TMPro;
 public class UpgradeCardUI : MonoBehaviour
 {
     [Header("UI References")]
+    [Tooltip("Main category logo / icon image (does not change between tiers).")]
     [SerializeField] private Image    iconImage;
     [SerializeField] private TMP_Text categoryTitleText;
     [SerializeField] private TMP_Text costText;
@@ -17,15 +18,12 @@ public class UpgradeCardUI : MonoBehaviour
     [SerializeField] private Button   upgradeButton;
     [SerializeField] private TMP_Text buttonLabel;
 
-    [Header("Tier Level Pips (1 to 5)")]
-    [Tooltip("5 pip images representing Tier 1 to Tier 5.")]
-    [SerializeField] private Image[] pipImages = new Image[5];
-
     [Header("Styling")]
-    [SerializeField] private Color pipFilledColor  = new Color(0.12f, 0.95f, 0.78f, 1.0f); // Bright Cyan / Teal
-    [SerializeField] private Color pipEmptyColor   = new Color(0.15f, 0.20f, 0.28f, 0.8f); // Dark Slate
     [SerializeField] private Color buttonCanAfford = new Color(0.08f, 0.75f, 0.68f, 1.0f);
     [SerializeField] private Color buttonCannot    = new Color(0.35f, 0.38f, 0.45f, 0.6f);
+
+    [Header("Legacy Pips (Optional)")]
+    [SerializeField] private Image[] pipImages = new Image[0];
 
     private UpgradeCategory _category;
     private Action<UpgradeCategory> _onUpgradeClicked;
@@ -55,16 +53,18 @@ public class UpgradeCardUI : MonoBehaviour
         _category = category;
         _onUpgradeClicked = onUpgrade;
 
-        if (iconImage != null && icon != null)
+        // Category logo image (remains constant per category)
+        if (iconImage != null)
         {
             iconImage.sprite = icon;
-            iconImage.enabled = true;
+            iconImage.preserveAspect = true;
+            iconImage.enabled = (icon != null);
         }
 
-        if (categoryTitleText != null)
-            categoryTitleText.text = title;
-
         bool isMax = currentTier >= maxTier;
+
+        if (categoryTitleText != null)
+            categoryTitleText.text = isMax ? $"{title} (MAX TIER)" : $"{title} (TIER {currentTier})";
 
         // Cost label
         if (costText != null)
@@ -77,13 +77,13 @@ public class UpgradeCardUI : MonoBehaviour
         if (perkDescriptionText != null)
             perkDescriptionText.text = perkDesc;
 
-        // Pips (Tier indicators)
-        if (pipImages != null)
+        // Pips (Optional legacy indicators - only colored if populated)
+        if (pipImages != null && pipImages.Length > 0)
         {
             for (int i = 0; i < pipImages.Length; i++)
             {
                 if (pipImages[i] == null) continue;
-                pipImages[i].color = (i < currentTier) ? pipFilledColor : pipEmptyColor;
+                pipImages[i].color = (i < currentTier) ? new Color(0.12f, 0.95f, 0.78f, 1f) : new Color(0.15f, 0.20f, 0.28f, 0.8f);
             }
         }
 
@@ -114,14 +114,16 @@ public class UpgradeCardUI : MonoBehaviour
         TMP_Text desc,
         Button btn,
         TMP_Text btnLbl,
-        Image[] pips)
+        Image iconImg = null,
+        Image[] pips = null)
     {
         categoryTitleText   = title;
         costText            = cost;
         perkDescriptionText = desc;
         upgradeButton       = btn;
         buttonLabel         = btnLbl;
-        pipImages           = pips;
+        iconImage           = iconImg;
+        pipImages           = pips ?? new Image[0];
 
         if (upgradeButton != null)
         {

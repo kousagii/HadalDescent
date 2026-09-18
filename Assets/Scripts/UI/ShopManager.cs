@@ -73,6 +73,25 @@ public class ShopManager : MonoBehaviour
     [Tooltip("Direct references if you build static upgrade rows directly in the scene.")]
     [SerializeField] private UpgradeCardUI[] staticCards;
 
+    [Header("Category Logos (Assign in Inspector)")]
+    [Tooltip("Logo icon for Reinforced Hull")]
+    [SerializeField] private Sprite hullLogo;
+
+    [Tooltip("Logo icon for Active Sonar Array")]
+    [SerializeField] private Sprite sonarLogo;
+
+    [Tooltip("Logo icon for Research Scanner")]
+    [SerializeField] private Sprite scannerLogo;
+
+    [Tooltip("Logo icon for Propulsion Engine")]
+    [SerializeField] private Sprite engineLogo;
+
+    [Tooltip("Logo icon for Submersible Floodlights")]
+    [SerializeField] private Sprite lightsLogo;
+
+    [Tooltip("Logo icon for Utilities & Expansion")]
+    [SerializeField] private Sprite utilitiesLogo;
+
     [Header("Upgrade Categories & Perks")]
     [SerializeField] private List<UpgradeCategoryConfig> categoryConfigs = new List<UpgradeCategoryConfig>();
 
@@ -99,6 +118,32 @@ public class ShopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns the assigned logo sprite for a category.
+    /// Priority: Inspector field -> Category config icon -> Resources/UI/UpgradeLogos/
+    /// </summary>
+    public Sprite GetCategoryIcon(UpgradeCategory category)
+    {
+        Sprite sprite = category switch
+        {
+            UpgradeCategory.Hull      => hullLogo,
+            UpgradeCategory.Sonar     => sonarLogo,
+            UpgradeCategory.Scanner   => scannerLogo,
+            UpgradeCategory.Engine    => engineLogo,
+            UpgradeCategory.Lights    => lightsLogo,
+            UpgradeCategory.Utilities => utilitiesLogo,
+            _                         => null
+        };
+
+        if (sprite != null) return sprite;
+
+        var cfg = GetConfig(category);
+        if (cfg != null && cfg.icon != null) return cfg.icon;
+
+        // Auto-load fallback from Resources/UI/UpgradeLogos/{category}
+        return Resources.Load<Sprite>($"UI/UpgradeLogos/{category}");
+    }
+
     // -----------------------------------------------------------------------
     // Unity Lifecycle
     // -----------------------------------------------------------------------
@@ -110,6 +155,25 @@ public class ShopManager : MonoBehaviour
 
         InitializeDefaultConfigs();
     }
+
+    private void OnValidate()
+    {
+        if (categoryConfigs == null || categoryConfigs.Count == 0)
+        {
+            InitializeDefaultConfigs();
+        }
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Populate / Reset Default Configs into Inspector")]
+    public void PopulateDefaultConfigsIntoInspector()
+    {
+        categoryConfigs.Clear();
+        InitializeDefaultConfigs();
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log("[ShopManager] Successfully populated default upgrade configs into Inspector!");
+    }
+#endif
 
     private void Start()
     {
@@ -167,11 +231,11 @@ public class ShopManager : MonoBehaviour
                 displayName = "Research Scanner",
                 tiers       = new UpgradeTierInfo[]
                 {
-                    new UpgradeTierInfo(1, 0,    "Base focus bar width (15%) \nStandard lock-on speed"),
-                    new UpgradeTierInfo(2, 150,  "2% focus bar width \nMinor stabilization against creature movement"),
-                    new UpgradeTierInfo(3, 350,  "30% focus bar width \n+15% lock-on meter fill speed from base"),
-                    new UpgradeTierInfo(4, 750,  "35% focus bar width \n+30% lock-on meter fill speed from base"),
-                    new UpgradeTierInfo(5, 1500, "40% focus bar width \nHalves lock-on progress decay when off-target")
+                    new UpgradeTierInfo(1, 0,    "15% Focus Bar (MG1) \nStandard puzzle countdown timer (MG2)"),
+                    new UpgradeTierInfo(2, 150,  "20% Focus Bar (MG1) \n+10s extra puzzle reconstruction time (MG2)"),
+                    new UpgradeTierInfo(3, 350,  "30% Focus Bar (MG1) \n+20s extra puzzle reconstruction time (MG2)"),
+                    new UpgradeTierInfo(4, 750,  "40% Focus Bar (MG1) \n1x Direct Tile Swap perk (MG2)"),
+                    new UpgradeTierInfo(5, 1500, "50% Focus Bar (MG1) \n2x Direct Tile Swaps & +15s bonus time (MG2)")
                 }
             },
 
@@ -398,7 +462,7 @@ public class ShopManager : MonoBehaviour
                 {
                     cardUI.Setup(
                         cfg.category,
-                        cfg.icon,
+                        GetCategoryIcon(cfg.category),
                         cfg.displayName,
                         currentTier,
                         5,
@@ -429,7 +493,7 @@ public class ShopManager : MonoBehaviour
 
                 staticCards[i].Setup(
                     cfg.category,
-                    cfg.icon,
+                    GetCategoryIcon(cfg.category),
                     cfg.displayName,
                     currentTier,
                     5,
@@ -587,11 +651,29 @@ public class ShopManager : MonoBehaviour
         var cardUI = rowGO.AddComponent<UpgradeCardUI>();
 
         // Row Inner Layout:
-        // Left: Title (and tier pips)
+        // Left: Category Logo Icon (remains constant per category)
+        var iconGO = new GameObject("CategoryIcon", typeof(RectTransform), typeof(Image));
+        iconGO.transform.SetParent(rRect, false);
+        var ir = iconGO.GetComponent<RectTransform>();
+        ir.anchorMin = new Vector2(0.015f, 0.10f); ir.anchorMax = new Vector2(0.095f, 0.90f); ir.sizeDelta = Vector2.zero;
+        var iconImg = iconGO.GetComponent<Image>();
+        var logoSprite = GetCategoryIcon(cfg.category);
+        if (logoSprite != null)
+        {
+            iconImg.sprite = logoSprite;
+            iconImg.preserveAspect = true;
+            iconImg.color = Color.white;
+        }
+        else
+        {
+            iconImg.color = new Color(0.2f, 0.3f, 0.4f, 0.5f);
+        }
+
+        // Title Area (shows category name and current tier)
         var leftGO = new GameObject("TitleArea", typeof(RectTransform));
         leftGO.transform.SetParent(rRect, false);
         var lr = leftGO.GetComponent<RectTransform>();
-        lr.anchorMin = new Vector2(0.02f, 0.48f); lr.anchorMax = new Vector2(0.40f, 0.95f); lr.sizeDelta = Vector2.zero;
+        lr.anchorMin = new Vector2(0.105f, 0.50f); lr.anchorMax = new Vector2(0.68f, 0.95f); lr.sizeDelta = Vector2.zero;
         var titleTxt = leftGO.AddComponent<TextMeshProUGUI>();
         if (font != null) titleTxt.font = font;
         titleTxt.text = cfg.displayName;
@@ -602,33 +684,11 @@ public class ShopManager : MonoBehaviour
         var descGO = new GameObject("DescArea", typeof(RectTransform));
         descGO.transform.SetParent(rRect, false);
         var dr = descGO.GetComponent<RectTransform>();
-        dr.anchorMin = new Vector2(0.02f, 0.05f); dr.anchorMax = new Vector2(0.68f, 0.48f); dr.sizeDelta = Vector2.zero;
+        dr.anchorMin = new Vector2(0.105f, 0.05f); dr.anchorMax = new Vector2(0.68f, 0.50f); dr.sizeDelta = Vector2.zero;
         var descTxt = descGO.AddComponent<TextMeshProUGUI>();
         if (font != null) descTxt.font = font;
         descTxt.fontSize = 36; descTxt.color = new Color(0.80f, 0.88f, 0.92f, 0.90f);
         descTxt.overflowMode = TextOverflowModes.Ellipsis;
-
-        // Tier Pips container (5 pips)
-        var pipsGO = new GameObject("Pips", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        pipsGO.transform.SetParent(rRect, false);
-        var pr = pipsGO.GetComponent<RectTransform>();
-        pr.anchorMin = new Vector2(0.42f, 0.52f); pr.anchorMax = new Vector2(0.65f, 0.88f); pr.sizeDelta = Vector2.zero;
-        var hlg = pipsGO.GetComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 6; hlg.childAlignment = TextAnchor.MiddleLeft;
-        hlg.childControlWidth = false; hlg.childControlHeight = false;
-
-        var pips = new Image[5];
-        for (int i = 0; i < 5; i++)
-        {
-            var pip = new GameObject($"Pip_{i + 1}", typeof(RectTransform), typeof(Image));
-            pip.transform.SetParent(pr, false);
-            var pipR = pip.GetComponent<RectTransform>();
-            pipR.sizeDelta = new Vector2(22f, 22f);
-            var pipImg = pip.GetComponent<Image>();
-            pipImg.sprite = WhiteSprite;
-            pipImg.color = (i == 0) ? new Color(0.12f, 0.95f, 0.78f) : new Color(0.15f, 0.20f, 0.28f, 0.8f);
-            pips[i] = pipImg;
-        }
 
         // Cost Label
         var costGO = new GameObject("CostArea", typeof(RectTransform));
@@ -660,7 +720,7 @@ public class ShopManager : MonoBehaviour
         btnLbl.alignment = TextAlignmentOptions.Center; btnLbl.color = Color.white;
 
         // Wire serialized references on the card component
-        cardUI.InjectReferences(titleTxt, costTxt, descTxt, btn, btnLbl, pips);
+        cardUI.InjectReferences(titleTxt, costTxt, descTxt, btn, btnLbl, iconImg);
 
         return cardUI;
     }
