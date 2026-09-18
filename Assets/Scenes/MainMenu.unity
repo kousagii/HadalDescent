@@ -721,6 +721,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneSelectionUI
   alohaFontAsset: {fileID: 11400000, guid: 7f219393d8efe2b4789a53cd57839cee, type: 2}
+  zoneScreenshots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   customRoot: {fileID: 0}
   customBackButton: {fileID: 0}
   customRdpText: {fileID: 0}
@@ -1426,6 +1432,9 @@ MonoBehaviour:
   customConfirmPopupRoot: {fileID: 0}
   customConfirmButton: {fileID: 0}
   customCancelButton: {fileID: 0}
+  customExitConfirmPopupRoot: {fileID: 0}
+  customExitConfirmButton: {fileID: 0}
+  customExitCancelButton: {fileID: 0}
   continueOpensZoneSelection: 1
   customZoneSelectionUI: {fileID: 0}
 --- !u!4 &1412839560

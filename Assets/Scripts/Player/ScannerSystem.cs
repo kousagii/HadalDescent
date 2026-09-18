@@ -141,14 +141,21 @@ public class ScannerSystem : MonoBehaviour
 
         float effectiveScanRange = baseRange + (GameManager.Instance != null ? GameManager.Instance.ScannerTier * 8f : 0f);
 
+        // Dynamic fog visibility limit: clamp detection to fog distance so we never lock onto objects in pure black void
+        float effectiveMaxDetectDist = detectionRange;
+        if (RenderSettings.fog && RenderSettings.fogEndDistance > 0f)
+        {
+            effectiveMaxDetectDist = Mathf.Min(detectionRange, RenderSettings.fogEndDistance);
+        }
+
         Ray centerRay = scanCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         Vector3 rayStart = centerRay.origin + centerRay.direction * 0.6f; // Offset forward to avoid submarine hull clipping
 
         // Collect all colliders hit by narrow center beam
-        var hits = Physics.SphereCastAll(rayStart, reticleBeamRadius, centerRay.direction, detectionRange, ~0, QueryTriggerInteraction.Collide);
+        var hits = Physics.SphereCastAll(rayStart, reticleBeamRadius, centerRay.direction, effectiveMaxDetectDist, ~0, QueryTriggerInteraction.Collide);
 
         // Also do a direct line-of-sight raycast
-        var directHits = Physics.RaycastAll(rayStart, centerRay.direction, detectionRange, ~0, QueryTriggerInteraction.Collide);
+        var directHits = Physics.RaycastAll(rayStart, centerRay.direction, effectiveMaxDetectDist, ~0, QueryTriggerInteraction.Collide);
 
         // Find the best valid target strictly inside the reticle
         SpeciesAI             bestAI = null;
@@ -160,13 +167,13 @@ public class ScannerSystem : MonoBehaviour
         // Process SphereCast hits
         foreach (var hit in hits)
         {
-            EvaluateHit(hit.collider, hit.point, ref bestAI, ref bestStatic, ref bestEnv, ref bestDebris, ref bestDist);
+            EvaluateHit(hit.collider, hit.point, rayStart, effectiveMaxDetectDist, ref bestAI, ref bestStatic, ref bestEnv, ref bestDebris, ref bestDist);
         }
 
         // Process Direct Raycast hits (higher precision)
         foreach (var hit in directHits)
         {
-            EvaluateHit(hit.collider, hit.point, ref bestAI, ref bestStatic, ref bestEnv, ref bestDebris, ref bestDist);
+            EvaluateHit(hit.collider, hit.point, rayStart, effectiveMaxDetectDist, ref bestAI, ref bestStatic, ref bestEnv, ref bestDebris, ref bestDist);
         }
 
         // ── Apply Detection State ──
@@ -329,7 +336,45 @@ public class ScannerSystem : MonoBehaviour
         }
     }
 
-    private void EvaluateHit(Collider col, Vector3 hitPoint,
+    /// <summary>
+    /// Checks if a physical obstacle (terrain, rock, cliff, wall) blocks line-of-sight between camera and target.
+    /// </summary>
+    private bool IsOccluded(Vector3 fromPos, Vector3 targetPoint, Transform targetTransform)
+    {
+        Vector3 dir = targetPoint - fromPos;
+        float dist = dir.magnitude;
+        if (dist <= 0.6f) return false;
+
+        // QueryTriggerInteraction.Ignore ensures species triggers, boundary triggers, etc. don't block,
+        // while solid terrain and rock mesh colliders DO block line-of-sight.
+        if (Physics.Raycast(fromPos, dir.normalized, out RaycastHit hit, dist - 0.25f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.collider != null
+                && !hit.collider.transform.IsChildOf(targetTransform)
+                && hit.collider.GetComponentInParent<PlayerMovement>() == null)
+            {
+                return true; // Blocked by terrain or solid underwater rock!
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Verifies that the target GameObject has at least one active, enabled Renderer.
+    /// </summary>
+    private static bool HasActiveVisibleRenderer(GameObject obj)
+    {
+        if (obj == null) return false;
+        var rends = obj.GetComponentsInChildren<Renderer>();
+        for (int i = 0; i < rends.Length; i++)
+        {
+            if (rends[i] != null && rends[i].enabled && rends[i].gameObject.activeInHierarchy)
+                return true;
+        }
+        return false;
+    }
+
+    private void EvaluateHit(Collider col, Vector3 hitPoint, Vector3 rayStart, float maxDetectRange,
         ref SpeciesAI bestAI, ref ScanTarget bestStatic, ref EnvironmentFactTarget bestEnv, ref DebrisCluster bestDebris,
         ref float bestDist)
     {
@@ -347,13 +392,13 @@ public class ScannerSystem : MonoBehaviour
         if (vpDistFromCenter > viewportAimThreshold) return; // Outside reticle viewport threshold
 
         float dist = Vector3.Distance(scanCamera.transform.position, aimPoint);
-        if (dist > detectionRange) return;
+        if (dist > maxDetectRange) return; // Beyond max detection or fog visibility limit
 
         // 1. Mobile Bestiary Species
         var ai = col.GetComponentInParent<SpeciesAI>();
         if (ai != null && ai.gameObject.activeInHierarchy && ai.Data != null)
         {
-            if (dist < bestDist)
+            if (dist < bestDist && HasActiveVisibleRenderer(ai.gameObject) && !IsOccluded(rayStart, aimPoint, ai.transform))
             {
                 bestDist = dist;
                 bestAI = ai;
@@ -368,7 +413,7 @@ public class ScannerSystem : MonoBehaviour
         var st = col.GetComponentInParent<ScanTarget>();
         if (st != null && st.gameObject.activeInHierarchy && st.Data != null)
         {
-            if (dist < bestDist)
+            if (dist < bestDist && HasActiveVisibleRenderer(st.gameObject) && !IsOccluded(rayStart, aimPoint, st.transform))
             {
                 bestDist = dist;
                 bestStatic = st;
@@ -383,7 +428,7 @@ public class ScannerSystem : MonoBehaviour
         var env = col.GetComponentInParent<EnvironmentFactTarget>();
         if (env != null && env.gameObject.activeInHierarchy)
         {
-            if (dist < bestDist)
+            if (dist < bestDist && HasActiveVisibleRenderer(env.gameObject) && !IsOccluded(rayStart, aimPoint, env.transform))
             {
                 bestDist = dist;
                 bestEnv = env;
@@ -398,7 +443,7 @@ public class ScannerSystem : MonoBehaviour
         var dc = col.GetComponentInParent<DebrisCluster>();
         if (dc != null && dc.gameObject.activeInHierarchy && !dc.IsCleaned)
         {
-            if (dist < bestDist)
+            if (dist < bestDist && HasActiveVisibleRenderer(dc.gameObject) && !IsOccluded(rayStart, aimPoint, dc.transform))
             {
                 bestDist = dist;
                 bestDebris = dc;

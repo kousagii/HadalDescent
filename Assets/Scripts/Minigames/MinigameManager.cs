@@ -278,6 +278,12 @@ public class MinigameManager : MonoBehaviour
             return;
         }
 
+        if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false))
+        {
+            Debug.LogWarning("[MinigameManager] Major UI panel or modal is open - suppressing hazard request.");
+            return;
+        }
+
         EnsureMinigameComponents();
 
         if (_mg4 != null && !_mg4.gameObject.activeSelf)

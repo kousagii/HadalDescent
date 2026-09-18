@@ -69,6 +69,13 @@ public class TutorialManager : MonoBehaviour
 
     private int _currentStepIndex = 0;
     private bool _isTutorialActive = false;
+    public bool IsTutorialOpen => _isTutorialActive
+                               || (customPromptModal != null && customPromptModal.activeInHierarchy)
+                               || (customTutorialRoot != null && customTutorialRoot.activeInHierarchy)
+                               || (customCompletionModal != null && customCompletionModal.activeInHierarchy)
+                               || (_proceduralPromptModal != null && _proceduralPromptModal.activeInHierarchy)
+                               || (_proceduralStepCard != null && _proceduralStepCard.activeInHierarchy)
+                               || (_proceduralCompletionModal != null && _proceduralCompletionModal.activeInHierarchy);
 
     private readonly TutorialStep[] _steps = new TutorialStep[]
     {

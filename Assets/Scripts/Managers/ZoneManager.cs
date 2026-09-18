@@ -205,9 +205,13 @@ public class ZoneManager : MonoBehaviour
 
         // 1. Apply atmosphere
         ApplyAtmosphere(zone);
-        if (CurrentZoneIndex == 0)
+        if (CurrentZoneIndex == 0 && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Sunlight"))
         {
             SunlightAtmosphereVFX.EnsureInstance();
+        }
+        else if (SunlightAtmosphereVFX.Instance != null)
+        {
+            Destroy(SunlightAtmosphereVFX.Instance.gameObject);
         }
 
         // 2. Find spawn tags, fall back to computed defaults

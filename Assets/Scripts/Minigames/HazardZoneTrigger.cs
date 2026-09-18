@@ -72,6 +72,7 @@ public class HazardZoneTrigger : MonoBehaviour
     private void Update()
     {
         if (_isTriggering) return;
+        if (UIManager.IsAnyPanelOrModalOpen()) return;
         if (Time.time - _lastTriggerTime < triggerCooldown) return;
 
         // Proximity check fallback (ensures triggering even if layers/tags on the player are custom)
@@ -89,6 +90,7 @@ public class HazardZoneTrigger : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_isTriggering) return;
+        if (UIManager.IsAnyPanelOrModalOpen()) return;
         if (Time.time - _lastTriggerTime < triggerCooldown) return;
 
         // Check if player submarine entered trigger
@@ -100,7 +102,21 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private IEnumerator TestTriggerRoutine()
     {
-        yield return new WaitForSeconds(initialTestDelay);
+        float timer = initialTestDelay;
+        while (timer > 0f)
+        {
+            if (!UIManager.IsAnyPanelOrModalOpen())
+            {
+                timer -= Time.deltaTime;
+            }
+            yield return null;
+        }
+
+        while (UIManager.IsAnyPanelOrModalOpen())
+        {
+            yield return null;
+        }
+
         TriggerHazardMinigame();
     }
 
@@ -111,6 +127,7 @@ public class HazardZoneTrigger : MonoBehaviour
     [ContextMenu("▶ Test Trigger Hazard Minigame Now")]
     public void TriggerHazardMinigame()
     {
+        if (UIManager.IsAnyPanelOrModalOpen()) return;
         if (MinigameManager.Instance == null || MinigameManager.Instance.IsMinigameActive) return;
 
         _lastTriggerTime = Time.time;
@@ -150,7 +167,23 @@ public class HazardZoneTrigger : MonoBehaviour
                 _ => Random.Range(120f, 180f)  // Sunlight test
             };
 
-            yield return new WaitForSeconds(interval);
+            // Countdown timer that strictly pauses whenever Shop, Bestiary, Pause, or any popup is open!
+            // Time spent browsing menus does NOT count down, preventing sudden activation upon closing.
+            float timer = interval;
+            while (timer > 0f)
+            {
+                if (!UIManager.IsAnyPanelOrModalOpen())
+                {
+                    timer -= Time.deltaTime;
+                }
+                yield return null;
+            }
+
+            // Once countdown elapses, wait until all menus/modals are closed before triggering
+            while (UIManager.IsAnyPanelOrModalOpen())
+            {
+                yield return null;
+            }
 
             // Only trigger if player is exploring peacefully (no other minigame or popup open)
             if (MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)

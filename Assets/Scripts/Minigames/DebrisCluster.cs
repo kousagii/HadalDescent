@@ -67,16 +67,47 @@ public class DebrisCluster : MonoBehaviour
 
     public void EnsureCollider()
     {
-        var sc = GetComponent<SphereCollider>();
-        if (sc == null)
+        // 1. Ensure all child colliders are triggers so they don't block physical submarine movement
+        var childCols = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < childCols.Length; i++)
         {
-            var box = GetComponent<BoxCollider>();
-            if (box != null) Destroy(box);
-
-            sc = gameObject.AddComponent<SphereCollider>();
+            if (childCols[i] != null)
+                childCols[i].isTrigger = true;
         }
-        sc.radius = interactRadius;
-        sc.isTrigger = true;
+
+        // 2. Remove any oversized SphereCollider from older versions
+        var sc = GetComponent<SphereCollider>();
+        if (sc != null) Destroy(sc);
+
+        // 3. Compute compound bounds from child renderers to form an exact bounding box
+        var renderers = GetComponentsInChildren<Renderer>();
+        if (renderers != null && renderers.Length > 0)
+        {
+            Bounds worldBounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null && renderers[i].enabled)
+                    worldBounds.Encapsulate(renderers[i].bounds);
+            }
+
+            var box = GetComponent<BoxCollider>();
+            if (box == null) box = gameObject.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+
+            // Transform world bounds into local box collider center and size
+            box.center = transform.InverseTransformPoint(worldBounds.center);
+            Vector3 localExtents = transform.InverseTransformVector(worldBounds.extents);
+            box.size = new Vector3(Mathf.Max(0.5f, Mathf.Abs(localExtents.x) * 2f),
+                                   Mathf.Max(0.5f, Mathf.Abs(localExtents.y) * 2f),
+                                   Mathf.Max(0.5f, Mathf.Abs(localExtents.z) * 2f));
+        }
+        else
+        {
+            // Fallback if no renderers found yet
+            var box = GetComponent<BoxCollider>() ?? gameObject.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = Vector3.one * 2f;
+        }
     }
 
     public void EnsureSonarTrackable()
@@ -110,7 +141,16 @@ public class DebrisCluster : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = new Color(1f, 0.72f, 0.15f, 0.35f);
+        var box = GetComponent<BoxCollider>();
+        if (box != null)
+        {
+            Gizmos.color = new Color(0f, 0.95f, 0.90f, 0.75f);
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.DrawWireCube(box.center, box.size);
+            Gizmos.matrix = Matrix4x4.identity;
+        }
+
+        Gizmos.color = new Color(1f, 0.72f, 0.15f, 0.25f);
         Gizmos.DrawWireSphere(transform.position, interactRadius);
     }
 }

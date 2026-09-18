@@ -318,6 +318,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         _meshRenderer = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>();
         _meshCollider = GetComponent<MeshCollider>() ?? gameObject.AddComponent<MeshCollider>();
 
+        _meshRenderer.enabled           = true;
         _meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         _meshRenderer.receiveShadows    = true;
 

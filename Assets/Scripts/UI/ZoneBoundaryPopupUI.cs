@@ -33,6 +33,8 @@ public class ZoneBoundaryPopupUI : MonoBehaviour
     private Action _onCancel;
     private Action _onShop;
 
+    public bool IsOpen => (promptPanel != null && promptPanel.activeSelf) || (warningPanel != null && warningPanel.activeSelf);
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

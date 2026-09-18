@@ -37,6 +37,24 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns true if any major UI panel, modal, or menu (Shop, Bestiary, Pause, FactCard, etc.) is currently open.
+    /// Used to freeze world timers, prevent background triggers, and pause hazard encounters.
+    /// </summary>
+    public static bool IsAnyPanelOrModalOpen(bool includeMinigames = true)
+    {
+        if (ShopManager.Instance != null && ShopManager.Instance.IsOpen) return true;
+        if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen) return true;
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return true;
+        if (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen) return true;
+        if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen) return true;
+        if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen) return true;
+        if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialOpen) return true;
+        if (includeMinigames && MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     // Inspector - HUD references
     // -----------------------------------------------------------------------

@@ -44,8 +44,7 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
     private static void OnGlobalSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        bool isSunlight = scene.name.Contains("Sunlight")
-                       || (ZoneManager.CurrentZoneIndex == 0 && !scene.name.Contains("Menu") && !scene.name.Contains("Select"));
+        bool isSunlight = scene.name.Contains("Sunlight");
 
         if (isSunlight)
         {
@@ -60,6 +59,16 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
     public static void EnsureInstance()
     {
+        if (!SceneManager.GetActiveScene().name.Contains("Sunlight"))
+        {
+            if (_instance != null)
+            {
+                Destroy(_instance.gameObject);
+                _instance = null;
+            }
+            return;
+        }
+
         if (_instance != null)
         {
             _instance.gameObject.SetActive(true);
@@ -85,6 +94,12 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
     private void Awake()
     {
+        if (!SceneManager.GetActiveScene().name.Contains("Sunlight"))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (_instance != null && _instance != this)
         {
             Destroy(gameObject);

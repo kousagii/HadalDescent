@@ -97,7 +97,24 @@ public class TerrainGenerator : MonoBehaviour
 
     private void Start()
     {
-        if (!_hasGenerated) Generate(0);
+        if (!_hasGenerated)
+        {
+            int zoneIdx = DetectCurrentZone();
+            Generate(zoneIdx);
+        }
+    }
+
+    private int DetectCurrentZone()
+    {
+        if (ZoneManager.Instance != null && ZoneManager.CurrentZoneIndex >= 0)
+            return ZoneManager.CurrentZoneIndex;
+
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (sceneName.Contains("Twilight")) return 1;
+        if (sceneName.Contains("Midnight")) return 2;
+        if (sceneName.Contains("Abyss"))    return 3;
+        if (sceneName.Contains("Hadal"))    return 4;
+        return 0;
     }
 
     public void Generate(int zoneIndex)
@@ -130,7 +147,7 @@ public class TerrainGenerator : MonoBehaviour
 
         // --- Phase 0: Apply ocean atmosphere & linear fog ---
         ZoneManager.ApplyAtmosphere(zone);
-        if (zoneIndex == 0)
+        if (zoneIndex == 0 && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Sunlight"))
         {
             SunlightAtmosphereVFX.EnsureInstance();
         }

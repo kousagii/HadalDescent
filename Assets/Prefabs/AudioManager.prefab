@@ -50,8 +50,8 @@ MonoBehaviour:
   audioMixer: {fileID: 24100000, guid: 52cb8fb87aff8954b93ecb3392f09e52, type: 2}
   bgmSource: {fileID: 5445631654854010829}
   sfxSource: {fileID: 241013902503530314}
-  mainMenuBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
-  sunlightZoneBGM: {fileID: 8300000, guid: 2bf2c7bbe1a2a074f87c358579762111, type: 3}
+  mainMenuBGM: {fileID: 8300000, guid: 72bcc764d205ca248a0f85bbae023e82, type: 3}
+  sunlightZoneBGM: {fileID: 8300000, guid: 538f6a8f2b79275498f9db2bdb5df0d4, type: 3}
   twilightZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   midnightZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}
   abyssZoneBGM: {fileID: 8300000, guid: 581867b52239be34da1b34aeed54c779, type: 3}

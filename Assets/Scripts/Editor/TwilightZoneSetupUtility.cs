@@ -472,7 +472,8 @@ public static class TwilightZoneSetupUtility
         EnsureComponent<EnvPropScatterer>(pcgGO);
         EnsureComponent<DistanceCullingManager>(pcgGO);
         EnsureComponent<DebrisSpawner>(pcgGO);
-        EnsureComponent<MeshRenderer>(pcgGO);
+        var pcgMR = EnsureComponent<MeshRenderer>(pcgGO);
+        if (pcgMR != null) pcgMR.enabled = true;
         EnsureComponent<MeshFilter>(pcgGO);
         EnsureComponent<MeshCollider>(pcgGO);
 
