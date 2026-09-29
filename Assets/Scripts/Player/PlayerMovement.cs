@@ -192,10 +192,17 @@ public class PlayerMovement : MonoBehaviour
             (camForward  * moveInput.y +
              bodyRight   * moveInput.x) * effectiveSpeed;
 
-        // Prevent submarine from moving above ocean surface (Y > 0)
-        if (rb.position.y >= 0f && targetVelocity.y > 0f)
+        // Allow submarine to surface halfway through the ocean surface (Y up to +1.0m)
+        const float maxSurfaceBreachY = 1.0f;
+        if (rb.position.y >= maxSurfaceBreachY && targetVelocity.y > 0f)
         {
             targetVelocity.y = 0f;
+        }
+
+        // When breaching above water line (Y > 0), apply gentle restoring force toward water level
+        if (rb.position.y > 0f)
+        {
+            targetVelocity.y -= rb.position.y * 2.5f;
         }
 
         // Safety check: prevent extreme velocity spikes or NaN corruption from violent collisions
@@ -210,10 +217,10 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(targetVelocity - rb.linearVelocity, ForceMode.VelocityChange);
 
-        // Clamp position to water surface ceiling
-        if (rb.position.y > 0f)
+        // Clamp position to maximum surface breach ceiling (halfway out of water)
+        if (rb.position.y > maxSurfaceBreachY)
         {
-            rb.position = new Vector3(rb.position.x, 0f, rb.position.z);
+            rb.position = new Vector3(rb.position.x, maxSurfaceBreachY, rb.position.z);
             if (rb.linearVelocity.y > 0f)
             {
                 rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);

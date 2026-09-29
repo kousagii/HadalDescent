@@ -61,6 +61,11 @@ public static class SpeciesDataGenerator
             wanderRadius           = 3.5f,
             moveSpeed              = 1.8f,
             fleeSpeed              = 5.0f,
+            turnSpeed              = 120f,
+            locomotionArchetype    = LocomotionArchetype.HoverBurst,
+            pulseFrequency         = 1.2f,
+            undulationFrequency    = 3.5f,
+            undulationAmplitude    = 15f,
             placeholderShape       = PlaceholderShape.Sphere,
             placeholderColor       = new Color(1.0f, 0.45f, 0.10f, 1f),
             placeholderScale       = new Vector3(0.5f, 0.5f, 0.5f),
@@ -89,6 +94,7 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 1.00f,
             instanceCount          = 4,
+            locomotionArchetype    = LocomotionArchetype.Sessile,
             placeholderShape       = PlaceholderShape.Cylinder,
             placeholderColor       = new Color(0.95f, 0.35f, 0.65f, 1f),
             placeholderScale       = new Vector3(1.2f, 0.8f, 1.2f),
@@ -117,6 +123,7 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.05f,
             maxDepthFraction       = 0.30f,
             instanceCount          = 6,
+            locomotionArchetype    = LocomotionArchetype.Sessile,
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.92f, 0.25f, 0.35f, 1f),
             placeholderScale       = new Vector3(1.5f, 2.0f, 0.3f),
@@ -145,6 +152,8 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 0.30f,
             instanceCount          = 4,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            benthicSurfaceOffset   = 0.15f,
             placeholderShape       = PlaceholderShape.Sphere,
             placeholderColor       = new Color(0.12f, 0.45f, 0.95f, 1f),
             placeholderScale       = new Vector3(1.0f, 0.3f, 1.0f),
@@ -173,6 +182,7 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 0.175f,
             instanceCount          = 3,
+            locomotionArchetype    = LocomotionArchetype.Sessile,
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.10f, 0.85f, 0.75f, 1f),
             placeholderScale       = new Vector3(2.0f, 1.2f, 1.5f),
@@ -204,6 +214,9 @@ public static class SpeciesDataGenerator
             wanderRadius           = 18f,
             moveSpeed              = 3.2f,
             fleeSpeed              = 6.5f,
+            locomotionArchetype    = LocomotionArchetype.PulsatileJetter,
+            pulseFrequency         = 1.1f,
+            pulseDutyCycle         = 0.35f,
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.85f, 0.95f, 1.0f, 1f),
             placeholderScale       = new Vector3(0.8f, 1.8f, 0.8f),
@@ -232,9 +245,15 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 0.375f,
             instanceCount          = 2,
-            wanderRadius           = 30f,
-            moveSpeed              = 4.5f,
-            fleeSpeed              = 7.0f,
+            wanderRadius           = 110f,
+            moveSpeed              = 2.0f,
+            fleeSpeed              = 4.2f,
+            turnSpeed              = 35f,
+            locomotionArchetype    = LocomotionArchetype.PelagicCruiser,
+            bankingAngle           = 25f,
+            undulationFrequency    = 1.6f,
+            undulationAmplitude    = 12f,
+            minCruiseSpeedFraction = 0.45f,
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.40f, 0.45f, 0.50f, 1f),
             placeholderScale       = new Vector3(1.2f, 3.5f, 1.2f),
@@ -266,6 +285,12 @@ public static class SpeciesDataGenerator
             wanderRadius           = 14f,
             moveSpeed              = 2.6f,
             fleeSpeed              = 5.5f,
+            turnSpeed              = 50f,
+            modelYawOffset         = 180f,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            benthicSurfaceOffset   = 0.45f,
+            undulationFrequency    = 1.8f,
+            undulationAmplitude    = 8f,
             placeholderShape       = PlaceholderShape.Cylinder,
             placeholderColor       = new Color(0.20f, 0.65f, 0.90f, 1f),
             placeholderScale       = new Vector3(1.8f, 0.2f, 1.8f),
@@ -294,6 +319,7 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.10f,
             maxDepthFraction       = 0.15f,
             instanceCount          = 4,
+            locomotionArchetype    = LocomotionArchetype.Sessile,
             placeholderShape       = PlaceholderShape.Cylinder,
             placeholderColor       = new Color(0.18f, 0.45f, 0.92f, 1f),
             placeholderScale       = new Vector3(1.0f, 1.4f, 1.0f),
@@ -322,6 +348,8 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.03f,
             maxDepthFraction       = 0.085f,
             instanceCount          = 4,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            benthicSurfaceOffset   = 0.15f,
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.82f, 0.68f, 0.48f, 1f),
             placeholderScale       = new Vector3(0.6f, 1.0f, 0.6f),
@@ -353,6 +381,7 @@ public static class SpeciesDataGenerator
             wanderRadius           = 20f,
             moveSpeed              = 1.2f,
             fleeSpeed              = 2.0f,
+            locomotionArchetype    = LocomotionArchetype.SurfaceDrifter,
             placeholderShape       = PlaceholderShape.Sphere,
             placeholderColor       = new Color(0.15f, 0.60f, 1.0f, 0.8f),
             placeholderScale       = new Vector3(0.8f, 0.8f, 0.8f),
@@ -381,6 +410,8 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.005f,
             maxDepthFraction       = 0.25f,
             instanceCount          = 3,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            benthicSurfaceOffset   = 0.30f,
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.85f, 0.40f, 0.15f, 1f),
             placeholderScale       = new Vector3(1.2f, 0.5f, 1.5f),
@@ -409,9 +440,15 @@ public static class SpeciesDataGenerator
             minDepthFraction       = 0.005f,
             maxDepthFraction       = 0.25f,
             instanceCount          = 3,
-            wanderRadius           = 35f,
-            moveSpeed              = 5.0f,
+            wanderRadius           = 130f,
+            moveSpeed              = 8.0f,
             fleeSpeed              = 8.0f,
+            turnSpeed              = 48f,
+            locomotionArchetype    = LocomotionArchetype.PelagicCruiser,
+            bankingAngle           = 35f,
+            undulationFrequency    = 2.2f,
+            undulationAmplitude    = 16f,
+            minCruiseSpeedFraction = 0.50f,
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.30f, 0.60f, 0.85f, 1f),
             placeholderScale       = new Vector3(1.0f, 3.2f, 1.0f),
@@ -441,8 +478,12 @@ public static class SpeciesDataGenerator
             maxDepthFraction       = 0.05f,
             instanceCount          = 2,
             wanderRadius           = 16f,
-            moveSpeed              = 3.0f,
-            fleeSpeed              = 6.0f,
+            moveSpeed              = 1.6f,
+            fleeSpeed              = 3.5f,
+            turnSpeed              = 55f,
+            locomotionArchetype    = LocomotionArchetype.Serpentine,
+            undulationFrequency    = 1.2f,
+            undulationAmplitude    = 12f,
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.95f, 0.85f, 0.10f, 1f),
             placeholderScale       = new Vector3(0.4f, 2.5f, 0.4f),
@@ -474,6 +515,10 @@ public static class SpeciesDataGenerator
             wanderRadius           = 12f,
             moveSpeed              = 1.5f,
             fleeSpeed              = 3.0f,
+            turnSpeed              = 40f,
+            locomotionArchetype    = LocomotionArchetype.PulsatileJetter,
+            pulseFrequency         = 0.65f,
+            pulseDutyCycle         = 0.40f,
             placeholderShape       = PlaceholderShape.Sphere,
             placeholderColor       = new Color(0.90f, 0.70f, 0.35f, 0.9f),
             placeholderScale       = new Vector3(1.2f, 1.2f, 1.2f),
@@ -548,6 +593,41 @@ public static class SpeciesDataGenerator
         asset.placeholderScale      = config.placeholderScale;
         asset.previewScaleMultiplier= config.previewScaleMultiplier;
 
+        // Locomotion profile
+        if (config.locomotionArchetype != default)
+        {
+            asset.locomotionArchetype = config.locomotionArchetype;
+        }
+        else if (config.isStationary)
+        {
+            asset.locomotionArchetype = LocomotionArchetype.Sessile;
+        }
+        else
+        {
+            if (config.taxonomicClass == TaxonomicClass.Scyphozoa || config.taxonomicClass == TaxonomicClass.Cephalopoda)
+                asset.locomotionArchetype = LocomotionArchetype.PulsatileJetter;
+            else if (config.taxonomicClass == TaxonomicClass.Hydrozoa)
+                asset.locomotionArchetype = LocomotionArchetype.SurfaceDrifter;
+            else if (config.taxonomicClass == TaxonomicClass.Reptilia)
+                asset.locomotionArchetype = LocomotionArchetype.Serpentine;
+            else if (config.taxonomicClass == TaxonomicClass.Malacostraca || config.taxonomicClass == TaxonomicClass.Asteroidea || config.taxonomicClass == TaxonomicClass.Gastropoda)
+                asset.locomotionArchetype = LocomotionArchetype.BenthicFollower;
+            else if (config.taxonomicClass == TaxonomicClass.Chondrichthyes && config.commonName.ToLower().Contains("ray"))
+                asset.locomotionArchetype = LocomotionArchetype.BenthicFollower;
+            else
+                asset.locomotionArchetype = LocomotionArchetype.PelagicCruiser;
+        }
+
+        asset.pulseFrequency         = config.pulseFrequency > 0f ? config.pulseFrequency : 0.8f;
+        asset.pulseDutyCycle         = config.pulseDutyCycle > 0f ? config.pulseDutyCycle : 0.35f;
+        asset.bankingAngle           = config.bankingAngle > 0f ? config.bankingAngle : (asset.locomotionArchetype == LocomotionArchetype.PelagicCruiser ? 25f : 0f);
+        asset.undulationFrequency    = config.undulationFrequency > 0f ? config.undulationFrequency : 2.0f;
+        asset.undulationAmplitude    = config.undulationAmplitude > 0f ? config.undulationAmplitude : 12f;
+        asset.benthicSurfaceOffset   = config.benthicSurfaceOffset > 0f ? config.benthicSurfaceOffset : 0.4f;
+        asset.minCruiseSpeedFraction = config.minCruiseSpeedFraction;
+        asset.turnSpeed              = config.turnSpeed > 0f ? config.turnSpeed : 65f;
+        if (config.modelYawOffset != 0f) asset.modelYawOffset = config.modelYawOffset;
+
         EditorUtility.SetDirty(asset);
         return asset;
     }
@@ -614,6 +694,18 @@ public static class SpeciesDataGenerator
         public Color placeholderColor;
         public Vector3 placeholderScale;
         public float previewScaleMultiplier;
+
+        // Locomotion Profile
+        public LocomotionArchetype locomotionArchetype;
+        public float pulseFrequency;
+        public float pulseDutyCycle;
+        public float bankingAngle;
+        public float undulationFrequency;
+        public float undulationAmplitude;
+        public float benthicSurfaceOffset;
+        public float minCruiseSpeedFraction;
+        public float turnSpeed;
+        public float modelYawOffset;
     }
 }
 #endif

@@ -384,7 +384,19 @@ public class ScannerSystem : MonoBehaviour
         if (col.GetComponentInParent<PlayerMovement>() != null) return;
 
         // Screen-space confirmation: ensure target collider is actually in front of the camera and within the center reticle
-        Vector3 aimPoint = (hitPoint != Vector3.zero) ? hitPoint : col.ClosestPoint(scanCamera.transform.position);
+        Vector3 aimPoint;
+        if (hitPoint != Vector3.zero)
+        {
+            aimPoint = hitPoint;
+        }
+        else if (col is BoxCollider || col is SphereCollider || col is CapsuleCollider || (col is MeshCollider mc && mc.convex))
+        {
+            aimPoint = col.ClosestPoint(scanCamera.transform.position);
+        }
+        else
+        {
+            aimPoint = col.bounds.ClosestPoint(scanCamera.transform.position);
+        }
         Vector3 vp = scanCamera.WorldToViewportPoint(aimPoint);
         if (vp.z <= 0.2f) return; // Behind camera or too close to lens
 

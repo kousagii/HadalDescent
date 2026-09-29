@@ -494,7 +494,7 @@ public class ZoneSelectionUI : MonoBehaviour
 
         if (SceneManager.GetActiveScene().name != sceneName)
         {
-            SceneManager.LoadScene(sceneName);
+            LoadingScreenUI.LoadScene(sceneName);
         }
     }
 
@@ -649,7 +649,7 @@ public class ZoneSelectionUI : MonoBehaviour
         string curScene = SceneManager.GetActiveScene().name;
         if (curScene != "MainMenu")
         {
-            SceneManager.LoadScene("MainMenu");
+            LoadingScreenUI.LoadScene("MainMenu");
         }
     }
 

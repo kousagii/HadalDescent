@@ -246,18 +246,11 @@ public class TutorialManager : MonoBehaviour
         if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
 
         GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped by player — opening Zone Selection.");
+        Debug.Log("[TutorialManager] Tutorial skipped by player — proceeding directly to gameplay.");
 
-        ZoneSelectionUI.IsAfterTutorialFlow = true;
-
-        if (ZoneSelectionUI.Instance != null)
-        {
-            ZoneSelectionUI.Instance.OpenZoneSelection();
-        }
-        else if (UIManager.Instance != null)
-        {
-            UIManager.Instance.OpenZoneSelection();
-        }
+        ZoneSelectionUI.IsAfterTutorialFlow = false;
+        Time.timeScale = 1f;
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     // -----------------------------------------------------------------------
@@ -333,18 +326,11 @@ public class TutorialManager : MonoBehaviour
 
         _isTutorialActive = false;
         GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped — opening Zone Selection.");
+        Debug.Log("[TutorialManager] Tutorial skipped — proceeding directly to gameplay.");
 
-        ZoneSelectionUI.IsAfterTutorialFlow = true;
-
-        if (ZoneSelectionUI.Instance != null)
-        {
-            ZoneSelectionUI.Instance.OpenZoneSelection();
-        }
-        else if (UIManager.Instance != null)
-        {
-            UIManager.Instance.OpenZoneSelection();
-        }
+        ZoneSelectionUI.IsAfterTutorialFlow = false;
+        Time.timeScale = 1f;
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     // -----------------------------------------------------------------------
@@ -386,18 +372,11 @@ public class TutorialManager : MonoBehaviour
         if (customCompletionModal != null) customCompletionModal.SetActive(false);
         if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
 
-        Debug.Log("[TutorialManager] Tutorial completed — opening Zone Selection.");
+        Debug.Log("[TutorialManager] Tutorial completed — proceeding directly to gameplay.");
 
-        ZoneSelectionUI.IsAfterTutorialFlow = true;
-
-        if (ZoneSelectionUI.Instance != null)
-        {
-            ZoneSelectionUI.Instance.OpenZoneSelection();
-        }
-        else if (UIManager.Instance != null)
-        {
-            UIManager.Instance.OpenZoneSelection();
-        }
+        ZoneSelectionUI.IsAfterTutorialFlow = false;
+        Time.timeScale = 1f;
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     public void OnCompletionReplayClicked()

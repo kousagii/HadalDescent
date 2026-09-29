@@ -37,6 +37,15 @@ MonoBehaviour:
   fleeSpeed: 4.5
   fleeRange: 10
   returnThreshold: 40
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 1.5
+  undulationAmplitude: 8
+  benthicSurfaceOffset: 0.35
+  minCruiseSpeedFraction: 0.0
   modelPrefab: {fileID: 0}
   modelYawOffset: 0
   previewScaleMultiplier: 1

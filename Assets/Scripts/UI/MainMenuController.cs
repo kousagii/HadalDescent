@@ -291,10 +291,9 @@ public class MainMenuController : MonoBehaviour
         };
 
         ZoneManager.SetCurrentZone(savedZone);
-        SceneManager.LoadScene(zoneScene);
-
         // Apply saved position after the zone scene finishes loading
         SceneManager.sceneLoaded += OnZoneSceneLoaded;
+        LoadingScreenUI.LoadScene(zoneScene);
     }
 
     private void OnZoneSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -316,7 +315,7 @@ public class MainMenuController : MonoBehaviour
         GameManager.DeleteSaveData();
         GameManager.Instance?.ResetState();
         GameManager.SetTutorialCompleted(false);
-        SceneManager.LoadScene(startingZoneSceneName);
+        LoadingScreenUI.LoadScene(startingZoneSceneName);
     }
 
     public void OnSettingsClicked()

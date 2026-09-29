@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Haliclona fascigera
   taxonomicClass: 13
   zoneIndex: 0
-  habitat: Western Pacific reef habitats (20-30 m)
-  depthRangeText: 20-30 m
+  habitat: "Western Pacific reef habitats (20\u201330 m)"
+  depthRangeText: "20\u201330 m"
   explorationHint: Look for vibrant blue cylindrical tubes anchored to rocky reef
     outcrops.
   secondaryZoneIndices: 
@@ -38,6 +38,15 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
+  turnSpeed: 65
+  locomotionArchetype: 6
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 1040045983470968908, guid: 7d450d46eb035c7438af2728a3e8afb5, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1

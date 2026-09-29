@@ -18,7 +18,7 @@ MonoBehaviour:
   taxonomicClass: 10
   zoneIndex: 0
   habitat: Indo-Pacific reefs, shallow waters (6 - 17 m)
-  depthRangeText: 6-17 m
+  depthRangeText: "6\u201317 m"
   explorationHint: Slowly moving along sandy reef floors and coral rubble channels.
   secondaryZoneIndices: 
   characteristics: Cone-shaped patterned shell.
@@ -37,6 +37,15 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.15
+  minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 7392894692970106120, guid: e20308a44ae7df142b457162a9b53880, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1

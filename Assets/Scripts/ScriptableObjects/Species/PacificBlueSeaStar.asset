@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Linckia laevigata
   taxonomicClass: 7
   zoneIndex: 0
-  habitat: Shallow reefs, rocks and rubble (0-60 m)
-  depthRangeText: 0-60 m
+  habitat: "Shallow reefs, rocks and rubble (0\u201360 m)"
+  depthRangeText: "0\u201360 m"
   explorationHint: Resting atop sunny reef platforms and sandy coral rubble.
   secondaryZoneIndices: 
   characteristics: Bright blue body with five long, slender arms.
@@ -37,6 +37,15 @@ MonoBehaviour:
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 40
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.15
+  minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 6734321286834239983, guid: 4cd091e767ab24a4aa92a9a681ca5419, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1

@@ -165,10 +165,23 @@ public class ZoneBoundaryTrigger : MonoBehaviour
                 }
                 else
                 {
-                    // STRICT 3m difference: only trigger if depth is within 3m of the surface
-                    if (tracker.CurrentDepth <= 3f)
+                    int prevZone = currentZone - 1;
+                    if (!ZoneConfig.IsValidZone(prevZone))
                     {
-                        HandleAscentBoundary();
+                        // Sunlight Zone surface: ONLY trigger if submarine is halfway through the surface
+                        // (Y >= +0.7m), allowing players to freely explore and scan Bluebottles at 0-3m depth!
+                        if (_playerSub != null && _playerSub.transform.position.y >= 0.7f)
+                        {
+                            HandleAscentBoundary();
+                        }
+                    }
+                    else
+                    {
+                        // Deeper zones: trigger when ascending to zone entrance depth
+                        if (tracker.CurrentDepth <= zone.displayDepthMin + 3f)
+                        {
+                            HandleAscentBoundary();
+                        }
                     }
                 }
             }
@@ -197,9 +210,21 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         }
         else
         {
-            if (tracker.CurrentDepth <= 3f)
+            int prevZone = currentZone - 1;
+            if (!ZoneConfig.IsValidZone(prevZone))
             {
-                HandleAscentBoundary();
+                // Sunlight Zone surface: only trigger if submarine breached surface halfway
+                if (other.transform.position.y >= 0.7f)
+                {
+                    HandleAscentBoundary();
+                }
+            }
+            else
+            {
+                if (tracker.CurrentDepth <= zone.displayDepthMin + 3f)
+                {
+                    HandleAscentBoundary();
+                }
             }
         }
     }
@@ -277,17 +302,14 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private void HandleAscentBoundary()
     {
-        if (_popupActive || _globalCooldownTimer > 0f) return;
-
-        var tracker = FindFirstObjectByType<DepthTracker>();
-        // STRICT 3m difference: only trigger if depth is within 3m of the surface (depth <= 3m)
-        if (tracker != null && tracker.CurrentDepth > 3f) return;
-
         int currentZone   = ZoneManager.CurrentZoneIndex;
         int previousZone  = currentZone - 1;
 
         if (!ZoneConfig.IsValidZone(previousZone))
         {
+            // Sunlight Zone surface: only prompt if submarine has surfaced halfway (Y >= +0.7m)
+            if (_playerSub != null && _playerSub.transform.position.y < 0.7f) return;
+
             // Already in shallowest zone (Sunlight Zone surface) — open Zone Selection UI!
             ShowBoundaryPopup(
                 "Return to Zone Selection?",

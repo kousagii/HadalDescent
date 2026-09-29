@@ -691,6 +691,10 @@ public class SpeciesSpawner : MonoBehaviour
         if (creaturesLayer < 0) creaturesLayer = LayerMask.NameToLayer("Default");
         SetLayerRecursive(go, creaturesLayer);
 
+        var locomotion = go.GetComponent<CreatureLocomotion>();
+        if (locomotion == null) locomotion = go.AddComponent<CreatureLocomotion>();
+        locomotion.Initialize(data);
+
         var cs = go.GetComponent<ContextSteering>();
         if (cs == null) cs = go.AddComponent<ContextSteering>();
 

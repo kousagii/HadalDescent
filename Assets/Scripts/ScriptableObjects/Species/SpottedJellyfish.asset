@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Mastigias papua
   taxonomicClass: 8
   zoneIndex: 0
-  habitat: Shallow sunlit lagoons and coves (1-20 m)
-  depthRangeText: 1-20 m
+  habitat: "Shallow sunlit lagoons and coves (1\u201320 m)"
+  depthRangeText: "1\u201320 m"
   explorationHint: Drifts in open sunlit water where solar rays illuminate the lagoon.
   secondaryZoneIndices: 
   characteristics: Golden-brown bell with white spots.
@@ -37,7 +37,16 @@ MonoBehaviour:
   fleeSpeed: 3
   fleeRange: 10
   returnThreshold: 40
-  modelPrefab: {fileID: 8037235477296494089, guid: 36ef2de50d8107248bb7c4ebc86eaac3, type: 3}
+  turnSpeed: 40
+  locomotionArchetype: 2
+  pulseFrequency: 0.65
+  pulseDutyCycle: 0.4
+  bankingAngle: 0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 9054277675419020925, guid: 36ef2de50d8107248bb7c4ebc86eaac3, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   placeholderShape: 0

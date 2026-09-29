@@ -17,9 +17,9 @@ MonoBehaviour:
   scientificName: Tursiops aduncus
   taxonomicClass: 2
   zoneIndex: 0
-  habitat: Shallow coastal, estuarine, and reef-associated tropical waters (usually
-    1 - 50 m)
-  depthRangeText: 1-50 m
+  habitat: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000
+    m, usually 1 - 50 m)
+  depthRangeText: "1\u201350 m"
   explorationHint: Swims in social pods across coastal and reef-associated surface
     waters.
   secondaryZoneIndices: 
@@ -37,12 +37,21 @@ MonoBehaviour:
   minDepthFraction: 0.005
   maxDepthFraction: 0.25
   instanceCount: 3
-  wanderRadius: 35
-  moveSpeed: 5
+  wanderRadius: 130
+  moveSpeed: 8
   fleeSpeed: 8
-  fleeRange: 10
-  returnThreshold: 40
-  modelPrefab: {fileID: 1365621601028647452, guid: 245e4a208a0283146b209005f9400f41, type: 3}
+  fleeRange: 12
+  returnThreshold: 150
+  turnSpeed: 48
+  locomotionArchetype: 0
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 35
+  undulationFrequency: 2.2
+  undulationAmplitude: 16
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0.5
+  modelPrefab: {fileID: 626129989961712411, guid: 245e4a208a0283146b209005f9400f41, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 0.75
   placeholderShape: 1

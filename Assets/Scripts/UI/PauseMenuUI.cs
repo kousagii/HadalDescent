@@ -451,7 +451,7 @@ public class PauseMenuUI : MonoBehaviour
         GameManager.Instance?.SaveGame();
 
         // Load Main Menu Scene
-        SceneManager.LoadScene("MainMenu");
+        LoadingScreenUI.LoadScene("MainMenu");
     }
 
     public void OnCancelExitGame()

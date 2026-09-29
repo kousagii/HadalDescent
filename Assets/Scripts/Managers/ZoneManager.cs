@@ -163,7 +163,7 @@ public class ZoneManager : MonoBehaviour
         PlayerPrefs.SetInt("Save_HasPosition", 0);
 
         string sceneName = ZoneConfig.Zones[targetZoneIndex].sceneName;
-        SceneManager.LoadScene(sceneName);
+        LoadingScreenUI.LoadScene(sceneName);
     }
 
     /// <summary>Returns to the zone selection menu.</summary>
@@ -184,11 +184,11 @@ public class ZoneManager : MonoBehaviour
         }
         else if (Application.CanStreamedLevelBeLoaded(zoneSelectSceneName))
         {
-            SceneManager.LoadScene(zoneSelectSceneName);
+            LoadingScreenUI.LoadScene(zoneSelectSceneName);
         }
         else
         {
-            SceneManager.LoadScene("MainMenu");
+            LoadingScreenUI.LoadScene("MainMenu");
         }
     }
 

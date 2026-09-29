@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Laticauda colubrina
   taxonomicClass: 3
   zoneIndex: 0
-  habitat: Shallow coral reefs, mangroves, and rocky shores (0-10 m)
-  depthRangeText: 0-10 m
+  habitat: "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+  depthRangeText: "0\u201310 m"
   explorationHint: Swims gracefully through shallow coral branches near the surface.
   secondaryZoneIndices: 
   characteristics: Black stripes and a yellow snout, with a paddle-like tail for
@@ -34,11 +34,20 @@ MonoBehaviour:
   maxDepthFraction: 0.05
   instanceCount: 2
   wanderRadius: 16
-  moveSpeed: 3
-  fleeSpeed: 6
+  moveSpeed: 1.6
+  fleeSpeed: 3.5
   fleeRange: 10
   returnThreshold: 40
-  modelPrefab: {fileID: 2665447713154055243, guid: 76fe1f7dd562b8a45be93ddf48bcbb54, type: 3}
+  turnSpeed: 55
+  locomotionArchetype: 5
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 1.2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 4944150657697064515, guid: 44dd0836962e58e4dbab3d49003a66eb, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 0.9
   placeholderShape: 1

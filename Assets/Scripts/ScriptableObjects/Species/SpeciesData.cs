@@ -117,6 +117,37 @@ public class SpeciesData : ScriptableObject
     public float fleeRange       = 10f;
     [Tooltip("Distance from spawn before a fleeing creature turns back.")]
     public float returnThreshold = 40f;
+    [Tooltip("Maximum turn rate in degrees per second (e.g. 50-65 for large cruisers/snakes, 100-140 for nimble reef fish).")]
+    [Range(15f, 200f)] public float turnSpeed = 65f;
+
+    // -----------------------------------------------------------------------
+    // Locomotion & Movement Profile (mobile species only)
+    // -----------------------------------------------------------------------
+
+    [Header("Locomotion Profile (mobile species only)")]
+    [Tooltip("Biomechanical movement archetype driving propulsion and behavior.")]
+    public LocomotionArchetype locomotionArchetype = LocomotionArchetype.PelagicCruiser;
+
+    [Tooltip("Pulse/stroke frequency (Hz) for pulsatile jetters, hover bursts, or tail beats.")]
+    public float pulseFrequency = 0.8f;
+
+    [Tooltip("Fraction of each pulse cycle spent actively thrusting (0.1 to 0.9).")]
+    [Range(0.1f, 0.9f)] public float pulseDutyCycle = 0.35f;
+
+    [Tooltip("Maximum roll banking angle in degrees when turning (sharks, dolphins).")]
+    [Range(0f, 60f)] public float bankingAngle = 25f;
+
+    [Tooltip("Frequency of procedural swimming yaw undulation (Hz).")]
+    public float undulationFrequency = 2.0f;
+
+    [Tooltip("Amplitude of procedural swimming yaw undulation (degrees).")]
+    public float undulationAmplitude = 12f;
+
+    [Tooltip("Target clearance above ocean floor for benthic species (metres).")]
+    public float benthicSurfaceOffset = 0.5f;
+
+    [Tooltip("Minimum cruise speed fraction (creature never drops below this fraction of moveSpeed).")]
+    [Range(0f, 1f)] public float minCruiseSpeedFraction = 0.0f;
 
     // -----------------------------------------------------------------------
     // Visual Assets
@@ -151,6 +182,17 @@ public class SpeciesData : ScriptableObject
 // ==========================================================================
 // Enums
 // ==========================================================================
+
+public enum LocomotionArchetype
+{
+    PelagicCruiser,  // Sharks, Dolphins: continuous momentum, banking turns, never stalls
+    HoverBurst,      // Clownfish: high maneuverability, station holding with rapid micro-bursts
+    PulsatileJetter, // Jellyfish, Squids: cyclic impulse thrust + viscous coasting, scale pulsing
+    BenthicFollower, // Rays, Lobsters, Snails, Starfish: terrain-clamped, surface walking/gliding
+    SurfaceDrifter,  // Bluebottles: surface-clamped, ambient current/wind drift
+    Serpentine,      // Sea Kraits: continuous lateral sinusoidal yaw undulation
+    Sessile          // Corals, Anemones, Sponges, Clams: stationary, scan target only
+}
 
 public enum TaxonomicClass
 {

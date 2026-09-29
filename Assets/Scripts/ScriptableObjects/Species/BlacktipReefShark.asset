@@ -17,8 +17,8 @@ MonoBehaviour:
   scientificName: Carcharhinus melanopterus
   taxonomicClass: 1
   zoneIndex: 0
-  habitat: Shallow coral reef flats and drop-offs (0-75 m)
-  depthRangeText: 0-75 m
+  habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
+  depthRangeText: "0\u201375 m"
   explorationHint: Patrols along reef edges and open drop-offs in continuous forward
     motion.
   secondaryZoneIndices: 
@@ -33,12 +33,21 @@ MonoBehaviour:
   minDepthFraction: 0
   maxDepthFraction: 0.375
   instanceCount: 2
-  wanderRadius: 30
-  moveSpeed: 4.5
-  fleeSpeed: 7
-  fleeRange: 10
-  returnThreshold: 40
-  modelPrefab: {fileID: 2948945790568154319, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
+  wanderRadius: 110
+  moveSpeed: 2
+  fleeSpeed: 4.2
+  fleeRange: 12
+  returnThreshold: 130
+  turnSpeed: 35
+  locomotionArchetype: 0
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 1.6
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0.45
+  modelPrefab: {fileID: 9173094734863184733, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 0.8
   placeholderShape: 1

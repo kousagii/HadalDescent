@@ -119,7 +119,7 @@ public class TerrainGenerator : MonoBehaviour
 
     public void Generate(int zoneIndex)
     {
-        _hasGenerated = true;
+        _hasGenerated = false;
         _zoneIndex = zoneIndex;
         if (!ZoneConfig.IsValidZone(zoneIndex))
         {
@@ -189,6 +189,8 @@ public class TerrainGenerator : MonoBehaviour
 
         // --- Phase 5: Finalize distance culling thresholds ---
         culler.RefreshThresholds();
+
+        _hasGenerated = true;
     }
 
     // -----------------------------------------------------------------------
