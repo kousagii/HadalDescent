@@ -32,7 +32,8 @@ public class SonarBlipUI : MonoBehaviour
     public static readonly Color ColorDebris              = new Color(1.00f, 0.72f, 0.15f, 1.00f); // Amber Yellow
     public static readonly Color ColorHazard              = new Color(1.00f, 0.23f, 0.20f, 1.00f); // Danger Red
     public static readonly Color ColorCollectible         = new Color(1.00f, 0.85f, 0.20f, 1.00f); // Gold
-    public static readonly Color ColorEnvironment         = new Color(0.25f, 0.80f, 1.00f, 0.80f); // Sea Blue
+    public static readonly Color ColorEnvironment         = new Color(1.00f, 0.90f, 0.12f, 1.00f); // Vibrant Yellow (#FFE620)
+    public static readonly Color ColorEnvironmentSurveyed = new Color(0.70f, 0.63f, 0.08f, 0.55f); // Dim Gold (surveyed)
 
     // -----------------------------------------------------------------------
     // State
@@ -103,13 +104,14 @@ public class SonarBlipUI : MonoBehaviour
                 SonarTrackable.SonarTargetType.Debris      => ColorDebris,
                 SonarTrackable.SonarTargetType.Hazard      => ColorHazard,
                 SonarTrackable.SonarTargetType.Collectible => ColorCollectible,
-                SonarTrackable.SonarTargetType.Environment => ColorEnvironment,
+                SonarTrackable.SonarTargetType.Environment => trackable.IsDiscovered ? ColorEnvironmentSurveyed : ColorEnvironment,
                 _                                          => ColorUndiscoveredSpecies
             };
         }
 
         _isPulsing = (!trackable.IsDiscovered && trackable.TargetType == SonarTrackable.SonarTargetType.Species)
-                     || trackable.TargetType == SonarTrackable.SonarTargetType.Hazard;
+                     || trackable.TargetType == SonarTrackable.SonarTargetType.Hazard
+                     || (!trackable.IsDiscovered && trackable.TargetType == SonarTrackable.SonarTargetType.Environment);
 
         // 2. Icon Sprite & Size
         if (iconImage != null)

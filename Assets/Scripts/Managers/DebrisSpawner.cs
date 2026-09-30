@@ -56,11 +56,26 @@ public class DebrisSpawner : MonoBehaviour
 
         for (int i = 0; i < clusterCount; i++)
         {
-            float rx = Random.Range(-halfW, halfW);
-            float rz = Random.Range(-halfL, halfL);
+            float rx = 0f;
+            float rz = 0f;
+            float floorY = -d;
+            int attempts = 0;
 
-            float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -d;
-            floorY = Mathf.Max(floorY, -d); // Never below zone seabed floor
+            do
+            {
+                rx = Random.Range(-halfW, halfW);
+                rz = Random.Range(-halfL, halfL);
+                floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -d;
+                floorY = Mathf.Max(floorY, -d); // Never below zone seabed floor
+                attempts++;
+            }
+            // In Sunlight Zone (zone 0), strictly enforce depth <= 180m (floorY >= -180f)
+            while (zoneIndex == 0 && floorY < -180f && attempts < 40);
+
+            if (zoneIndex == 0 && floorY < -180f)
+            {
+                floorY = -180f;
+            }
 
             Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
             Vector3 spawnPos;
@@ -77,6 +92,12 @@ public class DebrisSpawner : MonoBehaviour
             if (spawnPos.y < floorY)
             {
                 spawnPos.y = floorY;
+            }
+
+            // Strict cap: never deeper than 180m in Sunlight Zone
+            if (zoneIndex == 0 && spawnPos.y < -180f)
+            {
+                spawnPos.y = -180f;
             }
 
             SpawnSingleCluster(spawnPos, i);

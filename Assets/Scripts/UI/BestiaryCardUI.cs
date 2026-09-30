@@ -71,16 +71,19 @@ public class BestiaryCardUI : MonoBehaviour
             if (titleText != null) titleText.text = data.commonName;
             if (subtitleText != null)
             {
+                subtitleText.gameObject.SetActive(true);
                 subtitleText.text = $"Class: <pos=170>{data.taxonomicClass}</pos>";
                 subtitleText.textWrappingMode = TextWrappingModes.NoWrap;
             }
             if (depthText != null)
             {
+                depthText.gameObject.SetActive(true);
                 depthText.text = $"Depth: <pos=170>{data.depthRangeText}</pos>";
                 depthText.textWrappingMode = TextWrappingModes.NoWrap;
             }
             if (habitatOrClueText != null)
             {
+                habitatOrClueText.gameObject.SetActive(true);
                 habitatOrClueText.text = $"Habitat: <pos=170>{data.habitat}</pos>";
                 habitatOrClueText.textWrappingMode = TextWrappingModes.Normal;
             }
@@ -99,11 +102,13 @@ public class BestiaryCardUI : MonoBehaviour
             if (titleText != null) titleText.text = "??? [Uncataloged Specimen]";
             if (subtitleText != null)
             {
+                subtitleText.gameObject.SetActive(true);
                 subtitleText.text = $"Class: <pos=170>{data.taxonomicClass}</pos>";
                 subtitleText.textWrappingMode = TextWrappingModes.NoWrap;
             }
             if (depthText != null)
             {
+                depthText.gameObject.SetActive(true);
                 depthText.text = $"Depth: <pos=170>{data.depthRangeText}</pos>";
                 depthText.textWrappingMode = TextWrappingModes.NoWrap;
             }
@@ -111,6 +116,7 @@ public class BestiaryCardUI : MonoBehaviour
             string clue = !string.IsNullOrEmpty(data.explorationHint) ? data.explorationHint : data.habitat;
             if (habitatOrClueText != null)
             {
+                habitatOrClueText.gameObject.SetActive(true);
                 habitatOrClueText.text = $"Habitat: <pos=170>{clue}</pos>";
                 habitatOrClueText.textWrappingMode = TextWrappingModes.Normal;
             }
@@ -157,14 +163,121 @@ public class BestiaryCardUI : MonoBehaviour
         else if (thumbnailRawImage != null)
             thumbBtn = thumbnailRawImage.GetComponent<Button>() ?? thumbnailRawImage.gameObject.AddComponent<Button>();
 
-        if (thumbBtn != null)
-        {
-            thumbBtn.onClick.RemoveAllListeners();
-            thumbBtn.onClick.AddListener(() =>
+            if (thumbBtn != null)
             {
-                if (BestiaryManager.Instance != null)
-                    BestiaryManager.Instance.OpenModelInspectionModal(data, isDiscovered);
-            });
+                thumbBtn.onClick.RemoveAllListeners();
+                thumbBtn.onClick.AddListener(() =>
+                {
+                    if (BestiaryManager.Instance != null)
+                        BestiaryManager.Instance.OpenModelInspectionModal(data, isDiscovered);
+                });
+            }
+        }
+
+    public void SetupHabitat(HabitatLandmarkData data, bool isSurveyed, Action onCardClick)
+    {
+        if (data == null) return;
+
+        if (cardButton == null) cardButton = GetComponent<Button>();
+
+        if (isSurveyed)
+        {
+            if (cardButton != null)
+            {
+                cardButton.interactable = true;
+                cardButton.onClick.RemoveAllListeners();
+                cardButton.onClick.AddListener(() => onCardClick?.Invoke());
+            }
+
+            // Put ONLY the name on the habitat card (no .ToUpper(), matching species commonName font weight)
+            if (titleText != null)
+            {
+                titleText.text = data.habitatName;
+                titleText.gameObject.SetActive(true);
+            }
+
+            // Remove Class, Depth, and Role from the card per user requirement
+            if (subtitleText != null)
+            {
+                subtitleText.text = "";
+                subtitleText.gameObject.SetActive(false);
+            }
+            if (depthText != null)
+            {
+                depthText.text = "";
+                depthText.gameObject.SetActive(false);
+            }
+            if (habitatOrClueText != null)
+            {
+                habitatOrClueText.text = "";
+                habitatOrClueText.gameObject.SetActive(false);
+            }
+
+            if (accentImage != null)
+                accentImage.color = new Color(1.0f, 0.88f, 0.15f, 1f); // Radiant Gold Accent
+        }
+        else
+        {
+            if (cardButton != null)
+            {
+                cardButton.interactable = false; // Locked until surveyed in ocean
+                cardButton.onClick.RemoveAllListeners();
+            }
+
+            // Put ONLY the name on the habitat card (no .ToUpper(), matching species "??? [Uncataloged Specimen]")
+            if (titleText != null)
+            {
+                titleText.text = "??? [Uncataloged Habitat]";
+                titleText.gameObject.SetActive(true);
+            }
+
+            // Remove Class, Depth, and Role from the card per user requirement
+            if (subtitleText != null)
+            {
+                subtitleText.text = "";
+                subtitleText.gameObject.SetActive(false);
+            }
+            if (depthText != null)
+            {
+                depthText.text = "";
+                depthText.gameObject.SetActive(false);
+            }
+            if (habitatOrClueText != null)
+            {
+                habitatOrClueText.text = "";
+                habitatOrClueText.gameObject.SetActive(false);
+            }
+
+            if (accentImage != null)
+                accentImage.color = new Color(0.40f, 0.35f, 0.15f, 1f); // Dim Gold/Ochre
+        }
+
+        // Hide 3D model raw image for habitats and display the photo
+        if (thumbnailRawImage != null)
+            thumbnailRawImage.gameObject.SetActive(false);
+
+        if (thumbnailImage != null)
+        {
+            thumbnailImage.gameObject.SetActive(true);
+            if (isSurveyed && data.habitatPhoto != null)
+            {
+                thumbnailImage.sprite = data.habitatPhoto;
+                thumbnailImage.color = Color.white;
+            }
+            else
+            {
+                thumbnailImage.sprite = data.habitatPhoto;
+                thumbnailImage.color = isSurveyed ? new Color(1f, 0.9f, 0.3f, 0.85f) : new Color(0.12f, 0.15f, 0.20f, 1f);
+            }
+
+            // Clicking thumbnail on surveyed habitat card also opens FactCard
+            var thumbBtn = thumbnailImage.GetComponent<Button>();
+            if (thumbBtn != null)
+            {
+                thumbBtn.interactable = isSurveyed;
+                thumbBtn.onClick.RemoveAllListeners();
+                if (isSurveyed) thumbBtn.onClick.AddListener(() => onCardClick?.Invoke());
+            }
         }
     }
 }

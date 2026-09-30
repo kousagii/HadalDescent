@@ -178,19 +178,30 @@ public class UIThemeManager : MonoBehaviour
         }
 
         // Identify if this text is a multi-line card body / description / habitat / clue element
-        var bestiaryCard = text.GetComponentInParent<BestiaryCardUI>();
+        var bestiaryCard = text.GetComponentInParent<BestiaryCardUI>(true);
+        var factCard = text.GetComponentInParent<FactCardUI>(true);
         bool isBestiaryBody = bestiaryCard != null && (text == bestiaryCard.habitatOrClueText || text.name == "Habitat" || text.name == "Clue");
-        bool isMultiLineContent = isBestiaryBody || text.name == "Description" || text.name == "Fact" || text.name == "Body" || text.name == "EcologicalSignificance";
+        bool isFactCardText = factCard != null;
+        bool isMultiLineContent = isBestiaryBody || isFactCardText || text.name == "Description" || text.name == "Fact" || text.name == "Body" || text.name == "EcologicalSignificance" || text.name == "EcologicalRole" || text.name == "InterestingFact";
 
-        // Special case: Sonar map range badge must strictly remain 36px and not auto-size down
-        if (text.name == "RangeText" || text.name == "RangeLabel" || (text.transform.parent != null && text.transform.parent.name == "RangeBadge"))
+        // Special case 1: Ecological role, description, and interesting fact — only enforce 24px if inside a FactCardUI (habitat card only, not species modals)
+        bool isHabitatFactCardBodyText = isFactCardText &&
+            (text.name == "Description" || text.name == "EcologicalRole" || text.name == "InterestingFact" || text.name == "EcologicalSignificance");
+        if (isHabitatFactCardBodyText)
+        {
+            text.fontSize = 24f;
+            text.fontSizeMin = 18f;
+            text.textWrappingMode = TextWrappingModes.Normal;
+        }
+        // Special case 2: Sonar map range badge must strictly remain 36px and not auto-size down
+        else if (text.name == "RangeText" || text.name == "RangeLabel" || (text.transform.parent != null && text.transform.parent.name == "RangeBadge"))
         {
             text.fontSize = 36f;
             text.fontSizeMin = 36f;
             text.fontSizeMax = 36f;
             text.enableAutoSizing = false;
         }
-        else if (isBestiaryBody)
+        else if (isBestiaryBody || isFactCardText)
         {
             // Preserve original font size and settings from the prefab; only ensure text wraps normally
             text.textWrappingMode = TextWrappingModes.Normal;
@@ -201,7 +212,7 @@ public class UIThemeManager : MonoBehaviour
         }
 
         // Ensure dedicated UI button labels stay on one single line, but NEVER force NoWrap on multi-line cards/descriptions
-        if (!isMultiLineContent && bestiaryCard == null)
+        if (!isMultiLineContent && bestiaryCard == null && factCard == null)
         {
             // Only apply NoWrap if it is directly on a Button or direct child of a Button (standard button label)
             if (text.GetComponent<Button>() != null || (text.transform.parent != null && text.transform.parent.GetComponent<Button>() != null))
@@ -214,7 +225,7 @@ public class UIThemeManager : MonoBehaviour
             text.textWrappingMode = TextWrappingModes.Normal;
         }
 
-        if (!isBestiaryBody)
+        if (!isBestiaryBody && !isFactCardText)
         {
             if (text.enableAutoSizing && text.fontSizeMin < 24f)
             {

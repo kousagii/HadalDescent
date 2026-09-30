@@ -503,6 +503,7 @@ public class UIManager : MonoBehaviour
     /// <summary>Tint the SCAN button when a target is ready to scan.</summary>
     public void ShowScanButton(bool active)
     {
+        ValidateAndRepairHUDButtonReferences();
         var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (scanButtonImage != null)
         {
@@ -535,6 +536,7 @@ public class UIManager : MonoBehaviour
     /// <summary>Tint the INTERACT button when near an interactive target or debris cluster.</summary>
     public void ShowInteractButton(bool active)
     {
+        ValidateAndRepairHUDButtonReferences();
         var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (interactButtonImage != null)
         {
@@ -650,19 +652,76 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Validates that scanButtonImage is assigned to the Camera button (ScanOuterRing)
+    /// and interactButtonImage is assigned to the Hand button (InteractButton).
+    /// If references are cross-wired, inverted, or missing, repairs them automatically.
+    /// </summary>
+    public void ValidateAndRepairHUDButtonReferences()
+    {
+        var root = transform.root;
+
+        // Check if scanButtonImage is misassigned to Interact button
+        bool scanIsInteract = scanButtonImage != null && (
+            scanButtonImage.gameObject.name.IndexOf("Interact", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            (scanButtonImage.sprite != null && scanButtonImage.sprite.name == "buttons-prototype_8")
+        );
+
+        // Check if interactButtonImage is misassigned to Scan button
+        bool interactIsScan = interactButtonImage != null && (
+            interactButtonImage.gameObject.name.IndexOf("Scan", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            interactButtonImage.transform.Find("Scan") != null
+        );
+
+        if (scanIsInteract && interactIsScan)
+        {
+            var temp = scanButtonImage;
+            scanButtonImage = interactButtonImage;
+            interactButtonImage = temp;
+        }
+        else
+        {
+            if (scanIsInteract || scanButtonImage == null)
+            {
+                var scanT = FindChildRecursive(root, "ScanOuterRing") ?? FindChildRecursive(root, "ScanButton") ?? FindChildRecursive(root, "Scan");
+                if (scanT != null)
+                {
+                    if (scanT.name == "Scan" && scanT.parent != null && scanT.parent.name.IndexOf("Scan", StringComparison.OrdinalIgnoreCase) >= 0)
+                        scanT = scanT.parent;
+                    scanButtonImage = scanT.GetComponent<Image>() ?? scanT.GetComponentInChildren<Image>();
+                }
+            }
+
+            if (interactIsScan || interactButtonImage == null)
+            {
+                var interactT = FindChildRecursive(root, "InteractButton") ?? FindChildRecursive(root, "InteractOuterRing") ?? FindChildRecursive(root, "Interact");
+                if (interactT != null)
+                {
+                    interactButtonImage = interactT.GetComponent<Image>() ?? interactT.GetComponentInChildren<Image>();
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Explicitly binds click listeners for all HUD buttons to guarantee clickability,
     /// even if prefabs had their inspector UnityEvent references severed.
     /// </summary>
     public void BindHUDButtons()
     {
-        // 1. Scan Button
+        ValidateAndRepairHUDButtonReferences();
+        var root = transform.root;
+
+        // 1. Scan Button (Camera icon / species scan minigame)
         Button scanBtn = null;
         if (scanButtonImage != null) scanBtn = scanButtonImage.GetComponent<Button>();
         if (scanBtn == null)
         {
-            var btnGO = GameObject.Find("ScanOuterRing") ?? GameObject.Find("ScanButton") ?? GameObject.Find("Scan") ?? GameObject.Find("ScanBtn");
-            if (btnGO != null)
+            var btnTr = FindChildRecursive(root, "ScanOuterRing") ?? FindChildRecursive(root, "ScanButton") ?? FindChildRecursive(root, "Scan") ?? FindChildRecursive(root, "ScanBtn");
+            if (btnTr != null)
             {
+                var btnGO = btnTr.gameObject;
+                if (btnGO.name == "Scan" && btnGO.transform.parent != null && btnGO.transform.parent.name.IndexOf("Scan", StringComparison.OrdinalIgnoreCase) >= 0)
+                    btnGO = btnGO.transform.parent.gameObject;
                 scanButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
                 scanBtn = btnGO.GetComponent<Button>() ?? btnGO.GetComponentInChildren<Button>();
             }
@@ -712,6 +771,14 @@ public class UIManager : MonoBehaviour
         }
         if (scanButtonImage != null)
         {
+            // Remove any stray icon child that may have been created on ScanOuterRing during a miswired run
+            var strayIcon = scanButtonImage.transform.Find("Icon");
+            if (strayIcon != null && scanButtonImage.transform.Find("Scan") != null)
+            {
+                if (Application.isPlaying) Destroy(strayIcon.gameObject);
+                else DestroyImmediate(strayIcon.gameObject);
+            }
+
             RemoveGlowEffects(scanButtonImage.gameObject);
             _scanInnerGlow = EnsureInnerGlow(scanButtonImage.gameObject, 0.85f);
             if (_scanInnerGlow != null)
@@ -731,14 +798,15 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // 2. Interact Button
+        // 2. Interact Button (Hand icon / debris cleanup & landmark facts)
         Button interactBtn = null;
         if (interactButtonImage != null) interactBtn = interactButtonImage.GetComponent<Button>();
         if (interactBtn == null)
         {
-            var btnGO = GameObject.Find("InteractButton") ?? GameObject.Find("InteractOuterRing") ?? GameObject.Find("Interact") ?? GameObject.Find("InteractBtn");
-            if (btnGO != null)
+            var btnTr = FindChildRecursive(root, "InteractButton") ?? FindChildRecursive(root, "InteractOuterRing") ?? FindChildRecursive(root, "Interact") ?? FindChildRecursive(root, "InteractBtn");
+            if (btnTr != null)
             {
+                var btnGO = btnTr.gameObject;
                 interactButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
                 interactBtn = btnGO.GetComponent<Button>() ?? btnGO.GetComponentInChildren<Button>();
             }

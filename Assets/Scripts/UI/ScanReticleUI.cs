@@ -315,7 +315,9 @@ public class ScanReticleUI : MonoBehaviour
                 // Pulsing alpha
                 float alpha = 0.70f + 0.30f * Mathf.Sin(Time.time * 4.5f);
                 _statusLabel.color = new Color(TooFarColor.r, TooFarColor.g, TooFarColor.b, alpha);
-                _statusLabel.text = "Get closer to scan";
+                _statusLabel.text = (_currentSpeciesId == "landmark" || _currentSpeciesId == "survey")
+                    ? "Get closer to survey"
+                    : "Get closer to scan";
                 if (_viewBestiaryBtn != null) _viewBestiaryBtn.gameObject.SetActive(false);
                 break;
 

@@ -19,8 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coral reefs and reef drop-offs (10\u201360 m)"
   depthRangeText: "10\u201360 m"
-  explorationHint: Look along sloping reef edges and drop-off rock walls exposed
-    to steady currents.
+  explorationHint: "Shallow coral reefs and reef drop-offs (10–60 m)"
   secondaryZoneIndices: 
   characteristics: Branching, fan-shaped octocoral with a semi-rigid skeleton; forms
     upright, branching colonies.

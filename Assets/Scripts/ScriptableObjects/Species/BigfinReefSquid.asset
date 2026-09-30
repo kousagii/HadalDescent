@@ -19,8 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
   depthRangeText: "0\u2013100 m"
-  explorationHint: Cruises gracefully over seagrass beds and midwater channels; shy
-    to approach.
+  explorationHint: "Shallow coastal reefs and seagrass beds (0–100 m)"
   secondaryZoneIndices: 
   characteristics: Long oval body with wide fins along its sides.
   ecologicalRole: Hunts small fish, crustaceans, and other marine animals.
@@ -50,6 +49,9 @@ MonoBehaviour:
   modelPrefab: {fileID: 2734095691627499509, guid: 2ea6a00234df36f418f3b7c8c63aaba8, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.875, y: 1.0625}
+  maxAxisVariance: 0.035
   placeholderShape: 1
   placeholderColor: {r: 0.85, g: 0.95, b: 1, a: 1}
   placeholderScale: {x: 0.8, y: 1.8, z: 0.8}

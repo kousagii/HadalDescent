@@ -57,6 +57,11 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Looping engine / propeller / thruster sound when submarine is moving")]
     [SerializeField] private AudioClip subMovementSFX;
     [SerializeField] private AudioSource subMovementSource;
+    [Tooltip("Dedicated AudioMixerGroup for submarine movement. If null, auto-checks for a group named 'Submarine' or falls back to 'SFX'.")]
+    [SerializeField] private AudioMixerGroup subMovementMixerGroup;
+    [Range(0.1f, 3.0f)]
+    [Tooltip("Volume multiplier for submarine movement (1.0 = normal, 1.5 = louder).")]
+    [SerializeField] private float subMovementVolumeMultiplier = 1.0f;
 
     [Header("SFX Clips - Transitions & World")]
     [Tooltip("Transition sound from Zone Selection into gameplay")]
@@ -98,6 +103,7 @@ public class AudioManager : MonoBehaviour
         if (debrisFoundSFX == null)     debrisFoundSFX     = other.debrisFoundSFX;
         if (speciesFoundSFX == null)    speciesFoundSFX    = other.speciesFoundSFX;
         if (subMovementSFX == null)     subMovementSFX     = other.subMovementSFX;
+        if (subMovementMixerGroup == null) subMovementMixerGroup = other.subMovementMixerGroup;
         if (zoneTransitionSFX == null)
         {
             zoneTransitionSFX      = other.zoneTransitionSFX;
@@ -215,9 +221,22 @@ public class AudioManager : MonoBehaviour
 
             if (subMovementSource.outputAudioMixerGroup == null)
             {
-                var groups = audioMixer.FindMatchingGroups("SFX");
-                if (groups != null && groups.Length > 0)
-                    subMovementSource.outputAudioMixerGroup = groups[0];
+                if (subMovementMixerGroup != null)
+                {
+                    subMovementSource.outputAudioMixerGroup = subMovementMixerGroup;
+                }
+                else
+                {
+                    var subGroups = audioMixer.FindMatchingGroups("Submarine");
+                    if (subGroups != null && subGroups.Length > 0)
+                        subMovementSource.outputAudioMixerGroup = subGroups[0];
+                    else
+                    {
+                        var groups = audioMixer.FindMatchingGroups("SFX");
+                        if (groups != null && groups.Length > 0)
+                            subMovementSource.outputAudioMixerGroup = groups[0];
+                    }
+                }
             }
 
             if (transitionSource.outputAudioMixerGroup == null)
@@ -514,7 +533,7 @@ public class AudioManager : MonoBehaviour
         float fadeSpeed = (_targetSubMovementVol > _currentSubMovementVol) ? 4f : 2.5f;
         _currentSubMovementVol = Mathf.MoveTowards(_currentSubMovementVol, _targetSubMovementVol, Time.deltaTime * fadeSpeed);
 
-        float effectiveVol = _currentSubMovementVol * (audioMixer != null ? 1f : SFXVolume * SFXBaseVolumeFactor);
+        float effectiveVol = Mathf.Clamp01(_currentSubMovementVol * subMovementVolumeMultiplier * (audioMixer != null ? 1f : SFXVolume * SFXBaseVolumeFactor));
         subMovementSource.volume = effectiveVol;
 
         if (_currentSubMovementVol <= 0.001f && _targetSubMovementVol == 0f)

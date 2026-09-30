@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50b81994f1a475db143ed1b6c9e3511, type: 3}
+  m_Name: Landmark_Twi_WhaleFall
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatLandmarkData
+  factId: fact_twi_whale_fall
+  habitatName: Whale Fall Oasis
+  category: Chemosynthetic Succession POI
+  zoneIndex: 1
+  depthRangeText: "400\u2013850 m"
+  habitatDescription: The massive carcass of a great cetacean settled upon the dark
+    bathyal seafloor, creating a localized biological bonanza.
+  ecologicalSignificance: 'Fuels four distinct ecological succession stages spanning
+    up to a century: mobile scavengers, enrichment opportunists, sulfophilic chemosynthesis,
+    and reef bones.'
+  interestingFact: A single 40-ton whale carcass deposits the equivalent organic
+    carbon of 2,000 years of ordinary marine snow to that seabed patch.
+  targetBiome: 1
+  citationSource: NOAA Ocean Exploration / Monterey Bay Aquarium Research Institute (MBARI)
+  rdpReward: 100
+  habitatPhoto: {fileID: 0}

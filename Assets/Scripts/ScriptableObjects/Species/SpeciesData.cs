@@ -163,6 +163,17 @@ public class SpeciesData : ScriptableObject
     [Tooltip("Scale multiplier for the 3D model in preview thumbnails.")]
     public float previewScaleMultiplier = 1.0f;
 
+    [Header("Natural Scale & Individual Variance")]
+    [Tooltip("If true, spawned individuals will vary organically in overall size and axis proportions.")]
+    public bool enableScaleVariation = true;
+
+    [Tooltip("Overall uniform scale multiplier range [Min, Max]. Default (0.875, 1.0625) scales base 4.0 (dolphin) to 3.5 - 4.25.")]
+    public Vector2 uniformScaleRange = new Vector2(0.875f, 1.0625f);
+
+    [Tooltip("Maximum subtle variation per axis (+/- %) to create unique body proportions without distortion. 0.035 = +/-3.5% (~0.25 total delta on scale 4).")]
+    [Range(0f, 0.08f)]
+    public float maxAxisVariance = 0.035f;
+
     [Header("Placeholder Visuals (until 3D model is ready)")]
     public PlaceholderShape placeholderShape = PlaceholderShape.Sphere;
     public Color            placeholderColor  = Color.cyan;

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50b81994f1a475db143ed1b6c9e3511, type: 3}
+  m_Name: Landmark_Sun_KelpCanopy
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatLandmarkData
+  factId: fact_sun_seagrass_bed
+  habitatName: Seagrass Bed
+  category: Marine Angiosperm Meadow
+  zoneIndex: 0
+  depthRangeText: "5\u201340 m"
+  habitatDescription: Vast submerged meadows formed by marine angiosperms (true flowering
+    plants) anchored into soft sands and silts in clear, sunlit coastal waters.
+  ecologicalSignificance: Premier "blue carbon" sinks that bury organic carbon up
+    to 35 times faster than tropical rainforests. Their dense rhizome roots stabilize
+    loose seabed sediments and nurture juvenile fish, sea turtles, and dugongs.
+  interestingFact: Unlike algae or seaweeds, seagrasses have true roots, veins, underwater
+    flowers, and fruit. They pollinate completely submerged using specialized waterborne
+    pollen grains carried by gentle ocean currents!
+  targetBiome: 1
+  citationSource: United Nations Environment Programme (UNEP) / Smithsonian Marine Station
+  rdpReward: 75
+  habitatPhoto: {fileID: 21300000, guid: 448e208ca3517e648953db4e00c34caa, type: 3}

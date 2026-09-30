@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow sunlit coral reef lagoons (0\u201335 m)"
   depthRangeText: "0\u201335 m"
-  explorationHint: Found embedded in sandy coral lagoons where bright sunlight penetrates.
+  explorationHint: "Shallow sunlit coral reef lagoons (0–35 m)"
   secondaryZoneIndices: 
   characteristics: Huge shell with colorful blue, green, or brown tissue.
   ecologicalRole: Supports coral reef ecosystems and filters seawater.

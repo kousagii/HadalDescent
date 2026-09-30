@@ -19,8 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Western Pacific reef habitats (20\u201330 m)"
   depthRangeText: "20\u201330 m"
-  explorationHint: Look for vibrant blue cylindrical tubes anchored to rocky reef
-    outcrops.
+  explorationHint: "Western Pacific reef habitats (20–30 m)"
   secondaryZoneIndices: 
   characteristics: Blue sponge with tubular projections and pores.
   ecologicalRole: Filters water and provides microhabitat.

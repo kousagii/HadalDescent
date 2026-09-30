@@ -23,10 +23,13 @@ public class SpeciesSpawner : MonoBehaviour
     [SerializeField] private TerrainGenerator terrain;
 
     [Header("Spawn Parameters")]
+    [Tooltip("Global species spawn multiplier (2 = double population, 3 = triple population).")]
+    [Range(1, 4)]
+    [SerializeField] private int spawnMultiplier = 2;
     [Tooltip("Max random placement attempts per creature instance before giving up.")]
-    [SerializeField] private int   maxAttempts   = 60;
+    [SerializeField] private int   maxAttempts   = 70;
     [Tooltip("Minimum distance between two spawned entities.")]
-    [SerializeField] private float minSeparation = 5f;
+    [SerializeField] private float minSeparation = 3.5f;
     [Tooltip("Radius used to check for terrain overlap at a candidate position.")]
     [SerializeField] private float overlapRadius = 1.5f;
     [Tooltip("Layer(s) to check against for terrain overlap (should match TerrainGenerator).")]
@@ -124,8 +127,17 @@ public class SpeciesSpawner : MonoBehaviour
     {
         int spawned = 0;
         bool isAnemone = data.speciesId == "anemone_001" || data.commonName.ToLower().Contains("anemone");
+        bool isDolphin = data.speciesId == "dolphin_001" || data.commonName.ToLower().Contains("dolphin");
 
-        for (int i = 0; i < data.instanceCount; i++)
+        int targetCount = Mathf.Max(1, data.instanceCount * spawnMultiplier);
+
+        // Idea B: Social Pod Spawning for Indo-Pacific Bottlenose Dolphins
+        if (isDolphin)
+        {
+            return SpawnDolphinPods(data, targetCount);
+        }
+
+        for (int i = 0; i < targetCount; i++)
         {
             if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot))
             {
@@ -138,9 +150,113 @@ public class SpeciesSpawner : MonoBehaviour
                 spawned++;
             }
         }
-        if (spawned < data.instanceCount)
-            Debug.LogWarning($"[SpeciesSpawner] '{data.commonName}': placed {spawned}/{data.instanceCount}.");
+        if (spawned < targetCount)
+            Debug.LogWarning($"[SpeciesSpawner] '{data.commonName}': placed {spawned}/{targetCount}.");
         return spawned;
+    }
+
+    /// <summary>
+    /// Idea B: Spawns dolphins in cohesive social pods (3 to 4 individuals per pod)
+    /// cruising in formation within their strictly designated depth layer and habitat.
+    /// </summary>
+    private int SpawnDolphinPods(SpeciesData data, int targetCount)
+    {
+        int spawned = 0;
+        int remaining = targetCount;
+
+        while (remaining > 0)
+        {
+            int podSize = Mathf.Min(remaining, Random.Range(3, 5));
+            if (remaining <= 2) podSize = remaining;
+
+            // 1. Establish Pod Leader (strictly respects depth range 1m-50m and OpenWater biome)
+            if (TryFindSpawnPosition(data, out Vector3 leaderPos, out Quaternion leaderRot))
+            {
+                SpawnInstance(data, leaderPos, leaderRot, leaderPos);
+                _usedPositions.Add(leaderPos);
+                spawned++;
+                remaining--;
+
+                Vector3 podCenter = leaderPos;
+                float leaderYaw = leaderRot.eulerAngles.y;
+
+                // 2. Spawn Pod Companions in loose organic formation around the leader
+                for (int c = 1; c < podSize; c++)
+                {
+                    if (TryFindDolphinPodCompanionPosition(data, podCenter, leaderYaw, out Vector3 compPos, out Quaternion compRot))
+                    {
+                        // Share podCenter as wander origin so the entire pod cruises together!
+                        SpawnInstance(data, compPos, compRot, podCenter);
+                        _usedPositions.Add(compPos);
+                        spawned++;
+                        remaining--;
+                    }
+                    else if (TryFindSpawnPosition(data, out Vector3 fbPos, out Quaternion fbRot))
+                    {
+                        SpawnInstance(data, fbPos, fbRot, fbPos);
+                        _usedPositions.Add(fbPos);
+                        spawned++;
+                        remaining--;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (spawned < targetCount)
+            Debug.LogWarning($"[SpeciesSpawner] '{data.commonName}': placed {spawned}/{targetCount} across pods.");
+        return spawned;
+    }
+
+    /// <summary>
+    /// Finds a companion spawn location in loose formation around the pod leader (Idea B),
+    /// strictly enforcing depth band (1m - 50m), ground clearance, and separation.
+    /// </summary>
+    private bool TryFindDolphinPodCompanionPosition(SpeciesData data, Vector3 podCenter, float leaderYaw, out Vector3 resultPos, out Quaternion resultRot)
+    {
+        float D = _zoneDef != null ? _zoneDef.playableDepth : 200f;
+        float upperDepthLimit = -Mathf.Min(data.minDepthFraction, data.maxDepthFraction) * D;
+        float rawLowerLimit   = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * D;
+        float lowerDepthLimit = Mathf.Max(rawLowerLimit, -D + 16f);
+
+        // Pod formation spread: 5.5m to 15.0m horizontal radius
+        for (int attempt = 0; attempt < 35; attempt++)
+        {
+            Vector2 hOffset = Random.insideUnitCircle * Random.Range(5.5f, 15.0f);
+            // Compressed vertical depth offset (+/- 2.0m) to keep the pod in the same swimming layer
+            float vOffset = Random.Range(-2.0f, 2.0f);
+
+            Vector3 candidatePos = new Vector3(podCenter.x + hOffset.x, podCenter.y + vOffset, podCenter.z + hOffset.y);
+
+            // 1. Biome verification
+            BiomeBand biome = terrain != null ? terrain.GetBiomeAt(candidatePos.x, candidatePos.z) : data.preferredBiome;
+            if (biome != data.preferredBiome && !IsCompatibleBiome(biome, data.preferredBiome))
+                continue;
+
+            // 2. Strict Depth Band and Seabed Clearance Check
+            float floorY = terrain != null ? terrain.SampleHeight(candidatePos.x, candidatePos.z) : -D;
+            float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
+            float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+            if (minSwimY > maxSwimY) continue;
+
+            candidatePos.y = Mathf.Clamp(candidatePos.y, minSwimY, maxSwimY);
+
+            // 3. Minimum separation between companions (at least 3.2m to prevent overlapping)
+            if (!IsSeparated(candidatePos, 3.2f)) continue;
+
+            resultPos = candidatePos;
+            // 4. Align cruising yaw with leader (+/- 25 deg organic formation spread)
+            float companionYaw = leaderYaw + Random.Range(-25f, 25f);
+            resultRot = Quaternion.Euler(0f, companionYaw, 0f);
+            return true;
+        }
+
+        resultPos = Vector3.zero;
+        resultRot = Quaternion.identity;
+        return false;
     }
 
     private bool TryFindSpawnPosition(SpeciesData data, out Vector3 resultPos, out Quaternion resultRot)
@@ -576,7 +692,7 @@ public class SpeciesSpawner : MonoBehaviour
     // Instantiation
     // -----------------------------------------------------------------------
 
-    private void SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation)
+    private void SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation, Vector3? wanderCenter = null)
     {
         GameObject go = data.modelPrefab != null
             ? Instantiate(data.modelPrefab, position, rotation, creatureParent)
@@ -584,8 +700,45 @@ public class SpeciesSpawner : MonoBehaviour
 
         go.name = $"{data.commonName} [{data.speciesId}]";
 
+        // Natural Individual Scale Variation:
+        // Applies organic size differences (juvenile to adult) and subtle axis offsets without distortion
+        Vector3 baseScale = data.modelPrefab != null
+            ? data.modelPrefab.transform.localScale
+            : (data.placeholderScale != Vector3.zero ? data.placeholderScale : Vector3.one);
+
+        go.transform.localScale = ComputeInstanceScale(data, baseScale);
+
+        Vector3 center = wanderCenter.HasValue ? wanderCenter.Value : position;
+
         if (data.isStationary) SetupStationary(go, data);
-        else                   SetupMobile(go, data, position);
+        else                   SetupMobile(go, data, center);
+    }
+
+    /// <summary>
+    /// Computes a natural individual scale with uniform size variance (e.g. juvenile vs adult)
+    /// plus subtle non-uniform axis jitter to give unique body proportions without distortion.
+    /// </summary>
+    public static Vector3 ComputeInstanceScale(SpeciesData data, Vector3 defaultBaseScale)
+    {
+        if (data == null || !data.enableScaleVariation)
+            return defaultBaseScale;
+
+        // 1. Uniform size multiplier (e.g., [0.875, 1.0625] scales base 4.0 dolphin to 3.5 - 4.25)
+        float minU = data.uniformScaleRange.x > 0.05f ? data.uniformScaleRange.x : 0.875f;
+        float maxU = data.uniformScaleRange.y >= minU ? data.uniformScaleRange.y : Mathf.Max(minU, 1.0625f);
+        float uniformMul = Random.Range(minU, maxU);
+
+        // 2. Subtle non-uniform axis jitter (+/- 3.5% = ~0.25 total spread on scale 4) without visual distortion
+        float jitter = Mathf.Clamp(data.maxAxisVariance > 0f ? data.maxAxisVariance : 0.035f, 0f, 0.065f);
+        float jX = 1f + Random.Range(-jitter, jitter);
+        float jY = 1f + Random.Range(-jitter, jitter);
+        float jZ = 1f + Random.Range(-jitter, jitter);
+
+        return new Vector3(
+            defaultBaseScale.x * uniformMul * jX,
+            defaultBaseScale.y * uniformMul * jY,
+            defaultBaseScale.z * uniformMul * jZ
+        );
     }
 
     private GameObject CreatePlaceholder(SpeciesData data, Vector3 position, Quaternion rotation)

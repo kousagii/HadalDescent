@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow reefs, rocks and rubble (0\u201360 m)"
   depthRangeText: "0\u201360 m"
-  explorationHint: Resting atop sunny reef platforms and sandy coral rubble.
+  explorationHint: "Shallow reefs, rocks and rubble (0–60 m)"
   secondaryZoneIndices: 
   characteristics: Bright blue body with five long, slender arms.
   ecologicalRole: Helps break down organic material on the seafloor.

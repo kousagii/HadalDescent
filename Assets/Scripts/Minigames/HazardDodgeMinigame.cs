@@ -75,6 +75,12 @@ public class HazardDodgeMinigame : MonoBehaviour
     [SerializeField] private float baseScrollSpeed  = 18f;
     [SerializeField] private float swipeSensitivity = 35f;
 
+    [Header("Submarine Visual Options")]
+    [Tooltip("Extra scale multiplier for the minigame submarine model (default 1.0)")]
+    [SerializeField] private float submarineScaleMultiplier = 1.0f;
+    [Tooltip("Yaw rotation offset in degrees if custom model orientation adjustment is needed (default 0)")]
+    [SerializeField] private float submarineYawOffset = 0f;
+
     // -----------------------------------------------------------------------
     // Zone Difficulty Configuration
     // -----------------------------------------------------------------------
@@ -471,7 +477,7 @@ public class HazardDodgeMinigame : MonoBehaviour
             float tiltNorm = laneWidth > 0.01f ? Mathf.Clamp((_targetX - _currentX) / laneWidth, -1f, 1f) : 0f;
             float tilt = tiltNorm * -28.0f; // Snappy, sleek banking roll clamped to 28 degrees
             _submarineObj.transform.localPosition = new Vector3(_currentX, 0f, -2.2f);
-            _submarineObj.transform.localRotation = Quaternion.Euler(0f, 0f, tilt);
+            _submarineObj.transform.localRotation = Quaternion.Euler(0f, submarineYawOffset, tilt);
         }
 
         // 3. Spawn Obstacles & Data Pods
@@ -979,13 +985,27 @@ public class HazardDodgeMinigame : MonoBehaviour
         CreateSideLedge(laneWidth * 1.5f + 8f);
 
         // 4. Submarine Player
+        Quaternion initRot = Quaternion.Euler(0f, submarineYawOffset, 0f);
         if (customSubmarinePrefab != null)
         {
-            _submarineObj = Instantiate(customSubmarinePrefab, _stageOrigin + new Vector3(0f, 0f, -2.2f), Quaternion.identity, _stageRoot.transform);
+            _submarineObj = Instantiate(customSubmarinePrefab, _stageOrigin + new Vector3(0f, 0f, -2.2f), initRot, _stageRoot.transform);
         }
         else
         {
-            _submarineObj = CreateProceduralSubmarine();
+            var resSub = Resources.Load<GameObject>("Submarine_Visual");
+            if (resSub != null)
+            {
+                _submarineObj = Instantiate(resSub, _stageOrigin + new Vector3(0f, 0f, -2.2f), initRot, _stageRoot.transform);
+            }
+            else
+            {
+                _submarineObj = CreateProceduralSubmarine();
+            }
+        }
+
+        if (_submarineObj != null && submarineScaleMultiplier != 1.0f)
+        {
+            _submarineObj.transform.localScale = Vector3.one * submarineScaleMultiplier;
         }
     }
 

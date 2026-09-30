@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coral reefs (0\u2013200 m)"
   depthRangeText: "0\u2013200 m"
-  explorationHint: Attached firmly to the upper surfaces of sunlit coral boulders.
+  explorationHint: "Shallow coral reefs (0–200 m)"
   secondaryZoneIndices: 
   characteristics: Many tentacles with rounded, bubble-like tips.
   ecologicalRole: Provides shelter for clownfish and other small reef animals.

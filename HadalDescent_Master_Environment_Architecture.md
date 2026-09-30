@@ -333,3 +333,61 @@ To complement your reusable rock starter pack, here is the curated production ch
   - Conduct marine literacy pre-test / post-test evaluation with target student cohort.
   - Compile statistical data on species recognition and engagement.
   - Finalize thesis manuscript and prepare defense presentation.
+
+---
+
+## 7. Advanced Environmental Immersion & Ecological Population Architecture
+
+To resolve the academic adviser critique ("environment looks boring") and transform empty water into a vibrant, living Philippine marine ecosystem without requiring heavy 3D asset downloads, five interconnected ecological and procedural systems are implemented across `SpeciesSpawner.cs`, `EnvPropScatterer.cs`, `CreatureLocomotion.cs`, and `SpeciesData.cs`:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                    ADVANCED ECOLOGICAL IMMERSION ARCHITECTURE                          │
+├────────────────────────────┬─────────────────────────────┬─────────────────────────────┤
+│ 1. Natural Scale Variation │ 2. Population Multiplier    │ 3. Social Pod Spawning      │
+│    • Base 4.0 → 3.38 - 4.40│    • 2x - 3x spawn count    │    • Bottlenose Dolphin Pods│
+│    • Axis jitter (max ~0.25│    • High-density marine life│   • Clownfish/Anemone Home  │
+├────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ 4. "Oasis vs Desert" Biome │ 5. Vertical Pinnacles (12m+)│ 6. Silhouette Fog Horizon   │
+│    • 40% denser coral beds │    • Non-uniform rock spires│    • 40m - 70m silhouettes  │
+│    • Pristine sandy basins │    • Upright seabed normal  │    • Curiosity exploration  │
+└────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
+```
+
+### A. Natural Scale & Individual Proportion Variance
+In nature, organisms of the same species are never identical clones. In [`SpeciesData.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Species/SpeciesData.cs) and [`SpeciesSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/SpeciesSpawner.cs):
+* **Uniform Size Range:** Sampled per instance across `uniformScaleRange` ($[0.875, 1.0625]$ by default). For Indo-Pacific Bottlenose Dolphins with a base authoring scale of $(4.0, 4.0, 4.0)$, individual instances spawn between $3.38\text{m}$ and $4.40\text{m}$, representing juveniles, mature adults, and dominant alphas.
+* **Organic Axis Jitter (Non-Uniform Proportions):** Subtle independent offsets on $X, Y, Z$ within `maxAxisVariance` ($\pm 3.5\%$) yield slightly stockier, leaner, or longer individuals while mathematically bounding the maximum inter-axis difference to $\le 0.28\text{ units}$ (average $0.14\text{ units}$). Silhouettes remain anatomically authentic without any visual distortion.
+* **Locomotion & Contact Interplay:** Applied directly to `go.transform.localScale` before calling `SetupMobile` / `SetupStationary`. `CreatureLocomotion.cs` automatically caches the scaled transform so procedural swimming pulses and undulations scale proportionately, while `AdjustContactHeight()` measures the true scaled mesh bounds for zero-gap seabed planting.
+
+### B. Global Population Multiplier (Double / Triple Density)
+* **`spawnMultiplier` (Slider: 1x to 4x, Default: 2x):** Multiplies `data.instanceCount` dynamically at runtime in [`SpeciesSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/SpeciesSpawner.cs).
+* **Population Scale:** In Zone 0 (Sunlight Zone), total fauna expands from ~45 individuals to ~90 (2x) or ~135 (3x) specimens.
+* **Performance Safeguards:** Spacing threshold `minSeparation` is adjusted to $3.5\text{m}$, and all spawned creatures are registered with `DistanceCullingManager.cs` to ensure mobile devices maintain smooth 60 FPS.
+
+### C. Idea B: Social Dolphin Pod Spawning & Clownfish Symbiosis
+* **Bottlenose Dolphin Social Pods:**
+  * When spawning dolphins (`dolphin_001`), `SpawnDolphinPods()` establishes cohesive pods of 3 to 4 individuals rather than solitary wanderers.
+  * **Leader Spawning:** Strictly obeys depth range ($1\text{m} - 50\text{m}$, `0.005 - 0.25` depth fraction), OpenWater biome, and ground clearance ($> 2.5\text{m}$).
+  * **Companion Formation:** Pod companions spawn within a $5.5\text{m} - 15.0\text{m}$ horizontal radius with compressed vertical depth variance ($\pm 2.0\text{m}$), aligned to the leader's cruising heading ($\pm 25^\circ$) with $\ge 3.2\text{m}$ individual clearance.
+  * **Shared Wandering Centroid:** Companions receive the leader's position as their `wanderCenter` in `SpeciesAI.cs`, ensuring the entire pod cruises, feeds, and turns together across the same territory.
+* **Clownfish & Anemone Symbiosis:**
+  * Uses recorded `_anemonePositions` to spawn Clownfish hovering directly above host Sea Anemones ($0.6\text{m} - 2.2\text{m}$ horizontal, $0.8\text{m} - 2.2\text{m}$ vertical), creating authentic Philippine coral reef mutualism.
+
+### D. Idea A: "Oasis vs. Desert" Biome Density Contrast
+* **Vibrant Coral Oases (Hard Biome / Reef Plateaus):**
+  * Props per cluster increased by $40\%$ ($18$ to $28$ corals per reef complex).
+  * Multi-tiered rock/plateau foundation slabs anchor lush coral gardens featuring alternating 6-color palettes.
+* **Serene Sand Deserts (Soft Biome / Basins):**
+  * Basins preserve wide open expanses of delicate sand ripples and semi-buried clam shells, contrasted with concentrated lush seagrass meadows.
+  * Navigating across calm open sand builds anticipation until the player discovers a bustling coral reef oasis.
+
+### E. Idea C: Vertical Sea Pinnacles & Spire Formations
+* **Towering Sea Stacks:** In $32\%$ of Rock clusters and $22\%$ of Reef complexes in [`EnvPropScatterer.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/EnvPropScatterer.cs), tall rock meshes (`Cone`, `Cylinder`, `Cube`, `bisect`) are instantiated with vertical height scaling of $2.2\times - 3.6\times$ ($12\text{m} - 22\text{m}$ total elevation).
+* **Upright Normal Alignment:** Pinnacles bypass `OrientRockFlat()` and align upward along the seabed normal, anchored by 2–4 companion boulders at their base.
+* **Submarine Navigation:** Tagged with obstacle triggers and terrain layers, allowing the submarine's context steering to navigate through dramatic vertical canyon spires.
+
+### F. Idea E: Atmospheric Fog Horizons & Distant Silhouettes
+* **Depth Perception:** In [`ZoneConfig.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/ZoneConfig.cs) and [`SunlightAtmosphereVFX.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Environment/SunlightAtmosphereVFX.cs), linear fog distances ($25\text{m} - 140\text{m}$) cause large creatures (dolphin pods, reef sharks) and towering rock spires to resolve into dark silhouette shapes at $40\text{m} - 70\text{m}$.
+* **Curiosity-Driven Exploration:** Shimmering godray caustics backlight these silhouettes in the mid-water column, beckoning the player forward to discover and scan the species.
+

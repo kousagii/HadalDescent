@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coral reefs and shelf sediments (1\u201350 m)"
   depthRangeText: "1\u201350 m"
-  explorationHint: Hides under rocky overhangs and deep reef crevices.
+  explorationHint: "Shallow coral reefs and shelf sediments (1–50 m)"
   secondaryZoneIndices: 
   characteristics: Colorful patterned body with long spiny antennae.
   ecologicalRole: Predator and scavenger that feeds on marine animals.

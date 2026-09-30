@@ -64,6 +64,8 @@ MonoBehaviour:
   speciesFoundSFX: {fileID: 8300000, guid: 5f15cbfbd00d1cf4483d2c4af3873dfe, type: 3}
   subMovementSFX: {fileID: 8300000, guid: 0648e4bba69429b48af01d0310c124e2, type: 3}
   subMovementSource: {fileID: 0}
+  subMovementMixerGroup: {fileID: 0}
+  subMovementVolumeMultiplier: 2
   zoneTransitionSFX: {fileID: 8300000, guid: 815538f7a8e54f844b3fc5c53114c072, type: 3}
   zoneTransitionDuration: 2.5
   zoneTransitionFadeOut: 0.5

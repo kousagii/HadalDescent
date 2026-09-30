@@ -19,8 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Coral reefs and anemones (0\u2013100 m)"
   depthRangeText: "0\u2013100 m"
-  explorationHint: Search around sunny, shallow coral reef summits nestled within
-    sea anemone patches.
+  explorationHint: "Coral reefs and anemones (0–100 m)"
   secondaryZoneIndices: 
   characteristics: Bright orange body with three white bands outlined in black.
   ecologicalRole: Lives with sea anemones and helps protect them from threats.
@@ -31,9 +30,9 @@ MonoBehaviour:
   isShy: 0
   preferredBiome: 2
   minDepthFraction: 0
-  maxDepthFraction: 1
+  maxDepthFraction: 0.5
   instanceCount: 6
-  wanderRadius: 3.5
+  wanderRadius: 8
   moveSpeed: 1.8
   fleeSpeed: 5
   fleeRange: 10

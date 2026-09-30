@@ -32,6 +32,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private TouchDragZone    dragZone;
     [SerializeField] private SubmarineCamera  submarineCamera;
 
+    [Header("First-Person Visuals")]
+    [Tooltip("If true, submarine body/capsule mesh renderers are hidden from the camera for an unobstructed first-person view.")]
+    [SerializeField] private bool hideSubmarineInFirstPerson = true;
+
     // -----------------------------------------------------------------------
     // Private state
     // -----------------------------------------------------------------------
@@ -51,6 +55,11 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
+        if (hideSubmarineInFirstPerson)
+        {
+            HideSubmarineVisuals();
+        }
+
         if (inputActionsAsset != null)
         {
             moveAction     = inputActionsAsset.FindAction("Move");
@@ -62,6 +71,23 @@ public class PlayerMovement : MonoBehaviour
             moveAction     = InputSystem.actions.FindAction("Move");
             interactAction = InputSystem.actions.FindAction("Interact");
             scanAction     = InputSystem.actions.FindAction("Scan");
+        }
+    }
+
+    /// <summary>
+    /// Disables any MeshRenderers on the submarine body so the first-person camera has a 100% unobstructed view.
+    /// Preserves colliders and physics intact.
+    /// </summary>
+    public void HideSubmarineVisuals()
+    {
+        var renderers = GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers)
+        {
+            // Do not disable particle systems or UI canvas elements if present
+            if (r is ParticleSystemRenderer || r.GetComponentInParent<Canvas>() != null)
+                continue;
+
+            r.enabled = false;
         }
     }
 

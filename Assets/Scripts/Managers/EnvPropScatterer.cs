@@ -90,6 +90,7 @@ public class EnvPropScatterer : MonoBehaviour
         var hardFoundationProps = new List<EnvPropSet.PropEntry>();
         var hardCoralProps = new List<EnvPropSet.PropEntry>();
         var rockProps = new List<EnvPropSet.PropEntry>();
+        var pinnacleProps = new List<EnvPropSet.PropEntry>();
         var seagrassProps = new List<EnvPropSet.PropEntry>();
         var clamProps = new List<EnvPropSet.PropEntry>();
         var softDuneProps = new List<EnvPropSet.PropEntry>();
@@ -113,19 +114,28 @@ public class EnvPropScatterer : MonoBehaviour
             else if (p.targetBiome == BiomeBand.Rock || n.Contains("rock") || n.Contains("boulder") || n.Contains("bisect"))
             {
                 rockProps.Add(p);
+                if (n.Contains("cone") || n.Contains("cylinder") || n.Contains("bisect") || n.Contains("pinnacle") || n.Contains("spire") || n.Contains("cube"))
+                    pinnacleProps.Add(p);
             }
             else if (p.targetBiome == BiomeBand.Hard)
             {
                 hardProps.Add(p);
                 if (n.Contains("cube") || n.Contains("cone") || n.Contains("plateau") || n.Contains("pinnacle") || n.Contains("rock"))
+                {
                     hardFoundationProps.Add(p);
+                    if (n.Contains("cone") || n.Contains("cylinder") || n.Contains("pinnacle") || n.Contains("spire"))
+                        pinnacleProps.Add(p);
+                }
                 else
+                {
                     hardCoralProps.Add(p);
+                }
             }
         }
 
         if (hardFoundationProps.Count == 0) hardFoundationProps = hardProps;
         if (hardCoralProps.Count == 0) hardCoralProps = hardProps;
+        if (pinnacleProps.Count == 0) pinnacleProps = rockProps;
 
         // ── Phase 1: Biome Ecosystem Formations ───────────────────────────
         float zoneAreaRatio = (width * length) / (300f * 300f);
@@ -142,7 +152,16 @@ public class EnvPropScatterer : MonoBehaviour
 
             if (biome == BiomeBand.Hard)
             {
-                // ── REEF COMPLEX (Hard Biome) ─────────────────────────────
+                // ── REEF COMPLEX (Hard Biome) — Idea A: Vibrant Coral Oasis ──────
+                // In ~22% of reef oases, anchor with a dramatic limestone pinnacle spire!
+                bool hasReefPinnacle = Random.value < 0.22f;
+                if (hasReefPinnacle && pinnacleProps.Count > 0)
+                {
+                    var pinEntry = PickRandomFromList(pinnacleProps);
+                    if (TryPlacePropInstance(meshGen, propSet, pinEntry, cx, cz, placedPositions, 2.5f, -1, Random.Range(1.4f, 2.2f), isPinnacle: true))
+                        placedCount++;
+                }
+
                 // 1. Center Foundation: Rock / Plateau / Slab
                 var foundationEntry = PickRandomFromList(hardFoundationProps);
                 if (foundationEntry != null)
@@ -151,9 +170,9 @@ public class EnvPropScatterer : MonoBehaviour
                         placedCount++;
                 }
 
-                // 2. Dense Coral Garden: tightly clustered corals on & around the base
-                int reefItems = Random.Range(Mathf.Max(8, propsPerCluster - 4), propsPerCluster + 6);
-                float reefRadius = Random.Range(clusterRadius * 0.7f, clusterRadius * 1.15f);
+                // 2. Dense Coral Garden: tightly clustered corals on & around the base (Idea A: Oasis density)
+                int reefItems = Random.Range(propsPerCluster + 2, propsPerCluster + 12);
+                float reefRadius = Random.Range(clusterRadius * 0.75f, clusterRadius * 1.25f);
                 for (int i = 0; i < reefItems; i++)
                 {
                     Vector2 offset = Random.insideUnitCircle * reefRadius;
@@ -171,43 +190,71 @@ public class EnvPropScatterer : MonoBehaviour
             }
             else if (biome == BiomeBand.Rock)
             {
-                // ── ROCK CLUSTER & SEPARATED OUTCROP (Rock Biome) ───────────
-                // 1. Primary Rock Cluster Formation: 1 Anchor Boulder + 3-6 tight companion rocks
-                var anchorEntry = PickRandomFromList(rockProps);
-                if (anchorEntry != null)
+                // ── ROCK FORMATIONS — Idea C: Vertical Pinnacles & Outcrops ──────
+                bool isPinnacleCluster = Random.value < 0.32f;
+
+                if (isPinnacleCluster && pinnacleProps.Count > 0)
                 {
-                    if (TryPlacePropInstance(meshGen, propSet, anchorEntry, cx, cz, placedPositions, 1.8f, -1, 1.4f))
-                        placedCount++;
+                    // Formation A: Towering Sea Pinnacle / Spire rising 12m-22m into water column
+                    var pinEntry = PickRandomFromList(pinnacleProps);
+                    if (pinEntry != null)
+                    {
+                        if (TryPlacePropInstance(meshGen, propSet, pinEntry, cx, cz, placedPositions, 2.5f, -1, Random.Range(1.8f, 2.6f), isPinnacle: true))
+                            placedCount++;
+                    }
+
+                    // 2-4 companion rocks nestling at the base of the spire
+                    int baseRockCount = Random.Range(2, 5);
+                    for (int i = 0; i < baseRockCount; i++)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * Random.Range(1.2f, 3.2f);
+                        float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+
+                        var rockEntry = PickRandomFromList(rockProps);
+                        if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 0.8f, -1, Random.Range(0.6f, 1.1f)))
+                            placedCount++;
+                    }
                 }
-
-                // Tight satellite companions nestled against the anchor boulder
-                int companionCount = Random.Range(3, 7);
-                float clusterTightRadius = Random.Range(1.2f, 2.8f);
-                for (int i = 0; i < companionCount; i++)
+                else
                 {
-                    Vector2 offset = Random.insideUnitCircle * clusterTightRadius;
-                    float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
-                    float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+                    // Formation B: Primary Rock Cluster Formation: 1 Anchor Boulder + 3-6 tight companion rocks
+                    var anchorEntry = PickRandomFromList(rockProps);
+                    if (anchorEntry != null)
+                    {
+                        if (TryPlacePropInstance(meshGen, propSet, anchorEntry, cx, cz, placedPositions, 1.8f, -1, 1.4f))
+                            placedCount++;
+                    }
 
-                    var rockEntry = PickRandomFromList(rockProps);
-                    // Tight clearance (0.75m) lets rocks nestle, touch, and form natural rock piles
-                    if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 0.75f, -1, Random.Range(0.45f, 0.95f)))
-                        placedCount++;
-                }
+                    // Tight satellite companions nestled against the anchor boulder
+                    int companionCount = Random.Range(3, 7);
+                    float clusterTightRadius = Random.Range(1.2f, 2.8f);
+                    for (int i = 0; i < companionCount; i++)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * clusterTightRadius;
+                        float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
 
-                // 2. Separated Companion Rocks (2 to 4 loose outlying rocks around the cluster)
-                int outlierCount = Random.Range(2, 5);
-                float outlierRadius = Random.Range(4.5f, 10.0f);
-                for (int i = 0; i < outlierCount; i++)
-                {
-                    Vector2 offset = Random.insideUnitCircle * outlierRadius;
-                    if (offset.magnitude < 3.5f) offset = offset.normalized * 3.5f;
-                    float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
-                    float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+                        var rockEntry = PickRandomFromList(rockProps);
+                        // Tight clearance (0.75m) lets rocks nestle, touch, and form natural rock piles
+                        if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 0.75f, -1, Random.Range(0.45f, 0.95f)))
+                            placedCount++;
+                    }
 
-                    var rockEntry = PickRandomFromList(rockProps);
-                    if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 2.2f, -1, Random.Range(0.6f, 1.2f)))
-                        placedCount++;
+                    // Separated Companion Rocks (2 to 4 loose outlying rocks around the cluster)
+                    int outlierCount = Random.Range(2, 5);
+                    float outlierRadius = Random.Range(4.5f, 10.0f);
+                    for (int i = 0; i < outlierCount; i++)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * outlierRadius;
+                        if (offset.magnitude < 3.5f) offset = offset.normalized * 3.5f;
+                        float px = Mathf.Clamp(cx + offset.x, -halfW, halfW);
+                        float pz = Mathf.Clamp(cz + offset.y, -halfL, halfL);
+
+                        var rockEntry = PickRandomFromList(rockProps);
+                        if (rockEntry != null && TryPlacePropInstance(meshGen, propSet, rockEntry, px, pz, placedPositions, 2.2f, -1, Random.Range(0.6f, 1.2f)))
+                            placedCount++;
+                    }
                 }
             }
             else // BiomeBand.Soft
@@ -321,7 +368,7 @@ public class EnvPropScatterer : MonoBehaviour
     private bool TryPlacePropInstance(OceanFloorMeshGenerator meshGen, EnvPropSet propSet,
                                       EnvPropSet.PropEntry entry, float px, float pz,
                                       List<Vector3> placedPositions, float minDistance, int coralColorIndex,
-                                      float scaleOverride = 1.0f)
+                                      float scaleOverride = 1.0f, bool isPinnacle = false)
     {
         if (entry == null || entry.prefab == null) return false;
 
@@ -348,10 +395,12 @@ public class EnvPropScatterer : MonoBehaviour
         float randomScale = Random.Range(entry.minScale, entry.maxScale) * mult * scaleOverride;
         Vector3 scaleAxis = entry.scaleMultiplier != Vector3.zero ? entry.scaleMultiplier : Vector3.one;
 
-        // Rocks: use natural proportions without non-uniform skewing
+        // Rocks: use natural proportions unless explicitly designated as a towering vertical pinnacle
         if (isRock)
         {
-            scaleAxis = Vector3.one;
+            scaleAxis = isPinnacle
+                ? new Vector3(Random.Range(0.85f, 1.25f), Random.Range(2.2f, 3.6f), Random.Range(0.85f, 1.25f))
+                : Vector3.one;
         }
 
         Vector3 finalScale = Vector3.Scale(scaleAxis, Vector3.one * randomScale);
@@ -397,10 +446,19 @@ public class EnvPropScatterer : MonoBehaviour
         GameObject go = Instantiate(entry.prefab, spawnPos, finalRot, _propParent);
         go.transform.localScale = finalScale;
 
-        // For rocks: Orient dynamically so the longer width lays flat on the surface
+        // For rocks: Orient dynamically so the longer width lays flat on the surface (unless it's an upright pinnacle)
         if (isRock)
         {
-            OrientRockFlat(go, normal);
+            if (isPinnacle)
+            {
+                // Align upward along blended normal with slight natural tilt
+                Vector3 blendedNormal = Vector3.Slerp(Vector3.up, normal, 0.22f);
+                go.transform.rotation = Quaternion.FromToRotation(Vector3.up, blendedNormal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            }
+            else
+            {
+                OrientRockFlat(go, normal);
+            }
         }
 
         // Dynamic Coral Color Variation

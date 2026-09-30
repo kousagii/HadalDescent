@@ -206,6 +206,7 @@ public static class TwilightZoneSetupUtility
         {
             meshRenderer.sharedMaterial = playerMat;
         }
+        meshRenderer.enabled = false; // Keep submarine body invisible to first-person camera
 
         // Camera setup - find or create child Main Camera
         Transform existingCamTr = playerGO.transform.Find("Main Camera");

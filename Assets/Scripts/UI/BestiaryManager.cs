@@ -26,6 +26,7 @@ public class BestiaryManager : MonoBehaviour
 
     [Header("Data")]
     [SerializeField] private SpeciesRegistry registry;
+    [SerializeField] private HabitatLandmarkRegistry habitatRegistry;
 
     [Header("UI Panels")]
     [Tooltip("Main Bestiary root panel (toggled on/off).")]
@@ -122,6 +123,8 @@ public class BestiaryManager : MonoBehaviour
 
         if (registry == null)
             registry = Resources.Load<SpeciesRegistry>("SpeciesRegistry");
+        if (habitatRegistry == null)
+            habitatRegistry = Resources.Load<HabitatLandmarkRegistry>("HabitatLandmarkRegistry");
     }
 
     // -----------------------------------------------------------------------
@@ -496,6 +499,8 @@ public class BestiaryManager : MonoBehaviour
 
         if (registry == null)
             registry = Resources.Load<SpeciesRegistry>("SpeciesRegistry");
+        if (habitatRegistry == null)
+            habitatRegistry = Resources.Load<HabitatLandmarkRegistry>("HabitatLandmarkRegistry");
 
         if (registry == null)
         {
@@ -538,10 +543,32 @@ public class BestiaryManager : MonoBehaviour
 
             CreateZoneHeader(zoneDef, z, zoneDiscovered, speciesList.Count);
 
+            // 1. Render all Species in this zone first (Species are most important)
             foreach (var data in speciesList)
             {
                 bool discovered = GameManager.Instance != null && (GameManager.Instance.IsDiscovered(data.speciesId) || GameManager.Instance.IsDiscovered(z, data.speciesId));
                 InstantiateSpeciesCard(data, discovered);
+            }
+
+            // 2. Render Habitat Landmarks below the species
+            if (habitatRegistry != null)
+            {
+                var landmarks = habitatRegistry.GetLandmarksForZone(z);
+                if (landmarks != null && landmarks.Count > 0)
+                {
+                    CreateHabitatSectionHeader(landmarks.Count);
+                    foreach (var lm in landmarks)
+                    {
+                        if (lm == null) continue;
+                        bool isSurveyed = GameManager.Instance != null && (
+                            GameManager.Instance.IsDiscovered(lm.factId) ||
+                            GameManager.Instance.IsDiscovered(z, lm.factId) ||
+                            (lm.factId == "fact_sun_coral_reef" && (GameManager.Instance.IsDiscovered("fact_sun_barrier_reef") || GameManager.Instance.IsDiscovered(z, "fact_sun_barrier_reef"))) ||
+                            (lm.factId == "fact_sun_seagrass_bed" && (GameManager.Instance.IsDiscovered("fact_sun_kelp_canopy") || GameManager.Instance.IsDiscovered(z, "fact_sun_kelp_canopy")))
+                        );
+                        InstantiateHabitatCard(lm, isSurveyed);
+                    }
+                }
             }
         }
     }
@@ -550,6 +577,219 @@ public class BestiaryManager : MonoBehaviour
     {
         for (int i = entryContainer.childCount - 1; i >= 0; i--)
             Destroy(entryContainer.GetChild(i).gameObject);
+    }
+
+    private void CreateHabitatSectionHeader(int count)
+    {
+        var headerGO = new GameObject("HabitatSectionHeader", typeof(RectTransform));
+        headerGO.transform.SetParent(entryContainer, false);
+        var rect = headerGO.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(0f, 40f);
+        StretchHorizontal(rect);
+
+        var txt = headerGO.AddComponent<TextMeshProUGUI>();
+        txt.fontSize = 20;
+        txt.fontStyle = FontStyles.Bold;
+        txt.color = new Color(1.0f, 0.90f, 0.20f, 1f); // Radiant Gold
+        txt.alignment = TextAlignmentOptions.MidlineLeft;
+        txt.margin = new Vector4(24f, 0f, 0f, 0f);
+        txt.text = $"✦ HABITAT SURVEY LANDMARKS ({count})";
+    }
+
+    private void InstantiateHabitatCard(HabitatLandmarkData data, bool isSurveyed)
+    {
+        GameObject prefabToUse = null;
+        if (isSurveyed && discoveredCardPrefab != null) prefabToUse = discoveredCardPrefab;
+        else if (!isSurveyed && undiscoveredCardPrefab != null) prefabToUse = undiscoveredCardPrefab;
+        else if (entryCardPrefab != null) prefabToUse = entryCardPrefab;
+
+        if (prefabToUse != null)
+        {
+            var card = Instantiate(prefabToUse, entryContainer);
+            var cardUI = card.GetComponent<BestiaryCardUI>();
+            var capturedData = data;
+
+            if (cardUI != null)
+            {
+                cardUI.SetupHabitat(data, isSurveyed, () => FactCardUI.ShowEnvironmentFact(capturedData));
+            }
+            else
+            {
+                var btn = card.GetComponent<Button>() ?? card.AddComponent<Button>();
+                if (isSurveyed)
+                {
+                    btn.interactable = true;
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => FactCardUI.ShowEnvironmentFact(capturedData));
+                }
+                else
+                {
+                    btn.interactable = false;
+                }
+                PopulateGenericHabitatPrefabLabels(card, data, isSurveyed);
+            }
+        }
+        else
+        {
+            CreateFallbackHabitatCard(data, isSurveyed);
+        }
+    }
+
+    private void PopulateGenericHabitatPrefabLabels(GameObject card, HabitatLandmarkData data, bool isSurveyed)
+    {
+        var labels = card.GetComponentsInChildren<TMP_Text>();
+        var images = card.GetComponentsInChildren<Image>();
+        var rawImages = card.GetComponentsInChildren<RawImage>();
+
+        // Disable raw images (for live 3D preview) so 2D photo displays
+        foreach (var raw in rawImages) raw.gameObject.SetActive(false);
+
+        if (isSurveyed)
+        {
+            SetTextSafe(labels, 0, data.habitatName);
+            SetTextSafe(labels, 1, "");
+            SetTextSafe(labels, 2, "");
+            SetTextSafe(labels, 3, "");
+        }
+        else
+        {
+            SetTextSafe(labels, 0, "??? [Uncataloged Habitat]");
+            SetTextSafe(labels, 1, "");
+            SetTextSafe(labels, 2, "");
+            SetTextSafe(labels, 3, "");
+        }
+
+        foreach (var img in images)
+        {
+            if (img.gameObject.name.ToLower().Contains("accent"))
+            {
+                img.color = isSurveyed ? new Color(1.0f, 0.88f, 0.15f, 1f) : new Color(0.40f, 0.35f, 0.15f, 1f);
+                break;
+            }
+        }
+
+        Image thumbImg = null;
+        foreach (var img in images)
+        {
+            if (img.gameObject == card) continue;
+            string n = img.gameObject.name.ToLower();
+            if (n.Contains("thumb") || n.Contains("photo") || n.Contains("icon") || n.Contains("image") || n.Contains("preview"))
+            {
+                thumbImg = img;
+                break;
+            }
+        }
+        if (thumbImg == null && images.Length > 1) thumbImg = images[1];
+
+        if (thumbImg != null)
+        {
+            thumbImg.gameObject.SetActive(true);
+            if (data.habitatPhoto != null)
+            {
+                UIThemeManager.ApplyAspectFillCrop(thumbImg, data.habitatPhoto);
+                thumbImg.color = isSurveyed ? Color.white : new Color(0.20f, 0.20f, 0.25f, 1f);
+            }
+            else
+            {
+                thumbImg.color = isSurveyed ? new Color(1f, 0.9f, 0.3f, 0.8f) : new Color(0.12f, 0.15f, 0.20f, 1f);
+            }
+        }
+    }
+
+    private void CreateFallbackHabitatCard(HabitatLandmarkData data, bool isSurveyed)
+    {
+        var cardGO = new GameObject($"HabitatCard_{data.factId}", typeof(RectTransform), typeof(Image), typeof(Button));
+        cardGO.transform.SetParent(entryContainer, false);
+
+        var rect = cardGO.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(0f, 260f); // Exactly matches species card height (260)
+        StretchHorizontal(rect);
+
+        var bg = cardGO.GetComponent<Image>();
+        bg.color = isSurveyed
+            ? new Color(0.08f, 0.12f, 0.18f, 0.95f)
+            : new Color(0.03f, 0.05f, 0.08f, 0.95f);
+
+        var btn = cardGO.GetComponent<Button>();
+        var captured = data;
+        if (isSurveyed)
+        {
+            btn.interactable = true;
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => FactCardUI.ShowEnvironmentFact(captured));
+        }
+        else
+        {
+            btn.interactable = false;
+        }
+
+        // Left Accent Strip (Gold / Yellow)
+        var accentGO = new GameObject("Accent", typeof(RectTransform), typeof(Image));
+        accentGO.transform.SetParent(cardGO.transform, false);
+        var accentRect = accentGO.GetComponent<RectTransform>();
+        accentRect.anchorMin = new Vector2(0f, 0f);
+        accentRect.anchorMax = new Vector2(0f, 1f);
+        accentRect.sizeDelta = new Vector2(6f, 0f);
+        accentRect.anchoredPosition = new Vector2(3f, 0f);
+        accentGO.GetComponent<Image>().color = isSurveyed
+            ? new Color(1.0f, 0.88f, 0.15f, 1f)   // Radiant Gold
+            : new Color(0.40f, 0.35f, 0.15f, 0.8f); // Dim Ochre
+
+        // Photo Box on Left
+        var iconBoxGO = new GameObject("IconBox", typeof(RectTransform), typeof(Image));
+        iconBoxGO.transform.SetParent(cardGO.transform, false);
+        var iconBoxRect = iconBoxGO.GetComponent<RectTransform>();
+        iconBoxRect.anchorMin = new Vector2(0f, 0.5f);
+        iconBoxRect.anchorMax = new Vector2(0f, 0.5f);
+        iconBoxRect.pivot     = new Vector2(0f, 0.5f);
+        iconBoxRect.sizeDelta = new Vector2(210f, 210f);
+        iconBoxRect.anchoredPosition = new Vector2(20f, 0f);
+        iconBoxGO.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.07f, 0.9f);
+
+        var photoGO = new GameObject("Photo", typeof(RectTransform), typeof(Image));
+        photoGO.transform.SetParent(iconBoxGO.transform, false);
+        var photoRect = photoGO.GetComponent<RectTransform>();
+        photoRect.anchorMin = Vector2.zero;
+        photoRect.anchorMax = Vector2.one;
+        photoRect.sizeDelta = Vector2.zero;
+        var photoImg = photoGO.GetComponent<Image>();
+
+        if (isSurveyed && data.habitatPhoto != null)
+        {
+            UIThemeManager.ApplyAspectFillCrop(photoImg, data.habitatPhoto);
+            photoImg.color = Color.white;
+        }
+        else
+        {
+            photoImg.color = isSurveyed ? new Color(1f, 0.9f, 0.3f, 0.8f) : new Color(0.20f, 0.22f, 0.25f, 0.5f);
+        }
+
+        // Info container on Right
+        var infoGO = new GameObject("Info", typeof(RectTransform));
+        infoGO.transform.SetParent(cardGO.transform, false);
+        var infoRect = infoGO.GetComponent<RectTransform>();
+        infoRect.anchorMin = new Vector2(0f, 0f);
+        infoRect.anchorMax = new Vector2(1f, 1f);
+        infoRect.offsetMin = new Vector2(250f, 15f);
+        infoRect.offsetMax = new Vector2(-20f, -15f);
+
+        var infoTMP = infoGO.AddComponent<TextMeshProUGUI>();
+        infoTMP.fontSize = 20;
+        infoTMP.color = Color.white;
+        infoTMP.lineSpacing = 6f;
+
+        if (isSurveyed)
+        {
+            infoTMP.text =
+                $"<b><size=28><color=#ffe24a>{data.habitatName}</color></size></b>  <size=18><color=#66ffbb>[✓ SURVEYED]</color></size>\n\n" +
+                $"<size=16><color=#ffe620>✦ Tap card to review complete scientific facts</color></size>";
+        }
+        else
+        {
+            infoTMP.text =
+                $"<b><size=28><color=#aaaaaa>??? [Uncataloged Habitat]</color></size></b>\n\n" +
+                $"<size=16><color=#88aacc>✦ Follow yellow sonar blips on ocean floor to survey</color></size>";
+        }
     }
 
     private void InstantiateSpeciesCard(SpeciesData data, bool discovered)

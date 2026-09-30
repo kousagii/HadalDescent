@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50b81994f1a475db143ed1b6c9e3511, type: 3}
+  m_Name: Landmark_Sun_BarrierReef
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatLandmarkData
+  factId: fact_sun_coral_reef
+  habitatName: Coral Reef Matrix
+  category: Biogenic Aragonite Ecosystem
+  zoneIndex: 0
+  depthRangeText: "50\u2013100 m"
+  habitatDescription: An expansive three-dimensional calcium carbonate fortress constructed
+    over thousands of years by hermatypic stony corals (Scleractinia) and crustose
+    coralline algae in sunlit waters.
+  ecologicalSignificance: Known as the "rainforests of the sea," coral reefs support
+    over 25% of all marine species while covering under 0.1% of the seafloor. They
+    serve as vital natural breakwaters, attenuating up to 97% of coastal wave energy.
+  interestingFact: Corals are animal colonies living in mutualism with photosynthetic
+    microscopic algae (zooxanthellae). The algae produce up to 90% of the polyp's
+    energy and provide corals their vibrant living coloration.
+  targetBiome: 2
+  citationSource: NOAA Coral Reef Conservation Program / Smithsonian Ocean Portal
+  rdpReward: 75
+  habitatPhoto: {fileID: 21300000, guid: 448e208ca3517e648953db4e00c34caa, type: 3}

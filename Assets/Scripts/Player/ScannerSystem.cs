@@ -43,8 +43,11 @@ public class ScannerSystem : MonoBehaviour
     [Tooltip("Effective interact range for stationary species and debris clusters.")]
     [SerializeField] private float interactRange   = 15f;
 
+    [Tooltip("Effective interact range for habitat landmarks and large environmental formations.")]
+    [SerializeField] private float landmarkInteractRange = 38f;
+
     [Tooltip("Maximum detection range for aiming at distant species (shows 'Get closer to scan').")]
-    [SerializeField] private float detectionRange  = 100f;
+    [SerializeField] private float detectionRange  = 120f;
 
     [Tooltip("Narrow raycast beam radius (in meters) to match the center reticle frame on screen.")]
     [SerializeField] private float reticleBeamRadius = 0.5f;
@@ -277,7 +280,8 @@ public class ScannerSystem : MonoBehaviour
                 AudioManager.Instance?.PlaySpeciesFound();
             }
 
-            if (bestDist <= interactRange)
+            float maxEnvDist = landmarkInteractRange;
+            if (bestDist <= maxEnvDist)
             {
                 // In Interact Range → Ready to view Fact Card
                 _environmentTarget = bestEnv;
@@ -291,7 +295,7 @@ public class ScannerSystem : MonoBehaviour
                 // Too Far
                 _environmentTarget = null;
                 ClearHighlight();
-                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.TooFar);
+                ScanReticleUI.Instance?.SetState(ScanReticleUI.ReticleState.TooFar, "survey");
                 UIManager.Instance?.ShowScanButton(false);
                 UIManager.Instance?.ShowInteractButton(false);
             }

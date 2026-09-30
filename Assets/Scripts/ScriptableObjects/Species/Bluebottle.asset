@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Ocean surface (0\u20133 m)"
   depthRangeText: "0\u20133 m"
-  explorationHint: Drifts right beneath the glistening water surface near Depth 0m.
+  explorationHint: "Ocean surface (0–3 m)"
   secondaryZoneIndices: 
   characteristics: Gas-filled float with long stinging structures.
   ecologicalRole: Catches small fish and plankton.

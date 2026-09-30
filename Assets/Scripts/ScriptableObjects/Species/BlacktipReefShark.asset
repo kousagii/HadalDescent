@@ -19,8 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
   depthRangeText: "0\u201375 m"
-  explorationHint: Patrols along reef edges and open drop-offs in continuous forward
-    motion.
+  explorationHint: "Shallow coral reef flats and drop-offs (0–75 m)"
   secondaryZoneIndices: 
   characteristics: Gray-brown body with black-tipped fins.
   ecologicalRole: Helps control reef fish and cephalopod populations.
@@ -34,8 +33,8 @@ MonoBehaviour:
   maxDepthFraction: 0.375
   instanceCount: 2
   wanderRadius: 110
-  moveSpeed: 2
-  fleeSpeed: 4.2
+  moveSpeed: 6.5
+  fleeSpeed: 10
   fleeRange: 12
   returnThreshold: 130
   turnSpeed: 35

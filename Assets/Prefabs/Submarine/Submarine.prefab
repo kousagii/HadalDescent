@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6351432801184312385
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -6212768488457499317, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_Name
+      value: ClawRope
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 6187.3794
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -141
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -27181.156
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2089858433952868598, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 14.88
+      objectReference: {fileID: 0}
+    - target: {fileID: -678909663146211545, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_Name
+      value: Claw
+      objectReference: {fileID: 0}
+    - target: {fileID: -406732329224286013, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 8.006608
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}
+      propertyPath: m_Name
+      value: Submarine
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: -4161369568681901532, guid: 37778bb523f39594ea5758106f8d1db8, type: 3}

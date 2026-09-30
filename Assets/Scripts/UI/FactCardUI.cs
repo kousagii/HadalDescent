@@ -77,6 +77,15 @@ public class FactCardUI : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
+        if (customCardPanel == null && (customHabitatName != null || customPhoto != null || customDescription != null))
+        {
+            customCardPanel = gameObject;
+        }
+
+        if (customDescription != null) customDescription.fontSize = 24f;
+        if (customEcologicalSignificance != null) customEcologicalSignificance.fontSize = 24f;
+        if (customFact != null) customFact.fontSize = 24f;
+
         if (customCloseButton != null)
         {
             customCloseButton.onClick.RemoveListener(Hide);
@@ -87,6 +96,10 @@ public class FactCardUI : MonoBehaviour
     private void Start()
     {
         _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+
+        if (customDescription != null) customDescription.fontSize = 24f;
+        if (customEcologicalSignificance != null) customEcologicalSignificance.fontSize = 24f;
+        if (customFact != null) customFact.fontSize = 24f;
 
         if (customCloseButton != null)
         {
@@ -157,6 +170,133 @@ public class FactCardUI : MonoBehaviour
         return fc;
     }
 
+    /// <summary>
+    /// Safely finds or instantiates FactCardUI and displays the environmental habitat fact card from a data asset.
+    /// </summary>
+    public static FactCardUI ShowEnvironmentFact(HabitatLandmarkData data)
+    {
+        if (data == null) return null;
+
+        var fc = Instance ?? FindFirstObjectByType<FactCardUI>(FindObjectsInactive.Include);
+        if (fc == null)
+        {
+            var pCanvas = FindFirstObjectByType<Canvas>();
+            var prefab = Resources.Load<GameObject>("UI/FactCardUI")
+                      ?? Resources.Load<GameObject>("Prefabs/UI/FactCardUI");
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab, pCanvas != null ? pCanvas.transform : null);
+                go.name = "FactCardUI";
+                fc = go.GetComponentInChildren<FactCardUI>(true);
+            }
+        }
+
+        if (fc != null)
+        {
+            fc.gameObject.SetActive(true);
+            fc.Show(data);
+        }
+        else
+        {
+            Debug.LogError("[FactCardUI] Failed to locate or load FactCardUI!");
+        }
+        return fc;
+    }
+
+    public void Show(HabitatLandmarkData data)
+    {
+        if (data == null) return;
+
+        gameObject.SetActive(true);
+        _isOpen = true;
+
+        bool isSurveyed = GameManager.Instance != null && (GameManager.Instance.IsDiscovered(data.factId) || GameManager.Instance.IsDiscovered(data.zoneIndex, data.factId));
+
+        string zoneName = ZoneConfig.Zones != null && data.zoneIndex >= 0 && data.zoneIndex < ZoneConfig.Zones.Length
+            ? ZoneConfig.Zones[data.zoneIndex].zoneName
+            : "Ocean Ecosystem";
+
+        if (customCardPanel != null)
+        {
+            customCardPanel.SetActive(true);
+            customCardPanel.transform.SetAsLastSibling();
+            customCardPanel.transform.localPosition = new Vector3(customCardPanel.transform.localPosition.x, customCardPanel.transform.localPosition.y, 0f);
+
+            var canvas = customCardPanel.GetComponent<Canvas>();
+            if (canvas == null) canvas = customCardPanel.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 10005; // Higher than Bestiary's 9999 so it is always on top
+
+            var raycaster = customCardPanel.GetComponent<GraphicRaycaster>();
+            if (raycaster == null) customCardPanel.AddComponent<GraphicRaycaster>();
+
+            // Ensure close button is properly wired and on top of all card graphics
+            WireCloseButton();
+
+            // Disable raycast target on all decorative/text elements so they never intercept clicks intended for the close button
+            DisableRaycastsOnCardContent(customCardPanel);
+
+            if (customPhoto != null)
+            {
+                UIThemeManager.ApplyAspectFillCrop(customPhoto, data.habitatPhoto);
+                customPhoto.gameObject.SetActive(data.habitatPhoto != null);
+                customPhoto.color = Color.white;
+            }
+
+            if (customHabitatName != null)            customHabitatName.text            = data.habitatName;
+            if (customCategory != null)               customCategory.text               = data.category;
+            if (customZone != null)                   customZone.text                   = $"Zone: {zoneName}";
+            if (customDepth != null)                  customDepth.text                  = $"Depth: {data.depthRangeText}";
+            if (customReward != null)                 customReward.text                 = isSurveyed ? "Habitat Cataloged in Bestiary" : $"+{data.rdpReward} RDP (Survey in Ocean)";
+
+            if (customEcologicalSignificance != null && customEcologicalSignificance != customDescription)
+            {
+                customEcologicalSignificance.gameObject.SetActive(true);
+                customEcologicalSignificance.text = data.ecologicalSignificance;
+            }
+
+            if (customFact != null && customFact != customDescription)
+            {
+                customFact.gameObject.SetActive(true);
+                customFact.text = data.interestingFact;
+            }
+
+            // Populate description container (either standalone overview or combined if dedicated fields are not assigned)
+            if (customDescription != null)
+            {
+                if (customEcologicalSignificance != null || customFact != null)
+                {
+                    customDescription.text = data.habitatDescription;
+                }
+                else
+                {
+                    customDescription.text =
+                        $"<b>HABITAT OVERVIEW:</b>\n{data.habitatDescription}\n\n" +
+                        $"<color=#77ddbb><b>ECOLOGICAL SIGNIFICANCE:</b></color>\n{data.ecologicalSignificance}\n\n" +
+                        $"<color=#ffe24a><b>✦ DID YOU KNOW?</b></color>\n{data.interestingFact}";
+                }
+            }
+        }
+        else
+        {
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+            if (_panel == null) BuildPanel();
+            if (_panel != null)
+            {
+                _panel.gameObject.SetActive(true);
+                _panel.SetAsLastSibling();
+            }
+
+            PopulateProgrammaticCard(data, zoneName, isSurveyed);
+        }
+
+        UIThemeManager.ApplyAntoneTheme(customCardPanel != null ? customCardPanel : (_panel != null ? _panel.gameObject : gameObject));
+
+        if (customDescription != null) customDescription.fontSize = 24f;
+        if (customEcologicalSignificance != null) customEcologicalSignificance.fontSize = 24f;
+        if (customFact != null) customFact.fontSize = 24f;
+    }
+
     public void Show(EnvironmentFactTarget target)
     {
         if (target == null) return;
@@ -185,10 +325,13 @@ public class FactCardUI : MonoBehaviour
             var canvas = customCardPanel.GetComponent<Canvas>();
             if (canvas == null) canvas = customCardPanel.AddComponent<Canvas>();
             canvas.overrideSorting = true;
-            canvas.sortingOrder = 9999;
+            canvas.sortingOrder = 10005; // Higher than Bestiary's 9999
 
             var raycaster = customCardPanel.GetComponent<GraphicRaycaster>();
             if (raycaster == null) customCardPanel.AddComponent<GraphicRaycaster>();
+
+            WireCloseButton();
+            DisableRaycastsOnCardContent(customCardPanel);
 
             if (customPhoto != null)
             {
@@ -201,10 +344,35 @@ public class FactCardUI : MonoBehaviour
             if (customCategory != null)               customCategory.text               = target.Category;
             if (customZone != null)                   customZone.text                   = $"Zone: {zoneName}";
             if (customDepth != null)                  customDepth.text                  = $"Depth: {target.DepthRangeText}";
-            if (customDescription != null)            customDescription.text            = target.HabitatDescription;
-            if (customEcologicalSignificance != null) customEcologicalSignificance.text = $"Significance: {target.EcologicalSignificance}";
-            if (customFact != null)                   customFact.text                   = $"Did you know? {target.InterestingFact}";
             if (customReward != null)                 customReward.text                 = isNew ? $"+{target.RdpReward} RDP (Habitat Surveyed!)" : "Habitat Already Surveyed";
+
+            if (customEcologicalSignificance != null && customEcologicalSignificance != customDescription)
+            {
+                customEcologicalSignificance.gameObject.SetActive(true);
+                customEcologicalSignificance.text = target.EcologicalSignificance;
+            }
+
+            if (customFact != null && customFact != customDescription)
+            {
+                customFact.gameObject.SetActive(true);
+                customFact.text = target.InterestingFact;
+            }
+
+            // Populate description container (either standalone overview or combined if dedicated fields are not assigned)
+            if (customDescription != null)
+            {
+                if (customEcologicalSignificance != null || customFact != null)
+                {
+                    customDescription.text = target.HabitatDescription;
+                }
+                else
+                {
+                    customDescription.text =
+                        $"<b>HABITAT OVERVIEW:</b>\n{target.HabitatDescription}\n\n" +
+                        $"<color=#77ddbb><b>ECOLOGICAL SIGNIFICANCE:</b></color>\n{target.EcologicalSignificance}\n\n" +
+                        $"<color=#ffe24a><b>✦ DID YOU KNOW?</b></color>\n{target.InterestingFact}";
+                }
+            }
         }
         else
         {
@@ -220,6 +388,10 @@ public class FactCardUI : MonoBehaviour
         }
 
         UIThemeManager.ApplyAntoneTheme(customCardPanel != null ? customCardPanel : (_panel != null ? _panel.gameObject : gameObject));
+
+        if (customDescription != null) customDescription.fontSize = 24f;
+        if (customEcologicalSignificance != null) customEcologicalSignificance.fontSize = 24f;
+        if (customFact != null) customFact.fontSize = 24f;
     }
 
     public void Hide()
@@ -233,9 +405,52 @@ public class FactCardUI : MonoBehaviour
         {
             _panel.gameObject.SetActive(false);
         }
-        if (customCardPanel == gameObject)
+        gameObject.SetActive(false);
+    }
+
+    private void WireCloseButton()
+    {
+        Button btnToWire = customCloseButton;
+        if (btnToWire == null && customCardPanel != null)
         {
-            gameObject.SetActive(false);
+            btnToWire = customCardPanel.GetComponentInChildren<Button>(true);
+            if (btnToWire != null) customCloseButton = btnToWire;
+        }
+
+        if (btnToWire != null)
+        {
+            btnToWire.gameObject.SetActive(true);
+            btnToWire.interactable = true;
+            btnToWire.onClick.RemoveAllListeners();
+            btnToWire.onClick.AddListener(Hide);
+
+            // Ensure close button is visually in front of everything and its graphic receives raycasts
+            btnToWire.transform.SetAsLastSibling();
+            var btnImg = btnToWire.GetComponent<Image>();
+            if (btnImg != null) btnImg.raycastTarget = true;
+        }
+    }
+
+    private void DisableRaycastsOnCardContent(GameObject root)
+    {
+        if (root == null) return;
+
+        // Texts should never intercept clicks
+        foreach (var txt in root.GetComponentsInChildren<TMP_Text>(true))
+        {
+            txt.raycastTarget = false;
+        }
+
+        // Images that are NOT part of a Button should not intercept clicks
+        foreach (var img in root.GetComponentsInChildren<Image>(true))
+        {
+            if (img.GetComponent<Button>() == null && img.GetComponentInParent<Button>() == null)
+            {
+                if (img.gameObject.name != "FactCard" && img.gameObject.name != "Background" && img.gameObject.name != "Card" && img.gameObject != root)
+                {
+                    img.raycastTarget = false;
+                }
+            }
         }
     }
 
@@ -253,15 +468,49 @@ public class FactCardUI : MonoBehaviour
 
         if (_bodyText != null)
         {
+            string sourceNote = !string.IsNullOrEmpty(target.CitationSource)
+                ? $"\n\n<size=12><color=#88aa99><b>SOURCE:</b> {target.CitationSource}</color></size>"
+                : "";
             _bodyText.text =
                 $"<color=#77ddbb><b>HABITAT OVERVIEW:</b></color>\n{target.HabitatDescription}\n\n" +
                 $"<color=#77ddbb><b>ECOLOGICAL SIGNIFICANCE:</b></color>\n{target.EcologicalSignificance}\n\n" +
-                $"<color=#ffcc00><b>✦ DID YOU KNOW?</b></color>\n{target.InterestingFact}";
+                $"<color=#ffcc00><b>✦ DID YOU KNOW?</b></color>\n{target.InterestingFact}" +
+                sourceNote;
         }
 
         if (_rewardText != null)
         {
             _rewardText.text = isNew ? $"<color=#ffcc00>+{target.RdpReward} RDP</color>  Habitat Surveyed!" : "<color=#88ccff>Habitat Previously Surveyed</color>";
+        }
+    }
+
+    private void PopulateProgrammaticCard(HabitatLandmarkData data, string zoneName, bool isSurveyed)
+    {
+        if (_photo != null)
+        {
+            UIThemeManager.ApplyAspectFillCrop(_photo, data.habitatPhoto);
+            _photo.gameObject.SetActive(data.habitatPhoto != null);
+            _photo.color = Color.white;
+        }
+
+        if (_commonNameText != null) _commonNameText.text = data.habitatName;
+        if (_sciNameText != null)    _sciNameText.text    = $"{data.category}  •  {zoneName} ({data.depthRangeText})";
+
+        if (_bodyText != null)
+        {
+            string sourceNote = !string.IsNullOrEmpty(data.citationSource)
+                ? $"\n\n<size=12><color=#88aa99><b>SOURCE:</b> {data.citationSource}</color></size>"
+                : "";
+            _bodyText.text =
+                $"<color=#77ddbb><b>HABITAT OVERVIEW:</b></color>\n{data.habitatDescription}\n\n" +
+                $"<color=#77ddbb><b>ECOLOGICAL SIGNIFICANCE:</b></color>\n{data.ecologicalSignificance}\n\n" +
+                $"<color=#ffcc00><b>✦ DID YOU KNOW?</b></color>\n{data.interestingFact}" +
+                sourceNote;
+        }
+
+        if (_rewardText != null)
+        {
+            _rewardText.text = isSurveyed ? "<color=#88ccff>Habitat Cataloged in Bestiary</color>" : $"<color=#ffcc00>+{data.rdpReward} RDP</color>  Survey Landmark in Ocean";
         }
     }
 
@@ -321,7 +570,7 @@ public class FactCardUI : MonoBehaviour
         br.offsetMin = new Vector2(28f, 110f); br.offsetMax = new Vector2(-28f, -340f);
         _bodyText = bodyGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _bodyText.font = font;
-        _bodyText.fontSize = 32; _bodyText.color = Color.white;
+        _bodyText.fontSize = 24; _bodyText.color = Color.white;
         _bodyText.lineSpacing = 10f;
         _bodyText.paragraphSpacing = 10f;
         _bodyText.textWrappingMode = TextWrappingModes.Normal;

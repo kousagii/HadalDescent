@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow reef sand flats and lagoons (0\u201320 m)"
   depthRangeText: "0\u201320 m"
-  explorationHint: Glides over shallow sandy channels between coral formations.
+  explorationHint: "Shallow reef sand flats and lagoons (0–20 m)"
   secondaryZoneIndices: 
   characteristics: Flat oval body covered with bright blue spots.
   ecologicalRole: Hunts small fish and invertebrates on the seafloor.

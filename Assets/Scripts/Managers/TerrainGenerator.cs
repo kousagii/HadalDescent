@@ -169,6 +169,14 @@ public class TerrainGenerator : MonoBehaviour
         // --- Phase 2: Scatter environment props on the mesh ---
         _propScatterer.Scatter(_meshGen, this, envPropSet, _zoneW, _zoneL, _pcgSeed);
 
+        // --- Phase 2.5: Procedurally place habitat landmark POIs atop the generated seabed ---
+        var landmarkSpawner = FindFirstObjectByType<HabitatLandmarkSpawner>();
+        if (landmarkSpawner == null)
+        {
+            landmarkSpawner = gameObject.AddComponent<HabitatLandmarkSpawner>();
+        }
+        landmarkSpawner.SpawnLandmarksForZone(zoneIndex);
+
         // --- Phase 3: Spawn species onto the generated seabed ---
         var spawner = FindFirstObjectByType<SpeciesSpawner>();
         if (spawner != null)

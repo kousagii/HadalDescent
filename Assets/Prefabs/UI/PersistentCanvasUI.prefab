@@ -131,8 +131,8 @@ MonoBehaviour:
   zoneNameLabel: {fileID: 1758753633734490029}
   sonarMapImage: {fileID: 5752302155294920844}
   rdpLabel: {fileID: 8252387908377986703}
-  scanButtonImage: {fileID: 8675187279160573103}
-  interactButtonImage: {fileID: 2591745527942049960}
+  scanButtonImage: {fileID: 2591745527942049960}
+  interactButtonImage: {fileID: 8675187279160573103}
   depthTracker: {fileID: 0}
   scannerSystem: {fileID: 0}
 --- !u!114 &5825510617409785806
@@ -799,11 +799,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3106910634620062050, guid: 778ed2e66ef71974abdecfa31465b11c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -700
+      value: -600
       objectReference: {fileID: 0}
     - target: {fileID: 3106910634620062050, guid: 778ed2e66ef71974abdecfa31465b11c, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -250.00002
+      value: -250
       objectReference: {fileID: 0}
     - target: {fileID: 3106910634620062050, guid: 778ed2e66ef71974abdecfa31465b11c, type: 3}
       propertyPath: m_LocalPosition.x

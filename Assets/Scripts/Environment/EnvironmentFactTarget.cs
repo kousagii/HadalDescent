@@ -13,6 +13,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnvironmentFactTarget : MonoBehaviour
 {
+    [Header("Data Asset (Optional - overrides manual fields below)")]
+    [Tooltip("Assign a HabitatLandmarkData asset to auto-populate all fields. If set, manual fields below are ignored.")]
+    [SerializeField] private HabitatLandmarkData dataAsset;
+
     [Header("Identity & Tracking")]
     [Tooltip("Unique ID for saving survey state (e.g. 'fact_coral_atoll_01').")]
     [SerializeField] private string factId = "fact_habitat_01";
@@ -52,26 +56,37 @@ public class EnvironmentFactTarget : MonoBehaviour
     [SerializeField] private Sprite habitatPhoto;
 
     // -----------------------------------------------------------------------
-    // Properties
+    // Properties (data asset takes priority when assigned)
+    // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
 
-    public string FactId                 => string.IsNullOrEmpty(factId) ? gameObject.name : factId;
-    public string HabitatName            => habitatName;
-    public string Category               => category;
-    public int    ZoneIndex              => zoneIndex;
-    public string DepthRangeText         => depthRangeText;
-    public string HabitatDescription     => habitatDescription;
-    public string EcologicalSignificance => ecologicalSignificance;
-    public string InterestingFact        => interestingFact;
-    public int    RdpReward              => rdpReward;
-    public Sprite HabitatPhoto           => habitatPhoto;
+    public string FactId                 => (dataAsset != null && !string.IsNullOrEmpty(dataAsset.factId)) ? dataAsset.factId : (string.IsNullOrEmpty(factId) ? gameObject.name : factId);
+    public string HabitatName            => dataAsset != null ? dataAsset.habitatName : habitatName;
+    public string Category               => dataAsset != null ? dataAsset.category : category;
+    public int    ZoneIndex              => dataAsset != null ? dataAsset.zoneIndex : zoneIndex;
+    public string DepthRangeText         => dataAsset != null ? dataAsset.depthRangeText : depthRangeText;
+    public string HabitatDescription     => dataAsset != null ? dataAsset.habitatDescription : habitatDescription;
+    public string EcologicalSignificance => dataAsset != null ? dataAsset.ecologicalSignificance : ecologicalSignificance;
+    public string InterestingFact        => dataAsset != null ? dataAsset.interestingFact : interestingFact;
+    public int    RdpReward              => dataAsset != null ? dataAsset.rdpReward : rdpReward;
+    public Sprite HabitatPhoto           => dataAsset != null ? dataAsset.habitatPhoto : habitatPhoto;
+    public BiomeBand TargetBiome         => dataAsset != null ? dataAsset.targetBiome : _targetBiome;
+    public string CitationSource         => dataAsset != null ? dataAsset.citationSource : _citationSource;
+
+    [SerializeField] private BiomeBand _targetBiome = BiomeBand.Hard;
+    [SerializeField] private string _citationSource = "NOAA Coral Reef Conservation Program / Smithsonian Ocean Portal";
 
     public bool IsSurveyed
     {
         get
         {
             if (GameManager.Instance != null)
-                return GameManager.Instance.IsDiscovered(FactId);
+            {
+                if (GameManager.Instance.IsDiscovered(FactId)) return true;
+                if (FactId == "fact_sun_coral_reef" && GameManager.Instance.IsDiscovered("fact_sun_barrier_reef")) return true;
+                if (FactId == "fact_sun_seagrass_bed" && GameManager.Instance.IsDiscovered("fact_sun_kelp_canopy")) return true;
+                return false;
+            }
             return _isSurveyedLocal;
         }
         set
@@ -123,7 +138,7 @@ public class EnvironmentFactTarget : MonoBehaviour
         if (trackable == null)
         {
             trackable = gameObject.AddComponent<SonarTrackable>();
-            trackable.Initialize(SonarTrackable.SonarTargetType.Environment, habitatName, IsSurveyed);
         }
+        trackable.Initialize(SonarTrackable.SonarTargetType.Environment, HabitatName, IsSurveyed);
     }
 }

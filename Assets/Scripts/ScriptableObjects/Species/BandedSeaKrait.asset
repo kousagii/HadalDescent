@@ -19,7 +19,7 @@ MonoBehaviour:
   zoneIndex: 0
   habitat: "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
   depthRangeText: "0\u201310 m"
-  explorationHint: Swims gracefully through shallow coral branches near the surface.
+  explorationHint: "Shallow coral reefs, mangroves, and rocky shores (0–10 m)"
   secondaryZoneIndices: 
   characteristics: Black stripes and a yellow snout, with a paddle-like tail for
     use in swimming.

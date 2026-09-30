@@ -45,6 +45,11 @@ public class CreatureLocomotion : MonoBehaviour
     private float _currentBankAngle;
     private float _previousYaw;
 
+    // Per-instance random phase offsets for animation desync
+    private float _hoverPhaseX;
+    private float _hoverPhaseY;
+    private float _hoverPhaseZ;
+
     // Benthic state
     private Vector3 _groundNormal = Vector3.up;
     private float   _groundY = -200f;
@@ -88,11 +93,40 @@ public class CreatureLocomotion : MonoBehaviour
     public void Initialize(SpeciesData data)
     {
         _data = data;
-        _cycleTimer = Random.Range(0f, 5f); // desynchronize individuals
+        _cycleTimer = Random.Range(0f, 20f); // wide desync window across individuals
 
-        if (_visualModel != null && _visualModel != transform)
+        // Per-instance random phase offsets for hover wobble desync
+        _hoverPhaseX = Random.Range(0f, Mathf.PI * 2f);
+        _hoverPhaseY = Random.Range(0f, Mathf.PI * 2f);
+        _hoverPhaseZ = Random.Range(0f, Mathf.PI * 2f);
+
+        if (_visualModel != null)
         {
             _baseModelScale = _visualModel.localScale;
+        }
+
+        // Desynchronize skeletal animation playback across individuals
+        // Each creature starts at a random point in its animation clip with a
+        // subtle speed variation so they drift further apart over time.
+        if (_animator != null && _animator.runtimeAnimatorController != null)
+        {
+            // Wait one frame for the state machine to initialize, then offset
+            StartCoroutine(DesyncAnimatorCoroutine());
+        }
+    }
+
+    private System.Collections.IEnumerator DesyncAnimatorCoroutine()
+    {
+        yield return null; // let Animator.Start() execute first
+
+        if (_animator != null)
+        {
+            var stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+            float randomOffset = Random.Range(0f, 1f);
+            _animator.Play(stateInfo.fullPathHash, 0, randomOffset);
+
+            // Subtle per-individual speed variation (±8%) so they drift apart naturally
+            _animator.speed *= Random.Range(0.92f, 1.08f);
         }
     }
 
@@ -199,9 +233,14 @@ public class CreatureLocomotion : MonoBehaviour
     private void UpdateHoverBurst(Vector3 steerDir, float targetSpeed)
     {
         _burstTimer += Time.fixedDeltaTime;
-        float burstInterval = Mathf.Max(0.5f, 1f / Mathf.Max(0.1f, _data.pulseFrequency));
+        float burstInterval = Mathf.Max(0.8f, 1f / Mathf.Max(0.1f, _data.pulseFrequency));
 
-        if (_burstTimer >= burstInterval)
+        // Measure how close the creature is to its current goal;
+        // when nearly arrived, suppress bursts and wobble to prevent jittering in place
+        float steerMagnitude = steerDir.magnitude;
+        bool nearGoal = steerMagnitude < 0.15f;
+
+        if (!nearGoal && _burstTimer >= burstInterval)
         {
             _burstTimer = 0f;
             _isBursting = true;
@@ -218,21 +257,26 @@ public class CreatureLocomotion : MonoBehaviour
         }
         else
         {
-            // Gentle hovering station drift
-            float hoverSpeed = targetSpeed * 0.2f;
+            // Gentle hovering station drift — slower when near goal to avoid oscillation
+            float hoverFraction = nearGoal ? 0.05f : 0.2f;
+            float hoverSpeed = targetSpeed * hoverFraction;
             _currentSpeed = Mathf.Lerp(_currentSpeed, hoverSpeed, 4f * Time.fixedDeltaTime);
         }
 
-        // Add subtle hummingbird-like hover jitter
+        // Subtle hummingbird-like hover wobble with per-instance phase offsets
+        // Dampen wobble when near goal to eliminate stationary jitter
+        float wobbleDamping = nearGoal ? 0.15f : 1.0f;
         Vector3 hoverWobble = new Vector3(
-            Mathf.Cos(_cycleTimer * 7f) * 0.15f,
-            Mathf.Sin(_cycleTimer * 5f) * 0.15f,
-            Mathf.Sin(_cycleTimer * 6f) * 0.15f);
+            Mathf.Cos(_cycleTimer * 7f + _hoverPhaseX) * 0.12f * wobbleDamping,
+            Mathf.Sin(_cycleTimer * 5f + _hoverPhaseY) * 0.10f * wobbleDamping,
+            Mathf.Sin(_cycleTimer * 6f + _hoverPhaseZ) * 0.12f * wobbleDamping);
 
         Vector3 moveStep = (steerDir.normalized * _currentSpeed + hoverWobble) * Time.fixedDeltaTime;
         _rb.MovePosition(_rb.position + moveStep);
 
-        ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 40f);
+        // Only rotate toward steer direction when actually moving; prevents snappy rotation jitter at rest
+        if (steerMagnitude > 0.05f)
+            ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 40f);
     }
 
     // -----------------------------------------------------------------------
