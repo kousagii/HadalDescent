@@ -391,3 +391,195 @@ In nature, organisms of the same species are never identical clones. In [`Specie
 * **Depth Perception:** In [`ZoneConfig.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/ZoneConfig.cs) and [`SunlightAtmosphereVFX.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Environment/SunlightAtmosphereVFX.cs), linear fog distances ($25\text{m} - 140\text{m}$) cause large creatures (dolphin pods, reef sharks) and towering rock spires to resolve into dark silhouette shapes at $40\text{m} - 70\text{m}$.
 * **Curiosity-Driven Exploration:** Shimmering godray caustics backlight these silhouettes in the mid-water column, beckoning the player forward to discover and scan the species.
 
+---
+
+## 8. Habitat Landmark Survey System
+
+Habitat Landmarks are large, hand-crafted prefab POIs (Points of Interest) that represent the signature ecological formations of each ocean depth zone. They serve a dual educational purpose:
+
+1. **In-Game Survey POI:** The player discovers and scans landmarks using the submarine scanner. First-time surveys award RDP and trigger an **Environment Fact Card** displaying real scientific data with citations.
+2. **Bestiary Habitat Entry:** Surveyed landmarks are permanently recorded in the Bestiary as habitat cards, allowing the player to revisit the educational content.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────┐     ┌──────────────────────────────────────┐
+│  HabitatLandmarkData (.asset)   │     │      HabitatLandmarkRegistry         │
+│  ScriptableObject per landmark  │────►│  Master list, grouped by zoneIndex   │
+│  (factId, habitat info, biome,  │     │  Resources/HabitatLandmarkRegistry   │
+│   citations, RDP reward, photo) │     └────────────────┬─────────────────────┘
+└─────────────────────────────────┘                      │
+                                                         ▼
+                                        ┌──────────────────────────────────────┐
+                                        │     HabitatLandmarkSpawner.cs        │
+                                        │  • Seed-based deterministic placement│
+                                        │  • Biome-aware flat surface search   │
+                                        │  • Raycast terrain surface snapping  │
+                                        │  • SonarTrackable + FactTarget auto  │
+                                        └────────────────┬─────────────────────┘
+                                                         │
+                                        ┌────────────────┴─────────────────────┐
+                                        ▼                                      ▼
+                          ┌──────────────────────┐            ┌──────────────────────────┐
+                          │ EnvironmentFactTarget │            │       FactCardUI          │
+                          │ (Attached to prefab)  │───scan────►│ Displays habitat info,    │
+                          │ • factId, habitatName │            │ ecological significance,  │
+                          │ • IsSurveyed tracking │            │ interesting fact, photo,  │
+                          │ • Collider auto-gen   │            │ citations, & RDP reward   │
+                          └──────────────────────┘            └──────────────────────────┘
+```
+
+### Key Scripts
+
+| Script | Path | Role |
+| :--- | :--- | :--- |
+| **HabitatLandmarkData** | [`HabitatLandmarkData.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Environment/HabitatLandmarkData.cs) | ScriptableObject storing all educational data for one landmark |
+| **HabitatLandmarkRegistry** | [`HabitatLandmarkRegistry.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Environment/HabitatLandmarkRegistry.cs) | Master list of all landmark data assets, queryable by zone |
+| **HabitatLandmarkSpawner** | [`HabitatLandmarkSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/HabitatLandmarkSpawner.cs) | Places/snaps landmark prefabs onto terrain at runtime |
+| **EnvironmentFactTarget** | [`EnvironmentFactTarget.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Environment/EnvironmentFactTarget.cs) | Component on each landmark enabling scanner interaction |
+| **FactCardUI** | [`FactCardUI.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/UI/FactCardUI.cs) | UI popup displaying the habitat fact card |
+
+### Data Asset Fields (`HabitatLandmarkData`)
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `factId` | `string` | Unique save-state ID (e.g. `fact_sun_coral_reef`) |
+| `habitatName` | `string` | Display name shown on the fact card |
+| `category` | `string` | Scientific classification (e.g. "Biogenic Aragonite Ecosystem") |
+| `zoneIndex` | `int (0–4)` | Ocean zone: 0=Sunlight, 1=Twilight, 2=Midnight, 3=Abyss, 4=Hadal |
+| `depthRangeText` | `string` | Displayed depth range (e.g. "50–100 m") |
+| `habitatDescription` | `string` | Scientific description of the formation |
+| `ecologicalSignificance` | `string` | Ecological role and importance |
+| `interestingFact` | `string` | "Did you know?" educational fact |
+| `targetBiome` | `BiomeBand` | Which procedural biome band the landmark spawns in (Hard, Soft, etc.) |
+| `citationSource` | `string` | Authoritative scientific source for the educational content |
+| `rdpReward` | `int` | Research Data Points awarded on first survey |
+| `habitatPhoto` | `Sprite` | Photo or illustration shown on the fact card |
+
+---
+
+### Current Habitat Landmarks (4 Active)
+
+#### Zone 0 — Sunlight Zone (0–200 m)
+
+##### 1. Coral Reef Matrix
+| Field | Value |
+| :--- | :--- |
+| **Asset** | [`Landmark_Sun_BarrierReef.asset`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Landmarks/Landmark_Sun_BarrierReef.asset) |
+| **Prefab** | [`Landmark_CoralReef.prefab`](file:///c:/Unity/HadalDescent/Assets/Prefabs/Environment/Landmarks/Landmark_CoralReef.prefab) (109 KB) |
+| **Fact ID** | `fact_sun_coral_reef` |
+| **Category** | Biogenic Aragonite Ecosystem |
+| **Depth Range** | 50–100 m |
+| **Target Biome** | Hard (BiomeBand.Hard) — spawns among coral reef plateaus |
+| **RDP Reward** | 75 |
+| **Description** | An expansive three-dimensional calcium carbonate fortress constructed over thousands of years by hermatypic stony corals (Scleractinia) and crustose coralline algae in sunlit waters. |
+| **Ecological Significance** | Known as the "rainforests of the sea," coral reefs support over 25% of all marine species while covering under 0.1% of the seafloor. They serve as vital natural breakwaters, attenuating up to 97% of coastal wave energy. |
+| **Interesting Fact** | Corals are animal colonies living in mutualism with photosynthetic microscopic algae (zooxanthellae). The algae produce up to 90% of the polyp's energy and provide corals their vibrant living coloration. |
+| **Citation** | NOAA Coral Reef Conservation Program / Smithsonian Ocean Portal |
+
+> [!NOTE]
+> **Placement Logic:** The spawner strictly searches for `BiomeBand.Hard` terrain with Y between -100 and -50 (depth 50–100 m). A dedicated coral reef fallback performs 60 extra sampling attempts in Hard biome at target depth 75 m if the standard flat-surface search fails.
+
+##### 2. Seagrass Bed
+| Field | Value |
+| :--- | :--- |
+| **Asset** | [`Landmark_Sun_KelpCanopy.asset`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Landmarks/Landmark_Sun_KelpCanopy.asset) |
+| **Prefab** | [`Landmark_SeaGrassBed.prefab`](file:///c:/Unity/HadalDescent/Assets/Prefabs/Environment/Landmarks/Landmark_SeaGrassBed.prefab) (263 KB) |
+| **Fact ID** | `fact_sun_seagrass_bed` |
+| **Category** | Marine Angiosperm Meadow |
+| **Depth Range** | 5–40 m |
+| **Target Biome** | Soft (BiomeBand.Soft) — spawns on sandy/silty sediment flats |
+| **RDP Reward** | 75 |
+| **Description** | Vast submerged meadows formed by marine angiosperms (true flowering plants) anchored into soft sands and silts in clear, sunlit coastal waters. |
+| **Ecological Significance** | Premier "blue carbon" sinks that bury organic carbon up to 35 times faster than tropical rainforests. Their dense rhizome roots stabilize loose seabed sediments and nurture juvenile fish, sea turtles, and dugongs. |
+| **Interesting Fact** | Unlike algae or seaweeds, seagrasses have true roots, veins, underwater flowers, and fruit. They pollinate completely submerged using specialized waterborne pollen grains carried by gentle ocean currents! |
+| **Citation** | United Nations Environment Programme (UNEP) / Smithsonian Marine Station |
+
+> [!NOTE]
+> **Anti-Float Logic:** The spawner samples the seabed height across 10 footprint offsets (covering the 40×30 m visual area) and sinks the root transform to `min(sampled heights) − 1.2 m`, ensuring every grass blade embeds firmly into the sediment rather than floating.
+
+---
+
+#### Zone 1 — Twilight Zone (200–1,000 m)
+
+##### 3. Whale Fall Oasis
+| Field | Value |
+| :--- | :--- |
+| **Asset** | [`Landmark_Twi_WhaleFall.asset`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Landmarks/Landmark_Twi_WhaleFall.asset) |
+| **Prefab** | [`Landmark_WhaleFall.prefab`](file:///c:/Unity/HadalDescent/Assets/Prefabs/Environment/Landmarks/Landmark_WhaleFall.prefab) (17 KB) |
+| **Fact ID** | `fact_twi_whale_fall` |
+| **Category** | Chemosynthetic Succession POI |
+| **Depth Range** | 400–850 m |
+| **Target Biome** | Soft (BiomeBand.Soft) — rests on deep silty terraces |
+| **RDP Reward** | 100 |
+| **Description** | The massive carcass of a great cetacean settled upon the dark bathyal seafloor, creating a localized biological bonanza. |
+| **Ecological Significance** | Fuels four distinct ecological succession stages spanning up to a century: mobile scavengers, enrichment opportunists, sulfophilic chemosynthesis, and reef bones. |
+| **Interesting Fact** | A single 40-ton whale carcass deposits the equivalent organic carbon of 2,000 years of ordinary marine snow to that seabed patch. |
+| **Citation** | NOAA Ocean Exploration / Monterey Bay Aquarium Research Institute (MBARI) |
+
+##### 4. Cold-Water Lophelia Mound
+| Field | Value |
+| :--- | :--- |
+| **Asset** | [`Landmark_Twi_ColdCoralMound.asset`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Landmarks/Landmark_Twi_ColdCoralMound.asset) |
+| **Prefab** | [`Landmark_ColdWaterCoralMound.prefab`](file:///c:/Unity/HadalDescent/Assets/Prefabs/Environment/Landmarks/Landmark_ColdWaterCoralMound.prefab) (13 KB) |
+| **Fact ID** | `fact_twi_cold_coral` |
+| **Category** | Deep-Sea Carbonate Bioherm |
+| **Depth Range** | 300–700 m |
+| **Target Biome** | Hard (BiomeBand.Hard) — anchors on rocky substrate outcrops |
+| **RDP Reward** | 100 |
+| **Description** | An ancient carbonate bioherm built entirely in perpetual darkness by *Lophelia pertusa* and *Madrepora* corals in chilly 4°C deep currents. |
+| **Ecological Significance** | Serves as deep-ocean biodiversity hotspots and breeding refuges for deep-water rockfish, squat lobsters, and fragile glass sponge gardens. |
+| **Interesting Fact** | Unlike shallow tropical corals, cold-water corals lack symbiotic photosynthetic algae (zooxanthellae) and filter 100% of sustenance from ocean currents. |
+| **Citation** | NOAA Ocean Exploration / ATLAS Deep-Sea Project |
+
+---
+
+### Spawning Algorithm (`HabitatLandmarkSpawner.cs`)
+
+The spawner runs after `TerrainGenerator` builds the ocean floor mesh and uses the following pipeline:
+
+1. **Seed Determinism:** Each landmark index uses `Random.InitState(seed * 8191 + i * 1337 + 777)` to produce consistent placement across identical world seeds.
+2. **Biome-Aware Search:** The `FindFlatBiomeLocation()` algorithm queries `TerrainGenerator.GetBiomeAt()` to constrain each landmark to its `targetBiome` band (Hard for coral, Soft for seagrass/whale fall).
+3. **Flat Surface Detection:** Candidate positions must satisfy:
+   - Center terrain normal `y >= 0.90` (near-horizontal ground)
+   - Perimeter normal `y >= 0.85` across 4 cardinal footprint offsets
+   - Height variance `<= 4.0 m` across the landmark footprint
+4. **Raycast Surface Snapping:** A downward physics raycast from `surfacePos.y + 50m` ensures the prefab lands precisely on the mesh collider surface.
+5. **Slope Compliance:** A gentle 15% spherical lerp toward the terrain normal gives natural slope integration without awkward tilting.
+6. **Component Wiring:** `EnvironmentFactTarget` and `SonarTrackable` (Environment type, Radiant Yellow sonar blip) are auto-added if missing.
+
+### Fact Card UI Integration
+
+When the player scans a landmark:
+1. `EnvironmentFactTarget` is detected by the scanner raycast.
+2. `FactCardUI.ShowEnvironmentFact()` is called, loading or instantiating the Fact Card UI prefab.
+3. The card displays: habitat photo, name, category, zone, depth, description, ecological significance, interesting fact, and RDP reward.
+4. Body text fields (`Description`, `EcologicalRole/Significance`, `InterestingFact`) are enforced at **24px font size** specifically within the FactCardUI hierarchy.
+5. First-time surveys call `GameManager.AddRDP()` and register the landmark as discovered for Bestiary access.
+
+### Landmark Production Checklist
+
+```
+[X] = Active Prefab + Data Asset in Project
+[ ] = Planned / Future
+
+--- ZONE 0: SUNLIGHT ZONE (0–200 m) ---
+[X] Landmark_CoralReef         (Coral Reef Matrix, Hard biome, 50–100 m, 75 RDP)
+[X] Landmark_SeaGrassBed       (Seagrass Bed, Soft biome, 5–40 m, 75 RDP)
+
+--- ZONE 1: TWILIGHT ZONE (200–1,000 m) ---
+[X] Landmark_WhaleFall         (Whale Fall Oasis, Soft biome, 400–850 m, 100 RDP)
+[X] Landmark_ColdWaterCoralMound (Cold-Water Lophelia Mound, Hard biome, 300–700 m, 100 RDP)
+
+--- ZONE 2: MIDNIGHT ZONE (1,000–4,000 m) ---
+[ ] Landmark_HydrothermalVent  (Black Smoker Field, Special biome)
+[ ] Landmark_PillowBasalt      (Pillow Basalt Flow, Hard biome)
+
+--- ZONE 3: ABYSSAL ZONE (4,000–6,000 m) ---
+[ ] Landmark_ManganeseField    (Polymetallic Nodule Bed, Hard biome)
+[ ] Landmark_WhaleFallAbyss    (Ancient Whale Fall, Special biome)
+
+--- ZONE 4: HADAL ZONE (6,000–11,000+ m) ---
+[ ] Landmark_SubductionScarp   (Tectonic Fault Scarp, Rock biome)
+[ ] Landmark_SerpentiniteSeep  (Serpentinite Fluid Seep, Special biome)
+```

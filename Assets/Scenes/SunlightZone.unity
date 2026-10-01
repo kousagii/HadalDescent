@@ -1244,6 +1244,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScannerSystem
   baseRange: 18
   interactRange: 7
+  landmarkInteractRange: 38
   detectionRange: 100
   reticleBeamRadius: 0.5
   viewportAimThreshold: 0.12
@@ -1332,7 +1333,7 @@ MonoBehaviour:
   zoneIndex: 0
   triggerRadius: 14
   triggerCooldown: 180
-  testTriggerOnStart: 0
+  testTriggerOnStart: 1
   initialTestDelay: 4
   enablePeriodicSurge: 1
 --- !u!135 &1302282772

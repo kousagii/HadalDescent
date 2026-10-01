@@ -46,7 +46,7 @@ public class HazardDodgeMinigame : MonoBehaviour
     [Tooltip("Custom Falling Rock / Boulder 3D prefab.")]
     [SerializeField] private GameObject customRockPrefab;
 
-    [Tooltip("Custom High-Pressure Data Pod 3D prefab.")]
+    [Tooltip("Custom Rare Pearl / Collectible 3D prefab.")]
     [SerializeField] private GameObject customDataPodPrefab;
 
     [Header("Custom UI Canvas (Optional — procedural UI used if null)")]
@@ -1154,16 +1154,22 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private GameObject CreateProceduralDataPod(Vector3 worldPos)
     {
-        var go = new GameObject("DataPod");
+        var go = new GameObject("RarePearl");
         go.transform.position = worldPos;
 
-        // Golden/Cyan Spinning Diamond (Cube rotated 45 deg)
-        var diamond = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        diamond.transform.SetParent(go.transform, false);
-        diamond.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
-        diamond.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
-        diamond.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(1.0f, 0.82f, 0.15f, 0.95f));
-        Destroy(diamond.GetComponent<Collider>());
+        // Glowing Spherical Pearl (Luminous warm iridescent sphere)
+        var pearl = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        pearl.transform.SetParent(go.transform, false);
+        pearl.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+        pearl.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(1.0f, 0.94f, 0.80f, 0.98f)); // Glowing warm pearl
+        Destroy(pearl.GetComponent<Collider>());
+
+        // Outer aquatic bubble / aura around the glowing pearl
+        var bubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        bubble.transform.SetParent(go.transform, false);
+        bubble.transform.localScale = new Vector3(1.85f, 1.85f, 1.85f);
+        bubble.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(0.40f, 0.90f, 1.0f, 0.35f)); // Translucent cyan aquatic aura
+        Destroy(bubble.GetComponent<Collider>());
 
         return go;
     }
@@ -1682,7 +1688,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         _warningHintTMP.fontStyle = FontStyles.Bold;
         _warningHintTMP.alignment = TextAlignmentOptions.Center;
         _warningHintTMP.color = new Color(0.40f, 0.92f, 1f, 1f); // Soft cyan
-        _warningHintTMP.text = "COLLECT DATA PODS FOR BONUS RDP";
+        _warningHintTMP.text = "COLLECT RARE PEARLS FOR BONUS RDP";
         _warningHintTMP.raycastTarget = false;
 
         _warningBannerRoot.SetActive(false);
@@ -1834,6 +1840,19 @@ public class HazardDodgeMinigame : MonoBehaviour
         {
             AudioManager.Instance?.PlayAlert();
         }
+    }
+
+    /// <summary>
+    /// Customizes the warning banner text dynamically (e.g. for zone-specific hazards or tutorial briefings).
+    /// </summary>
+    public void SetWarningText(string title, string instruction = null, string hint = null)
+    {
+        if (_warningTitleTMP != null && !string.IsNullOrEmpty(title))
+            _warningTitleTMP.text = title;
+        if (_warningDescTMP != null && !string.IsNullOrEmpty(instruction))
+            _warningDescTMP.text = instruction;
+        if (_warningHintTMP != null && !string.IsNullOrEmpty(hint))
+            _warningHintTMP.text = hint;
     }
 
     private IEnumerator AnimateWarningBannerPulse()

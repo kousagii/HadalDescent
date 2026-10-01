@@ -178,6 +178,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     // Results UI
     private GameObject _resultsPanel;
 
+    // Toast Status Banner
+    private GameObject  _statusBannerRoot;
+    private CanvasGroup _statusBannerCanvasGroup;
+    private Coroutine   _statusBannerFadeCoroutine;
+
     private float _phaseTimeRemaining;
     private float _totalPhaseTime = 25f;
 
@@ -263,6 +268,17 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _trolleyX    = 0f;
         _clawY       = _clawRestY;
         _joystickHorizontalInput = 0f;
+
+        if (_statusBannerFadeCoroutine != null)
+        {
+            StopCoroutine(_statusBannerFadeCoroutine);
+            _statusBannerFadeCoroutine = null;
+        }
+        if (_statusBannerRoot != null)
+        {
+            _statusBannerRoot.SetActive(false);
+            if (_statusBannerCanvasGroup != null) _statusBannerCanvasGroup.alpha = 0f;
+        }
 
         // Utilities Tier 2 Perk: +25% claw drop and retrieval speed
         int utilTier = GameManager.Instance != null ? GameManager.Instance.UtilitiesTier : 1;
@@ -602,7 +618,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             foreach (var col in coralGO.GetComponentsInChildren<Collider>())
                 col.isTrigger = true;
 
-            _spawnedObstacles.Add(coralGO);
+            // Note: Coral is decorative scenery, NOT an obstacle with eco disturbance penalty.
+            // Do not add to _spawnedObstacles so dropping onto empty seabed incurs 0 penalty.
         }
 
         for (int i = 0; i < 2; i++)
@@ -775,11 +792,24 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customStatusTextLegacy == null && customStatusText == null) customStatusTextLegacy = FindDeepChild<Text>(customUIRoot, "Status", "StatusText", "Banner");
             if (customStatusText == null && customStatusTextLegacy == null)
             {
-                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.88f), new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(920f, 65f), new Color(0.02f, 0.06f, 0.12f, 0.88f));
-                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(880f, 55f));
+                // Disappearing bottom toast banner (no startup instructions, only shown for grabbed items and eco disturbance)
+                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(560f, 50f), new Color(0.02f, 0.06f, 0.12f, 0.90f));
+                _statusBannerRoot = autoBannerGO;
+                _statusBannerCanvasGroup = autoBannerGO.AddComponent<CanvasGroup>();
+                _statusBannerCanvasGroup.alpha = 0f;
+                _statusBannerRoot.SetActive(false);
+
+                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(520f, 42f));
                 customStatusText.enableAutoSizing = true;
                 customStatusText.fontSizeMin = 14;
                 customStatusText.fontSizeMax = 22;
+            }
+            else
+            {
+                _statusBannerRoot = (customStatusText != null) ? customStatusText.gameObject : customStatusTextLegacy.gameObject;
+                _statusBannerCanvasGroup = _statusBannerRoot.GetComponent<CanvasGroup>() ?? _statusBannerRoot.AddComponent<CanvasGroup>();
+                _statusBannerCanvasGroup.alpha = 0f;
+                _statusBannerRoot.SetActive(false);
             }
 
             // Auto-wire Phase 1 Controls
@@ -851,8 +881,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         CreateUIText(topBar.transform, "PhaseTitle", "REMOVAL PHASE", 36, new Vector2(0.50f, 0.5f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
         customTimerText = CreateUIText(topBar.transform, "TimerText", "Time: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
 
-        var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.86f), new Vector2(0.5f, 0.86f), Vector2.zero, new Vector2(920f, 65f), new Color(0.02f, 0.06f, 0.12f, 0.88f));
-        customStatusText = CreateUIText(bannerGO.transform, "StatusText", "Move claw with Joystick [◄ ►] | Tap button to drop claw", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(880f, 55f));
+        var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(560f, 50f), new Color(0.02f, 0.06f, 0.12f, 0.90f));
+        _statusBannerRoot = bannerGO;
+        _statusBannerCanvasGroup = bannerGO.AddComponent<CanvasGroup>();
+        _statusBannerCanvasGroup.alpha = 0f;
+        _statusBannerRoot.SetActive(false);
+
+        customStatusText = CreateUIText(bannerGO.transform, "StatusText", "", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(520f, 42f));
         customStatusText.enableAutoSizing = true;
         customStatusText.fontSizeMin = 14;
         customStatusText.fontSizeMax = 22;
@@ -872,7 +907,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var handleGO = CreateUIPanel(joyRoot.transform, "Handle", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(85f, 85f), new Color(0f, 0.93f, 0.85f, 0.9f));
         _joystickHandle = handleGO.GetComponent<RectTransform>();
 
-        var lbl = CreateUIText(joyRoot.transform, "JoyLabel", "MOVE CLAW\n◄  ►", 15, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white);
+        var lbl = CreateUIText(joyRoot.transform, "JoyLabel", "MOVE CLAW", 15, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white);
         lbl.raycastTarget = false;
 
         WireJoystickEvents(joyRoot);
@@ -1214,8 +1249,15 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         foreach (var obs in _spawnedObstacles)
         {
             if (obs == null) continue;
-            float dist = Vector3.Distance(clawPos, obs.transform.localPosition);
-            if (dist < 1.1f)
+            // Only swimming live species (fish) trigger eco disturbance
+            if (!obs.name.StartsWith("Obstacle_Fish", StringComparison.OrdinalIgnoreCase)) continue;
+
+            Vector3 obsPos = obs.transform.localPosition;
+            float dx = Mathf.Abs(clawPos.x - obsPos.x);
+            float dy = Mathf.Abs(clawPos.y - obsPos.y);
+
+            // Tight, fair bounding box for swimming live species
+            if (dx < 0.55f && dy < 0.38f)
             {
                 return true;
             }
@@ -1227,12 +1269,52 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     {
         _clawState = ClawState.Reeling;
         _phaseTimeRemaining = Mathf.Max(0f, _phaseTimeRemaining - 3f);
-        ShowStatusBanner("⚠ ECO-DISTURBANCE! AVOID LIVE SPECIES (-3s)", new Color(1f, 0.2f, 0.2f));
+        ShowStatusBanner("Eco disturbance (-3s)", new Color(1f, 0.35f, 0.35f));
     }
 
-    private void ShowStatusBanner(string msg, Color col)
+    private void ShowStatusBanner(string msg, Color col, float duration = 1.8f)
     {
         SetText(customStatusText, customStatusTextLegacy, msg, col);
+
+        if (_statusBannerRoot != null)
+        {
+            _statusBannerRoot.SetActive(true);
+            _statusBannerRoot.transform.SetAsLastSibling();
+            if (_statusBannerCanvasGroup != null)
+            {
+                _statusBannerCanvasGroup.alpha = 1f;
+            }
+
+            if (_statusBannerFadeCoroutine != null)
+            {
+                StopCoroutine(_statusBannerFadeCoroutine);
+            }
+            _statusBannerFadeCoroutine = StartCoroutine(FadeStatusBannerRoutine(duration));
+        }
+    }
+
+    private IEnumerator FadeStatusBannerRoutine(float displayDuration)
+    {
+        yield return new WaitForSeconds(displayDuration);
+
+        if (_statusBannerCanvasGroup != null)
+        {
+            float elapsed = 0f;
+            float fadeTime = 0.35f;
+            while (elapsed < fadeTime)
+            {
+                elapsed += Time.deltaTime;
+                _statusBannerCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeTime);
+                yield return null;
+            }
+            _statusBannerCanvasGroup.alpha = 0f;
+        }
+
+        if (_statusBannerRoot != null)
+        {
+            _statusBannerRoot.SetActive(false);
+        }
+        _statusBannerFadeCoroutine = null;
     }
 
     // -----------------------------------------------------------------------
@@ -1359,11 +1441,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         if (isCorrect)
         {
             _correctSortCount++;
-            ShowStatusBanner($"✓ CORRECT! +15 RDP ({selectedCategory.ToString().ToUpper()})", Color.green);
+            ShowStatusBanner($"✓ Correct! +15 RDP ({selectedCategory.ToString().ToUpper()})", new Color(0.2f, 0.95f, 0.4f), 1.6f);
         }
         else
         {
-            ShowStatusBanner($"✗ WRONG BIN! {currentItem.displayName} is {currentItem.category.ToString().ToUpper()}.", new Color(1f, 0.5f, 0f));
+            ShowStatusBanner($"✗ Wrong bin! Item is {currentItem.category.ToString().ToUpper()}", new Color(1f, 0.45f, 0.25f), 1.8f);
         }
 
         _sortingIndex++;
@@ -1390,6 +1472,17 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         if (customBinHazardous != null) customBinHazardous.gameObject.SetActive(false);
         if (customSortingItemText != null) customSortingItemText.gameObject.SetActive(false);
         if (customSortingItemTextLegacy != null) customSortingItemTextLegacy.gameObject.SetActive(false);
+
+        if (_statusBannerFadeCoroutine != null)
+        {
+            StopCoroutine(_statusBannerFadeCoroutine);
+            _statusBannerFadeCoroutine = null;
+        }
+        if (_statusBannerRoot != null)
+        {
+            _statusBannerRoot.SetActive(false);
+            if (_statusBannerCanvasGroup != null) _statusBannerCanvasGroup.alpha = 0f;
+        }
 
         int totalCleaned = _collectedDebris.Count;
         int accuracy = totalCleaned > 0 ? Mathf.RoundToInt(((float)_correctSortCount / totalCleaned) * 100f) : 100;
