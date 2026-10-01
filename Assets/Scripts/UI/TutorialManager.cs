@@ -1,42 +1,52 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Manages the step-by-step interactive tutorial workflow (Figures 3, 4, 5, 6, 7).
-///
-/// Features:
-///   - Initial "Start Tutorial?" prompt upon starting a New Game.
-///   - 8 sequential tutorial modules:
-///       0. Mission Overview
-///       1. HUD Orientation (Depth, RDP, Sonar, Bestiary, Objectives)
-///       2. Submarine Navigation (Look Drag, Joystick movement)
-///       3. Sonar System (Sonar blips for species, debris, hazards)
-///       4. Species Scanning (Lock-on, Capture & Focus / Reconstruction minigames, RDP)
-///       5. Bestiary Encyclopedia (3D models, facts, completion tracking)
-///       6. Environmental Cleanup (Robotic claw, bin sorting)
-///       7. Hazard Encounter (3-lane dodging, data pods)
-///       8. Submarine Upgrades (Hull pressure levels, shop progression)
-///   - "Next", "Skip", and "Replay" options.
-///   - Awards +100 Bonus RDP on completion and saves tutorial state.
+/// Manages the non-blocking event-driven interactive tutorial sequence.
+/// Implements HadalDescent_Interactive_Tutorial_Story_Plan.md:
+///   - Opening cinematic (~15s) via CinematicSequencer.cs
+///   - Step 0: Mission Overview
+///   - Step 1: HUD Orientation (sequential 5 arrow pointers)
+///   - Step 2: Submarine Navigation (sustained joystick input >= 2.0s)
+///   - Step 3: Sonar System & Color Radar Identification (Sonar legend + cyan blip proximity)
+///   - Step 4A: Species Encounter 1 (Minigame 1 Capture & Focus slideshow + scan)
+///   - Step 4B: Species Encounter 2 (Minigame 2 Reconstruction Scan slideshow + scan)
+///   - Step 5: Bestiary Marine Encyclopedia (3D Inspection & details review)
+///   - Step 6: Environmental Debris Cleanup (Seabed-anchored debris cluster + Minigame 3 slideshow + sort)
+///   - Step 7: Hazard Encounter: "Dangers Ahead" (Automated trigger Minigame 4 + slideshow + evasion)
+///   - Step 8: Submarine Upgrade Shop (Open Shop)
+///   - Graduation: +100 RDP Bonus & completion save
+///   - 4-Tier Non-compliance timers (20s nudge, 40s assist, 60s [SKIP STEP])
+///   - Three [SKIP TUTORIAL] touchpoints with confirmation modal
 /// </summary>
 public class TutorialManager : MonoBehaviour
 {
     public static TutorialManager Instance { get; private set; }
 
-    [System.Serializable]
-    public class TutorialStep
+    public enum TutorialPhase
     {
-        public string stepTitle;
-        [TextArea(3, 8)]
-        public string stepDescription;
-        public string objectivePrompt;
+        Inactive,
+        Cinematic,
+        Step0_MissionOverview,
+        Step1_HUDOrientation,
+        Step2_Navigation,
+        Step3_SonarSystem,
+        Step4A_ScanEncounter1,
+        Step4B_ScanEncounter2,
+        Step5_BestiaryReview,
+        Step6_DebrisCleanup,
+        Step7_HazardEncounter,
+        Step8_UpgradeShop,
+        Graduation,
+        Completed
     }
 
-    [Header("Custom UI Bindings (Optional)")]
+    [Header("Optional Custom UI References (Backwards Compatibility)")]
     [SerializeField] private GameObject customTutorialRoot;
     [SerializeField] private TMP_Text   customStepNumberText;
     [SerializeField] private TMP_Text   customTitleText;
@@ -45,95 +55,52 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private Button     customNextButton;
     [SerializeField] private Button     customSkipButton;
 
-    [Header("Custom Prompt Dialog (Optional)")]
+    [Header("Confirmation Modal (Optional)")]
     [SerializeField] private GameObject customPromptModal;
     [SerializeField] private Button     customPromptStartBtn;
     [SerializeField] private Button     customPromptSkipBtn;
 
-    [Header("Custom Completion Dialog (Optional)")]
+    [Header("Graduation / Completion Modal (Optional)")]
     [SerializeField] private GameObject customCompletionModal;
     [SerializeField] private Button     customCompletionProceedBtn;
     [SerializeField] private Button     customCompletionReplayBtn;
 
-    // Procedural UI References
-    private GameObject _proceduralCanvasGO;
-    private GameObject _proceduralPromptModal;
-    private GameObject _proceduralStepCard;
-    private GameObject _proceduralCompletionModal;
-    private TMP_Text   _proceduralStepNumText;
-    private TMP_Text   _proceduralTitleText;
-    private TMP_Text   _proceduralDescText;
-    private TMP_Text   _proceduralObjectiveText;
-    private Button     _proceduralNextBtn;
-    private TMP_Text   _proceduralNextBtnText;
+    // Runtime state
+    private TutorialPhase _currentPhase = TutorialPhase.Inactive;
+    public TutorialPhase CurrentPhase => _currentPhase;
+    public bool IsTutorialActive => _currentPhase != TutorialPhase.Inactive && _currentPhase != TutorialPhase.Completed;
+    public bool IsTutorialModalOpen => (_skipConfirmModal != null && _skipConfirmModal.activeSelf) ||
+                                       (customPromptModal != null && customPromptModal.activeSelf) ||
+                                       (customCompletionModal != null && customCompletionModal.activeSelf);
+    public bool IsTutorialOpen   => IsTutorialModalOpen;
 
-    private int _currentStepIndex = 0;
-    private bool _isTutorialActive = false;
-    public bool IsTutorialOpen => _isTutorialActive
-                               || (customPromptModal != null && customPromptModal.activeInHierarchy)
-                               || (customTutorialRoot != null && customTutorialRoot.activeInHierarchy)
-                               || (customCompletionModal != null && customCompletionModal.activeInHierarchy)
-                               || (_proceduralPromptModal != null && _proceduralPromptModal.activeInHierarchy)
-                               || (_proceduralStepCard != null && _proceduralStepCard.activeInHierarchy)
-                               || (_proceduralCompletionModal != null && _proceduralCompletionModal.activeInHierarchy);
+    // Non-compliance timers
+    private float _phaseTimer = 0f;
+    private bool  _tier1Nudged = false;
+    private bool  _tier2Assisted = false;
+    private bool  _tier3SkipStepAvailable = false;
+    private bool  _species1VisualConfirmed = false;
+    private bool  _step2NavigationHandled = false;
+    private bool  _bestiaryOpenedInStep5 = false;
+    private bool  _step6DebrisHandled = false;
+    private bool  _step6DebrisCleanedTriggered = false;
+    private bool  _step7CompletedHandled = false;
 
-    private readonly TutorialStep[] _steps = new TutorialStep[]
-    {
-        new TutorialStep
-        {
-            stepTitle = "EXPEDITION MISSION OVERVIEW",
-            stepDescription = "Welcome, Marine Researcher!\n\nYou have been deployed to the Philippine Sea aboard a state-of-the-art exploration submersible.\n\nYour mission is to explore all 5 ocean depth zones, research endemic marine species, collect underwater pollutants, survive environmental hazards, and upgrade your submarine.\n\nTo progress to the next zone, you need to document half the species and upgrade your submarine hull.",
-            objectivePrompt = "Tap 'NEXT' to begin HUD & Controls Orientation."
-        },
-        new TutorialStep
-        {
-            stepTitle = "1. HUD & GAUGES ORIENTATION",
-            stepDescription = "• <b>Top-Left HUD:</b> Depth Gauge displays your current depth in metres. The circular Sonar Map tracks nearby entities in real time.\n• <b>Top-Right HUD:</b> RDP Counter tracks earned research currency. The Shop and Bestiary buttons manage your upgrades and biological records.\n• <b>Bottom HUD:</b> Steering Joystick, Scanner, and Interact buttons control your submersible.",
-            objectivePrompt = "Observe your HUD indicators, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "2. SUBMARINE NAVIGATION",
-            stepDescription = "• <b>Cockpit Look & Aim:</b> Drag anywhere across the exploration viewport to rotate your camera yaw and pitch.\n• <b>Propulsion:</b> Use the left joystick to steer forward, backward, left, and right.\n• Moving forward while aiming up or down controls your vertical ascent and descent.",
-            objectivePrompt = "Practice looking and steering, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "3. SONAR SYSTEM & MAPPING",
-            stepDescription = "• The Sonar Map in the top-left continuously emits acoustic pulses to detect surroundings:\n  - <color=#00e5ff><b>Cyan Markers:</b></color> Marine species swimming nearby.\n  - <color=#ffd700><b>Yellow Markers:</b></color> Collectible environmental debris.\n  - <color=#ff4444><b>Red Markers:</b></color> Dangerous thermal vent plumes & hazard zones.\n• Upgrading Sonar in the Shop extends detection radius and adds elevation indicators.",
-            objectivePrompt = "Check your Sonar Map for nearby blips, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "4. SPECIES ENCOUNTER & SCANNING",
-            stepDescription = "• When approaching marine life, center the creature within your HUD <b>Scan Reticle</b>.\n• When locked on, tap <b>SCAN</b> to initiate research.\n• Complete the scanning mini-game (keep target inside the focus zone or solve the reconstruction puzzle) to document the species and earn <b>Research Data Points (RDP)</b>!",
-            objectivePrompt = "Aim at a species and practice scan targeting, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "5. BESTIARY MARINE ENCYCLOPEDIA",
-            stepDescription = "• Tap the <b>Bestiary</b> button (top-right book icon) at any time to open your field research encyclopedia.\n• Inspect interactive 3D models, scientific taxonomy, ecological roles, and fun facts for every discovered creature.\n• Undiscovered organisms remain as silhouettes with habitat clues to guide your search.",
-            objectivePrompt = "Review the Bestiary catalog, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "6. ENVIRONMENTAL DEBRIS CLEANUP",
-            stepDescription = "• Throughout the seabed, you will encounter marine debris clusters that threaten ocean ecosystems.\n• Approach debris and tap <b>INTERACT</b> to deploy the robotic collection claw.\n• Classify and sort retrieved trash into <b>Plastics, Metals, and Hazardous Waste</b> bins to earn bonus RDP and increase species spawn rates!",
-            objectivePrompt = "Learn debris retrieval mechanics, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "7. HAZARD ENCOUNTER & SURVIVAL",
-            stepDescription = "• High-velocity hydrothermal plumes and rockfalls occasionally trigger an emergency <b>Hazard Dodge</b> sequence.\n• The camera transitions to a 3-lane top-down view. Swipe left/right to dodge incoming obstacles and collect bonus data pods!\n• Surviving awards high-yield survey data points without damaging your hull.",
-            objectivePrompt = "Prepare for hazard encounters, then tap 'NEXT'."
-        },
-        new TutorialStep
-        {
-            stepTitle = "8. SUBMARINE UPGRADE SHOP",
-            stepDescription = "• Open the <b>Shop</b> (top-right wrench icon) to spend your hard-earned RDP on submarine enhancements:\n  - <b>Hull Resistance (Tiers 1-5):</b> Withstand crushing pressure to unlock deeper ocean zones!\n  - <b>Engine, Sonar, Scanner, Lights:</b> Boost speed, scan area, focus size, and underwater visibility.\n• Reaching deeper zones requires both Hull upgrades and 50% species cataloged.",
-            objectivePrompt = "Review upgrade paths, then tap 'NEXT' to complete the tutorial."
-        }
-    };
+    // Submarine movement tracking (Step 2)
+    private float _sustainedMoveTimer = 0f;
+
+    // Targeted entities
+    private SpeciesAI     _tutorialSpecies1;
+    private SpeciesAI     _tutorialSpecies2;
+    private DebrisCluster _tutorialDebris;
+    private readonly List<SpeciesAI> _cachedSceneSpecies = new List<SpeciesAI>();
+    private readonly List<DebrisCluster> _cachedSceneDebris = new List<DebrisCluster>();
+
+    // Procedural Skip Confirmation Modal
+    private GameObject _skipConfirmModal;
+    private Canvas     _tutorialCanvas;
+
+    private Coroutine _step1Routine;
 
     private void Awake()
     {
@@ -148,11 +115,24 @@ public class TutorialManager : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        ScannerSystem.OnSpeciesScanned += OnSpeciesScannedHandler;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        ScannerSystem.OnSpeciesScanned -= OnSpeciesScannedHandler;
+    }
+
+    private void Start()
+    {
+        EnsureCanvas();
+        WireRadioCallbacks();
+
+        if (SceneManager.GetActiveScene().name == "SunlightZone" && !GameManager.IsTutorialCompleted())
+        {
+            StartCoroutine(InitTutorialRoutine());
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -160,191 +140,519 @@ public class TutorialManager : MonoBehaviour
         bool isMenu = scene.name == "MainMenu" || scene.name == "SplashScreen" || scene.name == "ZoneSelect";
         if (isMenu)
         {
-            HideAllTutorialModals();
+            AbortTutorial();
             return;
         }
 
         if (scene.name == "SunlightZone" && !GameManager.IsTutorialCompleted())
         {
-            StartCoroutine(PromptTutorialAfterSceneReady());
+            StartCoroutine(InitTutorialRoutine());
         }
     }
 
-    public void HideAllTutorialModals()
+    private void EnsureCanvas()
     {
-        if (customTutorialRoot != null) customTutorialRoot.SetActive(false);
-        if (customPromptModal != null) customPromptModal.SetActive(false);
-        if (customCompletionModal != null) customCompletionModal.SetActive(false);
-
-        if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
-        if (_proceduralStepCard != null) _proceduralStepCard.SetActive(false);
-        if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
+        if (_tutorialCanvas != null) return;
+        _tutorialCanvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
     }
 
-    private void Start()
+    private void WireRadioCallbacks()
     {
-        if (customTutorialRoot != null)
+        var radio = RadioTextboxUI.Instance;
+        if (radio != null)
         {
-            WireCustomUI();
-        }
+            radio.OnSkipTutorialRequested -= ShowSkipTutorialPrompt;
+            radio.OnSkipTutorialRequested += ShowSkipTutorialPrompt;
 
-        // Check if we should prompt the tutorial (e.g. New Game in SunlightZone)
-        if (!GameManager.IsTutorialCompleted() && SceneManager.GetActiveScene().name == "SunlightZone")
-        {
-            StartCoroutine(PromptTutorialAfterSceneReady());
+            radio.OnSkipStepRequested -= OnSkipStepClicked;
+            radio.OnSkipStepRequested += OnSkipStepClicked;
         }
     }
 
-    private IEnumerator PromptTutorialAfterSceneReady()
+    private IEnumerator InitTutorialRoutine()
     {
-        yield return new WaitForSeconds(0.5f);
-        if (!GameManager.IsTutorialCompleted() && SceneManager.GetActiveScene().name == "SunlightZone")
+        yield return new WaitForSeconds(0.6f);
+
+        if (GameManager.IsTutorialCompleted()) yield break;
+
+        HideAllTutorialEntities();
+
+        // Hide HUD skip button during opening cinematic (cinematic has its own middle-top skip button)
+        UIManager.Instance?.SetHUDSkipTutorialVisible(false);
+
+        // Check if CinematicSequencer is present or add it
+        var sequencer = CinematicSequencer.Instance ?? FindFirstObjectByType<CinematicSequencer>(FindObjectsInactive.Include);
+        if (sequencer == null)
         {
-            ShowTutorialPrompt();
+            var go = new GameObject("CinematicSequencer");
+            sequencer = go.AddComponent<CinematicSequencer>();
+        }
+
+        _currentPhase = TutorialPhase.Cinematic;
+        sequencer.PlayOpeningCinematic(OnCinematicFinished);
+    }
+
+    private void OnCinematicFinished()
+    {
+        if (_currentPhase != TutorialPhase.Cinematic) return;
+        UIManager.Instance?.SetHUDSkipTutorialVisible(true, ShowSkipTutorialPrompt);
+        StartStep0();
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 0 — Mission Overview
+    // -----------------------------------------------------------------------
+
+    public void StartTutorial() => StartStep0();
+
+    public void StartStep0()
+    {
+        _currentPhase = TutorialPhase.Step0_MissionOverview;
+        ResetPhaseTimers();
+
+        UIManager.Instance?.SetHUDSkipTutorialVisible(true, ShowSkipTutorialPrompt);
+        WireRadioCallbacks();
+
+        string speech = "Welcome aboard, Researcher. This is Dr. Santos at the Benham Rise Marine Station. "
+                      + "Submarine diagnostics are green. You are currently deployed in the Sunlight Zone. "
+                      + "Your mission: document marine species in the Philippine Sea to build our Marine Biodiversity Database. "
+                      + "Let's begin by testing your instruments.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Review mission parameters",
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step0_MissionOverview)
+                {
+                    StartStep1();
+                }
+            },
+            showSkipStep: false,
+            autoDismissDelay: 2.0f
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 1 — HUD Orientation (5 Sequential Pointers)
+    // -----------------------------------------------------------------------
+
+    public void StartStep1()
+    {
+        _currentPhase = TutorialPhase.Step1_HUDOrientation;
+        ResetPhaseTimers();
+
+        string speech = "Your submarine's instrument panel is online. Let me walk you through your displays.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Familiarize yourself with HUD instruments",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        if (_step1Routine != null) StopCoroutine(_step1Routine);
+        _step1Routine = StartCoroutine(Step1PointersRoutine());
+    }
+
+    private IEnumerator Step1PointersRoutine()
+    {
+        var arrow = TutorialArrowUI.Instance ?? FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
+        var ui = UIManager.Instance;
+
+        // 1. Depth Gauge (top-left)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetDepthGaugeRect();
+            if (r != null) arrow.PointAtHUD(r, "Current Depth (metres)", TutorialArrowUI.ArrowDirection.Left);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 2. Sonar Map (top-left circle)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetSonarMapRect();
+            if (r != null) arrow.PointAtHUD(r, "Sonar Radar", TutorialArrowUI.ArrowDirection.Left);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 3. RDP Counter (top-left cluster)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetRDPCounterRect();
+            if (r != null) arrow.PointAtHUD(r, "Research Data Points", TutorialArrowUI.ArrowDirection.Left);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 4. Shop Button (top-right wrench, pointing Up from below)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetShopButtonRect();
+            if (r != null) arrow.PointAtHUD(r, "Submarine Upgrade Shop", TutorialArrowUI.ArrowDirection.Up);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 5. Bestiary Button (top-right book, pointing Up from below)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetBestiaryButtonRect();
+            if (r != null) arrow.PointAtHUD(r, "Marine Biodiversity Bestiary", TutorialArrowUI.ArrowDirection.Up);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        arrow?.Hide();
+
+        // Finish all radio text from Step 1 before proceeding to Step 2
+        while (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy)
+        {
+            yield return null;
+        }
+
+        if (_currentPhase == TutorialPhase.Step1_HUDOrientation)
+        {
+            StartStep2();
         }
     }
 
     // -----------------------------------------------------------------------
-    // Tutorial Prompt Dialog (Figure 3)
+    // STEP 2 — Submarine Navigation & Viewport Controls
     // -----------------------------------------------------------------------
 
-    public void ShowTutorialPrompt()
+    public void StartStep2()
     {
-        if (customPromptModal != null)
+        _currentPhase = TutorialPhase.Step2_Navigation;
+        ResetPhaseTimers();
+        _sustainedMoveTimer = 0f;
+        _step2NavigationHandled = false;
+
+        var player = FindFirstObjectByType<PlayerMovement>(FindObjectsInactive.Include);
+        if (player != null) player.enabled = true;
+
+        var subCam = FindFirstObjectByType<SubmarineCamera>(FindObjectsInactive.Include);
+        if (subCam != null) subCam.enabled = true;
+
+        var dragZone = FindFirstObjectByType<TouchDragZone>(FindObjectsInactive.Include);
+        if (dragZone != null)
         {
-            customPromptModal.SetActive(true);
-            return;
+            dragZone.gameObject.SetActive(true);
+            dragZone.enabled = true;
         }
 
-        if (_proceduralPromptModal == null)
+        string speech = "Time to take the helm. Drag across the viewport to steer your camera view, "
+                      + "and push the directional joystick to navigate forward.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Steer submarine with joystick for 2 seconds",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        var arrow = TutorialArrowUI.Instance ?? FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
+        var ui = UIManager.Instance;
+        if (ui != null && arrow != null)
         {
-            BuildProceduralUI();
+            var stickRect = ui.GetJoystickRect();
+            if (stickRect != null)
+            {
+                arrow.PointAtHUD(stickRect, "USE JOYSTICK TO NAVIGATE", TutorialArrowUI.ArrowDirection.Down);
+            }
         }
-
-        if (_proceduralPromptModal != null)
-        {
-            _proceduralPromptModal.transform.SetAsLastSibling();
-            _proceduralPromptModal.SetActive(true);
-        }
-    }
-
-    public void OnPromptStartTutorial()
-    {
-        AudioManager.Instance?.PlayButtonClick();
-
-        if (customPromptModal != null) customPromptModal.SetActive(false);
-        if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
-
-        StartTutorial();
-    }
-
-    public void OnPromptSkipTutorial()
-    {
-        AudioManager.Instance?.PlayButtonClick();
-
-        if (customPromptModal != null) customPromptModal.SetActive(false);
-        if (_proceduralPromptModal != null) _proceduralPromptModal.SetActive(false);
-
-        GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped by player — proceeding directly to gameplay.");
-
-        ZoneSelectionUI.IsAfterTutorialFlow = false;
-        Time.timeScale = 1f;
-        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     // -----------------------------------------------------------------------
-    // Tutorial Step Progression (Figure 4)
+    // STEP 3 — Sonar System & Color Radar Identification
     // -----------------------------------------------------------------------
 
-    public void StartTutorial()
+    public void StartStep3()
     {
-        _isTutorialActive = true;
-        _currentStepIndex = 0;
+        _currentPhase = TutorialPhase.Step3_SonarSystem;
+        ResetPhaseTimers();
 
-        if (customTutorialRoot != null)
+        TutorialArrowUI.Instance?.Hide();
+
+        string speech = "Keep an eye on your sonar radar. Different contact signatures emit distinct frequencies: "
+                      + "Cyan markers indicate marine species. Yellow markers pinpoint habitat landmarks. "
+                      + "Orange markers reveal collectible debris, and Red markers highlight dangerous hazard zones. "
+                      + "Steer toward the nearest cyan blip.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Track and approach a Cyan species signature on sonar",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        // Show Sonar Legend Card
+        TutorialArrowUI.Instance?.SetSonarLegendVisible(true);
+
+        // Point arrow to Sonar Map
+        var ui = UIManager.Instance;
+        if (ui != null)
         {
-            customTutorialRoot.SetActive(true);
-        }
-        else
-        {
-            if (_proceduralStepCard == null) BuildProceduralUI();
-            if (_proceduralStepCard != null) _proceduralStepCard.SetActive(true);
-        }
-
-        DisplayCurrentStep();
-    }
-
-    private void DisplayCurrentStep()
-    {
-        if (_currentStepIndex < 0 || _currentStepIndex >= _steps.Length)
-        {
-            CompleteTutorial();
-            return;
+            var sonarRect = ui.GetSonarMapRect();
+            if (sonarRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(sonarRect, "SONAR RADAR CONTACTS", TutorialArrowUI.ArrowDirection.Left);
+            }
         }
 
-        TutorialStep step = _steps[_currentStepIndex];
-        string stepNum = $"TUTORIAL STEP {_currentStepIndex + 1} / {_steps.Length}";
-
-        // Update Custom UI
-        if (customStepNumberText != null) customStepNumberText.text = stepNum;
-        if (customTitleText != null) customTitleText.text = step.stepTitle;
-        if (customDescText != null) customDescText.text = step.stepDescription;
-        if (customObjectiveText != null) customObjectiveText.text = step.objectivePrompt;
-
-        // Update Procedural UI
-        if (_proceduralStepNumText != null) _proceduralStepNumText.text = stepNum;
-        if (_proceduralTitleText != null) _proceduralTitleText.text = step.stepTitle;
-        if (_proceduralDescText != null) _proceduralDescText.text = step.stepDescription;
-        if (_proceduralObjectiveText != null) _proceduralObjectiveText.text = step.objectivePrompt;
-
-        string nextLabel = (_currentStepIndex == _steps.Length - 1) ? "FINISH TUTORIAL" : "NEXT STEP";
-        if (_proceduralNextBtnText != null) _proceduralNextBtnText.text = nextLabel;
-    }
-
-    public void OnNextStepClicked()
-    {
-        AudioManager.Instance?.PlayButtonClick();
-
-        _currentStepIndex++;
-        if (_currentStepIndex < _steps.Length)
-        {
-            DisplayCurrentStep();
-        }
-        else
-        {
-            CompleteTutorial();
-        }
-    }
-
-    public void OnSkipTutorialClicked()
-    {
-        AudioManager.Instance?.PlayButtonClick();
-
-        if (customTutorialRoot != null) customTutorialRoot.SetActive(false);
-        if (_proceduralStepCard != null) _proceduralStepCard.SetActive(false);
-
-        _isTutorialActive = false;
-        GameManager.SetTutorialCompleted(true);
-        Debug.Log("[TutorialManager] Tutorial skipped — proceeding directly to gameplay.");
-
-        ZoneSelectionUI.IsAfterTutorialFlow = false;
-        Time.timeScale = 1f;
-        UIManager.Instance?.SetExplorationHUDVisible(true);
+        EnsureTutorialSpecies();
     }
 
     // -----------------------------------------------------------------------
-    // Tutorial Completion & Rewards
+    // STEP 4A — Species Encounter 1 (Minigame 1: Capture & Focus)
     // -----------------------------------------------------------------------
 
-    private void CompleteTutorial()
+    public void StartStep4A()
     {
-        _isTutorialActive = false;
+        _currentPhase = TutorialPhase.Step4A_ScanEncounter1;
+        ResetPhaseTimers();
 
-        if (customTutorialRoot != null) customTutorialRoot.SetActive(false);
-        if (_proceduralStepCard != null) _proceduralStepCard.SetActive(false);
+        TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
 
-        // Mark completed and award bonus RDP
+        string speech = "You have a creature in your sights! "
+                      + "Align the target in your reticle and tap SCAN.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Align creature in reticle and complete scan",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        // Point to Scan button
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var scanRect = ui.GetScanButtonRect();
+            if (scanRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 4B — Species Encounter 2 (Minigame 2: Reconstruction Scan)
+    // -----------------------------------------------------------------------
+
+    public void StartStep4B()
+    {
+        _currentPhase = TutorialPhase.Step4B_ScanEncounter2;
+        ResetPhaseTimers();
+
+        string speech = "Notice the different bio-signature on this second creature? Our automated scanner will switch "
+                      + "to the alternative scanning module. Lock on and initiate scan.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Scan second creature to calibrate all scanner modes",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        EnsureTutorialSpecies(isSecond: true);
+
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var scanRect = ui.GetScanButtonRect();
+            if (scanRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 5 — Bestiary Marine Encyclopedia
+    // -----------------------------------------------------------------------
+
+    public void StartStep5()
+    {
+        _currentPhase = TutorialPhase.Step5_BestiaryReview;
+        _bestiaryOpenedInStep5 = false;
+        ResetPhaseTimers();
+
+        string speech = "Open the Bestiary to review your documented specimens. Every discovered entry features two interactive views: "
+                      + "the 3D Model modal to inspect full creature anatomy, and the Detail Modal to view biological field photos, scientific classifications, "
+                      + "and ecological facts. If you ever feel lost, the search clues on undiscovered entries will guide your expedition.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Open Bestiary and inspect your scanned species",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var bestiaryRect = ui.GetBestiaryButtonRect();
+            if (bestiaryRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(bestiaryRect, "TAP TO OPEN BESTIARY", TutorialArrowUI.ArrowDirection.Right);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 6 — Environmental Debris Cleanup (Minigame 3)
+    // -----------------------------------------------------------------------
+
+    public void StartStep6()
+    {
+        _currentPhase = TutorialPhase.Step6_DebrisCleanup;
+        ResetPhaseTimers();
+
+        TutorialArrowUI.Instance?.Hide();
+
+        string speech = "Researcher, I'm detecting discarded ocean debris polluting the coral bed ahead. "
+                      + "Human pollution disrupts fragile marine life. Maneuver in close and deploy your robotic collection arm to collect and sort the waste.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Approach debris and tap INTERACT to sort waste",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        EnsureSeabedDebris();
+
+        if (_tutorialDebris != null)
+        {
+            TutorialArrowUI.Instance?.PointAtWorld(_tutorialDebris.transform, "DEBRIS CLUSTER", Vector3.up * 1.5f, TutorialArrowUI.ArrowDirection.Down);
+        }
+
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var interactRect = ui.GetInteractButtonRect();
+            if (interactRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(interactRect, "TAP TO DEPLOY ARM", TutorialArrowUI.ArrowDirection.Down);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 7 — Hazard Encounter: "Dangers Ahead" (Minigame 4)
+    // -----------------------------------------------------------------------
+
+    public void StartStep7()
+    {
+        _currentPhase = TutorialPhase.Step7_HazardEncounter;
+        ResetPhaseTimers();
+        _step7CompletedHandled = false;
+
+        TutorialArrowUI.Instance?.Hide();
+
+        var hazard = FindFirstObjectByType<HazardZoneTrigger>();
+        if (hazard != null)
+        {
+            TutorialArrowUI.Instance?.PointAtWorld(hazard.transform, "HAZARD ZONE", Vector3.up * 2f, TutorialArrowUI.ArrowDirection.Down);
+        }
+
+        string speech = "⚠️ DANGERS AHEAD — Turbulent reef current and seamount terrain detected! "
+                      + "Engage emergency evasive navigation. Swipe left and right across lanes to dodge falling rocks and vortexes. "
+                      + "Collect floating rare pearls along the route to earn bonus research data!";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Engage emergency evasion and collect rare pearls",
+            onComplete: () =>
+            {
+                // Automated trigger of Minigame 4 after radio speech completes
+                if (!_step7CompletedHandled && MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)
+                {
+                    TutorialArrowUI.Instance?.Hide();
+                    MinigameManager.Instance.TriggerHazardDodgeMinigame(
+                        0,
+                        onSuccess: (reward) => OnHazardCompleted(survived: true),
+                        onFail: () => OnHazardCompleted(survived: false)
+                    );
+                }
+            },
+            showSkipStep: false,
+            autoDismissDelay: 1.0f,
+            forceImmediate: true
+        );
+    }
+
+    public void OnHazardCompleted(bool survived)
+    {
+        if (_step7CompletedHandled) return;
+        _step7CompletedHandled = true;
+
+        TutorialArrowUI.Instance?.Hide();
+
+        string finishSpeech = survived
+            ? "Masterful evasive piloting! You navigated the turbulence and secured valuable survey data."
+            : "Hull alarms silenced. Even experienced deep-sea pilots take impacts. Reinforcing your hull at the Shop will increase your survival margin.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            finishSpeech,
+            "",
+            onComplete: () => StartStep8(),
+            showSkipStep: false,
+            autoDismissDelay: 2.5f,
+            forceImmediate: true
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // STEP 8 — Submarine Upgrade Shop
+    // -----------------------------------------------------------------------
+
+    public void StartStep8()
+    {
+        _currentPhase = TutorialPhase.Step8_UpgradeShop;
+        ResetPhaseTimers();
+
+        string speech = "You've earned Research Data Points from species scanning, debris removal, and hazard navigation. "
+                      + "Tap the Shop icon to inspect submarine upgrades.";
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "Open the Upgrade Shop",
+            onComplete: null,
+            showSkipStep: false
+        );
+
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var shopRect = ui.GetShopButtonRect();
+            if (shopRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(shopRect, "OPEN UPGRADE SHOP", TutorialArrowUI.ArrowDirection.Right);
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // GRADUATION
+    // -----------------------------------------------------------------------
+
+    public void GraduateTutorial()
+    {
+        _currentPhase = TutorialPhase.Graduation;
+        TutorialArrowUI.Instance?.Hide();
+        UIManager.Instance?.SetHUDSkipTutorialVisible(false);
+
+        // Award +100 RDP Expedition Bonus
         GameManager.SetTutorialCompleted(true);
         if (GameManager.Instance != null)
         {
@@ -352,420 +660,781 @@ public class TutorialManager : MonoBehaviour
             GameManager.Instance.SaveGame();
         }
 
-        // Show Completion Modal
-        if (customCompletionModal != null)
+        AudioManager.Instance?.PlayTutorialStepChime();
+
+        string speech = "All systems verified and operational. Your training certification is complete, Researcher. "
+                      + "The Philippine Sea holds 95 species waiting to be discovered across 5 depth zones. "
+                      + "The deep ocean is calling. Dr. Santos out.";
+
+        ObjectiveHUDUI.Instance?.SetObjective(ObjectiveHUDUI.PostTutorialDefaultObjective);
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            speech,
+            "TUTORIAL COMPLETE — +100 RDP EXPEDITION BONUS!",
+            onComplete: () =>
+            {
+                _currentPhase = TutorialPhase.Completed;
+                ObjectiveHUDUI.Instance?.SetObjective(ObjectiveHUDUI.PostTutorialDefaultObjective);
+            },
+            showSkipStep: false,
+            autoDismissDelay: 6.0f
+        );
+
+        RestoreAllTutorialEntities();
+        Debug.Log("[TutorialManager] Tutorial graduated successfully! Awarded +100 RDP.");
+    }
+
+    // -----------------------------------------------------------------------
+    // Update Loop & Non-Compliance Escalation
+    // -----------------------------------------------------------------------
+
+    private void Update()
+    {
+        if (!IsTutorialActive) return;
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
+        if (Time.timeScale <= 0f) return;
+
+        _phaseTimer += Time.unscaledDeltaTime;
+
+        // Non-compliance checks
+        if (_phaseTimer >= 20f && !_tier1Nudged)
         {
-            customCompletionModal.SetActive(true);
+            _tier1Nudged = true;
+            ApplyTier1Nudge();
+        }
+
+        if (_phaseTimer >= 40f && !_tier2Assisted)
+        {
+            _tier2Assisted = true;
+            ApplyTier2Assist();
+        }
+
+        if (_phaseTimer >= 60f && !_tier3SkipStepAvailable)
+        {
+            _tier3SkipStepAvailable = true;
+            RadioTextboxUI.Instance?.SetSkipStepVisible(true);
+        }
+
+        // Active Step State Checks
+        switch (_currentPhase)
+        {
+            case TutorialPhase.Step2_Navigation:
+                CheckStep2Navigation();
+                break;
+
+            case TutorialPhase.Step3_SonarSystem:
+                CheckStep3SonarProximity();
+                break;
+
+            case TutorialPhase.Step5_BestiaryReview:
+                CheckStep5Bestiary();
+                break;
+
+            case TutorialPhase.Step6_DebrisCleanup:
+                CheckStep6DebrisCleaned();
+                break;
+
+            case TutorialPhase.Step8_UpgradeShop:
+                CheckStep8ShopOpened();
+                break;
+        }
+    }
+
+    private void ResetPhaseTimers()
+    {
+        _phaseTimer = 0f;
+        _tier1Nudged = false;
+        _tier2Assisted = false;
+        _tier3SkipStepAvailable = false;
+        _species1VisualConfirmed = false;
+        _step2NavigationHandled = false;
+        _step6DebrisHandled = false;
+        _step6DebrisCleanedTriggered = false;
+        _step7CompletedHandled = false;
+        RadioTextboxUI.Instance?.SetSkipStepVisible(false);
+    }
+
+    private void CheckStep2Navigation()
+    {
+        if (_step2NavigationHandled) return;
+
+        var player = FindFirstObjectByType<PlayerMovement>();
+        if (player != null && player.HasMovementInput)
+        {
+            _sustainedMoveTimer += Time.unscaledDeltaTime;
+            if (_sustainedMoveTimer >= 2.0f)
+            {
+                _step2NavigationHandled = true;
+                TutorialArrowUI.Instance?.Hide();
+                RadioTextboxUI.Instance?.DisplayMessage(
+                    "DR. SANTOS",
+                    "Thrusters responding crisply. You're handling the submarine like a pro.",
+                    "",
+                    onComplete: () => StartStep3(),
+                    showSkipStep: false,
+                    forceImmediate: true,
+                    autoDismissDelay: 2.0f
+                );
+            }
+        }
+        else
+        {
+            _sustainedMoveTimer = Mathf.Max(0f, _sustainedMoveTimer - Time.unscaledDeltaTime * 0.5f);
+        }
+    }
+
+    private void CheckStep3SonarProximity()
+    {
+        if (_species1VisualConfirmed) return;
+
+        var player = FindFirstObjectByType<PlayerMovement>();
+        if (player == null) return;
+
+        if (_tutorialSpecies1 == null)
+        {
+            EnsureTutorialSpecies(false);
+        }
+
+        if (_tutorialSpecies1 != null)
+        {
+            float dist = Vector3.Distance(player.transform.position, _tutorialSpecies1.transform.position);
+            if (dist <= 35f)
+            {
+                // Wait until previous radio box (sonar explanation) has finished before proceeding
+                if (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy)
+                {
+                    return;
+                }
+
+                _species1VisualConfirmed = true;
+                TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
+                RadioTextboxUI.Instance?.DisplayMessage(
+                    "DR. SANTOS",
+                    "Contact visual confirmed! Target is within scanning distance.",
+                    "",
+                    onComplete: () => StartStep4A(),
+                    showSkipStep: false,
+                    autoDismissDelay: 2.0f
+                );
+            }
+        }
+    }
+
+    private void CheckStep5Bestiary()
+    {
+        if (!_bestiaryOpenedInStep5)
+        {
+            if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+            {
+                _bestiaryOpenedInStep5 = true;
+                TutorialArrowUI.Instance?.Hide();
+            }
+        }
+        else
+        {
+            if (BestiaryManager.Instance != null && !BestiaryManager.Instance.IsOpen)
+            {
+                if (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy) return;
+                StartStep6();
+            }
+        }
+    }
+
+    public void NotifyDebrisCleaned()
+    {
+        if (_currentPhase == TutorialPhase.Step6_DebrisCleanup)
+        {
+            _step6DebrisCleanedTriggered = true;
+        }
+    }
+
+    private void CheckStep6DebrisCleaned()
+    {
+        if (_step6DebrisHandled) return;
+
+        if (_step6DebrisCleanedTriggered || (_tutorialDebris != null && _tutorialDebris.IsCleaned))
+        {
+            _step6DebrisCleanedTriggered = true;
+
+            // Wait for previous radio box to finish before proceeding
+            if (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy)
+            {
+                return;
+            }
+
+            _step6DebrisHandled = true;
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "Reef cleared! Removing debris revitalizes the ecosystem, increasing species encounter rates. You've earned research funding bonus.",
+                "",
+                onComplete: () => StartStep7(),
+                showSkipStep: false,
+                autoDismissDelay: 2.5f,
+                forceImmediate: true
+            );
+        }
+    }
+
+    private void CheckStep8ShopOpened()
+    {
+        if (ShopManager.Instance != null && ShopManager.Instance.IsOpen)
+        {
+            TutorialArrowUI.Instance?.Hide();
+            GraduateTutorial();
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Non-Compliance Escalations
+    // -----------------------------------------------------------------------
+
+    private void ApplyTier1Nudge()
+    {
+        if (_currentPhase == TutorialPhase.Step3_SonarSystem || _currentPhase == TutorialPhase.Step4A_ScanEncounter1)
+        {
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "Researcher, check your sonar radar. There's a biological contact right near your heading.",
+                "Track Cyan species signature on sonar",
+                showSkipStep: false
+            );
+        }
+    }
+
+    private void ApplyTier2Assist()
+    {
+        if (_currentPhase == TutorialPhase.Step3_SonarSystem || _currentPhase == TutorialPhase.Step4A_ScanEncounter1)
+        {
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "I'm highlighting the specimen on your HUD. Align it with your forward viewport reticle.",
+                "Align creature in reticle and complete scan",
+                showSkipStep: false
+            );
+
+            if (_tutorialSpecies1 != null)
+            {
+                TutorialArrowUI.Instance?.PointAtWorld(_tutorialSpecies1.transform, "TARGET SPECIMEN", Vector3.up * 1f, TutorialArrowUI.ArrowDirection.Down);
+
+                // Steer creature gently towards player
+                var player = FindFirstObjectByType<PlayerMovement>();
+                if (player != null)
+                {
+                    Vector3 steerDir = (player.transform.position + player.transform.forward * 8f - _tutorialSpecies1.transform.position).normalized;
+                    _tutorialSpecies1.transform.position += steerDir * 2.5f;
+                }
+            }
+        }
+    }
+
+    private void OnSkipStepClicked()
+    {
+        AudioManager.Instance?.PlayButtonClick();
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            "Remote telemetry captured the specimen's biological signature. Let's move on.",
+            "",
+            onComplete: () => AdvanceToNextStep(),
+            showSkipStep: false,
+            autoDismissDelay: 2.0f
+        );
+    }
+
+    private void AdvanceToNextStep()
+    {
+        switch (_currentPhase)
+        {
+            case TutorialPhase.Step0_MissionOverview:
+                StartStep1();
+                break;
+            case TutorialPhase.Step1_HUDOrientation:
+                StartStep2();
+                break;
+            case TutorialPhase.Step2_Navigation:
+                StartStep3();
+                break;
+            case TutorialPhase.Step3_SonarSystem:
+                StartStep4A();
+                break;
+            case TutorialPhase.Step4A_ScanEncounter1:
+                StartStep4B();
+                break;
+            case TutorialPhase.Step4B_ScanEncounter2:
+                StartStep5();
+                break;
+            case TutorialPhase.Step5_BestiaryReview:
+                StartStep6();
+                break;
+            case TutorialPhase.Step6_DebrisCleanup:
+                StartStep7();
+                break;
+            case TutorialPhase.Step7_HazardEncounter:
+                StartStep8();
+                break;
+            case TutorialPhase.Step8_UpgradeShop:
+                GraduateTutorial();
+                break;
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Scan Event Handling (Steps 4A & 4B)
+    // -----------------------------------------------------------------------
+
+    private void OnSpeciesScannedHandler(SpeciesData data)
+    {
+        if (_currentPhase == TutorialPhase.Step4A_ScanEncounter1)
+        {
+            TutorialArrowUI.Instance?.Hide();
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "First specimen logged! Excellent work. But our survey requires data on another nearby creature to calibrate our secondary scanning protocol.",
+                "",
+                onComplete: () => StartStep4B(),
+                showSkipStep: false,
+                autoDismissDelay: 2.5f
+            );
+        }
+        else if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2)
+        {
+            TutorialArrowUI.Instance?.Hide();
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "Both scanning modules calibrated! All species data has been automatically synced with your on-board encyclopedia. Let's review the Bestiary.",
+                "",
+                onComplete: () => StartStep5(),
+                showSkipStep: false,
+                autoDismissDelay: 2.5f
+            );
+        }
+    }
+
+    public int GetTutorialMinigamePick()
+    {
+        if (_currentPhase == TutorialPhase.Step4A_ScanEncounter1) return 1; // Always Minigame 1
+        if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2) return 2; // Always Minigame 2
+        return -1;
+    }
+
+    // -----------------------------------------------------------------------
+    // Code-Driven Placement & Anchoring Helpers
+    // -----------------------------------------------------------------------
+
+    private void HideAllTutorialEntities()
+    {
+        _cachedSceneSpecies.Clear();
+        var allSpecies = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var s in allSpecies)
+        {
+            if (s != null)
+            {
+                _cachedSceneSpecies.Add(s);
+                s.gameObject.SetActive(false);
+            }
+        }
+
+        // Pre-select two distinct species for Step 4A and Step 4B if available
+        if (_cachedSceneSpecies.Count > 0)
+        {
+            _tutorialSpecies1 = _cachedSceneSpecies[0];
+        }
+        if (_cachedSceneSpecies.Count > 1)
+        {
+            _tutorialSpecies2 = _cachedSceneSpecies[1];
+            for (int i = 1; i < _cachedSceneSpecies.Count; i++)
+            {
+                if (_cachedSceneSpecies[i].Data != null && _tutorialSpecies1?.Data != null &&
+                    _cachedSceneSpecies[i].Data != _tutorialSpecies1.Data)
+                {
+                    _tutorialSpecies2 = _cachedSceneSpecies[i];
+                    break;
+                }
+            }
+        }
+
+        _cachedSceneDebris.Clear();
+        var allDebris = FindObjectsByType<DebrisCluster>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var d in allDebris)
+        {
+            if (d != null)
+            {
+                _cachedSceneDebris.Add(d);
+                d.gameObject.SetActive(false);
+            }
+        }
+        if (_cachedSceneDebris.Count > 0)
+        {
+            _tutorialDebris = _cachedSceneDebris[0];
+        }
+    }
+
+    private void RestoreAllTutorialEntities()
+    {
+        foreach (var s in _cachedSceneSpecies)
+        {
+            if (s != null) s.gameObject.SetActive(true);
+        }
+        foreach (var d in _cachedSceneDebris)
+        {
+            if (d != null) d.gameObject.SetActive(true);
+        }
+    }
+
+    private void PositionTutorialEntity(GameObject entity, float distanceAhead, float verticalOffset = 0f)
+    {
+        if (entity == null) return;
+
+        // Clean any unwanted model artifacts (such as Spotted Jellyfish's Cylinder.001)
+        foreach (var t in entity.GetComponentsInChildren<Transform>(true))
+        {
+            if (t != null && t.gameObject != entity && t.name.IndexOf("Cylinder", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                t.gameObject.SetActive(false);
+            }
+        }
+
+        var player = FindFirstObjectByType<PlayerMovement>();
+        Vector3 pPos = player != null ? player.transform.position : Vector3.zero;
+        Vector3 fwd  = player != null ? player.transform.forward : Vector3.forward;
+        fwd.y = 0f;
+        if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
+        fwd.Normalize();
+
+        Vector3 spawnPos = pPos + fwd * distanceAhead + Vector3.up * verticalOffset;
+        entity.transform.position = spawnPos;
+        entity.transform.forward = -fwd;
+        entity.SetActive(true);
+    }
+
+    private void PositionTutorialDebris(GameObject debris, float distanceAhead)
+    {
+        if (debris == null) return;
+        var player = FindFirstObjectByType<PlayerMovement>();
+        Vector3 pPos = player != null ? player.transform.position : Vector3.zero;
+        Vector3 fwd  = player != null ? player.transform.forward : Vector3.forward;
+        fwd.y = 0f;
+        if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
+        fwd.Normalize();
+
+        Vector3 candidatePos = pPos + fwd * distanceAhead;
+        Vector3 rayOrigin = new Vector3(candidatePos.x, candidatePos.y + 40f, candidatePos.z);
+        Vector3 floorPos = candidatePos;
+        floorPos.y = -140f;
+
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 160f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            floorPos = hit.point;
+        }
+
+        debris.transform.position = floorPos;
+        debris.SetActive(true);
+    }
+
+    private void EnsureTutorialSpecies(bool isSecond = false)
+    {
+        if (!isSecond)
+        {
+            if (_tutorialSpecies1 != null)
+            {
+                PositionTutorialEntity(_tutorialSpecies1.gameObject, 28f, 1f);
+                return;
+            }
+        }
+        else
+        {
+            if (_tutorialSpecies2 != null)
+            {
+                PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
+                return;
+            }
+        }
+
+        var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (!isSecond && allAI.Length > 0)
+        {
+            _tutorialSpecies1 = allAI[0];
+            PositionTutorialEntity(_tutorialSpecies1.gameObject, 28f, 1f);
+            return;
+        }
+        else if (isSecond && allAI.Length > 1)
+        {
+            _tutorialSpecies2 = allAI[1];
+            PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
+            return;
+        }
+    }
+
+    private void EnsureSeabedDebris()
+    {
+        if (_tutorialDebris != null)
+        {
+            PositionTutorialDebris(_tutorialDebris.gameObject, 25f);
             return;
         }
 
-        if (_proceduralCompletionModal != null)
+        // Check if a debris cluster already exists in the scene
+        var existing = FindFirstObjectByType<DebrisCluster>(FindObjectsInactive.Include);
+        if (existing != null)
         {
-            _proceduralCompletionModal.SetActive(true);
+            _tutorialDebris = existing;
+            PositionTutorialDebris(_tutorialDebris.gameObject, 25f);
+            return;
+        }
+
+        // Otherwise raycast onto the ocean floor in front of player
+        var player = FindFirstObjectByType<PlayerMovement>();
+        Vector3 playerPos = player != null ? player.transform.position : Vector3.zero;
+        Vector3 forward = player != null ? player.transform.forward : Vector3.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+        forward.Normalize();
+
+        Vector3 candidatePos = playerPos + forward * 25f;
+        Vector3 rayOrigin = new Vector3(candidatePos.x, candidatePos.y + 50f, candidatePos.z);
+        Vector3 floorPos = candidatePos;
+        floorPos.y = -140f; // Sunlight zone default floor fallback
+
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 160f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            floorPos = hit.point;
+        }
+
+        var debrisGO = new GameObject("Tutorial_DebrisCluster");
+        debrisGO.transform.position = floorPos;
+        _tutorialDebris = debrisGO.AddComponent<DebrisCluster>();
+        debrisGO.AddComponent<SphereCollider>().isTrigger = true;
+        _cachedSceneDebris.Add(_tutorialDebris);
+    }
+
+    // -----------------------------------------------------------------------
+    // Skip Tutorial System & Modal (Section 1D)
+    // -----------------------------------------------------------------------
+
+    public void ShowSkipTutorialPrompt()
+    {
+        if (customPromptModal != null)
+        {
+            customPromptModal.SetActive(true);
+            return;
+        }
+
+        BuildSkipConfirmModal();
+        if (_skipConfirmModal != null)
+        {
+            _skipConfirmModal.SetActive(true);
         }
     }
 
-    public void OnCompletionProceedClicked()
+    private void BuildSkipConfirmModal()
     {
-        AudioManager.Instance?.PlayButtonClick();
+        if (_skipConfirmModal != null) return;
 
-        if (customCompletionModal != null) customCompletionModal.SetActive(false);
-        if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
+        EnsureCanvas();
+        if (_tutorialCanvas == null) return;
 
-        Debug.Log("[TutorialManager] Tutorial completed — proceeding directly to gameplay.");
+        TMP_FontAsset font = UIThemeManager.AntoneFont;
 
-        ZoneSelectionUI.IsAfterTutorialFlow = false;
-        Time.timeScale = 1f;
+        // Expanded 940x460 modal dialog container
+        _skipConfirmModal = new GameObject("SkipTutorialConfirmModal", typeof(RectTransform), typeof(Image));
+        _skipConfirmModal.transform.SetParent(_tutorialCanvas.transform, false);
+        var modalRect = _skipConfirmModal.GetComponent<RectTransform>();
+        modalRect.anchorMin = new Vector2(0.5f, 0.5f);
+        modalRect.anchorMax = new Vector2(0.5f, 0.5f);
+        modalRect.pivot     = new Vector2(0.5f, 0.5f);
+        modalRect.sizeDelta = new Vector2(940f, 460f);
+        modalRect.anchoredPosition = Vector2.zero;
+
+        var bg = _skipConfirmModal.GetComponent<Image>();
+        bg.color = new Color(0.03f, 0.07f, 0.14f, 0.96f);
+
+        var outline = _skipConfirmModal.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0.9f, 1f, 0.9f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        // Top cyan glowing accent line
+        var topAccent = new GameObject("TopAccent", typeof(RectTransform), typeof(Image));
+        topAccent.transform.SetParent(_skipConfirmModal.transform, false);
+        var taRect = topAccent.GetComponent<RectTransform>();
+        taRect.anchorMin = new Vector2(0f, 1f);
+        taRect.anchorMax = new Vector2(1f, 1f);
+        taRect.pivot     = new Vector2(0.5f, 1f);
+        taRect.sizeDelta = new Vector2(0f, 3f);
+        taRect.anchoredPosition = Vector2.zero;
+        var taImg = topAccent.GetComponent<Image>();
+        taImg.color = new Color(0f, 0.9f, 1f, 1f);
+        taImg.raycastTarget = false;
+
+        // Header Title: SKIP TUTORIAL?
+        var titleGO = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+        titleGO.transform.SetParent(_skipConfirmModal.transform, false);
+        var titleRect = titleGO.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(1f, 1f);
+        titleRect.pivot     = new Vector2(0.5f, 1f);
+        titleRect.sizeDelta = new Vector2(-60f, 50f);
+        titleRect.anchoredPosition = new Vector2(0f, -30f);
+
+        var titleTxt = titleGO.GetComponent<TextMeshProUGUI>();
+        titleTxt.font = font;
+        titleTxt.fontStyle = FontStyles.Normal;
+        titleTxt.fontSize = 36f;
+        titleTxt.color = new Color(0.3f, 0.85f, 1f, 1f);
+        titleTxt.alignment = TextAlignmentOptions.Center;
+        titleTxt.raycastTarget = false;
+        titleTxt.text = "SKIP TUTORIAL?";
+
+        // Body Description: Spacious and clean layout
+        var descGO = new GameObject("Desc", typeof(RectTransform), typeof(TextMeshProUGUI));
+        descGO.transform.SetParent(_skipConfirmModal.transform, false);
+        var descRect = descGO.GetComponent<RectTransform>();
+        descRect.anchorMin = new Vector2(0.5f, 0.5f);
+        descRect.anchorMax = new Vector2(0.5f, 0.5f);
+        descRect.pivot     = new Vector2(0.5f, 0.5f);
+        descRect.sizeDelta = new Vector2(840f, 180f);
+        descRect.anchoredPosition = new Vector2(0f, 20f);
+
+        var descTxt = descGO.GetComponent<TextMeshProUGUI>();
+        descTxt.font = font;
+        descTxt.fontStyle = FontStyles.Normal;
+        descTxt.fontSize = 30f;
+        descTxt.color = new Color(0.92f, 0.95f, 0.98f, 1f);
+        descTxt.alignment = TextAlignmentOptions.Center;
+        descTxt.textWrappingMode = TextWrappingModes.Normal;
+        descTxt.lineSpacing = 8f;
+        descTxt.raycastTarget = false;
+        descTxt.text = "Skip basic training and proceed directly to free ocean exploration?\nAll standard equipment and dive systems will be brought online immediately.";
+
+        // Button Container Row
+        var btnRow = new GameObject("BtnRow", typeof(RectTransform));
+        btnRow.transform.SetParent(_skipConfirmModal.transform, false);
+        var btnRect = btnRow.GetComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0f, 0f);
+        btnRect.anchorMax = new Vector2(1f, 0f);
+        btnRect.pivot     = new Vector2(0.5f, 0f);
+        btnRect.sizeDelta = new Vector2(-60f, 80f);
+        btnRect.anchoredPosition = new Vector2(0f, 35f);
+
+        // [ RESUME TUTORIAL ] Button (Left) - Solid background, no outline
+        var resumeGO = new GameObject("ResumeBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+        resumeGO.transform.SetParent(btnRow.transform, false);
+        var resRect = resumeGO.GetComponent<RectTransform>();
+        resRect.anchorMin = new Vector2(0f, 0.5f);
+        resRect.anchorMax = new Vector2(0.48f, 0.5f);
+        resRect.pivot     = new Vector2(0.5f, 0.5f);
+        resRect.sizeDelta = new Vector2(0f, 65f);
+        resRect.anchoredPosition = Vector2.zero;
+
+        var resImg = resumeGO.GetComponent<Image>();
+        resImg.color = new Color(0.05f, 0.22f, 0.35f, 0.98f);
+
+        var resBtn = resumeGO.GetComponent<Button>();
+        resBtn.targetGraphic = resImg;
+        resBtn.onClick.AddListener(() =>
+        {
+            AudioManager.Instance?.PlayButtonClick();
+            _skipConfirmModal.SetActive(false);
+        });
+
+        var resTxtGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        resTxtGO.transform.SetParent(resumeGO.transform, false);
+        var rtRect = resTxtGO.GetComponent<RectTransform>();
+        rtRect.anchorMin = Vector2.zero;
+        rtRect.anchorMax = Vector2.one;
+        rtRect.sizeDelta = Vector2.zero;
+        rtRect.anchoredPosition = Vector2.zero;
+
+        var resTxt = resTxtGO.GetComponent<TextMeshProUGUI>();
+        resTxt.font = font;
+        resTxt.fontStyle = FontStyles.Normal;
+        resTxt.fontSize = 28f;
+        resTxt.color = Color.white;
+        resTxt.alignment = TextAlignmentOptions.Center;
+        resTxt.raycastTarget = false;
+        resTxt.text = "RESUME TUTORIAL";
+
+        // [ SKIP NOW ] Button (Right) - Solid background, no outline
+        var skipNowGO = new GameObject("SkipNowBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+        skipNowGO.transform.SetParent(btnRow.transform, false);
+        var snRect = skipNowGO.GetComponent<RectTransform>();
+        snRect.anchorMin = new Vector2(0.52f, 0.5f);
+        snRect.anchorMax = new Vector2(1f, 0.5f);
+        snRect.pivot     = new Vector2(0.5f, 0.5f);
+        snRect.sizeDelta = new Vector2(0f, 65f);
+        snRect.anchoredPosition = Vector2.zero;
+
+        var snImg = skipNowGO.GetComponent<Image>();
+        snImg.color = new Color(0.42f, 0.09f, 0.09f, 0.98f);
+
+        var snBtn = skipNowGO.GetComponent<Button>();
+        snBtn.targetGraphic = snImg;
+        snBtn.onClick.AddListener(() =>
+        {
+            AudioManager.Instance?.PlayButtonClick();
+            _skipConfirmModal.SetActive(false);
+            OnSkipTutorialConfirmed();
+        });
+
+        var snTxtGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        snTxtGO.transform.SetParent(skipNowGO.transform, false);
+        var snTxtRect = snTxtGO.GetComponent<RectTransform>();
+        snTxtRect.anchorMin = Vector2.zero;
+        snTxtRect.anchorMax = Vector2.one;
+        snTxtRect.sizeDelta = Vector2.zero;
+        snTxtRect.anchoredPosition = Vector2.zero;
+
+        var snTxt = snTxtGO.GetComponent<TextMeshProUGUI>();
+        snTxt.font = font;
+        snTxt.fontStyle = FontStyles.Normal;
+        snTxt.fontSize = 28f;
+        snTxt.color = Color.white;
+        snTxt.alignment = TextAlignmentOptions.Center;
+        snTxt.raycastTarget = false;
+        snTxt.text = "SKIP NOW";
+
+        _skipConfirmModal.SetActive(false);
+    }
+
+    public void OnSkipTutorialConfirmed()
+    {
+        AbortTutorial();
+        GameManager.SetTutorialCompleted(true);
+
+        RadioTextboxUI.Instance?.DisplayMessage(
+            "DR. SANTOS",
+            "All systems good to go. Good luck out there, Researcher.",
+            "",
+            showSkipStep: false,
+            autoDismissDelay: 3.0f
+        );
+
+        Debug.Log("[TutorialManager] Tutorial skipped by player — proceeding directly to free gameplay.");
+    }
+
+    public void AbortTutorial()
+    {
+        _currentPhase = TutorialPhase.Inactive;
+
+        if (_step1Routine != null)
+        {
+            StopCoroutine(_step1Routine);
+            _step1Routine = null;
+        }
+
+        CinematicSequencer.Instance?.SkipCinematic();
+        RadioTextboxUI.Instance?.HideInstant();
+        TutorialArrowUI.Instance?.Hide();
+        TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
+        MinigameInstructionOverlay.Instance?.HideInstant();
+        ObjectiveHUDUI.Instance?.SetObjective(ObjectiveHUDUI.PostTutorialDefaultObjective);
+
+        if (customTutorialRoot != null) customTutorialRoot.SetActive(false);
+        if (_skipConfirmModal != null) _skipConfirmModal.SetActive(false);
+
+        UIManager.Instance?.SetHUDSkipTutorialVisible(false);
         UIManager.Instance?.SetExplorationHUDVisible(true);
-    }
-
-    public void OnCompletionReplayClicked()
-    {
-        AudioManager.Instance?.PlayButtonClick();
-
-        if (customCompletionModal != null) customCompletionModal.SetActive(false);
-        if (_proceduralCompletionModal != null) _proceduralCompletionModal.SetActive(false);
-
-        StartTutorial();
-    }
-
-    private void WireCustomUI()
-    {
-        if (customNextButton != null)
-        {
-            customNextButton.onClick.RemoveListener(OnNextStepClicked);
-            customNextButton.onClick.AddListener(OnNextStepClicked);
-        }
-
-        if (customSkipButton != null)
-        {
-            customSkipButton.onClick.RemoveListener(OnSkipTutorialClicked);
-            customSkipButton.onClick.AddListener(OnSkipTutorialClicked);
-        }
-
-        if (customPromptStartBtn != null)
-        {
-            customPromptStartBtn.onClick.RemoveListener(OnPromptStartTutorial);
-            customPromptStartBtn.onClick.AddListener(OnPromptStartTutorial);
-        }
-
-        if (customPromptSkipBtn != null)
-        {
-            customPromptSkipBtn.onClick.RemoveListener(OnPromptSkipTutorial);
-            customPromptSkipBtn.onClick.AddListener(OnPromptSkipTutorial);
-        }
-
-        if (customCompletionProceedBtn != null)
-        {
-            customCompletionProceedBtn.onClick.RemoveListener(OnCompletionProceedClicked);
-            customCompletionProceedBtn.onClick.AddListener(OnCompletionProceedClicked);
-        }
-
-        if (customCompletionReplayBtn != null)
-        {
-            customCompletionReplayBtn.onClick.RemoveListener(OnCompletionReplayClicked);
-            customCompletionReplayBtn.onClick.AddListener(OnCompletionReplayClicked);
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Procedural UI Construction (Aloha SDF Dark Sci-Fi Design, Min 36px)
-    // -----------------------------------------------------------------------
-
-    private void BuildProceduralUI()
-    {
-        if (_proceduralCanvasGO != null) return;
-
-        var font = UIThemeManager.AlohaFont;
-
-        _proceduralCanvasGO = new GameObject("Tutorial_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        DontDestroyOnLoad(_proceduralCanvasGO);
-        var canvas = _proceduralCanvasGO.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 9997;
-
-        var scaler = _proceduralCanvasGO.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        // ── 1. Initial Prompt Modal ──────────────────────────────────────
-        BuildProceduralPromptModal(_proceduralCanvasGO.transform, font);
-
-        // ── 2. Active Tutorial Step Card ─────────────────────────────────
-        BuildProceduralStepCard(_proceduralCanvasGO.transform, font);
-
-        // ── 3. Completion Modal ──────────────────────────────────────────
-        BuildProceduralCompletionModal(_proceduralCanvasGO.transform, font);
-    }
-
-    private void BuildProceduralPromptModal(Transform parent, TMP_FontAsset font)
-    {
-        _proceduralPromptModal = new GameObject("TutorialPromptModal", typeof(RectTransform), typeof(Image));
-        _proceduralPromptModal.transform.SetParent(parent, false);
-
-        var bgR = _proceduralPromptModal.GetComponent<RectTransform>();
-        bgR.anchorMin = Vector2.zero;
-        bgR.anchorMax = Vector2.one;
-        bgR.sizeDelta = Vector2.zero;
-        _proceduralPromptModal.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.08f, 0.88f);
-
-        var cardGO = new GameObject("PromptCard", typeof(RectTransform), typeof(Image));
-        cardGO.transform.SetParent(_proceduralPromptModal.transform, false);
-        var cR = cardGO.GetComponent<RectTransform>();
-        cR.anchorMin = new Vector2(0.5f, 0.5f);
-        cR.anchorMax = new Vector2(0.5f, 0.5f);
-        cR.pivot     = new Vector2(0.5f, 0.5f);
-        cR.sizeDelta = new Vector2(1240f, 680f);
-        cardGO.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
-
-        // Top accent line
-        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
-        topStripe.transform.SetParent(cardGO.transform, false);
-        var tsR = topStripe.GetComponent<RectTransform>();
-        tsR.anchorMin = new Vector2(0f, 1f);
-        tsR.anchorMax = new Vector2(1f, 1f);
-        tsR.pivot     = new Vector2(0.5f, 1f);
-        tsR.sizeDelta = new Vector2(0f, 5f);
-        topStripe.GetComponent<Image>().color = new Color(0.2f, 0.85f, 1f, 1f);
-
-        // Title (Top-anchored)
-        CreateText("Title", "SUBMARINE SYSTEMS TUTORIAL", new Vector2(0f, -36f), new Vector2(1160f, 50f), 36, FontStyles.Bold, new Color(0.3f, 0.9f, 1f), cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
-
-        // Subtitle (Top-anchored)
-        CreateText("Subtitle", "WELCOME, MARINE RESEARCHER!", new Vector2(0f, -94f), new Vector2(1160f, 44f), 32, FontStyles.Bold, Color.white, cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
-
-        // Desc (Top-anchored, top-aligned)
-        var descTMP = CreateText("Desc", "Would you like to complete the guided tutorial covering submarine navigation, sonar mapping, species scanning, debris cleanup, and upgrade systems?", new Vector2(0f, -156f), new Vector2(1100f, 350f), 32, FontStyles.Normal, new Color(0.92f, 0.94f, 0.97f), cardGO.transform, font, TextAlignmentOptions.Top, new Vector2(0.5f, 1f));
-        descTMP.enableAutoSizing = true;
-        descTMP.fontSizeMin = 26f;
-        descTMP.fontSizeMax = 32f;
-        descTMP.lineSpacing = 6f;
-        descTMP.paragraphSpacing = 10f;
-
-        // Button Row (Bottom-anchored)
-        var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        btnRow.transform.SetParent(cardGO.transform, false);
-        var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchorMin = new Vector2(0.5f, 0f);
-        brR.anchorMax = new Vector2(0.5f, 0f);
-        brR.pivot     = new Vector2(0.5f, 0f);
-        brR.anchoredPosition = new Vector2(0f, 36f);
-        brR.sizeDelta = new Vector2(1100f, 84f);
-
-        var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
-        hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 35f;
-        hlg.childControlWidth = false;
-        hlg.childControlHeight = false;
-
-        // BOTH BUTTONS EXACT SAME SIZE (420x76), 1 LINE ONLY
-        CreateButton("StartBtn", "START TUTORIAL", Vector2.zero, new Vector2(420f, 76f), new Color(0.08f, 0.65f, 0.55f), OnPromptStartTutorial, btnRow.transform, font, 32);
-        CreateButton("SkipBtn", "SKIP TO DIVE", Vector2.zero, new Vector2(420f, 76f), new Color(0.18f, 0.25f, 0.35f), OnPromptSkipTutorial, btnRow.transform, font, 32);
-
-        _proceduralPromptModal.SetActive(false);
-    }
-
-    private void BuildProceduralStepCard(Transform parent, TMP_FontAsset font)
-    {
-        _proceduralStepCard = new GameObject("TutorialStepCard", typeof(RectTransform), typeof(Image));
-        _proceduralStepCard.transform.SetParent(parent, false);
-
-        var cR = _proceduralStepCard.GetComponent<RectTransform>();
-        cR.anchorMin = new Vector2(0.5f, 0.5f);
-        cR.anchorMax = new Vector2(0.5f, 0.5f);
-        cR.pivot     = new Vector2(0.5f, 0.5f);
-        cR.anchoredPosition = Vector2.zero;
-        cR.sizeDelta = new Vector2(1360f, 780f);
-        _proceduralStepCard.GetComponent<Image>().color = new Color(0.03f, 0.07f, 0.14f, 0.96f);
-
-        // Step Number Banner (Top-anchored)
-        var stepNumGO = new GameObject("StepNum", typeof(RectTransform));
-        stepNumGO.transform.SetParent(_proceduralStepCard.transform, false);
-        var snR = stepNumGO.GetComponent<RectTransform>();
-        snR.anchorMin = new Vector2(0.5f, 1f);
-        snR.anchorMax = new Vector2(0.5f, 1f);
-        snR.pivot     = new Vector2(0.5f, 1f);
-        snR.anchoredPosition = new Vector2(0f, -22f);
-        snR.sizeDelta = new Vector2(1260f, 38f);
-        _proceduralStepNumText = stepNumGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) _proceduralStepNumText.font = font;
-        _proceduralStepNumText.fontSize = 32;
-        _proceduralStepNumText.fontStyle = FontStyles.Bold;
-        _proceduralStepNumText.alignment = TextAlignmentOptions.Center;
-        _proceduralStepNumText.color = new Color(0.3f, 0.85f, 1f);
-
-        // Title (Top-anchored)
-        var titleGO = new GameObject("Title", typeof(RectTransform));
-        titleGO.transform.SetParent(_proceduralStepCard.transform, false);
-        var tR = titleGO.GetComponent<RectTransform>();
-        tR.anchorMin = new Vector2(0.5f, 1f);
-        tR.anchorMax = new Vector2(0.5f, 1f);
-        tR.pivot     = new Vector2(0.5f, 1f);
-        tR.anchoredPosition = new Vector2(0f, -64f);
-        tR.sizeDelta = new Vector2(1260f, 46f);
-        _proceduralTitleText = titleGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) _proceduralTitleText.font = font;
-        _proceduralTitleText.fontSize = 34;
-        _proceduralTitleText.fontStyle = FontStyles.Bold;
-        _proceduralTitleText.alignment = TextAlignmentOptions.Center;
-        _proceduralTitleText.color = Color.white;
-
-        // Description (Top-anchored, generous 410px height for multi-paragraph guidance, auto-fitting to prevent overlap)
-        var descGO = new GameObject("Desc", typeof(RectTransform));
-        descGO.transform.SetParent(_proceduralStepCard.transform, false);
-        var dR = descGO.GetComponent<RectTransform>();
-        dR.anchorMin = new Vector2(0.5f, 1f);
-        dR.anchorMax = new Vector2(0.5f, 1f);
-        dR.pivot     = new Vector2(0.5f, 1f);
-        dR.anchoredPosition = new Vector2(0f, -116f);
-        dR.sizeDelta = new Vector2(1260f, 410f);
-        _proceduralDescText = descGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) _proceduralDescText.font = font;
-        _proceduralDescText.fontSize = 32;
-        _proceduralDescText.lineSpacing = 4f;
-        _proceduralDescText.paragraphSpacing = 8f;
-        _proceduralDescText.enableAutoSizing = true;
-        _proceduralDescText.fontSizeMin = 26f;
-        _proceduralDescText.fontSizeMax = 32f;
-        _proceduralDescText.alignment = TextAlignmentOptions.Top;
-        _proceduralDescText.color = new Color(0.9f, 0.92f, 0.95f);
-
-        // Objective Prompt (Top-anchored strictly below description with zero overlap)
-        var objGO = new GameObject("Objective", typeof(RectTransform));
-        objGO.transform.SetParent(_proceduralStepCard.transform, false);
-        var oR = objGO.GetComponent<RectTransform>();
-        oR.anchorMin = new Vector2(0.5f, 1f);
-        oR.anchorMax = new Vector2(0.5f, 1f);
-        oR.pivot     = new Vector2(0.5f, 1f);
-        oR.anchoredPosition = new Vector2(0f, -540f);
-        oR.sizeDelta = new Vector2(1260f, 52f);
-        _proceduralObjectiveText = objGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) _proceduralObjectiveText.font = font;
-        _proceduralObjectiveText.fontSize = 30;
-        _proceduralObjectiveText.fontStyle = FontStyles.Italic;
-        _proceduralObjectiveText.alignment = TextAlignmentOptions.Center;
-        _proceduralObjectiveText.color = new Color(0.2f, 1f, 0.7f);
-
-        // Action Buttons Row (Bottom-anchored)
-        var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        btnRow.transform.SetParent(_proceduralStepCard.transform, false);
-        var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchorMin = new Vector2(0.5f, 0f);
-        brR.anchorMax = new Vector2(0.5f, 0f);
-        brR.pivot     = new Vector2(0.5f, 0f);
-        brR.anchoredPosition = new Vector2(0f, 32f);
-        brR.sizeDelta = new Vector2(1260f, 84f);
-
-        var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
-        hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 35f;
-        hlg.childControlWidth = false;
-        hlg.childControlHeight = false;
-
-        // Next Button and Skip Button - EXACT SAME SIZE (400x76), 1 LINE ONLY
-        _proceduralNextBtn = CreateButton("NextBtn", "NEXT STEP", Vector2.zero, new Vector2(400f, 76f), new Color(0.08f, 0.65f, 0.55f), OnNextStepClicked, btnRow.transform, font, 32, out _proceduralNextBtnText);
-
-        CreateButton("SkipBtn", "SKIP TUTORIAL", Vector2.zero, new Vector2(400f, 76f), new Color(0.18f, 0.22f, 0.28f), OnSkipTutorialClicked, btnRow.transform, font, 32);
-
-        _proceduralStepCard.SetActive(false);
-    }
-
-    private void BuildProceduralCompletionModal(Transform parent, TMP_FontAsset font)
-    {
-        _proceduralCompletionModal = new GameObject("TutorialCompletionModal", typeof(RectTransform), typeof(Image));
-        _proceduralCompletionModal.transform.SetParent(parent, false);
-
-        var bgR = _proceduralCompletionModal.GetComponent<RectTransform>();
-        bgR.anchorMin = Vector2.zero;
-        bgR.anchorMax = Vector2.one;
-        bgR.sizeDelta = Vector2.zero;
-        _proceduralCompletionModal.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.08f, 0.88f);
-
-        var cardGO = new GameObject("CompletionCard", typeof(RectTransform), typeof(Image));
-        cardGO.transform.SetParent(_proceduralCompletionModal.transform, false);
-        var cR = cardGO.GetComponent<RectTransform>();
-        cR.anchorMin = new Vector2(0.5f, 0.5f);
-        cR.anchorMax = new Vector2(0.5f, 0.5f);
-        cR.pivot     = new Vector2(0.5f, 0.5f);
-        cR.sizeDelta = new Vector2(1240f, 720f);
-        cardGO.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
-
-        // Top accent line
-        var topStripe = new GameObject("TopStripe", typeof(RectTransform), typeof(Image));
-        topStripe.transform.SetParent(cardGO.transform, false);
-        var tsR = topStripe.GetComponent<RectTransform>();
-        tsR.anchorMin = new Vector2(0f, 1f);
-        tsR.anchorMax = new Vector2(1f, 1f);
-        tsR.pivot     = new Vector2(0.5f, 1f);
-        tsR.sizeDelta = new Vector2(0f, 5f);
-        topStripe.GetComponent<Image>().color = new Color(0.1f, 0.95f, 0.7f, 1f);
-
-        // Title (Top-anchored)
-        CreateText("Title", "TUTORIAL COMPLETED!", new Vector2(0f, -36f), new Vector2(1160f, 52f), 40, FontStyles.Bold, new Color(0.2f, 1f, 0.7f), cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
-
-        // Subtitle (Top-anchored)
-        CreateText("Subtitle", "CONGRATULATIONS, RESEARCHER!", new Vector2(0f, -96f), new Vector2(1160f, 44f), 32, FontStyles.Bold, Color.white, cardGO.transform, font, TextAlignmentOptions.Center, new Vector2(0.5f, 1f));
-
-        // Desc (Top-anchored, top-aligned)
-        string completionDesc = "You have completed all submarine operational training.\n\n<color=#00e5ff><b>+100 Research Data Points (RDP)</b></color>\nhave been added to your submarine research fund.\n\nYou are now ready for free deep-sea exploration!";
-        var descTMP = CreateText("Desc", completionDesc, new Vector2(0f, -158f), new Vector2(1120f, 380f), 32, FontStyles.Normal, new Color(0.92f, 0.94f, 0.97f), cardGO.transform, font, TextAlignmentOptions.Top, new Vector2(0.5f, 1f));
-        descTMP.enableAutoSizing = true;
-        descTMP.fontSizeMin = 26f;
-        descTMP.fontSizeMax = 32f;
-        descTMP.lineSpacing = 6f;
-        descTMP.paragraphSpacing = 12f;
-
-        // Button Row (Bottom-anchored)
-        var btnRow = new GameObject("BtnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        btnRow.transform.SetParent(cardGO.transform, false);
-        var brR = btnRow.GetComponent<RectTransform>();
-        brR.anchorMin = new Vector2(0.5f, 0f);
-        brR.anchorMax = new Vector2(0.5f, 0f);
-        brR.pivot     = new Vector2(0.5f, 0f);
-        brR.anchoredPosition = new Vector2(0f, 36f);
-        brR.sizeDelta = new Vector2(1120f, 84f);
-
-        var hlg = btnRow.GetComponent<HorizontalLayoutGroup>();
-        hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.spacing = 35f;
-        hlg.childControlWidth = false;
-        hlg.childControlHeight = false;
-
-        // BOTH BUTTONS EXACT SAME SIZE (440x76), 1 LINE ONLY
-        CreateButton("ProceedBtn", "START EXPEDITION", Vector2.zero, new Vector2(440f, 76f), new Color(0.08f, 0.65f, 0.55f), OnCompletionProceedClicked, btnRow.transform, font, 32);
-        CreateButton("ReplayBtn", "REPLAY TUTORIAL", Vector2.zero, new Vector2(440f, 76f), new Color(0.18f, 0.25f, 0.35f), OnCompletionReplayClicked, btnRow.transform, font, 32);
-
-        _proceduralCompletionModal.SetActive(false);
-    }
-
-    // -----------------------------------------------------------------------
-    // UI Helpers
-    // -----------------------------------------------------------------------
-
-    private TextMeshProUGUI CreateText(string name, string text, Vector2 pos, Vector2 size, float fontSize, FontStyles style, Color color, Transform parent, TMP_FontAsset font, TextAlignmentOptions alignment = TextAlignmentOptions.Center, Vector2? anchor = null)
-    {
-        var go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        var r = go.GetComponent<RectTransform>();
-        if (anchor.HasValue)
-        {
-            r.anchorMin = anchor.Value;
-            r.anchorMax = anchor.Value;
-            r.pivot     = anchor.Value;
-        }
-        r.anchoredPosition = pos;
-        r.sizeDelta = size;
-
-        var tmp = go.AddComponent<TextMeshProUGUI>();
-        if (font != null) tmp.font = font;
-        tmp.fontSize = Mathf.Max(30f, fontSize);
-        tmp.fontStyle = style;
-        tmp.alignment = alignment;
-        tmp.color = color;
-        tmp.text = text;
-        return tmp;
-    }
-
-    private Button CreateButton(string name, string label, Vector2 pos, Vector2 size, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, float fontSize = 32f)
-    {
-        return CreateButton(name, label, pos, size, color, action, parent, font, fontSize, out _);
-    }
-
-    private Button CreateButton(string name, string label, Vector2 pos, Vector2 size, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, float fontSize, out TMP_Text labelText)
-    {
-        var btnGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-        btnGO.transform.SetParent(parent, false);
-        var r = btnGO.GetComponent<RectTransform>();
-        r.anchoredPosition = pos;
-        r.sizeDelta = size;
-
-        btnGO.GetComponent<Image>().color = color;
-        var btn = btnGO.GetComponent<Button>();
-        btn.onClick.AddListener(action);
-
-        var lblGO = new GameObject("Label", typeof(RectTransform));
-        lblGO.transform.SetParent(btnGO.transform, false);
-        var lblR = lblGO.GetComponent<RectTransform>();
-        lblR.anchorMin = Vector2.zero;
-        lblR.anchorMax = Vector2.one;
-        lblR.offsetMin = new Vector2(16f, 4f);
-        lblR.offsetMax = new Vector2(-16f, -4f);
-
-        var tmp = lblGO.AddComponent<TextMeshProUGUI>();
-        if (font != null) tmp.font = font;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = Color.white;
-        tmp.text = label;
-
-        // Enforce ONE LINE ONLY:
-        tmp.textWrappingMode = TextWrappingModes.NoWrap;
-        tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 22f;
-        tmp.fontSizeMax = Mathf.Max(28f, fontSize);
-
-        labelText = tmp;
-        return btn;
+        RestoreAllTutorialEntities();
+        Time.timeScale = 1.0f;
     }
 }

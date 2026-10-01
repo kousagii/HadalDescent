@@ -69,10 +69,22 @@ public class HazardZoneTrigger : MonoBehaviour
         }
     }
 
+    private bool IsHazardTriggerSuppressed()
+    {
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+        {
+            // Allow triggering if player is on Step 7 (Hazard Encounter)
+            bool isStep7 = TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter;
+            if (!isStep7) return true;
+        }
+        return false;
+    }
+
     private void Update()
     {
+        if (IsHazardTriggerSuppressed()) return;
         if (_isTriggering) return;
-        if (UIManager.IsAnyPanelOrModalOpen()) return;
+        if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
         if (Time.time - _lastTriggerTime < triggerCooldown) return;
 
         // Proximity check fallback (ensures triggering even if layers/tags on the player are custom)
@@ -89,8 +101,9 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (IsHazardTriggerSuppressed()) return;
         if (_isTriggering) return;
-        if (UIManager.IsAnyPanelOrModalOpen()) return;
+        if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
         if (Time.time - _lastTriggerTime < triggerCooldown) return;
 
         // Check if player submarine entered trigger
@@ -102,9 +115,19 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private IEnumerator TestTriggerRoutine()
     {
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+        {
+            yield break;
+        }
+
         float timer = initialTestDelay;
         while (timer > 0f)
         {
+            if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+            {
+                yield break;
+            }
+
             if (!UIManager.IsAnyPanelOrModalOpen())
             {
                 timer -= Time.deltaTime;
@@ -114,6 +137,10 @@ public class HazardZoneTrigger : MonoBehaviour
 
         while (UIManager.IsAnyPanelOrModalOpen())
         {
+            if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+            {
+                yield break;
+            }
             yield return null;
         }
 
@@ -127,7 +154,8 @@ public class HazardZoneTrigger : MonoBehaviour
     [ContextMenu("▶ Test Trigger Hazard Minigame Now")]
     public void TriggerHazardMinigame()
     {
-        if (UIManager.IsAnyPanelOrModalOpen()) return;
+        if (IsHazardTriggerSuppressed()) return;
+        if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
         if (MinigameManager.Instance == null || MinigameManager.Instance.IsMinigameActive) return;
 
         _lastTriggerTime = Time.time;
@@ -141,11 +169,19 @@ public class HazardZoneTrigger : MonoBehaviour
             {
                 _isTriggering = false;
                 Debug.Log($"[HazardZoneTrigger] Hazard Dodge Cleared! +{bonusEarned} RDP");
+                if (TutorialManager.Instance != null && TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter)
+                {
+                    TutorialManager.Instance.OnHazardCompleted(survived: true);
+                }
             },
             onFail: () =>
             {
                 _isTriggering = false;
                 Debug.Log("[HazardZoneTrigger] Hazard Dodge Failed! Hull compromised, -50 RDP");
+                if (TutorialManager.Instance != null && TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter)
+                {
+                    TutorialManager.Instance.OnHazardCompleted(survived: false);
+                }
             }
         );
     }
@@ -172,7 +208,7 @@ public class HazardZoneTrigger : MonoBehaviour
             float timer = interval;
             while (timer > 0f)
             {
-                if (!UIManager.IsAnyPanelOrModalOpen())
+                if (!UIManager.IsAnyPanelOrModalOpen() && (TutorialManager.Instance == null || !TutorialManager.Instance.IsTutorialActive))
                 {
                     timer -= Time.deltaTime;
                 }
@@ -180,7 +216,7 @@ public class HazardZoneTrigger : MonoBehaviour
             }
 
             // Once countdown elapses, wait until all menus/modals are closed before triggering
-            while (UIManager.IsAnyPanelOrModalOpen())
+            while (UIManager.IsAnyPanelOrModalOpen() || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive))
             {
                 yield return null;
             }

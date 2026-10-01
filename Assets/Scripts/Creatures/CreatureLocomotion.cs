@@ -69,21 +69,42 @@ public class CreatureLocomotion : MonoBehaviour
         _ai       = GetComponent<SpeciesAI>();
         _animator = GetComponentInChildren<Animator>();
 
-        // Cache best visual renderer transform for procedural deformation
-        var smr = GetComponentInChildren<SkinnedMeshRenderer>();
-        if (smr != null)
+        // Deactivate any unwanted legacy cylinder meshes (e.g. Spotted Jellyfish Cylinder.001)
+        foreach (var t in GetComponentsInChildren<Transform>(true))
         {
-            _visualModel = smr.transform;
+            if (t != null && t.gameObject != gameObject && t.name.IndexOf("Cylinder", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                t.gameObject.SetActive(false);
+            }
         }
-        else
+
+        // Cache best visual renderer transform for procedural deformation (skipping inactive or artifact meshes)
+        var smrs = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        for (int i = 0; i < smrs.Length; i++)
         {
-            var mr = GetComponentInChildren<MeshRenderer>();
-            if (mr != null)
-                _visualModel = mr.transform;
-            else if (transform.childCount > 0)
-                _visualModel = transform.GetChild(0);
-            else
-                _visualModel = transform;
+            if (smrs[i] != null && smrs[i].gameObject.activeInHierarchy && !smrs[i].name.Contains("Cylinder"))
+            {
+                _visualModel = smrs[i].transform;
+                break;
+            }
+        }
+
+        if (_visualModel == null)
+        {
+            var mrs = GetComponentsInChildren<MeshRenderer>(true);
+            for (int i = 0; i < mrs.Length; i++)
+            {
+                if (mrs[i] != null && mrs[i].gameObject.activeInHierarchy && !mrs[i].name.Contains("Cylinder"))
+                {
+                    _visualModel = mrs[i].transform;
+                    break;
+                }
+            }
+        }
+
+        if (_visualModel == null)
+        {
+            _visualModel = transform.childCount > 0 ? transform.GetChild(0) : transform;
         }
         _baseModelScale = _visualModel.localScale;
 

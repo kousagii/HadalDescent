@@ -67,6 +67,49 @@ public class UIThemeManager : MonoBehaviour
         }
     }
 
+    private static TMP_FontAsset _cachedGameplayFont;
+
+    /// <summary>
+    /// Retrieves the global Gameplay SDF font asset.
+    /// </summary>
+    public static TMP_FontAsset GameplayFont
+    {
+        get
+        {
+            if (_cachedGameplayFont != null) return _cachedGameplayFont;
+
+            var allFonts = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
+            foreach (var f in allFonts)
+            {
+                if (f != null && f.name.Contains("Gameplay"))
+                {
+                    _cachedGameplayFont = f;
+                    return _cachedGameplayFont;
+                }
+            }
+
+            var inScene = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var t in inScene)
+            {
+                if (t != null && t.font != null && t.font.name.Contains("Gameplay"))
+                {
+                    _cachedGameplayFont = t.font;
+                    return _cachedGameplayFont;
+                }
+            }
+
+            var loaded = Resources.Load<TMP_FontAsset>("Fonts/Gameplay SDF")
+                                ?? Resources.Load<TMP_FontAsset>("Gameplay SDF");
+            if (loaded != null)
+            {
+                _cachedGameplayFont = loaded;
+                return _cachedGameplayFont;
+            }
+
+            return AntoneFont;
+        }
+    }
+
     /// <summary>
     /// Backward-compatibility alias for AntoneFont (redirects all callers to Antone font).
     /// </summary>
@@ -164,12 +207,37 @@ public class UIThemeManager : MonoBehaviour
     public static void ApplyToText(TMP_Text text, TMP_FontAsset font = null)
     {
         if (text == null) return;
+
+        // Exemption: Radio Textbox is the only element that explicitly uses Gameplay SDF
+        bool isRadioText = false;
+        if (RadioTextboxUI.Instance != null)
+        {
+            isRadioText = RadioTextboxUI.Instance.IsRadioText(text);
+        }
+        else
+        {
+            isRadioText = text.GetComponentInParent<RadioTextboxUI>(true) != null;
+        }
+
+        if (isRadioText)
+        {
+            var gpFont = GameplayFont;
+            if (gpFont != null && text.font != gpFont)
+            {
+                text.font = gpFont;
+            }
+            text.characterSpacing = 3f;
+            return;
+        }
+
+        // All other text in the entire game strictly uses Antone font with normal character spacing
         if (font == null) font = AntoneFont;
 
         if (font != null && text.font != font)
         {
             text.font = font;
         }
+        text.characterSpacing = 0f;
 
         // Replace missing unicode en-dash/em-dash glyphs with standard ASCII hyphen (-)
         if (text.text != null && (text.text.Contains('–') || text.text.Contains('—') || text.text.Contains('\u2013') || text.text.Contains('\u2014')))

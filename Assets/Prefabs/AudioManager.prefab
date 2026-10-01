@@ -73,6 +73,9 @@ MonoBehaviour:
   diveSFX: {fileID: 0}
   surfaceSFX: {fileID: 0}
   alertSFX: {fileID: 0}
+  radioChirpSFX: {fileID: 8300000, guid: 1fdb909fb4434c242ab028501bdaaa3a, type: 3}
+  radioStaticSFX: {fileID: 8300000, guid: ee46b16cd990c71499768cfbd10f3ded, type: 3}
+  tutorialStepChimeSFX: {fileID: 8300000, guid: 77040a9e533a82848aba1ebd92556b09, type: 3}
 --- !u!82 &5445631654854010829
 AudioSource:
   m_ObjectHideFlags: 0

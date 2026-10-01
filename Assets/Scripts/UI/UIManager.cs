@@ -50,7 +50,7 @@ public class UIManager : MonoBehaviour
         if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen) return true;
         if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen) return true;
         if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
-        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialOpen) return true;
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialModalOpen) return true;
         if (includeMinigames && MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
         return false;
     }
@@ -367,8 +367,12 @@ public class UIManager : MonoBehaviour
         var reticle = ScanReticleUI.Instance;
         if (reticle != null) reticle.SetVisible(visible);
 
-        var dragZone = FindFirstObjectByType<TouchDragZone>();
-        if (dragZone != null) dragZone.gameObject.SetActive(visible);
+        var dragZone = FindFirstObjectByType<TouchDragZone>(FindObjectsInactive.Include);
+        if (dragZone != null)
+        {
+            dragZone.gameObject.SetActive(visible);
+            dragZone.enabled = visible;
+        }
 
         var joystickGO = GameObject.Find("MobileControls")
                       ?? GameObject.Find("Joystick") 
@@ -376,7 +380,14 @@ public class UIManager : MonoBehaviour
                       ?? GameObject.Find("Floating Joystick") 
                       ?? GameObject.Find("Dynamic Joystick")
                       ?? GameObject.Find("Virtual Joystick");
+        if (joystickGO == null && canvas != null)
+        {
+            var mcTr = canvas.transform.Find("HUD/MobileControls") ?? canvas.transform.Find("MobileControls");
+            if (mcTr != null) joystickGO = mcTr.gameObject;
+        }
         if (joystickGO != null) joystickGO.SetActive(visible);
+
+        ObjectiveHUDUI.Instance?.SetVisible(visible);
     }
 
     // -----------------------------------------------------------------------
@@ -1458,5 +1469,127 @@ public class UIManager : MonoBehaviour
         });
 
         return pauseGO;
+    }
+
+    // -----------------------------------------------------------------------
+    // Tutorial Target RectTransform Getters
+    // -----------------------------------------------------------------------
+
+    public RectTransform GetDepthGaugeRect()
+    {
+        if (depthLabel != null) return depthLabel.rectTransform;
+        var go = GameObject.Find("Depth") ?? GameObject.Find("DepthGauge") ?? GameObject.Find("DepthLabel");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetSonarMapRect()
+    {
+        if (sonarMapImage != null) return sonarMapImage.rectTransform;
+        var go = GameObject.Find("SonarMap") ?? GameObject.Find("Sonar") ?? GameObject.Find("SonarMapImage");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetRDPCounterRect()
+    {
+        if (rdpLabel != null) return rdpLabel.rectTransform;
+        var go = GameObject.Find("RDP") ?? GameObject.Find("RDPLabel") ?? GameObject.Find("RDPCounter");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetScanButtonRect()
+    {
+        if (scanButtonImage != null) return scanButtonImage.rectTransform;
+        var go = GameObject.Find("Scan") ?? GameObject.Find("ScanButton") ?? GameObject.Find("BtnScan");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetInteractButtonRect()
+    {
+        if (interactButtonImage != null) return interactButtonImage.rectTransform;
+        var go = GameObject.Find("Interact") ?? GameObject.Find("InteractButton") ?? GameObject.Find("BtnInteract");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetShopButtonRect()
+    {
+        var go = GameObject.Find("Shop") ?? GameObject.Find("ShopButton") ?? GameObject.Find("BtnShop");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetBestiaryButtonRect()
+    {
+        var go = GameObject.Find("Bestiary") ?? GameObject.Find("BestiaryButton") ?? GameObject.Find("BtnBestiary");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetJoystickRect()
+    {
+        var go = GameObject.Find("MovementJoystick") ?? GameObject.Find("Joystick") ?? GameObject.Find("Floating Joystick") ?? GameObject.Find("Variable Joystick");
+        return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    private GameObject _hudSkipTutorialGO;
+
+    public void SetHUDSkipTutorialVisible(bool visible, Action onSkipClicked = null)
+    {
+        if (visible)
+        {
+            if (_hudSkipTutorialGO == null)
+            {
+                var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                if (canvas == null) return;
+
+                // Middle-top placement to avoid overlapping any HUD icons
+                _hudSkipTutorialGO = new GameObject("HUDSkipTutorialBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+                _hudSkipTutorialGO.transform.SetParent(canvas.transform, false);
+                var rt = _hudSkipTutorialGO.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.5f, 1f);
+                rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot     = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(320f, 50f);
+                rt.anchoredPosition = new Vector2(0f, -22f);
+
+                var img = _hudSkipTutorialGO.GetComponent<Image>();
+                img.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+
+                var outline = _hudSkipTutorialGO.AddComponent<Outline>();
+                outline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
+                outline.effectDistance = new Vector2(2f, -2f);
+
+                var btnComp = _hudSkipTutorialGO.GetComponent<Button>();
+                btnComp.targetGraphic = img;
+
+                var txtGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+                txtGO.transform.SetParent(_hudSkipTutorialGO.transform, false);
+                var txtRt = txtGO.GetComponent<RectTransform>();
+                txtRt.anchorMin = Vector2.zero;
+                txtRt.anchorMax = Vector2.one;
+                txtRt.sizeDelta = Vector2.zero;
+                txtRt.anchoredPosition = Vector2.zero;
+
+                var txt = txtGO.GetComponent<TextMeshProUGUI>();
+                txt.font = UIThemeManager.AntoneFont;
+                txt.fontStyle = FontStyles.Normal;
+                txt.fontSize = 28f;
+                txt.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
+                txt.alignment = TextAlignmentOptions.Center;
+                txt.raycastTarget = false;
+                txt.text = "SKIP TUTORIAL";
+            }
+
+            var btn = _hudSkipTutorialGO.GetComponent<Button>();
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() =>
+            {
+                AudioManager.Instance?.PlayButtonClick();
+                onSkipClicked?.Invoke();
+            });
+
+            _hudSkipTutorialGO.SetActive(true);
+        }
+        else
+        {
+            if (_hudSkipTutorialGO != null) _hudSkipTutorialGO.SetActive(false);
+        }
     }
 }

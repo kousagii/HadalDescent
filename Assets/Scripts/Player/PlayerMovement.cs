@@ -74,6 +74,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public Vector2 CurrentMoveInput => moveInput;
+    public bool HasMovementInput => moveInput.sqrMagnitude > 0.05f;
+
     /// <summary>
     /// Disables any MeshRenderers on the submarine body so the first-person camera has a 100% unobstructed view.
     /// Preserves colliders and physics intact.
@@ -88,6 +91,21 @@ public class PlayerMovement : MonoBehaviour
                 continue;
 
             r.enabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Enables MeshRenderers on the submarine body for 3rd-person cutscenes and cinematic orbits.
+    /// </summary>
+    public void ShowSubmarineVisuals()
+    {
+        var renderers = GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers)
+        {
+            if (r is ParticleSystemRenderer || r.GetComponentInParent<Canvas>() != null)
+                continue;
+
+            r.enabled = true;
         }
     }
 

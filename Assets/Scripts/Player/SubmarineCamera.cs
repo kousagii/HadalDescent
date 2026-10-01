@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Manages the submarine's first-person camera.
@@ -41,6 +42,10 @@ public class SubmarineCamera : MonoBehaviour
     private float _smoothYaw;
     private float _smoothPitch;
 
+    // Direct touch position tracking fallback
+    private Vector2 _lastTouchPos;
+    private bool    _hasLastTouch;
+
     /// <summary>World-space yaw the camera is currently pointing.</summary>
     public float CameraYaw   => _smoothYaw;
 
@@ -82,8 +87,84 @@ public class SubmarineCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (dragZone == null)
+            dragZone = FindFirstObjectByType<TouchDragZone>(FindObjectsInactive.Include);
+
         // --- 1. Read drag delta from the UI touch zone ---
-        Vector2 drag = dragZone != null ? dragZone.TouchDelta : Vector2.zero;
+        Vector2 drag = Vector2.zero;
+        if (dragZone != null)
+        {
+            if (!dragZone.gameObject.activeInHierarchy)
+            {
+                dragZone.gameObject.SetActive(true);
+                dragZone.enabled = true;
+            }
+            drag = dragZone.ConsumeTouchDelta();
+        }
+
+        // Direct Touchscreen input fallback (mobile devices and Unity Device Simulator)
+        if (drag == Vector2.zero && Touchscreen.current != null)
+        {
+            var primary = Touchscreen.current.primaryTouch;
+            if (primary.press.isPressed)
+            {
+                Vector2 touchPos = primary.position.ReadValue();
+                // Left 22% of screen is joystick territory; allow drag everywhere else if not clicking a button
+                if (touchPos.x > Screen.width * 0.22f && !IsOverClickableUI(touchPos))
+                {
+                    if (_hasLastTouch)
+                    {
+                        Vector2 delta = touchPos - _lastTouchPos;
+                        if (delta.sqrMagnitude > 0.01f)
+                        {
+                            drag = delta * 0.35f;
+                        }
+                    }
+                    _lastTouchPos = touchPos;
+                    _hasLastTouch = true;
+                }
+                else
+                {
+                    _hasLastTouch = false;
+                }
+            }
+            else
+            {
+                _hasLastTouch = false;
+            }
+        }
+
+        // Desktop / Editor mouse-drag fallback using InputSystem
+#if UNITY_EDITOR || UNITY_STANDALONE
+        if (drag == Vector2.zero && Mouse.current != null)
+        {
+            bool rightPressed = Mouse.current.rightButton.isPressed;
+            bool leftPressed  = Mouse.current.leftButton.isPressed;
+
+            if (rightPressed || (leftPressed && !IsOverClickableUI(Mouse.current.position.ReadValue())))
+            {
+                Vector2 delta = Mouse.current.delta.ReadValue();
+                drag = delta * 0.9f;
+            }
+        }
+
+        // Arrow keys / IJKL keyboard look fallback
+        if (Keyboard.current != null)
+        {
+            float keyLookX = 0f;
+            float keyLookY = 0f;
+            if (Keyboard.current.rightArrowKey.isPressed || Keyboard.current.lKey.isPressed) keyLookX += 1f;
+            if (Keyboard.current.leftArrowKey.isPressed  || Keyboard.current.jKey.isPressed) keyLookX -= 1f;
+            if (Keyboard.current.upArrowKey.isPressed    || Keyboard.current.iKey.isPressed) keyLookY += 1f;
+            if (Keyboard.current.downArrowKey.isPressed  || Keyboard.current.kKey.isPressed) keyLookY -= 1f;
+
+            if (keyLookX != 0f || keyLookY != 0f)
+            {
+                float dt = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.02f;
+                drag += new Vector2(keyLookX * 120f * dt, keyLookY * 90f * dt);
+            }
+        }
+#endif
 
         // Apply sensitivity and pitch direction settings
         float sens = LookSensitivityMultiplier;
@@ -100,6 +181,24 @@ public class SubmarineCamera : MonoBehaviour
 
         // --- 3. Apply rotation: pitch is always relative to world up ---
         transform.rotation = Quaternion.Euler(_smoothPitch, _smoothYaw, 0f);
+    }
+
+    private static bool IsOverClickableUI(Vector2 screenPos)
+    {
+        var es = UnityEngine.EventSystems.EventSystem.current;
+        if (es == null) return false;
+
+        var pointerData = new UnityEngine.EventSystems.PointerEventData(es) { position = screenPos };
+        var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        es.RaycastAll(pointerData, results);
+        foreach (var r in results)
+        {
+            if (r.gameObject != null && r.gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------

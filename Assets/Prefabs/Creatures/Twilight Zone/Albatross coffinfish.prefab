@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &2444287509135894937
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1457.45
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.12
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 2959.557
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      propertyPath: m_Name
+      value: Albatross coffinfish
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects:
+    - {fileID: -3632652786504397588, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8704515883012445158}
+    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2283894522272321498}
+  m_SourcePrefab: {fileID: -4161369568681901532, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+--- !u!1 &6364420839327656414 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8771091787928289351, guid: cc0ee6eeb64cf8f48aae870419c017f2, type: 3}
+  m_PrefabInstance: {fileID: 2444287509135894937}
+  m_PrefabAsset: {fileID: 0}
+--- !u!54 &8704515883012445158
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6364420839327656414}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 2
+  m_AngularDamping: 10
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!65 &2283894522272321498
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6364420839327656414}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.6574707, y: 1.4309403, z: 2.2089844}
+  m_Center: {x: -0.41540527, y: 0.3287887, z: -0.27685547}

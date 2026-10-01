@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -74,6 +75,10 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip diveSFX;
     [SerializeField] private AudioClip surfaceSFX;
     [SerializeField] private AudioClip alertSFX;
+    [Header("Tutorial & Comms SFX")]
+    [SerializeField] private AudioClip radioChirpSFX;
+    [SerializeField] private AudioClip radioStaticSFX;
+    [SerializeField] private AudioClip tutorialStepChimeSFX;
 
     private Coroutine _fadeCoroutine;
     private Coroutine _transitionCoroutine;
@@ -91,6 +96,7 @@ public class AudioManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         EnsureSources();
+        EnsureTutorialClips();
 
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -117,8 +123,19 @@ public class AudioManager : MonoBehaviour
         if (hadalZoneBGM == null)       hadalZoneBGM       = other.hadalZoneBGM;
         if (mainMenuBGM == null)        mainMenuBGM        = other.mainMenuBGM;
         if (defaultGameplayBGM == null) defaultGameplayBGM = other.defaultGameplayBGM;
+        if (radioChirpSFX == null)      radioChirpSFX      = other.radioChirpSFX;
+        if (radioStaticSFX == null)     radioStaticSFX     = other.radioStaticSFX;
+        if (tutorialStepChimeSFX == null) tutorialStepChimeSFX = other.tutorialStepChimeSFX;
 
+        EnsureTutorialClips();
         EnsureSources();
+    }
+
+    private void EnsureTutorialClips()
+    {
+        if (radioChirpSFX == null) radioChirpSFX = FindClipByName("radio chirp");
+        if (radioStaticSFX == null) radioStaticSFX = FindClipByName("radio static");
+        if (tutorialStepChimeSFX == null) tutorialStepChimeSFX = FindClipByName("tutorial step chime");
     }
 
     private void OnDestroy()
@@ -129,6 +146,7 @@ public class AudioManager : MonoBehaviour
     private void Start()
     {
         LoadAudioPreferences();
+        EnsureTutorialClips();
 
         // Auto-play music for currently active scene if not already playing
         if (bgmSource != null && !bgmSource.isPlaying)
@@ -451,6 +469,65 @@ public class AudioManager : MonoBehaviour
     public void PlayDive()          => PlaySFX(diveSFX);
     public void PlaySurface()       => PlaySFX(surfaceSFX);
     public void PlayAlert()         => PlaySFX(alertSFX);
+
+    public void PlayRadioChirp()
+    {
+        if (radioChirpSFX == null) radioChirpSFX = FindClipByName("radio chirp");
+        if (radioChirpSFX != null)
+        {
+            PlaySFX(radioChirpSFX);
+        }
+        else
+        {
+            Debug.LogWarning("[AudioManager] Radio Chirp SFX not assigned or found.");
+        }
+    }
+
+    public void PlayRadioStatic()
+    {
+        if (radioStaticSFX == null) radioStaticSFX = FindClipByName("radio static");
+        if (radioStaticSFX != null)
+        {
+            PlaySFX(radioStaticSFX);
+        }
+        else
+        {
+            Debug.LogWarning("[AudioManager] Radio Static SFX not assigned or found.");
+        }
+    }
+
+    public void PlayTutorialStepChime()
+    {
+        if (tutorialStepChimeSFX == null) tutorialStepChimeSFX = FindClipByName("tutorial step chime");
+        if (tutorialStepChimeSFX != null)
+        {
+            PlaySFX(tutorialStepChimeSFX);
+        }
+        else
+        {
+            Debug.LogWarning("[AudioManager] Tutorial Step Chime SFX not assigned or found.");
+        }
+    }
+
+    private AudioClip FindClipByName(string clipName)
+    {
+        // 1. Try Resources.Load from "Audio/" folder
+        var clip = Resources.Load<AudioClip>("Audio/" + clipName);
+        if (clip != null) return clip;
+
+        // 2. Try Resources.Load from root Resources folder
+        clip = Resources.Load<AudioClip>(clipName);
+        if (clip != null) return clip;
+
+        // 3. Fallback: Search all loaded AudioClips in memory
+        var allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+        foreach (var c in allClips)
+        {
+            if (c != null && c.name.Equals(clipName, StringComparison.OrdinalIgnoreCase))
+                return c;
+        }
+        return null;
+    }
 
     /// <summary>
     /// Plays the zone transition sound effect for the configured duration (default: 3.0s),

@@ -176,6 +176,8 @@ public class MinigameManager : MonoBehaviour
         DisableControls();
         Time.timeScale = 0f;
         UIManager.Instance?.SetExplorationHUDVisible(false);
+        TutorialArrowUI.Instance?.Hide();
+        RadioTextboxUI.Instance?.HideInstant();
 
         Action wrappedSuccess = () =>
         {
@@ -197,15 +199,28 @@ public class MinigameManager : MonoBehaviour
         int zone = ZoneManager.CurrentZoneIndex;
         int pick = ChooseMinigame(zone);
 
-        if ((pick == 1 || forceMG1) && !forceMG2)
+        Action startMinigame = () =>
         {
-            _mg1.Initialize(data, zone, wrappedSuccess, wrappedFail);
-            _mg1.Show();
+            if ((pick == 1 || forceMG1) && !forceMG2)
+            {
+                _mg1.Initialize(data, zone, wrappedSuccess, wrappedFail);
+                _mg1.Show();
+            }
+            else
+            {
+                _mg2.Initialize(data, zone, wrappedSuccess, wrappedFail);
+                _mg2.Show();
+            }
+        };
+
+        var overlay = MinigameInstructionOverlay.Instance ?? FindFirstObjectByType<MinigameInstructionOverlay>(FindObjectsInactive.Include);
+        if (overlay != null)
+        {
+            overlay.ShowSlideshow(pick, startMinigame);
         }
         else
         {
-            _mg2.Initialize(data, zone, wrappedSuccess, wrappedFail);
-            _mg2.Show();
+            startMinigame();
         }
     }
 
@@ -254,13 +269,28 @@ public class MinigameManager : MonoBehaviour
 
         _minigameActive = true;
         DisableControls();
+        TutorialArrowUI.Instance?.Hide();
+        RadioTextboxUI.Instance?.HideInstant();
 
         Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); onSuccess?.Invoke(); };
         Action wrappedFail    = () => { _minigameActive = false; EnableControls(); onFail?.Invoke(); };
 
-        int zone = ZoneManager.CurrentZoneIndex;
-        _mg3.Initialize(cluster, zone, wrappedSuccess, wrappedFail);
-        _mg3.Show();
+        Action startMG3 = () =>
+        {
+            int zone = ZoneManager.CurrentZoneIndex;
+            _mg3.Initialize(cluster, zone, wrappedSuccess, wrappedFail);
+            _mg3.Show();
+        };
+
+        var overlay = MinigameInstructionOverlay.Instance ?? FindFirstObjectByType<MinigameInstructionOverlay>(FindObjectsInactive.Include);
+        if (overlay != null)
+        {
+            overlay.ShowSlideshow(3, startMG3);
+        }
+        else
+        {
+            startMG3();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -280,8 +310,13 @@ public class MinigameManager : MonoBehaviour
 
         if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false))
         {
-            Debug.LogWarning("[MinigameManager] Major UI panel or modal is open - suppressing hazard request.");
-            return;
+            bool isTutorialStep7 = TutorialManager.Instance != null && 
+                                   TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter;
+            if (!isTutorialStep7)
+            {
+                Debug.LogWarning("[MinigameManager] Major UI panel or modal is open - suppressing hazard request.");
+                return;
+            }
         }
 
         EnsureMinigameComponents();
@@ -294,6 +329,8 @@ public class MinigameManager : MonoBehaviour
         _minigameActive = true;
         DisableControls();
         UIManager.Instance?.SetExplorationHUDVisible(false);
+        TutorialArrowUI.Instance?.Hide();
+        RadioTextboxUI.Instance?.HideInstant();
 
         Action<int> wrappedSuccess = (reward) =>
         {
@@ -311,8 +348,21 @@ public class MinigameManager : MonoBehaviour
             onFail?.Invoke();
         };
 
-        _mg4.Initialize(zoneIndex, wrappedSuccess, wrappedFail);
-        _mg4.Show();
+        Action startMG4 = () =>
+        {
+            _mg4.Initialize(zoneIndex, wrappedSuccess, wrappedFail);
+            _mg4.Show();
+        };
+
+        var overlay = MinigameInstructionOverlay.Instance ?? FindFirstObjectByType<MinigameInstructionOverlay>(FindObjectsInactive.Include);
+        if (overlay != null)
+        {
+            overlay.ShowSlideshow(4, startMG4);
+        }
+        else
+        {
+            startMG4();
+        }
     }
 
     /// <summary>
@@ -331,6 +381,11 @@ public class MinigameManager : MonoBehaviour
     {
         if (forceMG1) return 1;
         if (forceMG2) return 2;
+
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+        {
+            return TutorialManager.Instance.GetTutorialMinigamePick();
+        }
 
         return UnityEngine.Random.value < 0.5f ? 1 : 2;
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,6 +32,8 @@ public class ScannerSystem : MonoBehaviour
             return _instance;
         }
     }
+
+    public static event Action<SpeciesData> OnSpeciesScanned;
 
     // -----------------------------------------------------------------------
     // Inspector
@@ -657,6 +660,8 @@ public class ScannerSystem : MonoBehaviour
         }
 
         ClearAllDetection();
+
+        OnSpeciesScanned?.Invoke(data);
 
         BestiaryDiscoveryPopup.ShowPopup(data, isNew);
         Debug.Log($"[ScannerSystem] Scan success: {data.commonName} (new={isNew})");

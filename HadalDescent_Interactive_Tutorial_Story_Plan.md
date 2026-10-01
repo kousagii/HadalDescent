@@ -23,7 +23,7 @@
 5. [UI Component Specifications](#5-ui-component-specifications)
    - 5A. [Radio Textbox (Gameplay SDF, Non-Blocking, No Bold, Min 32px)](#5a-radio-textbox-non-blocking-comms--gameplay-sdf)
    - 5B. [Tutorial Directional Arrow & Sonar Legend](#5b-tutorial-directional-arrow--sonar-legend)
-   - 5C. [Self-Paced Minigame Briefing Overlay with Embedded Multi-Image Panel (`Arts/Tutorial`)](#5c-self-paced-minigame-briefing-overlay-with-embedded-multi-image-panel-artstutorial)
+   - 5C. [Full-Screen Image Slideshow Briefing (`Arts/Tutorial`)](#5c-full-screen-image-slideshow-briefing-artstutorial)
    - 5D. [Skip Tutorial Button & Confirmation Prompt](#5d-skip-tutorial-button--confirmation-prompt)
 6. [Asset Requirements Checklist](#6-asset-requirements-checklist)
 7. [Implementation Timeline (3–4 Hours)](#7-implementation-timeline)
@@ -41,22 +41,21 @@
 
 ---
 
-### 1B. Opening Cinematic Sequence (Sunlight Zone Start → Ocean Descent Preview → Cockpit Transition)
+### 1B. Opening Cinematic Sequence (Sunlight Zone Orbit → Cockpit Transition)
 
-The game opens with an in-engine cinematic utilizing the **custom 3D Submarine model**. Rather than starting with an aerial surface shot, the sequence begins directly beneath the surface in the **Sunlight Zone**, previews the mysterious depths ahead, and seamlessly transitions into first-person gameplay:
+The game opens with a **simplified in-engine cinematic** (~15 seconds) utilizing the **custom 3D Submarine model**. The sequence orbits the submarine in the **Sunlight Zone**, dollies into the cockpit, and hands off to the first radio transmission:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        OPENING CINEMATIC SEQUENCE                          │
-│                     (~35 seconds, non-interactive)                          │
+│                     (~15 seconds, non-interactive)                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  BEAT 1 — SUNLIGHT ZONE INTRODUCTION (Third Person, 5s)                    │
+│  BEAT 1 — SUNLIGHT ZONE ORBIT (Third Person, 5s)                           │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  Camera orbits the player's 3D Submarine model cruising gracefully  │    │
 │  │  through the vibrant Sunlight Zone (0–200m).                        │    │
 │  │  Golden sunbeams penetrate the crystal turquoise water.             │    │
-│  │  School of reef fish dart past the submarine hull.                  │    │
 │  │  Text overlay fades in (Gameplay SDF, 36px, clean un-bolded):       │    │
 │  │    "PHILIPPINE SEA — BENHAM RISE MARINE EXPEDITION"                 │    │
 │  │    "BIODIVERSITY RESEARCH SUBMERSIBLE 'HADAL EXPLORER'"             │    │
@@ -64,33 +63,9 @@ The game opens with an in-engine cinematic utilizing the **custom 3D Submarine m
 │  │  [SKIP TUTORIAL] button visible in top-right corner from the start. │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
-│  BEAT 2 — THE DESCENT PREVIEW (3 Seconds Per Zone, 12s total)              │
+│  BEAT 2 — COCKPIT TRANSITION (Third → First Person, 5s)                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  The camera tilts down and accelerates downward in a rapid preview  │    │
-│  │  dive showcasing the five distinct ocean zones ahead:               │    │
-│  │                                                                      │    │
-│  │  • [0–3s] TWILIGHT ZONE (200–1,000m):                               │    │
-│  │    Water shifts from turquoise to deep indigo. Faint silhouettes    │    │
-│  │    of pelagic species and first bioluminescent flickers appear.     │    │
-│  │                                                                      │    │
-│  │  • [3–6s] MIDNIGHT ZONE (1,000–4,000m):                             │    │
-│  │    Pitch-black water. Bioluminescent flashes from anglerfish and   │    │
-│  │    lanternfish illuminate the submarine's exterior lights.          │    │
-│  │                                                                      │    │
-│  │  • [6–9s] ABYSSAL ZONE (4,000–6,000m):                              │    │
-│  │    Submarine hull lights cut through freezing 4°C benthic plains;   │    │
-│  │    silhouettes of deep-sea trenches and glass sponges emerge.       │    │
-│  │                                                                      │    │
-│  │  • [9–12s] HADAL ZONE (6,000–11,000m):                              │    │
-│  │    The extreme abyss of the Philippine Trench. Extreme pressure     │    │
-│  │    depth gauge vignette warning flashes briefly.                    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│  BEAT 3 — RETURN & COCKPIT TRANSITION (Third → First Person, 8s)           │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  Rapid rewind/re-ascent back to the safe, tranquil Sunlight Zone.   │    │
-│  │  Camera rotates around the 3D Submarine model and smoothly dollies   │    │
-│  │  directly toward the forward cockpit viewport glass.                 │    │
+│  │  Camera smoothly dollies toward the forward cockpit viewport glass.  │    │
 │  │  Camera passes through the glass pane into the 1st-person view.      │    │
 │  │  Cockpit HUD instruments initialize and power on:                   │    │
 │  │    • Depth gauge flickers on at 18m                                 │    │
@@ -98,9 +73,9 @@ The game opens with an in-engine cinematic utilizing the **custom 3D Submarine m
 │  │    • Reticle powers up with cyan diagnostic circle                   │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
-│  BEAT 4 — FIRST RADIO TRANSMISSION (First Person, Comms Active)            │
+│  BEAT 3 — FIRST RADIO TRANSMISSION (First Person, Comms Active)            │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  🔊 Audio: Radio static burst + crisp comms open beep tone          │    │
+│  │  🔊 Audio: Radio static burst + radio chirp tone                    │    │
 │  │                                                                      │    │
 │  │  RADIO TEXTBOX slides up (bottom-center, Gameplay SDF, no bold):   │    │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │    │
@@ -129,7 +104,7 @@ The game opens with an in-engine cinematic utilizing the **custom 3D Submarine m
 
 | Act | Narrative Milestone | Gameplay Progression |
 | :--- | :--- | :--- |
-| **PROLOGUE** | **Deployment & Calibration** — Marine biologist arrives in the Philippine Sea aboard the research submersible. | In-engine 3D submarine cinematic → 3-second zone previews → cockpit transition → comms calibration with Dr. Santos. *(Option to skip tutorial available at any point).* |
+| **PROLOGUE** | **Deployment & Calibration** — Marine biologist arrives in the Philippine Sea aboard the research submersible. | In-engine 3D submarine cinematic (~15s): Sunlight Zone orbit → cockpit transition → comms calibration with Dr. Santos. *(Option to skip tutorial available at any point).* |
 | **ACT I** | **Sunlight Zone Expedition & Research Certification** — Dr. Santos mentors the researcher through core exploration protocols. | Interactive tutorial steps occur seamlessly without pausing gameplay. Player masters piloting, sonar reading, both scanning minigames (with self-paced `[CONTINUE]` briefings and embedded `Arts/Tutorial` images), Bestiary encyclopedia, debris cleanup, hazard survival, and upgrade shop. |
 | **ACT II** | **The Descent into the Deep** — Player descends progressively through Twilight, Midnight, Abyssal, and Hadal zones. Hull upgrades are required to survive mounting hydrostatic pressure. | Radio transmissions from Dr. Santos become rarer and more atmospheric as the radio signal weakens with depth. Environmental storytelling through habitat landmarks and bioluminescence. |
 | **ACT III** | **Final Cataloging & 100% Completion** — Cataloging the rarest hadal trench species to achieve complete database coverage (95/95 species). | Database reaches full completion. *(Note: Ending sequence cinematics and global research center upload sequence are deferred for future implementation).* |
@@ -200,8 +175,8 @@ To support returning players, playtesters, and experienced pilots, the tutorial 
 > - **Minimum text font size is 32px** across all tutorial elements, objective lines, and button labels (mobile readability guarantee).
 
 > [!IMPORTANT]
-> **Rule #3: Self-Paced Overlays with Embedded Tutorial Art.**  
-> Minigame instructions must NEVER disappear automatically on a timer. Each minigame briefing overlay embeds the official visual guides from `Assets/Arts/Tutorial/` (e.g., `Minigame 1-1.png`, `Minigame 1-2.png`, `Minigame 2.png`) inside containers that share the exact styling as the **[CONTINUE]** button (cyan border, dark navy panel, soft glow), letting players absorb the mechanics at their own pace.
+> **Rule #3: Self-Paced Image Slideshow Overlays (No Instruction Text).**  
+> Minigame briefings display tutorial images from `Assets/Arts/Tutorial/` in a **full-screen image slideshow** — one image at a time. All instruction text is **baked directly into the images** (each image already contains numbered step, instructions, and gameplay diagrams). The overlay shows only: the image in a cyan-bordered container, a page counter (`1 / 3`), `◀ PREV` / `NEXT ▶` arrows, a `[SKIP ▶]` button (top-right), and a `[CONTINUE]` button that replaces NEXT on the final slide. No auto-fade timer; fully self-paced.
 
 > [!IMPORTANT]
 > **Rule #4: Always provide a Skip Tutorial option.**  
@@ -454,21 +429,19 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 
 ---
 
-#### STEP 4A — Species Encounter 1: First Scanning Module (Embedded Multi-Image Briefing)
+#### STEP 4A — Species Encounter 1: First Scanning Module (Image Slideshow Briefing)
 - **Trigger:** Target creature enters the scanning reticle.
 - **Radio Dialogue (Gameplay SDF, 34px, no bold):**  
   *"You have a creature in your sights! There are two types of scanning modules on your submersible depending on the specimen. Align the target in your reticle and tap SCAN."*
 - **UI Pointers:**
   - Arrow → **Center Reticle**: *"ALIGN CREATURE"* (32px label)
   - Arrow → **SCAN Button** (bottom HUD): *"TAP TO SCAN"* (32px label)
-- **Self-Paced Minigame Briefing Overlay with Embedded Images (`Assets/Arts/Tutorial/`):**
-  - **Embedded Images:** Features **two styled image panels** embedded side-by-side inside the card:
-    - Left Panel: `Minigame 1-1.png` (holding screen to raise bar)
-    - Right Panel: `Minigame 1-2.png` (keeping creature centered in green zone)
-    - *Image Styling:* Each image is framed in a container styled identically to the Continue button (2px cyan border `#00E5FF`, dark navy backing, 12px rounded corners, soft glow).
-  - **Instruction Text (Gameplay SDF, 34px):**  
-    *"Hold touch anywhere to raise the focus bar. Keep the swimming creature centered inside the green zone until the scan completes!"*
-  - **Action Button:** `[ CONTINUE TO SCAN ]` (34px, Cyan accent). Tapping button closes briefing and begins the minigame.
+- **Image Slideshow Briefing (2 slides):**
+  - **Slide 1/2:** `Minigame 1-1.png` — "Hold anywhere in the screen to raise the green bar" (text baked into image)
+  - **Slide 2/2:** `Minigame 1-2.png` — "Releasing the hold drops the green bar" (text baked into image)
+  - **No separate instruction text** — images are self-contained with step numbers and diagrams
+  - **Navigation:** `◀ PREV` / `NEXT ▶` arrows, page counter `1 / 2`, `[SKIP ▶]` top-right
+  - **Last slide:** `[CONTINUE TO SCAN]` replaces NEXT (34px, Cyan accent)
 - **Objective Line (32px, green):** `OBJECTIVE: Align creature in reticle and complete scan`
 - **Non-Compliance Safeguard:** If player ignores for >60s, `[ SKIP STEP ]` option appears on the radio textbox.
 - **Advance Condition:** Player completes Minigame 1.
@@ -477,16 +450,15 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 
 ---
 
-#### STEP 4B — Species Encounter 2: Second Scanning Module (Embedded Image Briefing)
+#### STEP 4B — Species Encounter 2: Second Scanning Module (Image Slideshow Briefing)
 - **Context:** To ensure the player is trained on both randomized scanning minigames, the tutorial spawns or highlights a second distinct species nearby.
 - **Trigger:** Second creature comes into proximity.
 - **Radio Dialogue (Gameplay SDF, 34px, no bold):**  
   *"Notice the different bio-signature on this second creature? Our automated scanner will switch to the alternative scanning module. Lock on and initiate scan."*
-- **Self-Paced Minigame Briefing Overlay with Embedded Image:**
-  - **Embedded Image:** Displays `Minigame 2.png` from `Assets/Arts/Tutorial/` embedded in the center with the signature cyan button border styling.
-  - **Instruction Text (Gameplay SDF, 34px):**  
-    *"Drag and connect biological scan fragments into the creature grid to reconstruct its profile!"*
-  - **Action Button:** `[ CONTINUE TO SCAN ]` (34px, Cyan accent). No timed fadeout.
+- **Image Slideshow Briefing (1 slide):**
+  - **Slide 1/1:** `Minigame 2.png` — "Tap an adjacent tile next to the empty space to move it" (text baked into image)
+  - **No separate instruction text** — image is self-contained
+  - **Single slide:** `[CONTINUE TO SCAN]` button shown directly below image (34px, Cyan accent)
 - **Objective Line (32px, green):** `OBJECTIVE: Scan second creature to calibrate all scanner modes`
 - **Advance Condition:** Player completes the second minigame scan.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
@@ -511,16 +483,20 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 
 ---
 
-#### STEP 6 — Environmental Debris Cleanup (Self-Paced with [CONTINUE])
-- **Trigger:** Player approaches within 30 metres of a guaranteed tutorial `DebrisCluster`.
+#### STEP 6 — Environmental Debris Cleanup (Image Slideshow Briefing)
+- **Trigger:** Player approaches within 30 metres of a guaranteed tutorial `DebrisCluster` (auto-spawned on the seabed ~35m from player start via code).
 - **Radio Dialogue (Gameplay SDF, 34px, no bold):**  
   *"Researcher, I'm detecting discarded ocean debris polluting the coral bed ahead. Human pollution disrupts fragile marine life. Maneuver in close and deploy your robotic collection arm to collect and sort the waste."*
 - **UI Pointers:**
   - World-space 3D arrow floating directly over the physical debris cluster in the ocean.
   - Screen-space arrow → **INTERACT Button** (bottom HUD): *"TAP TO DEPLOY ARM"* (32px label)
-- **Self-Paced Minigame Briefing Overlay (Gameplay SDF, min 32px):**  
-  - Instructions: *"Operate the robotic claw to extract debris. Drag items into the correct sorting bins: Plastic, Metal, or Hazardous!"*
-  - Action Button: `[ CONTINUE TO CLEANUP ]` (34px, Cyan accent). No timer.
+- **Image Slideshow Briefing (3 slides):**
+  - **Slide 1/3:** `Minigame 3-1.png` — "Move joystick to move the claw left or right" (text baked into image)
+  - **Slide 2/3:** `Minigame 3-2.png` — "Tap the button to drop claw and collect trash" (text baked into image)
+  - **Slide 3/3:** `Minigame 3-3.png` — "Sort collected trash into the correct bins" (text baked into image)
+  - **No separate instruction text** — images are self-contained with step numbers and diagrams
+  - **Navigation:** `◀ PREV` / `NEXT ▶` arrows, page counter `1 / 3`, `[SKIP ▶]` top-right
+  - **Last slide:** `[CONTINUE TO CLEANUP]` replaces NEXT (34px, Cyan accent)
 - **Objective Line (32px, green):** `OBJECTIVE: Approach debris and tap INTERACT to sort waste`
 - **Advance Condition:** `EnvironmentalCleanupMinigame` completes successfully.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
@@ -528,19 +504,18 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 
 ---
 
-#### STEP 7 — Hazard Encounter: "Dangers Ahead" (Self-Paced with [CONTINUE])
+#### STEP 7 — Hazard Encounter: "Dangers Ahead" (Image Slideshow Briefing)
 - **Context:** In the Sunlight Zone (0–200m), there are **no thermal vent plumes**. Hazards consist of turbulent reef currents, seamount terrain, sharp coral spires, and falling reef rockfall. Additionally, Minigame 4 features **multiple objectives**: surviving the hazard course while collecting valuable floating **Rare Pearls** dislodged by the ocean turbulence.
-- **Trigger:** Scripted hazard zone placed ahead on the player's path.
+- **Trigger:** Automated by `TutorialManager` after Step 6 completes — directly calls `MinigameManager.TriggerHazardDodgeMinigame()` (no physical proximity trigger needed during tutorial).
 - **Radio Dialogue (Gameplay SDF, 34px, no bold):**  
   *"⚠️ DANGERS AHEAD — Turbulent reef current and seamount terrain detected! Engage emergency evasive navigation. Swipe left and right across lanes to dodge falling rocks and vortexes. Collect floating rare pearls along the route to earn bonus research data!"*
-- **Self-Paced Minigame Briefing Overlay (Gameplay SDF, min 32px):**  
-  - Instructions:  
-    *"← SWIPE LEFT / RIGHT TO DODGE HAZARDS →"*  
-    *"COLLECT RARE PEARLS FOR BONUS RDP!"*
-  - Dual Objectives clearly enumerated:
-    1. Survive 3 navigation lanes down to 0 metres without depleting 3 Hull Integrity pips.
-    2. Collect floating glowing Rare Pearls (+10 to +25 RDP each).
-  - Action Button: `[ CONTINUE TO EVASIVE RUN ]` (34px, Red/Cyan accent). No timer.
+- **Image Slideshow Briefing (3 slides):**
+  - **Slide 1/3:** `Minigame 4-1.png` — "Swipe left or right across lanes to dodge obstacles" (text baked into image)
+  - **Slide 2/3:** `Minigame 4-2.png` — "Collect pearls to earn bonus RDP" (text baked into image)
+  - **Slide 3/3:** `Minigame 4-3.png` — "Avoid getting hit, 3 hits = hull compromised" (text baked into image)
+  - **No separate instruction text** — images are self-contained with step numbers and diagrams
+  - **Navigation:** `◀ PREV` / `NEXT ▶` arrows, page counter `1 / 3`, `[SKIP ▶]` top-right
+  - **Last slide:** `[CONTINUE TO EVASIVE RUN]` replaces NEXT (34px, Red/Cyan accent)
 - **Advance Condition:** `HazardDodgeMinigame` finishes.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
   - If Survived: *"Masterful evasive piloting! You navigated the turbulence and secured valuable survey data."*
@@ -647,8 +622,8 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 | :--- | :--- | :--- | :--- |
 | **RadioTextboxUI.cs** | `Assets/Scripts/UI/` | Procedural non-blocking radio speech box using **Gameplay SDF**, no bold, min 32px text, typewriter reveal, audio static burst, and integrated `[ SKIP ]` button. | ~260 |
 | **TutorialArrowUI.cs** | `Assets/Scripts/UI/` | Procedural animated directional pointer supporting both screen-space HUD targets and 3D world-space targets. Minimum label font size 32px. | ~200 |
-| **MinigameInstructionOverlay.cs** | `Assets/Scripts/UI/` | Self-paced overlay embedding images from `Assets/Arts/Tutorial/` inside matching button-styled containers, with diagram, instructions (Gameplay SDF, 32px+), and a prominent **`[ CONTINUE ]`** button to proceed. Supports multi-image layouts. | ~160 |
-| **CinematicSequencer.cs** | `Assets/Scripts/Cinematics/` | Controls the 3D submarine model camera orbit in Sunlight Zone, 3-second zone descent previews, cockpit camera dolly, and top-right `[ SKIP TUTORIAL ]` button. | ~190 |
+| **MinigameInstructionOverlay.cs** | `Assets/Scripts/UI/` | Full-screen image slideshow briefing. Displays one tutorial image at a time from `Assets/Arts/Tutorial/` with page counter (`1/3`), `◀ PREV` / `NEXT ▶` arrows, `[SKIP ▶]` button, and `[CONTINUE]` on last slide. **No instruction text** — all text is baked into the images. | ~200 |
+| **CinematicSequencer.cs** | `Assets/Scripts/Cinematics/` | Controls the simplified opening cinematic (~15s): 3D submarine Sunlight Zone orbit, cockpit camera dolly transition, HUD power-on, and top-right `[ SKIP TUTORIAL ]` button. | ~150 |
 
 ---
 
@@ -691,7 +666,8 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 │    • Tap anywhere on the textbox to instantly skip typewriter effect   │
 │    • Tapping [SKIP TUTORIAL] opens prompt or immediately skips         │
 │    • Auto-dismisses 4s after text completes OR when objective met      │
-│    • Radio static sound burst triggers on box appearance               │
+│    • Radio static burst (radio static.mp3) triggers on box appearance │
+│    • Radio chirp (radio chirp.mp3) plays on BOTH box open AND close   │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -727,62 +703,72 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 
 ---
 
-### 5C. Self-Paced Minigame Briefing Overlay with Embedded Multi-Image Panel (`Arts/Tutorial`)
+### 5C. Full-Screen Image Slideshow Briefing (`Arts/Tutorial`)
 
-The briefing overlay features embedded tutorial artwork located in `Assets/Arts/Tutorial/`. Each embedded image container uses the **exact visual styling of the Continue button** (2px cyan border, dark navy translucent fill, rounded corners, soft glow) to create a cohesive, high-tech interface.
+Tutorial images contain **all instruction text baked directly into each image** (step number, instructions, gameplay diagrams). The overlay simply displays one image at a time with navigation controls — no duplicate instruction text needed.
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│             SELF-PACED MINIGAME BRIEFING OVERLAY (MULTI-IMAGE EMBEDDED)          │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│  Anchoring: Center screen overlay (non-blocking pause while reading)             │
-│  Background: Semi-transparent dark vignette (0.02, 0.04, 0.08, 0.90)             │
-│  Dimensions: 1000px width x 620px height                                         │
-│                                                                                  │
-│  ┌────────────────────────────────────────────────────────────────────────────┐  │
-│  │  SCANNING PROTOCOL: CAPTURE & FOCUS                                        │  │
-│  │  ────────────────────────────────────────────────────────────────────────  │  │
-│  │                                                                            │  │
-│  │   EMBEDDED IMAGE CONTAINERS (MATCHING CONTINUE BUTTON STYLING):            │  │
-│  │   ┌───────────────────────────┐      ┌───────────────────────────┐         │  │
-│  │   │ 2px Cyan Border (#00E5FF) │      │ 2px Cyan Border (#00E5FF) │         │  │
-│  │   │ Deep Navy Backing (0.08)  │      │ Deep Navy Backing (0.08)  │         │  │
-│  │   │ 12px Rounded Corners      │      │ 12px Rounded Corners      │         │  │
-│  │   │                           │      │                           │         │  │
-│  │   │    [ Minigame 1-1.png ]   │      │    [ Minigame 1-2.png ]   │         │  │
-│  │   │    Hold to raise bar      │      │    Keep creature centered │         │  │
-│  │   │                           │      │                           │         │  │
-│  │   └───────────────────────────┘      └───────────────────────────┘         │  │
-│  │            STEP 1: ASCEND                     STEP 2: FOCUS                │  │
-│  │                                                                            │  │
-│  │  "Hold touch anywhere to raise the focus bar. Keep the swimming creature   │  │
-│  │   centered inside the green zone until data capture reaches 100%!"         │  │
-│  │                                                                            │  │
-│  │                  ╔═════════════════════════════════════╗                   │  │
-│  │                  ║         [ CONTINUE TO SCAN ]        ║                   │  │
-│  │                  ╚═════════════════════════════════════╝                   │  │
-│  │                     (2px Cyan Border, 34px Gameplay SDF)                   │  │
-│  └────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                  │
-│  Image Asset Mapping from Assets/Arts/Tutorial/:                                 │
-│    • Minigame 1 (Capture & Focus):                                               │
-│      - Image 1: Assets/Arts/Tutorial/Minigame 1-1.png (Raising the green bar)    │
-│      - Image 2: Assets/Arts/Tutorial/Minigame 1-2.png (Holding creature in focus)│
-│    • Minigame 2 (Reconstruction Scan):                                           │
-│      - Image: Assets/Arts/Tutorial/Minigame 2.png (Connecting scan puzzle tiles) │
-│    • Minigame 3 (Debris Cleanup):                                                │
-│      - Procedural / custom diagram of claw grab and 3 sorting bins               │
-│    • Minigame 4 (Hazard Dodge):                                                  │
-│      - Procedural / custom 3-lane dodge diagram with glowing Rare Pearl badges   │
-│                                                                                  │
-│  Container & Button Styling Synergy:                                             │
-│    • Border: 2px solid cyan (#00E5FF) on both the image containers & button     │
-│    • Fill: Deep navy translucent `rgba(10, 22, 42, 0.85)`                       │
-│    • Corner Radius: 12px–14px uniform rounded edges                              │
-│    • Hover/Active Bloom: Soft cyan emissive glow (0.00, 0.90, 1.00, 0.35)        │
-│                                                                                  │
-└──────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│             FULL-SCREEN IMAGE SLIDESHOW BRIEFING                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Anchoring: Center screen overlay (non-blocking, gameplay input disabled)   │
+│  Background: Dark vignette (0.02, 0.04, 0.08, 0.92)                        │
+│                                                                             │
+│                                               [SKIP ▶]  ← Top-right, 32px │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                                                                       │  │
+│  │               FULL TUTORIAL IMAGE DISPLAYED HERE                      │  │
+│  │          (One image at a time, aspect ratio preserved)                │  │
+│  │                                                                       │  │
+│  │    All text is BAKED INTO the image — no overlay text needed          │  │
+│  │    (numbered step, instructions, diagrams all in the image)           │  │
+│  │                                                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│   Image Container: 2px cyan border, 12px corners, dark navy backing, glow  │
+│                                                                             │
+│                                                                             │
+│          ◀              1 / 3              ▶                               │
+│       [PREV]      (Gameplay SDF, 34px)   [NEXT]                            │
+│                                                                             │
+│            (On LAST slide, NEXT becomes:)                                   │
+│         ╔═══════════════════════════════════╗                               │
+│         ║       [ CONTINUE ]  34px         ║                               │
+│         ╚═══════════════════════════════════╝                               │
+│           (2px Cyan Border, Gameplay SDF)                                   │
+│                                                                             │
+│  Navigation Behavior:                                                       │
+│    • ◀ PREV: Goes to previous image (hidden on first slide)                │
+│    • NEXT ▶: Goes to next image (visible on all except last slide)         │
+│    • [CONTINUE]: Replaces NEXT on final slide only → starts minigame       │
+│    • [SKIP ▶]: Skips all remaining slides → starts minigame immediately   │
+│    • Swipe left/right: Natural mobile gesture navigation                    │
+│    • No auto-advance timer — fully self-paced                              │
+│                                                                             │
+│  Image Asset Mapping from Assets/Arts/Tutorial/:                            │
+│    • Minigame 1 (Capture & Focus) — 2 slides:                              │
+│      - Slide 1/2: Minigame 1-1.png (Hold to raise green bar)              │
+│      - Slide 2/2: Minigame 1-2.png (Release drops bar, fill meter)        │
+│    • Minigame 2 (Reconstruction Scan) — 1 slide:                           │
+│      - Slide 1/1: Minigame 2.png (Tap tiles to solve puzzle)              │
+│    • Minigame 3 (Debris Cleanup) — 3 slides:                              │
+│      - Slide 1/3: Minigame 3-1.png (Move joystick to move claw)           │
+│      - Slide 2/3: Minigame 3-2.png (Tap button to drop claw)              │
+│      - Slide 3/3: Minigame 3-3.png (Sort trash into correct bins)         │
+│    • Minigame 4 (Hazard Dodge) — 3 slides:                                │
+│      - Slide 1/3: Minigame 4-1.png (Swipe lanes to dodge)                 │
+│      - Slide 2/3: Minigame 4-2.png (Collect pearls for RDP)               │
+│      - Slide 3/3: Minigame 4-3.png (Avoid hits, 3 = hull compromised)    │
+│                                                                             │
+│  Image Container & Button Styling Synergy:                                  │
+│    • Border: 2px solid cyan (#00E5FF)                                      │
+│    • Fill: Deep navy translucent rgba(10, 22, 42, 0.85)                    │
+│    • Corner Radius: 12px uniform rounded edges                              │
+│    • Outer Glow: rgba(0, 229, 255, 0.15)                                   │
+│    • Nav Arrows: 56×56px cyan touch targets                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -821,11 +807,11 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 
 | Asset | Status | Usage in Tutorial |
 | :--- | :--- | :--- |
-| **3D Submarine Model** | ✅ Available | Featured prominently in the opening cinematic (Sunlight Zone orbit, 3s zone preview descent, camera dolly into cockpit). |
+| **3D Submarine Model** | ✅ Available | Featured in the opening cinematic (Sunlight Zone orbit, cockpit dolly transition). |
 | **Sunlight Zone Environment** | ✅ Implemented | Primary training arena (procedural coral reefs, sunbeam lighting). |
-| **Tutorial Debris Cluster** | ✅ Configured | Spawned 35m from starting position for Step 6 cleanup. |
-| **Tutorial Species Spawners** | ✅ Configured | Two distinct species guaranteed near spawn point for Steps 4A & 4B. |
-| **Scripted Hazard Trigger** | ✅ Configured | Sunlight zone turbulence and coral rockfall corridor for Step 7. |
+| **Tutorial Debris Cluster** | ✅ Code-driven | Auto-spawned on the seabed ~35m from player start via `DebrisSpawner` tutorial override. No manual scene placement needed. |
+| **Tutorial Species (×2)** | ✅ Code-driven | Two distinct mobile species force-spawned 20–30m from player start via `SpeciesSpawner` tutorial override. No manual scene placement needed. |
+| **Hazard Zone Trigger** | ✅ Code-driven | Automated by `TutorialManager` after Step 6 — directly calls `MinigameManager.TriggerHazardDodgeMinigame()`. Periodic surge disabled during tutorial. |
 
 ---
 
@@ -833,23 +819,29 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 
 | Asset File | Path | Status | Usage |
 | :--- | :--- | :--- | :--- |
-| **Minigame 1-1.png** | `Assets/Arts/Tutorial/Minigame 1-1.png` | ✅ Exists | Embedded in Step 4A briefing overlay (Step 1: Ascend bar). |
-| **Minigame 1-2.png** | `Assets/Arts/Tutorial/Minigame 1-2.png` | ✅ Exists | Embedded in Step 4A briefing overlay (Step 2: Center creature). |
-| **Minigame 2.png** | `Assets/Arts/Tutorial/Minigame 2.png` | ✅ Exists | Embedded in Step 4B briefing overlay (Reconstruction puzzle tiles). |
-| **tutorial_arrow.png** | `Assets/Arts/UI/` (or procedural) | ✅ Procedural | Cyan directional bouncing pointer. |
-| **radio_icon.png** | `Assets/Arts/UI/` | ✅ Implemented | Speaker icon on radio transmission box. |
+| **Minigame 1-1.png** | `Assets/Arts/Tutorial/Minigame 1-1.png` | ✅ Exists | Slideshow Slide 1/2 for Step 4A (Hold to raise green bar). |
+| **Minigame 1-2.png** | `Assets/Arts/Tutorial/Minigame 1-2.png` | ✅ Exists | Slideshow Slide 2/2 for Step 4A (Release drops bar, fill meter). |
+| **Minigame 2.png** | `Assets/Arts/Tutorial/Minigame 2.png` | ✅ Exists | Slideshow Slide 1/1 for Step 4B (Tap tiles to solve puzzle). |
+| **Minigame 3-1.png** | `Assets/Arts/Tutorial/Minigame 3-1.png` | ✅ Exists | Slideshow Slide 1/3 for Step 6 (Move joystick to move claw). |
+| **Minigame 3-2.png** | `Assets/Arts/Tutorial/Minigame 3-2.png` | ✅ Exists | Slideshow Slide 2/3 for Step 6 (Tap button to drop claw). |
+| **Minigame 3-3.png** | `Assets/Arts/Tutorial/Minigame 3-3.png` | ✅ Exists | Slideshow Slide 3/3 for Step 6 (Sort trash into correct bins). |
+| **Minigame 4-1.png** | `Assets/Arts/Tutorial/Minigame 4-1.png` | ✅ Exists | Slideshow Slide 1/3 for Step 7 (Swipe lanes to dodge obstacles). |
+| **Minigame 4-2.png** | `Assets/Arts/Tutorial/Minigame 4-2.png` | ✅ Exists | Slideshow Slide 2/3 for Step 7 (Collect pearls for bonus RDP). |
+| **Minigame 4-3.png** | `Assets/Arts/Tutorial/Minigame 4-3.png` | ✅ Exists | Slideshow Slide 3/3 for Step 7 (Avoid hits, 3 = hull compromised). |
+| **tutorial_arrow.png** | Procedural | ✅ Procedural | Cyan directional bouncing pointer (drawn via Unity UI Image rotation). |
+| **radio_icon.png** | Procedural | ✅ Procedural | Speaker icon on radio transmission box. |
 
 ---
 
 ### 6C. Audio Assets
 
-| Asset Name | Format | Duration | Purpose |
+| Asset Name | Path | Status | Purpose |
 | :--- | :--- | :--- | :--- |
-| `radio_static_burst.wav` | WAV | 0.6s | Played at the opening of each Dr. Santos transmission. |
-| `radio_comms_open.wav` | WAV | 0.2s | High-tech comms open chirp. |
-| `radio_comms_close.wav` | WAV | 0.2s | High-tech comms close tone. |
-| `tutorial_step_chime.wav` | WAV | 0.8s | Subtle positive affirmation on step completion. |
-| `data_pod_pickup.wav` / `pearl_pickup.wav` | WAV | 0.4s | Rewarding acoustic ping when collecting glowing rare pearls during hazard run. |
+| `radio static.mp3` | `Assets/Audio/radio static.mp3` | ✅ Exists | Radio static burst played at opening of each Dr. Santos transmission. |
+| `radio chirp.mp3` | `Assets/Audio/radio chirp.mp3` | ✅ Exists | Radio open AND close tone (used for both). |
+| `tutorial step chime.mp3` | `Assets/Audio/tutorial step chime.mp3` | ✅ Exists | Positive affirmation chime on step completion. |
+| `species found beep.mp3` | `Assets/Audio/species found beep.mp3` | ✅ Exists | Reused for scan success during tutorial. |
+| `debris found .mp3` | `Assets/Audio/debris found .mp3` | ✅ Exists | Reused for debris detection during tutorial. |
 
 ---
 
@@ -881,12 +873,12 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 │               • Implement `OnSkipTutorialClicked()` bypass flow          │
 │               • Hook non-compliance nudge timers (20s, 40s, 60s)        │
 │                                                                          │
-│  HOUR 2: Embedded Multi-Image Overlays & Dual-Scan Sequencing            │
+│  HOUR 2: Image Slideshow Overlays & Dual-Scan Sequencing                │
 │  ├── [25 min] Build MinigameInstructionOverlay.cs                        │
-│  │            • Embed images from `Assets/Arts/Tutorial/`                │
-│  │            • Multi-image container layout (Minigame 1-1 + 1-2)        │
-│  │            • Match container styling with `[ CONTINUE ]` button       │
-│  │            • Self-paced reading (no auto-fade timer)                  │
+│  │            • Full-screen image slideshow (one image at a time)        │
+│  │            • Page counter (1/3), ◀ PREV / NEXT ▶ arrows              │
+│  │            • [CONTINUE] replaces NEXT on final slide                  │
+│  │            • [SKIP ▶] top-right to skip remaining slides              │
 │  ├── [20 min] Build TutorialArrowUI.cs                                   │
 │  │            • Screen-space and world-space animated pointers           │
 │  │            • Step 1 sequential HUD instrument pointers                │
@@ -905,11 +897,11 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 │  │            • `[ CONTINUE TO EVASIVE RUN ]` button                     │
 │  └── [20 min] Shop Guidance Step 8 + Completion Reward (+100 RDP)        │
 │                                                                          │
-│  HOUR 4: Opening Cinematic with 3D Submarine & Polish                    │
-│  ├── [35 min] CinematicSequencer.cs                                      │
+│  HOUR 4: Simplified Opening Cinematic & Polish                           │
+│  ├── [25 min] CinematicSequencer.cs                                      │
 │  │            • Sunlight Zone orbit around player's 3D Submarine model   │
-│  │            • 3-second descent preview across ocean zones              │
 │  │            • Cockpit camera dolly transition into first-person        │
+│  │            • HUD instruments power-on sequence                        │
 │  │            • Top-right `[SKIP TUTORIAL]` HUD trigger                  │
 │  └── [25 min] Audio integration & playtest validation pass               │
 │                                                                          │
@@ -924,7 +916,7 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 | :--- | :--- | :--- |
 | **Non-Blocking Architecture** | High | Standard Unity Coroutines and canvas overlays avoid `Time.timeScale = 0`. |
 | **Skip Tutorial & Fail-Safe Bypass** | High | `TutorialManager.cs` already contains `OnSkipTutorialClicked()` boilerplate; simple timer activates `[SKIP STEP]` if player stalls for 60s. |
-| **Embedded Multi-Image UI** | High | Images already exist at `Assets/Arts/Tutorial/` (`Minigame 1-1.png`, `Minigame 1-2.png`, `Minigame 2.png`). Standard Unity UI `Image` elements in horizontal layout with matching button border material. |
+| **Image Slideshow UI** | High | All 9 tutorial images already exist at `Assets/Arts/Tutorial/` with text baked in. Standard Unity UI `Image` + `Sprite` swap per slide, with `Button.onClick` for navigation. |
 | **Self-Paced [CONTINUE] Buttons** | High | Replaces coroutine delay timer with standard Unity UI `Button.onClick` listener, making implementation simpler and more reliable. |
 | **Gameplay SDF Integration** | High | Asset already exists at `Assets/TextMesh Pro/Fonts/Gameplay SDF.asset`; readily loaded via `Resources.Load` or direct serialized reference. |
 | **3D Submarine Model Integration** | High | User has the 3D model ready; simple camera lerp path achieves the cinematic without heavy rig setups. |
@@ -1049,5 +1041,5 @@ The briefing overlay features embedded tutorial artwork located in `Assets/Arts/
 | `HazardDodgeMinigame.cs`| ✅ Exists | **Minor Edit:** Verify Sunlight Zone hazards ("Dangers Ahead") and Rare Pearl rewards. |
 | `RadioTextboxUI.cs` | 🆕 New Script | **Create:** Non-blocking radio box using **Gameplay SDF**, normal weight, ≥32px font, with `[SKIP]` and `[SKIP STEP]` fallback buttons. |
 | `TutorialArrowUI.cs` | 🆕 New Script | **Create:** Animated screen-space and world-space pointers with ≥32px labels. |
-| `MinigameInstructionOverlay.cs` | 🆕 New Script | **Create:** Self-paced briefing overlay embedding images from `Assets/Arts/Tutorial/` inside matching button-styled containers, with prominent **`[ CONTINUE ]`** button (no timer), Gameplay SDF, ≥32px text. |
-| `CinematicSequencer.cs` | 🆕 New Script | **Create:** 3D submarine Sunlight Zone orbit, 3s zone preview descent, cockpit transition, and skip trigger. |
+| `MinigameInstructionOverlay.cs` | 🆕 New Script | **Create:** Full-screen image slideshow briefing. One image at a time from `Assets/Arts/Tutorial/` with page counter, `◀ PREV` / `NEXT ▶` arrows, `[SKIP ▶]`, and `[CONTINUE]` on last slide. No instruction text — all text baked into images. |
+| `CinematicSequencer.cs` | 🆕 New Script | **Create:** Simplified ~15s cinematic: 3D submarine Sunlight Zone orbit, cockpit transition, HUD power-on, and skip trigger. |

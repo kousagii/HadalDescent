@@ -193,7 +193,7 @@ public class MainMenuController : MonoBehaviour
             var tmp = continueButton.GetComponentInChildren<TextMeshProUGUI>();
             if (tmp != null)
             {
-                tmp.color = hasSave ? Color.white : new Color(0.3f, 0.3f, 0.3f, 0.4f);
+                tmp.color = hasSave ? new Color(0f, 0.9f, 1, 1f) : new Color(0.3f, 0.3f, 0.3f, 0.4f);
             }
         }
         else
@@ -568,11 +568,9 @@ public class MainMenuController : MonoBehaviour
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        // Yes Button (Delete & Start New Game) - 2 lines: enlarged taller/wider to comfortably fit both lines
-        CreateDialogButton("ConfirmBtn", "START NEW GAME", new Color(0.75f, 0.18f, 0.18f), OnConfirmNewGame, btnContainer.transform, font, new Vector2(390f, 92f), 30f);
-
-        // Cancel Button (Keep Save) - 1 line: kept standard size
-        CreateDialogButton("CancelBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelNewGame, btnContainer.transform, font, new Vector2(300f, 70f), 32f);
+        // Confirm & Cancel Buttons - identical dimensions for visual symmetry
+        CreateDialogButton("ConfirmBtn", "START NEW GAME", new Color(0.75f, 0.18f, 0.18f), OnConfirmNewGame, btnContainer.transform, font, new Vector2(380f, 90f), 30f);
+        CreateDialogButton("CancelBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelNewGame, btnContainer.transform, font, new Vector2(380f, 90f), 30f);
     }
 
     // -----------------------------------------------------------------------
@@ -661,11 +659,9 @@ public class MainMenuController : MonoBehaviour
         hlg.childControlWidth = false;
         hlg.childControlHeight = false;
 
-        // Yes Button (Quit Game)
+        // Confirm & Cancel Buttons - identical dimensions
         CreateDialogButton("ConfirmExitBtn", "QUIT GAME", new Color(0.75f, 0.18f, 0.18f), OnConfirmExitGame, btnContainer.transform, font, new Vector2(340f, 80f), 30f);
-
-        // Cancel Button (Stay in Main Menu)
-        CreateDialogButton("CancelExitBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelExitGame, btnContainer.transform, font, new Vector2(300f, 80f), 32f);
+        CreateDialogButton("CancelExitBtn", "CANCEL", new Color(0.15f, 0.35f, 0.50f), OnCancelExitGame, btnContainer.transform, font, new Vector2(340f, 80f), 30f);
     }
 
     private void CreateDialogButton(string name, string label, Color color, UnityEngine.Events.UnityAction action, Transform parent, TMP_FontAsset font, Vector2 size, float fontSize = 32f)

@@ -131,6 +131,8 @@ public class DebrisCluster : MonoBehaviour
         if (_trackable != null)
             Destroy(_trackable);
 
+        TutorialManager.Instance?.NotifyDebrisCleaned();
+
         Debug.Log($"[DebrisCluster] '{clusterName}' successfully cleaned up.");
         Destroy(gameObject, 0.1f);
     }

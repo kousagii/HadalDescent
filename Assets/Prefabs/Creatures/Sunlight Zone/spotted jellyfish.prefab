@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3975961864464611296, guid: 611aea3beb5ce2c4c9470327e1a1e19a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8771091787928289351, guid: 611aea3beb5ce2c4c9470327e1a1e19a, type: 3}
       propertyPath: m_Name
       value: Spotted Jellyfish

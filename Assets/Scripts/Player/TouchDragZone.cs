@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 /// <summary>
 /// Captures finger-drag delta from a UI RectTransform panel and exposes it
@@ -11,39 +12,46 @@ using UnityEngine.EventSystems;
 /// </summary>
 public class TouchDragZone : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler
 {
-    [Header("Sensitivity")]
-    [SerializeField] private float sensitivity = 0.2f;
-
-    /// <summary>Pixel-space drag movement this frame, scaled by sensitivity.</summary>
+    /// <summary>Pixel-space drag movement this frame.</summary>
     public Vector2 TouchDelta { get; private set; }
 
-    private Vector2 _accumulatedDelta;
     private bool _isDragging;
+    public bool IsDragging => _isDragging;
+
+    private void Awake()
+    {
+        var img = GetComponent<Image>();
+        if (img == null)
+        {
+            img = gameObject.AddComponent<Image>();
+            img.color = Color.clear;
+        }
+        img.raycastTarget = true;
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        _isDragging       = true;
-        _accumulatedDelta = Vector2.zero;
-        TouchDelta        = Vector2.zero;
+        _isDragging = true;
+        TouchDelta  = Vector2.zero;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        // eventData.delta is in screen pixels; multiply by sensitivity
-        _accumulatedDelta += eventData.delta * sensitivity;
+        TouchDelta += eventData.delta;
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        _isDragging       = false;
-        _accumulatedDelta = Vector2.zero;
-        TouchDelta        = Vector2.zero;
+        _isDragging = false;
     }
 
-    private void Update()
+    /// <summary>
+    /// Consumes and resets the accumulated touch drag delta.
+    /// </summary>
+    public Vector2 ConsumeTouchDelta()
     {
-        // Expose accumulated drag delta throughout the frame for SubmarineCamera
-        TouchDelta        = _accumulatedDelta;
-        _accumulatedDelta = Vector2.zero;
+        Vector2 d = TouchDelta;
+        TouchDelta = Vector2.zero;
+        return d;
     }
 }
