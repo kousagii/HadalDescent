@@ -346,7 +346,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         string speech = "Time to take the helm. Drag across the viewport to steer your camera view, "
-                      + "and push the directional joystick to navigate forward.";
+                      + "and push the joystick to navigate forward.";
 
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
@@ -459,8 +459,8 @@ public class TutorialManager : MonoBehaviour
         _currentPhase = TutorialPhase.Step4B_ScanEncounter2;
         ResetPhaseTimers();
 
-        string speech = "Notice the different bio-signature on this second creature? Our automated scanner will switch "
-                      + "to the alternative scanning module. Lock on and initiate scan.";
+        string speech = "There is an alternative way for the scanning module. Our automated scanner will switch to the alternative scanning module"
+                      + "Lock on and initiate scan.";
 
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
@@ -533,7 +533,7 @@ public class TutorialManager : MonoBehaviour
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
             speech,
-            "Approach debris and tap INTERACT to sort waste",
+            "Approach orange dot on the sonar map and tap INTERACT to sort waste",
             onComplete: null,
             showSkipStep: false
         );
@@ -574,9 +574,8 @@ public class TutorialManager : MonoBehaviour
             TutorialArrowUI.Instance?.PointAtWorld(hazard.transform, "HAZARD ZONE", Vector3.up * 2f, TutorialArrowUI.ArrowDirection.Down);
         }
 
-        string speech = "⚠️ DANGERS AHEAD — Turbulent reef current and seamount terrain detected! "
-                      + "Engage emergency evasive navigation. Swipe left and right across lanes to dodge falling rocks and vortexes. "
-                      + "Collect floating rare pearls along the route to earn bonus research data!";
+        string speech = "DANGERS AHEAD — Turbulent reef current and seamount terrain detected! "
+                      + "Engage emergency evasive navigation.";
 
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
@@ -675,8 +674,8 @@ public class TutorialManager : MonoBehaviour
         AudioManager.Instance?.PlayTutorialStepChime();
 
         string speech = "All systems verified and operational. Your training certification is complete, Researcher. "
-                      + "The Philippine Sea holds 95 species waiting to be discovered across 5 depth zones. "
-                      + "The deep ocean is calling. Dr. Santos out.";
+                      + "The Philippine Sea holds species waiting to be discovered across 5 depth zones. "
+                      + "The deep ocean is calling. Good luck out there.";
 
         ObjectiveHUDUI.Instance?.SetObjective(ObjectiveHUDUI.PostTutorialDefaultObjective);
 

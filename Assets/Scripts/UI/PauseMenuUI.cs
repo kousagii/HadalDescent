@@ -47,6 +47,7 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private Button customResumeButton;
     [SerializeField] private Button customSaveGameButton;
     [SerializeField] private Button customSettingsButton;
+    [SerializeField] private Button customZonesButton;
     [SerializeField] private Button customExitGameButton;
 
     [Header("Custom Settings Controls - Audio")]
@@ -112,6 +113,7 @@ public class PauseMenuUI : MonoBehaviour
                 Instance.customResumeButton = customResumeButton;
                 Instance.customSaveGameButton = customSaveGameButton;
                 Instance.customSettingsButton = customSettingsButton;
+                Instance.customZonesButton = customZonesButton;
                 Instance.customExitGameButton = customExitGameButton;
                 Instance.customMasterVolumeSlider = customMasterVolumeSlider;
                 Instance.customMusicVolumeSlider = customMusicVolumeSlider;
@@ -211,6 +213,10 @@ public class PauseMenuUI : MonoBehaviour
             {
                 OnSettingsBackClicked();
             }
+            else if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen && ZoneSelectionUI.OpenedFromPauseMenu)
+            {
+                ZoneSelectionUI.Instance.OnBackClicked();
+            }
             else
             {
                 TogglePause();
@@ -235,6 +241,8 @@ public class PauseMenuUI : MonoBehaviour
         _isPaused = true;
         _timeScaleBeforePause = Time.timeScale;
         Time.timeScale = 0f;
+        AudioManager.Instance?.StopBarRisingSFX();
+        AudioManager.Instance?.StopClawSFX();
 
         if (customPauseRoot != null)
         {
@@ -405,6 +413,73 @@ public class PauseMenuUI : MonoBehaviour
         }
     }
 
+    public void OnZonesClicked()
+    {
+        AudioManager.Instance?.PlayButtonClick();
+
+        // Temporarily hide pause panels while zone selection is displayed
+        if (customPauseRoot != null) customPauseRoot.SetActive(false);
+        if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
+
+        ZoneSelectionUI.OpenedFromPauseMenu = true;
+
+        if (ZoneSelectionUI.Instance != null)
+        {
+            ZoneSelectionUI.Instance.OpenZoneSelection();
+        }
+        else
+        {
+            UIManager.Instance?.OpenZoneSelection();
+        }
+    }
+
+    public void ShowPauseMenu()
+    {
+        _isPaused = true;
+        Time.timeScale = 0f;
+
+        if (customPauseRoot != null)
+        {
+            customPauseRoot.SetActive(true);
+            customPauseRoot.transform.SetAsLastSibling();
+
+            var canvas = customPauseRoot.GetComponent<Canvas>() ?? customPauseRoot.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 32767;
+
+            var raycaster = customPauseRoot.GetComponent<GraphicRaycaster>() ?? customPauseRoot.AddComponent<GraphicRaycaster>();
+            raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
+            if (customMainPausePanel != null) customMainPausePanel.SetActive(true);
+            if (customSettingsPanel != null)  customSettingsPanel.SetActive(false);
+        }
+        else
+        {
+            if (_proceduralRoot == null) BuildProceduralUI();
+            if (_proceduralRoot != null)
+            {
+                if (_proceduralCanvasGO != null)
+                {
+                    _proceduralCanvasGO.SetActive(true);
+                    _proceduralCanvasGO.transform.SetAsLastSibling();
+                    var c = _proceduralCanvasGO.GetComponent<Canvas>();
+                    if (c != null)
+                    {
+                        c.overrideSorting = true;
+                        c.sortingOrder = 32767;
+                    }
+                }
+                _proceduralRoot.SetActive(true);
+                _proceduralRoot.transform.SetAsLastSibling();
+                if (_mainPausePanel != null) _mainPausePanel.SetActive(true);
+                if (_settingsPanel != null)  _settingsPanel.SetActive(false);
+            }
+        }
+
+        LoadSettingsToUI();
+        Debug.Log("[PauseMenuUI] Resumed Pause Menu from Zone Selection.");
+    }
+
     public void OnExitGameClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
@@ -558,6 +633,11 @@ public class PauseMenuUI : MonoBehaviour
             customSettingsButton.onClick.RemoveListener(OnSettingsClicked);
             customSettingsButton.onClick.AddListener(OnSettingsClicked);
         }
+        if (customZonesButton != null)
+        {
+            customZonesButton.onClick.RemoveListener(OnZonesClicked);
+            customZonesButton.onClick.AddListener(OnZonesClicked);
+        }
         if (customExitGameButton != null)
         {
             customExitGameButton.onClick.RemoveListener(OnExitGameClicked);
@@ -678,32 +758,33 @@ public class PauseMenuUI : MonoBehaviour
         mainRect.anchorMin = new Vector2(0.5f, 0.5f);
         mainRect.anchorMax = new Vector2(0.5f, 0.5f);
         mainRect.pivot     = new Vector2(0.5f, 0.5f);
-        mainRect.sizeDelta = new Vector2(620f, 700f);
+        mainRect.sizeDelta = new Vector2(620f, 750f);
         _mainPausePanel.GetComponent<Image>().color = new Color(0.04f, 0.09f, 0.16f, 0.98f);
 
         // Title (Aloha, 48px Bold)
-        CreateText("Title", "PAUSE", new Vector2(0f, 270f), new Vector2(520f, 65f), 48, FontStyles.Bold, Color.white, _mainPausePanel.transform, font);
+        CreateText("Title", "PAUSE", new Vector2(0f, 290f), new Vector2(520f, 65f), 48, FontStyles.Bold, Color.white, _mainPausePanel.transform, font);
 
         // Save Notification Text (Aloha, 36px Bold)
         var notifGO = new GameObject("SaveNotification", typeof(RectTransform));
         notifGO.transform.SetParent(_mainPausePanel.transform, false);
         var notifRect = notifGO.GetComponent<RectTransform>();
-        notifRect.anchoredPosition = new Vector2(0f, 205f);
-        notifRect.sizeDelta = new Vector2(520f, 48f);
+        notifRect.anchoredPosition = new Vector2(0f, 230f);
+        notifRect.sizeDelta = new Vector2(520f, 44f);
         _saveNotification = notifGO.AddComponent<TextMeshProUGUI>();
         if (font != null) _saveNotification.font = font;
-        _saveNotification.fontSize = 36;
+        _saveNotification.fontSize = 34;
         _saveNotification.fontStyle = FontStyles.Bold;
         _saveNotification.alignment = TextAlignmentOptions.Center;
         _saveNotification.color = new Color(0.2f, 1f, 0.7f);
         _saveNotification.text = "";
         notifGO.SetActive(false);
 
-        // Buttons: Resume, Save Game, Settings, Exit Game
-        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 110f),  new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font, new Vector2(440f, 68f));
-        CreateMenuButton("SaveBtn",     "SAVE GAME", new Vector2(0f, 24f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
-        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -62f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
-        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -148f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
+        // Buttons: Resume, Save, Settings, Zones, Exit Game
+        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 150f),  new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font, new Vector2(440f, 64f));
+        CreateMenuButton("SaveBtn",     "SAVE",      new Vector2(0f, 70f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 64f));
+        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -10f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font, new Vector2(440f, 64f));
+        CreateMenuButton("ZonesBtn",    "ZONES",     new Vector2(0f, -90f),  new Color(0.12f, 0.38f, 0.58f), OnZonesClicked,    _mainPausePanel.transform, font, new Vector2(440f, 64f));
+        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -170f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 64f));
 
         // ── 2. Settings Panel ────────────────────────────────────────────
         _settingsPanel = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));

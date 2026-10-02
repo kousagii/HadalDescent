@@ -92,6 +92,10 @@ public class ShopManager : MonoBehaviour
     [Tooltip("Logo icon for Utilities & Expansion")]
     [SerializeField] private Sprite utilitiesLogo;
 
+    [Header("Audio (Optional — defaults to AudioManager)")]
+    [Tooltip("Sound played upon purchasing an upgrade (buying an upgrade.mp3).")]
+    [SerializeField] private AudioClip buyUpgradeSFX;
+
     [Header("Upgrade Categories & Perks")]
     [SerializeField] private List<UpgradeCategoryConfig> categoryConfigs = new List<UpgradeCategoryConfig>();
 
@@ -340,13 +344,17 @@ public class ShopManager : MonoBehaviour
         _isOpen = false;
         if (shopPanel != null) shopPanel.SetActive(false);
 
-        if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(true);
-        if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
-
         if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen)
         {
+            if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
+            if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
             ZoneSelectionUI.Instance.RefreshAllZoneCards();
             ZoneSelectionUI.Instance.transform.SetAsLastSibling();
+        }
+        else
+        {
+            if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(true);
+            if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
         }
     }
 
@@ -422,6 +430,11 @@ public class ShopManager : MonoBehaviour
         int newTier = currentTier + 1;
         SetTier(category, newTier);
         Debug.Log($"[ShopManager] Upgraded {category} to Tier {newTier} for {cost} RDP.");
+
+        if (buyUpgradeSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(buyUpgradeSFX);
+        else
+            AudioManager.Instance?.PlayBuyUpgradeSFX();
 
         OnUpgradePurchased?.Invoke(category, newTier);
         RefreshShopUI();

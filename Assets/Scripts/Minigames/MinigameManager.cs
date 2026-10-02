@@ -185,6 +185,7 @@ public class MinigameManager : MonoBehaviour
             _minigameActive = false;
             EnableControls();
             UIManager.Instance?.SetExplorationHUDVisible(true);
+            AudioManager.Instance?.StopBarRisingSFX();
             onSuccess?.Invoke();
         };
         Action wrappedFail = () =>
@@ -193,6 +194,7 @@ public class MinigameManager : MonoBehaviour
             _minigameActive = false;
             EnableControls();
             UIManager.Instance?.SetExplorationHUDVisible(true);
+            AudioManager.Instance?.StopBarRisingSFX();
             onFail?.Invoke();
         };
 
@@ -272,8 +274,8 @@ public class MinigameManager : MonoBehaviour
         TutorialArrowUI.Instance?.Hide();
         RadioTextboxUI.Instance?.HideInstant();
 
-        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); onSuccess?.Invoke(); };
-        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); onFail?.Invoke(); };
+        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); AudioManager.Instance?.StopClawSFX(); onSuccess?.Invoke(); };
+        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); AudioManager.Instance?.StopClawSFX(); onFail?.Invoke(); };
 
         Action startMG3 = () =>
         {

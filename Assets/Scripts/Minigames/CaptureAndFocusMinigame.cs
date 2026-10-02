@@ -94,6 +94,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     public void Show()
     {
         StopAllCoroutines();
+        AudioManager.Instance?.StopBarRisingSFX();
         UIManager.Instance?.SetExplorationHUDVisible(false);
         BuildUI();
         int tier = GetScannerTier();
@@ -121,13 +122,32 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         UpdateVisuals(halfZone, true);
     }
 
+    public bool IsFinished => _finished;
+
     public void SetHolding(bool isHolding)
     {
+        if (_finished)
+        {
+            _holding = false;
+            AudioManager.Instance?.StopBarRisingSFX();
+            return;
+        }
+
         _holding = isHolding;
+        if (!_holding)
+        {
+            AudioManager.Instance?.StopBarRisingSFX();
+        }
     }
 
     private bool IsHoldInputActive()
     {
+        if (_finished)
+        {
+            _holding = false;
+            return false;
+        }
+
         if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
         {
             _holding = false;
@@ -183,7 +203,11 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         if (_canvasGroup != null) _canvasGroup.blocksRaycasts = !isPaused;
         if (isPaused)
         {
-            _holding = false;
+            if (_holding)
+            {
+                _holding = false;
+                AudioManager.Instance?.StopBarRisingSFX();
+            }
             return;
         }
 
@@ -197,13 +221,19 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
         // 1. Universal input checking (New Input System, Pointer, Touchscreen, Mouse, Keyboard)
         bool holding = IsHoldInputActive();
+        if (holding != _holding)
+        {
+            _holding = holding;
+            if (_holding) AudioManager.Instance?.PlayBarRisingSFX();
+            else          AudioManager.Instance?.StopBarRisingSFX();
+        }
 
         // 2. Focus bar dimensions & strict boundary clamping
         float zoneSize = GetScannerFocusWidth(tier);
         float halfZone = zoneSize * 0.5f;
 
         // Move green focus zone — strictly clamped so top and bottom edges never leave the black container
-        _zonePos += holding ? RiseSpeed * dt : -FallSpeed * dt;
+        _zonePos += _holding ? RiseSpeed * dt : -FallSpeed * dt;
         _zonePos  = Mathf.Clamp(_zonePos, halfZone, 1.0f - halfZone);
 
         // 3. Creature autonomous movement
@@ -331,6 +361,13 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     {
         if (_finished) return;
         _finished = true;
+        _holding = false;
+        AudioManager.Instance?.StopBarRisingSFX();
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.blocksRaycasts = false;
+        }
 
         if (_redFlash != null)
         {
@@ -373,7 +410,9 @@ public class CaptureAndFocusMinigame : MonoBehaviour
 
     private IEnumerator DelayedClose(bool success)
     {
+        AudioManager.Instance?.StopBarRisingSFX();
         yield return new WaitForSecondsRealtime(1.2f);
+        AudioManager.Instance?.StopBarRisingSFX();
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
         UIManager.Instance?.SetExplorationHUDVisible(true);
 
@@ -386,6 +425,7 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         StopAllCoroutines();
         _finished = true;
         _holding = false;
+        AudioManager.Instance?.StopBarRisingSFX();
         if (_rootPanel != null)
         {
             Destroy(_rootPanel.gameObject);
@@ -679,22 +719,26 @@ public class CapturePointerReceiver : MonoBehaviour, IPointerDownHandler, IPoint
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (_minigame == null || _minigame.IsFinished) return;
         if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
-        if (_minigame != null) _minigame.SetHolding(true);
+        _minigame.SetHolding(true);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         if (_minigame != null) _minigame.SetHolding(false);
+        AudioManager.Instance?.StopBarRisingSFX();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         if (_minigame != null) _minigame.SetHolding(false);
+        AudioManager.Instance?.StopBarRisingSFX();
     }
 
     private void OnDisable()
     {
         if (_minigame != null) _minigame.SetHolding(false);
+        AudioManager.Instance?.StopBarRisingSFX();
     }
 }

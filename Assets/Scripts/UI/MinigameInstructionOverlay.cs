@@ -193,8 +193,8 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         controlsRect.sizeDelta = new Vector2(1100f, 90f);
         controlsRect.anchoredPosition = new Vector2(0f, -330f);
 
-        // ◀ PREV Button (Box container: 260x64px, 2px Cyan Border, Gameplay SDF 32px)
-        var prevGO = new GameObject("PrevButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+        // ◀ PREV Button (Box container: 260x64px, true 2px Solid Cyan Border, Gameplay SDF 32px)
+        var prevGO = new GameObject("PrevButton", typeof(RectTransform), typeof(Image), typeof(Button));
         prevGO.transform.SetParent(controlsGO.transform, false);
         var prevRect = prevGO.GetComponent<RectTransform>();
         prevRect.anchorMin = new Vector2(0f, 0.5f);
@@ -203,15 +203,24 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         prevRect.sizeDelta = new Vector2(260f, 64f);
         prevRect.anchoredPosition = new Vector2(20f, 0f);
 
-        var prevBg = prevGO.GetComponent<Image>();
-        prevBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        // Outer border (Cyan)
+        var prevBorder = prevGO.GetComponent<Image>();
+        prevBorder.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
 
-        var prevOutline = prevGO.GetComponent<Outline>();
-        prevOutline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
-        prevOutline.effectDistance = new Vector2(2f, -2f);
+        // Inner solid background (Dark Navy inset by 2px on all 4 sides)
+        var prevInnerGO = new GameObject("InnerBg", typeof(RectTransform), typeof(Image));
+        prevInnerGO.transform.SetParent(prevGO.transform, false);
+        var prevInnerRect = prevInnerGO.GetComponent<RectTransform>();
+        prevInnerRect.anchorMin = Vector2.zero;
+        prevInnerRect.anchorMax = Vector2.one;
+        prevInnerRect.sizeDelta = new Vector2(-4f, -4f); // 2px border on left, right, top, bottom
+        prevInnerRect.anchoredPosition = Vector2.zero;
+        var prevBg = prevInnerGO.GetComponent<Image>();
+        prevBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        prevBg.raycastTarget = false;
 
         _procPrevBtn = prevGO.GetComponent<Button>();
-        _procPrevBtn.targetGraphic = prevBg;
+        _procPrevBtn.targetGraphic = prevBorder;
         _procPrevBtn.onClick.AddListener(OnPrevClicked);
 
         var prevTextGO = new GameObject("PrevLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -249,8 +258,8 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         _procPageIndicator.alignment = TextAlignmentOptions.Center;
         _procPageIndicator.text = "1 / 3";
 
-        // NEXT ▶ Button (Box container: 260x64px, 2px Cyan Border, Gameplay SDF 32px)
-        var nextGO = new GameObject("NextButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+        // NEXT ▶ Button (Box container: 260x64px, true 2px Solid Cyan Border, Gameplay SDF 32px)
+        var nextGO = new GameObject("NextButton", typeof(RectTransform), typeof(Image), typeof(Button));
         nextGO.transform.SetParent(controlsGO.transform, false);
         var nextRect = nextGO.GetComponent<RectTransform>();
         nextRect.anchorMin = new Vector2(1f, 0.5f);
@@ -259,15 +268,24 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         nextRect.sizeDelta = new Vector2(260f, 64f);
         nextRect.anchoredPosition = new Vector2(-20f, 0f);
 
-        var nextBg = nextGO.GetComponent<Image>();
-        nextBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        // Outer border (Cyan)
+        var nextBorder = nextGO.GetComponent<Image>();
+        nextBorder.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
 
-        var nextOutline = nextGO.GetComponent<Outline>();
-        nextOutline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
-        nextOutline.effectDistance = new Vector2(2f, -2f);
+        // Inner solid background (Dark Navy inset by 2px on all 4 sides)
+        var nextInnerGO = new GameObject("InnerBg", typeof(RectTransform), typeof(Image));
+        nextInnerGO.transform.SetParent(nextGO.transform, false);
+        var nextInnerRect = nextInnerGO.GetComponent<RectTransform>();
+        nextInnerRect.anchorMin = Vector2.zero;
+        nextInnerRect.anchorMax = Vector2.one;
+        nextInnerRect.sizeDelta = new Vector2(-4f, -4f);
+        nextInnerRect.anchoredPosition = Vector2.zero;
+        var nextBg = nextInnerGO.GetComponent<Image>();
+        nextBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        nextBg.raycastTarget = false;
 
         _procNextBtn = nextGO.GetComponent<Button>();
-        _procNextBtn.targetGraphic = nextBg;
+        _procNextBtn.targetGraphic = nextBorder;
         _procNextBtn.onClick.AddListener(OnNextClicked);
 
         var nextTextGO = new GameObject("NextLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -287,8 +305,8 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         nextText.raycastTarget = false;
         nextText.text = "NEXT ▶";
 
-        // [ CONTINUE ] Button (Replaces NEXT on last slide: 260x64px, 2px Cyan Border, Gameplay SDF 32px)
-        var contGO = new GameObject("ContinueButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+        // [ CONTINUE ] Button (Replaces NEXT on last slide: 260x64px, true 2px Solid Cyan Border, Gameplay SDF 32px)
+        var contGO = new GameObject("ContinueButton", typeof(RectTransform), typeof(Image), typeof(Button));
         contGO.transform.SetParent(controlsGO.transform, false);
         var contRect = contGO.GetComponent<RectTransform>();
         contRect.anchorMin = new Vector2(1f, 0.5f);
@@ -297,15 +315,24 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         contRect.sizeDelta = new Vector2(260f, 64f);
         contRect.anchoredPosition = new Vector2(-20f, 0f);
 
-        var contBg = contGO.GetComponent<Image>();
-        contBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        // Outer border (Cyan)
+        var contBorder = contGO.GetComponent<Image>();
+        contBorder.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
 
-        var contOutline = contGO.GetComponent<Outline>();
-        contOutline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
-        contOutline.effectDistance = new Vector2(2f, -2f);
+        // Inner solid background (Dark Navy inset by 2px on all 4 sides)
+        var contInnerGO = new GameObject("InnerBg", typeof(RectTransform), typeof(Image));
+        contInnerGO.transform.SetParent(contGO.transform, false);
+        var contInnerRect = contInnerGO.GetComponent<RectTransform>();
+        contInnerRect.anchorMin = Vector2.zero;
+        contInnerRect.anchorMax = Vector2.one;
+        contInnerRect.sizeDelta = new Vector2(-4f, -4f);
+        contInnerRect.anchoredPosition = Vector2.zero;
+        var contBg = contInnerGO.GetComponent<Image>();
+        contBg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        contBg.raycastTarget = false;
 
         _procContinueBtn = contGO.GetComponent<Button>();
-        _procContinueBtn.targetGraphic = contBg;
+        _procContinueBtn.targetGraphic = contBorder;
         _procContinueBtn.onClick.AddListener(OnContinueClicked);
 
         var contTextGO = new GameObject("ContinueLabel", typeof(RectTransform), typeof(TextMeshProUGUI));

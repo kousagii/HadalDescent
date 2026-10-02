@@ -19,12 +19,16 @@ public class ZoneSelectionUI : MonoBehaviour
 {
     public static ZoneSelectionUI Instance { get; private set; }
 
-    /// <summary>
-    /// When set to true (e.g. upon completing or skipping the tutorial),
-    /// the active zone card action button displays "PROCEED" instead of "◀ GO BACK".
-    /// Automatically resets to false as soon as the user selects a zone or closes the menu.
-    /// </summary>
     public static bool IsAfterTutorialFlow { get; set; } = false;
+
+    /// <summary>
+    /// Set to true when Zone Selection is accessed via the in-game Pause Menu "ZONES" button.
+    /// Allows the Back button to return cleanly to the Pause Menu instead of exiting to Main Menu.
+    /// </summary>
+    public static bool OpenedFromPauseMenu { get; set; } = false;
+
+    public bool IsOpen => (customRoot != null && customRoot.activeInHierarchy) || (_proceduralRoot != null && _proceduralRoot.activeInHierarchy);
+    public bool IsWarningOpen => (customWarningModal != null && customWarningModal.activeInHierarchy) || (_proceduralWarningModal != null && _proceduralWarningModal.activeInHierarchy);
 
     [System.Serializable]
     public class ZoneCardBinding
@@ -206,21 +210,51 @@ public class ZoneSelectionUI : MonoBehaviour
 
     public void OpenZoneSelection()
     {
+        UIManager.Instance?.SetExplorationHUDVisible(false);
         TryLoadCustomPrefab();
 
         if (customRoot != null)
         {
             customRoot.SetActive(true);
+            customRoot.transform.SetAsLastSibling();
+            var canvas = customRoot.GetComponent<Canvas>() ?? customRoot.GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = 32766;
+            }
         }
         else
         {
             if (_proceduralRoot == null) BuildProceduralUI();
-            if (_proceduralRoot != null) _proceduralRoot.SetActive(true);
+            if (_proceduralRoot != null)
+            {
+                if (_proceduralCanvasGO != null)
+                {
+                    _proceduralCanvasGO.SetActive(true);
+                    _proceduralCanvasGO.transform.SetAsLastSibling();
+                    var c = _proceduralCanvasGO.GetComponent<Canvas>();
+                    if (c != null)
+                    {
+                        c.overrideSorting = true;
+                        c.sortingOrder = 32766;
+                    }
+                }
+                _proceduralRoot.SetActive(true);
+                _proceduralRoot.transform.SetAsLastSibling();
+            }
         }
+
+        string backLabel = OpenedFromPauseMenu ? "PAUSE MENU" : (SceneManager.GetActiveScene().name == "MainMenu" ? "MAIN MENU" : "BACK");
 
         if (customBackButton != null)
         {
             customBackButton.gameObject.SetActive(true);
+            var btnText = customBackButton.GetComponentInChildren<TMP_Text>(true);
+            if (btnText != null)
+            {
+                btnText.text = backLabel;
+            }
         }
 
         if (_proceduralBackBtn != null)
@@ -228,7 +262,7 @@ public class ZoneSelectionUI : MonoBehaviour
             _proceduralBackBtn.gameObject.SetActive(true);
             if (_proceduralBackBtnText != null)
             {
-                _proceduralBackBtnText.text = "MAIN MENU";
+                _proceduralBackBtnText.text = backLabel;
                 _proceduralBackBtnText.alignment = TextAlignmentOptions.Center;
                 _proceduralBackBtnText.verticalAlignment = VerticalAlignmentOptions.Middle;
                 _proceduralBackBtnText.margin = Vector4.zero;
@@ -310,11 +344,11 @@ public class ZoneSelectionUI : MonoBehaviour
         }
         else
         {
-            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED 🔒";
+            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED";
             btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
         }
 
-        string reqText = zoneIndex == 0 ? "DEFAULT ACCESS" : (isUnlocked ? "HULL REQUIREMENT MET" : $"REQ: HULL TIER {zone.requiredHullTier}");
+        string reqText = zoneIndex == 0 ? "DEFAULT ACCESS" : (isUnlocked ? "HULL REQ MET" : $"REQ: HULL TIER {zone.requiredHullTier}");
         Color reqColor = isUnlocked ? new Color(0.10f, 0.44f, 0.34f) : new Color(0.65f, 0.20f, 0.20f);
 
         var font = GetAlohaFont();
@@ -478,16 +512,34 @@ public class ZoneSelectionUI : MonoBehaviour
     private void EnterZone(int zoneIndex)
     {
         IsAfterTutorialFlow = false;
+        OpenedFromPauseMenu = false;
         if (!ZoneConfig.IsValidZone(zoneIndex)) return;
 
         MinigameManager.Instance?.CancelActiveMinigame();
+
+        string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
+
+        if (SceneManager.GetActiveScene().name == sceneName)
+        {
+            // Already in this zone - simply close zone selection and resume gameplay
+            CloseZoneSelection();
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            {
+                PauseMenuUI.Instance.ResumeGame();
+            }
+            else
+            {
+                Time.timeScale = 1f;
+                UIManager.Instance?.SetExplorationHUDVisible(true);
+            }
+            return;
+        }
 
         ZoneManager.SetCurrentZone(zoneIndex);
         ZoneManager.SetEnteredFromAbove(true);
         PlayerPrefs.SetInt("Save_HasPosition", 0);
         PlayerPrefs.Save();
 
-        string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
         Debug.Log($"[ZoneSelectionUI] Entering Zone {zoneIndex} ('{sceneName}')...");
 
         AudioManager.Instance?.PlayZoneTransition();
@@ -495,10 +547,7 @@ public class ZoneSelectionUI : MonoBehaviour
         CloseZoneSelection();
         ZoneBoundaryTrigger.PushPlayerFromActiveBoundary();
 
-        if (SceneManager.GetActiveScene().name != sceneName)
-        {
-            LoadingScreenUI.LoadScene(sceneName);
-        }
+        LoadingScreenUI.LoadScene(sceneName);
     }
 
     private void ShowPressureWarningModal(int zoneIndex)
@@ -598,8 +647,6 @@ public class ZoneSelectionUI : MonoBehaviour
         }
     }
 
-    public bool IsOpen => (customRoot != null && customRoot.activeInHierarchy) || (_proceduralRoot != null && _proceduralRoot.activeInHierarchy);
-
     public void OnWarningShopClicked()
     {
         AudioManager.Instance?.PlayButtonClick();
@@ -645,7 +692,25 @@ public class ZoneSelectionUI : MonoBehaviour
 
     public void OnBackClicked()
     {
+        if (IsWarningOpen)
+        {
+            OnWarningCloseClicked();
+            return;
+        }
+
         AudioManager.Instance?.PlayButtonClick();
+
+        if (OpenedFromPauseMenu)
+        {
+            OpenedFromPauseMenu = false;
+            CloseZoneSelection();
+            if (PauseMenuUI.Instance != null)
+            {
+                PauseMenuUI.Instance.ShowPauseMenu();
+            }
+            return;
+        }
+
         Time.timeScale = 1f;
         CloseZoneSelection();
 
@@ -1003,7 +1068,7 @@ public class ZoneSelectionUI : MonoBehaviour
         }
         else
         {
-            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED 🔒";
+            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED";
             btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
         }
 

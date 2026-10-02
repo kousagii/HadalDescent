@@ -105,6 +105,14 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     public GameObject prefabCoralObstacle;
     public GameObject prefabFishObstacle;
 
+    [Header("=== AUDIO (Optional — defaults to AudioManager) ===")]
+    [Tooltip("Energetic & tropical ambient BGM for Minigame 3.")]
+    [SerializeField] private AudioClip customBGM;
+    [Tooltip("Mechanical winch claw dropping & reel-up sound.")]
+    [SerializeField] private AudioClip customClawSFX;
+    [Tooltip("Species bump sound (shared bump track).")]
+    [SerializeField] private AudioClip customBumpSFX;
+
     // -----------------------------------------------------------------------
     // State & Callbacks
     // -----------------------------------------------------------------------
@@ -227,6 +235,11 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _isActive = true;
         gameObject.SetActive(true);
         StopAllCoroutines();
+
+        if (customBGM != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayBGM(customBGM);
+        else
+            AudioManager.Instance?.PlayMinigame3BGM();
 
         if (customUIRoot == null && (gameObject.name.Contains("Minigame3") || GetComponent<RectTransform>() != null))
         {
@@ -1216,6 +1229,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             _cableRenderer.SetPosition(0, _trolley.position);
             _cableRenderer.SetPosition(1, _clawHead.position + Vector3.up * 0.35f);
         }
+
+        bool isClawMoving = (_clawState == ClawState.Dropping || _clawState == ClawState.Reeling);
+        AudioManager.Instance?.SetClawMoving(isClawMoving);
     }
 
     private void OnDropClawPressed()
@@ -1269,6 +1285,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     {
         _clawState = ClawState.Reeling;
         _phaseTimeRemaining = Mathf.Max(0f, _phaseTimeRemaining - 3f);
+
+        if (customBumpSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(customBumpSFX);
+        else
+            AudioManager.Instance?.PlayBumpSFX();
+
         ShowStatusBanner("Eco disturbance (-3s)", new Color(1f, 0.35f, 0.35f));
     }
 
@@ -1580,6 +1602,9 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         RestoreSceneCamera();
         UIManager.Instance?.SetExplorationHUDVisible(true);
+
+        AudioManager.Instance?.StopClawSFX();
+        AudioManager.Instance?.RestoreZoneBGM();
     }
 
     private void OnDisable()

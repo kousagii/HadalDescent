@@ -38,17 +38,20 @@ MonoBehaviour:
   fleeRange: 10
   returnThreshold: 40
   turnSpeed: 65
-  locomotionArchetype: 0
+  locomotionArchetype: 3
   pulseFrequency: 0.8
   pulseDutyCycle: 0.35
-  bankingAngle: 20
-  undulationFrequency: 2.0
+  bankingAngle: 0
+  undulationFrequency: 2
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
-  minCruiseSpeedFraction: 0.25
+  minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 0}
   modelYawOffset: 0
   previewScaleMultiplier: 0.9
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.875, y: 1.0625}
+  maxAxisVariance: 0.035
   placeholderShape: 3
   placeholderColor: {r: 0.42, g: 0.38, b: 0.32, a: 1}
   placeholderScale: {x: 2, y: 0.3, z: 2}

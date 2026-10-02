@@ -61,6 +61,10 @@ public class ScannerSystem : MonoBehaviour
     [Header("References")]
     [SerializeField] private Camera scanCamera;
 
+    [Header("Audio (Optional — defaults to AudioManager)")]
+    [Tooltip("Sound played when species is successfully scanned (species scanned successfully.mp3).")]
+    [SerializeField] private AudioClip scanSuccessSFX;
+
     // -----------------------------------------------------------------------
     // Active Targets
     // -----------------------------------------------------------------------
@@ -662,6 +666,11 @@ public class ScannerSystem : MonoBehaviour
         ClearAllDetection();
 
         OnSpeciesScanned?.Invoke(data);
+
+        if (scanSuccessSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(scanSuccessSFX);
+        else
+            AudioManager.Instance?.PlaySpeciesScannedSuccessSFX();
 
         BestiaryDiscoveryPopup.ShowPopup(data, isNew);
         Debug.Log($"[ScannerSystem] Scan success: {data.commonName} (new={isNew})");

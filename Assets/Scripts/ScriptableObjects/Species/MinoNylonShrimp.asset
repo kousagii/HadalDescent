@@ -42,13 +42,16 @@ MonoBehaviour:
   pulseFrequency: 0.8
   pulseDutyCycle: 0.35
   bankingAngle: 0
-  undulationFrequency: 1.5
-  undulationAmplitude: 8
-  benthicSurfaceOffset: 0.35
-  minCruiseSpeedFraction: 0.0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 0}
   modelYawOffset: 0
   previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.875, y: 1.0625}
+  maxAxisVariance: 0.035
   placeholderShape: 1
   placeholderColor: {r: 0.95, g: 0.3, b: 0.22, a: 1}
   placeholderScale: {x: 0.4, y: 0.8, z: 0.4}

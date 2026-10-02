@@ -59,9 +59,13 @@ MonoBehaviour:
   defaultGameplayBGM: {fileID: 0}
   fadeDuration: 1
   buttonClickSFX: {fileID: 8300000, guid: e5202679b288f0b42afb01b2be4ee1ef, type: 3}
+  buttonClickVolume: 0.8
   cameraShutterSFX: {fileID: 8300000, guid: fb61cbc2cef159b42bc7316be257f83d, type: 3}
+  cameraShutterVolume: 0.85
   debrisFoundSFX: {fileID: 8300000, guid: 5cba734006905f6408bbcfe48add0882, type: 3}
+  debrisFoundVolume: 0.85
   speciesFoundSFX: {fileID: 8300000, guid: 5f15cbfbd00d1cf4483d2c4af3873dfe, type: 3}
+  speciesFoundVolume: 0.85
   subMovementSFX: {fileID: 8300000, guid: 0648e4bba69429b48af01d0310c124e2, type: 3}
   subMovementSource: {fileID: 0}
   subMovementMixerGroup: {fileID: 0}
@@ -69,13 +73,45 @@ MonoBehaviour:
   zoneTransitionSFX: {fileID: 8300000, guid: 815538f7a8e54f844b3fc5c53114c072, type: 3}
   zoneTransitionDuration: 2.5
   zoneTransitionFadeOut: 0.5
+  zoneTransitionVolume: 0.75
   transitionSource: {fileID: 0}
   diveSFX: {fileID: 0}
   surfaceSFX: {fileID: 0}
   alertSFX: {fileID: 0}
+  minigame1BarRisingSFX: {fileID: 8300000, guid: 6f29c81e2e55c804f9bd55cc0743254e, type: 3}
+  minigame1BarVolume: 0.55
+  barRisingSource: {fileID: 0}
+  minigame2BlockMoveSFX: {fileID: 8300000, guid: 13f452872b5d9ec49bb02daa474e25da, type: 3}
+  minigame2BlockMoveVolume: 0.9
+  minigame3ClawSFX: {fileID: 8300000, guid: a97e2734106046645858d63dff221f59, type: 3}
+  minigame3ClawVolume: 0.65
+  clawSource: {fileID: 0}
+  minigame3BGM: {fileID: 8300000, guid: 2bf2c7bbe1a2a074f87c358579762111, type: 3}
+  minigame3BGMVolume: 0.7
+  minigame4BGM: {fileID: 8300000, guid: be79793f7364aff4f96c886f5fe1fd5a, type: 3}
+  minigame4BGMVolume: 0.7
+  minigame4AlertSFX: {fileID: 8300000, guid: e8bea1ad5ee8568429cabc3201cd2b2e, type: 3}
+  minigame4AlertVolume: 0.45
+  minigame4SwipeSubSFX: {fileID: 8300000, guid: 7d77d1a4a44d68e4780c43ba0af6fbd1, type: 3}
+  minigame4SwipeSubVolume: 1.35
+  minigame4CollectPearlSFX: {fileID: 8300000, guid: eda97d6ad9344074880a0b828871ba1f, type: 3}
+  minigame4CollectPearlVolume: 0.85
+  bumpSFX: {fileID: 8300000, guid: 2e6c9cfd8674c9c43b87763d4e79afe1, type: 3}
+  bumpVolume: 0.85
+  buyUpgradeSFX: {fileID: 8300000, guid: 9e769d2b9b6d58d4281e8abbbe943ee0, type: 3}
+  buyUpgradeVolume: 0.85
+  speciesScannedSuccessSFX: {fileID: 8300000, guid: a90aa22556620b146aea0b4b34f231c0, type: 3}
+  speciesScannedSuccessVolume: 0.9
+  openBestiaryModalSFX: {fileID: 8300000, guid: c04c31d0b1796fe47a45d98de1ec30c1, type: 3}
+  openBestiaryModalVolume: 0.85
   radioChirpSFX: {fileID: 8300000, guid: 1fdb909fb4434c242ab028501bdaaa3a, type: 3}
+  radioChirpVolume: 0.8
   radioStaticSFX: {fileID: 8300000, guid: ee46b16cd990c71499768cfbd10f3ded, type: 3}
+  radioStaticVolume: 0.65
   tutorialStepChimeSFX: {fileID: 8300000, guid: 77040a9e533a82848aba1ebd92556b09, type: 3}
+  tutorialStepChimeVolume: 0.85
+  autoNormalizeSFX: 1
+  targetPerceivedLoudness: 0.7
 --- !u!82 &5445631654854010829
 AudioSource:
   m_ObjectHideFlags: 0

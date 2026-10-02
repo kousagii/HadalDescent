@@ -82,6 +82,10 @@ public class BestiaryManager : MonoBehaviour
     [Tooltip("ScrollRect containing the entry list. Auto-found if null.")]
     [SerializeField] private ScrollRect scrollRect;
 
+    [Header("Audio (Optional — defaults to AudioManager)")]
+    [Tooltip("Sound effect played when opening a 3D modal or detail modal (open bestiary modal.mp3).")]
+    [SerializeField] private AudioClip openModalSFX;
+
     // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
@@ -248,6 +252,11 @@ public class BestiaryManager : MonoBehaviour
         if (data == null) return;
         CloseDetailModal();
         CloseModelInspectionModal();
+
+        if (openModalSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(openModalSFX);
+        else
+            AudioManager.Instance?.PlayOpenBestiaryModalSFX();
 
         var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
         if (canvas == null) return;
@@ -468,6 +477,11 @@ public class BestiaryManager : MonoBehaviour
 
         bool isDiscovered = GameManager.Instance != null && (GameManager.Instance.IsDiscovered(data.speciesId) || GameManager.Instance.IsDiscovered(data.zoneIndex, data.speciesId));
         if (!isDiscovered) return; // Locked for undiscovered entries
+
+        if (openModalSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(openModalSFX);
+        else
+            AudioManager.Instance?.PlayOpenBestiaryModalSFX();
 
         if (detailModal != null)
         {

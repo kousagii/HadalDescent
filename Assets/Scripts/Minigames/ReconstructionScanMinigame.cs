@@ -86,6 +86,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private float _totalTime;   
     private float _cellSize;
 
+    [Header("Audio (Optional — falls back to AudioManager if null)")]
+    [Tooltip("Sound effect played when moving / sliding puzzle blocks (button toggle).")]
+    [SerializeField] private AudioClip customBlockMoveSFX;
+
     // -----------------------------------------------------------------------
     // Entry point
     // -----------------------------------------------------------------------
@@ -215,6 +219,7 @@ public class ReconstructionScanMinigame : MonoBehaviour
             {
                 // Execute direct swap between the two chosen tiles
                 SwapTiles(_firstSwapIdx, idx);
+                PlayBlockMoveAudio();
                 _firstSwapIdx = -1;
                 _swapsRemaining--;
                 _swapModeActive = false;
@@ -229,8 +234,17 @@ public class ReconstructionScanMinigame : MonoBehaviour
 
         if (!IsAdjacentToEmpty(idx)) return;
         SwapTiles(idx, _emptyIdx);
+        PlayBlockMoveAudio();
         RefreshTileDisplay();
         if (IsSolved()) Finish(true);
+    }
+
+    private void PlayBlockMoveAudio()
+    {
+        if (customBlockMoveSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(customBlockMoveSFX);
+        else
+            AudioManager.Instance?.PlayBlockMoveSFX();
     }
 
     private void SwapTiles(int a, int b)

@@ -81,6 +81,18 @@ public class HazardDodgeMinigame : MonoBehaviour
     [Tooltip("Yaw rotation offset in degrees if custom model orientation adjustment is needed (default 0)")]
     [SerializeField] private float submarineYawOffset = 0f;
 
+    [Header("Audio (Optional — defaults to AudioManager)")]
+    [Tooltip("Fast-paced panic BGM during the hazard run.")]
+    [SerializeField] private AudioClip customBGM;
+    [Tooltip("Hazard alert alarm siren sound.")]
+    [SerializeField] private AudioClip customAlertSFX;
+    [Tooltip("Submarine swish / swipe sound when shifting lanes.")]
+    [SerializeField] private AudioClip customSwipeSFX;
+    [Tooltip("Rare pearl / data pod collection chime.")]
+    [SerializeField] private AudioClip customPearlSFX;
+    [Tooltip("Obstacle collision bump sound.")]
+    [SerializeField] private AudioClip customBumpSFX;
+
     // -----------------------------------------------------------------------
     // Zone Difficulty Configuration
     // -----------------------------------------------------------------------
@@ -309,6 +321,11 @@ public class HazardDodgeMinigame : MonoBehaviour
         _hasSwipedThisTouch = false;
         _isActive      = true;
 
+        if (customBGM != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlayBGM(customBGM);
+        else
+            AudioManager.Instance?.PlayMinigame4BGM();
+
         gameObject.SetActive(true);
 
         BuildStage();
@@ -377,6 +394,10 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // 1. Gentle ambient warning on exploration screen with Warning Banner & Alert chime
         ShowWarningBanner(true);
+        if (customAlertSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(customAlertSFX);
+        else
+            AudioManager.Instance?.PlayHazardAlertSFX();
 
         float elapsed = 0f;
         float exploreAlertDuration = 1.8f;
@@ -586,6 +607,11 @@ public class HazardDodgeMinigame : MonoBehaviour
         {
             _currentLane = newLane;
             _targetX = (_currentLane - 1) * laneWidth;
+
+            if (customSwipeSFX != null && AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(customSwipeSFX);
+            else
+                AudioManager.Instance?.PlaySubSwipeSFX();
         }
     }
 
@@ -727,6 +753,10 @@ public class HazardDodgeMinigame : MonoBehaviour
                     {
                         // Collect Data Pod (+5 RDP bonus)
                         _collectedRdp += 5;
+                        if (customPearlSFX != null && AudioManager.Instance != null)
+                            AudioManager.Instance.PlaySFX(customPearlSFX);
+                        else
+                            AudioManager.Instance?.PlayPearlCollectSFX();
                         StartCoroutine(FlashItemCollection(item.GameObject));
                     }
                     else
@@ -749,6 +779,11 @@ public class HazardDodgeMinigame : MonoBehaviour
     private void OnHazardHit()
     {
         _remainingHits--;
+        if (customBumpSFX != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(customBumpSFX);
+        else
+            AudioManager.Instance?.PlayBumpSFX();
+
         StartCoroutine(ScreenShakeAndImpactFlash());
 
         if (_remainingHits <= 0)
@@ -823,6 +858,8 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         RestoreSceneCamera();
         SetExplorationHUDActive(true);
+
+        AudioManager.Instance?.RestoreZoneBGM();
 
         CleanupStage();
         if (_rootUI != null) _rootUI.gameObject.SetActive(false);
@@ -1239,6 +1276,8 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         RestoreSceneCamera();
         SetExplorationHUDActive(true);
+
+        AudioManager.Instance?.RestoreZoneBGM();
     }
 
     private void OnDisable()
