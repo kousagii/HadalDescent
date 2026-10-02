@@ -66,6 +66,12 @@ public class ZoneManager : MonoBehaviour
     /// </summary>
     public static bool EnteredFromAbove { get; private set; } = true;
 
+    /// <summary>Explicitly sets whether the player entered from above (surface) or below (ascending).</summary>
+    public static void SetEnteredFromAbove(bool fromAbove)
+    {
+        EnteredFromAbove = fromAbove;
+    }
+
     // -----------------------------------------------------------------------
     // Inspector
     // -----------------------------------------------------------------------
@@ -236,6 +242,14 @@ public class ZoneManager : MonoBehaviour
                 float z = PlayerPrefs.GetFloat("Save_PosZ", 0f);
                 float rotY = PlayerPrefs.GetFloat("Save_RotY", 0f);
 
+                // Prevent spawning inside or on top of the bottom boundary trigger
+                float floorY = _bottomSpawn != null ? _bottomSpawn.position.y : -zone.playableDepth;
+                if (y <= floorY + 15f)
+                {
+                    y = floorY + 25f; // Place player 25m safely above the boundary
+                    Debug.Log($"[ZoneManager] Saved position was near bottom boundary ({floorY:F1}m). Adjusted Y to safe altitude: {y:F1}m");
+                }
+
                 sub.transform.position = new Vector3(x, y, z);
                 sub.transform.rotation = Quaternion.Euler(0f, rotY, 0f);
 
@@ -262,15 +276,15 @@ public class ZoneManager : MonoBehaviour
                 if (spawnPoint != null)
                 {
                     // If entered from above, spawn slightly below surface (Depth ~8m)
-                    // so the player does not instantly touch the surface boundary on frame 1
-                    Vector3 offset = EnteredFromAbove ? new Vector3(0f, -5f, 0f) : new Vector3(0f, 6f, 0f);
+                    // If entered from below (or returning from deeper levels), spawn 25m on top of boundary
+                    Vector3 offset = EnteredFromAbove ? new Vector3(0f, -5f, 0f) : new Vector3(0f, 25f, 0f);
                     spawnPos = spawnPoint.position + offset;
                     spawnRot = spawnPoint.rotation;
                 }
                 else
                 {
-                    // Fallback: top-centre or bottom-centre of zone
-                    float spawnY = EnteredFromAbove ? -6f : -zone.playableDepth + 10f;
+                    // Fallback: top-centre or 25m above bottom-centre of zone
+                    float spawnY = EnteredFromAbove ? -6f : -zone.playableDepth + 25f;
                     spawnPos = new Vector3(0f, spawnY, 0f);
                 }
 
@@ -287,6 +301,9 @@ public class ZoneManager : MonoBehaviour
                 var camCtrl = sub.GetComponentInChildren<SubmarineCamera>();
                 camCtrl?.SnapYawToBody();
             }
+
+            // Unpause timescale on zone setup
+            Time.timeScale = 1f;
         }
 
         Debug.Log($"[ZoneManager] Loaded '{zone.zoneName}' | " +

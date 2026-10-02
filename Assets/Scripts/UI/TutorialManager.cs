@@ -210,6 +210,7 @@ public class TutorialManager : MonoBehaviour
         _currentPhase = TutorialPhase.Step0_MissionOverview;
         ResetPhaseTimers();
 
+        HideAllTutorialEntities();
         UIManager.Instance?.SetHUDSkipTutorialVisible(true, ShowSkipTutorialPrompt);
         WireRadioCallbacks();
 
@@ -242,6 +243,8 @@ public class TutorialManager : MonoBehaviour
     {
         _currentPhase = TutorialPhase.Step1_HUDOrientation;
         ResetPhaseTimers();
+
+        HideAllTutorialEntities();
 
         string speech = "Your submarine's instrument panel is online. Let me walk you through your displays.";
 
@@ -327,6 +330,8 @@ public class TutorialManager : MonoBehaviour
         _sustainedMoveTimer = 0f;
         _step2NavigationHandled = false;
 
+        HideAllTutorialEntities();
+
         var player = FindFirstObjectByType<PlayerMovement>(FindObjectsInactive.Include);
         if (player != null) player.enabled = true;
 
@@ -410,6 +415,13 @@ public class TutorialManager : MonoBehaviour
 
     public void StartStep4A()
     {
+        // Smooth early-scan bypass: If first specimen was already scanned during Step 3, smoothly proceed to Step 4B!
+        if (_tutorialSpecies1 != null && _tutorialSpecies1.Data != null && GameManager.Instance != null && GameManager.Instance.IsDiscovered(_tutorialSpecies1.Data.speciesId))
+        {
+            StartStep4B();
+            return;
+        }
+
         _currentPhase = TutorialPhase.Step4A_ScanEncounter1;
         ResetPhaseTimers();
 
@@ -716,6 +728,12 @@ public class TutorialManager : MonoBehaviour
             RadioTextboxUI.Instance?.SetSkipStepVisible(true);
         }
 
+        // Prevent late-spawned entities or unmanaged creatures from appearing before Step 3
+        if (_currentPhase < TutorialPhase.Step3_SonarSystem)
+        {
+            EnforceEntitiesHiddenBeforeStep3();
+        }
+
         // Active Step State Checks
         switch (_currentPhase)
         {
@@ -787,6 +805,13 @@ public class TutorialManager : MonoBehaviour
     private void CheckStep3SonarProximity()
     {
         if (_species1VisualConfirmed) return;
+
+        // If species 1 was already discovered (e.g. player scanned early before proximity trigger completed)
+        if (_tutorialSpecies1 != null && _tutorialSpecies1.Data != null && GameManager.Instance != null && GameManager.Instance.IsDiscovered(_tutorialSpecies1.Data.speciesId))
+        {
+            _species1VisualConfirmed = true;
+            return;
+        }
 
         var player = FindFirstObjectByType<PlayerMovement>();
         if (player == null) return;
@@ -985,8 +1010,10 @@ public class TutorialManager : MonoBehaviour
 
     private void OnSpeciesScannedHandler(SpeciesData data)
     {
-        if (_currentPhase == TutorialPhase.Step4A_ScanEncounter1)
+        if (_currentPhase == TutorialPhase.Step3_SonarSystem || _currentPhase == TutorialPhase.Step4A_ScanEncounter1)
         {
+            _species1VisualConfirmed = true;
+            TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
             TutorialArrowUI.Instance?.Hide();
             RadioTextboxUI.Instance?.DisplayMessage(
                 "DR. SANTOS",
@@ -1013,7 +1040,7 @@ public class TutorialManager : MonoBehaviour
 
     public int GetTutorialMinigamePick()
     {
-        if (_currentPhase == TutorialPhase.Step4A_ScanEncounter1) return 1; // Always Minigame 1
+        if (_currentPhase == TutorialPhase.Step3_SonarSystem || _currentPhase == TutorialPhase.Step4A_ScanEncounter1) return 1; // Always Minigame 1
         if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2) return 2; // Always Minigame 2
         return -1;
     }
@@ -1021,6 +1048,34 @@ public class TutorialManager : MonoBehaviour
     // -----------------------------------------------------------------------
     // Code-Driven Placement & Anchoring Helpers
     // -----------------------------------------------------------------------
+
+    private float _hideEnforceTimer = 0f;
+    private void EnforceEntitiesHiddenBeforeStep3()
+    {
+        _hideEnforceTimer += Time.unscaledDeltaTime;
+        if (_hideEnforceTimer < 0.25f) return;
+        _hideEnforceTimer = 0f;
+
+        var creaturesParent = GameObject.Find("_Creatures");
+        if (creaturesParent != null)
+        {
+            for (int i = 0; i < creaturesParent.transform.childCount; i++)
+            {
+                var child = creaturesParent.transform.GetChild(i).gameObject;
+                if (child != null && child.activeSelf) child.SetActive(false);
+            }
+        }
+
+        var debrisParent = GameObject.Find("_DebrisClusters");
+        if (debrisParent != null)
+        {
+            for (int i = 0; i < debrisParent.transform.childCount; i++)
+            {
+                var child = debrisParent.transform.GetChild(i).gameObject;
+                if (child != null && child.activeSelf) child.SetActive(false);
+            }
+        }
+    }
 
     private void HideAllTutorialEntities()
     {
@@ -1032,6 +1087,27 @@ public class TutorialManager : MonoBehaviour
             {
                 _cachedSceneSpecies.Add(s);
                 s.gameObject.SetActive(false);
+            }
+        }
+
+        // Also deactivate stationary species (ScanTarget)
+        var allTargets = FindObjectsByType<ScanTarget>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTargets)
+        {
+            if (t != null)
+            {
+                t.gameObject.SetActive(false);
+            }
+        }
+
+        // Also deactivate all children in _Creatures container
+        var creaturesParent = GameObject.Find("_Creatures");
+        if (creaturesParent != null)
+        {
+            for (int i = 0; i < creaturesParent.transform.childCount; i++)
+            {
+                var child = creaturesParent.transform.GetChild(i).gameObject;
+                if (child != null) child.SetActive(false);
             }
         }
 
@@ -1064,6 +1140,17 @@ public class TutorialManager : MonoBehaviour
                 d.gameObject.SetActive(false);
             }
         }
+
+        var debrisParent = GameObject.Find("_DebrisClusters");
+        if (debrisParent != null)
+        {
+            for (int i = 0; i < debrisParent.transform.childCount; i++)
+            {
+                var child = debrisParent.transform.GetChild(i).gameObject;
+                if (child != null) child.SetActive(false);
+            }
+        }
+
         if (_cachedSceneDebris.Count > 0)
         {
             _tutorialDebris = _cachedSceneDebris[0];
@@ -1072,6 +1159,32 @@ public class TutorialManager : MonoBehaviour
 
     private void RestoreAllTutorialEntities()
     {
+        var creaturesParent = GameObject.Find("_Creatures");
+        if (creaturesParent != null)
+        {
+            for (int i = 0; i < creaturesParent.transform.childCount; i++)
+            {
+                var child = creaturesParent.transform.GetChild(i).gameObject;
+                if (child != null) child.SetActive(true);
+            }
+        }
+
+        var debrisParent = GameObject.Find("_DebrisClusters");
+        if (debrisParent != null)
+        {
+            for (int i = 0; i < debrisParent.transform.childCount; i++)
+            {
+                var child = debrisParent.transform.GetChild(i).gameObject;
+                if (child != null) child.SetActive(true);
+            }
+        }
+
+        var allTargets = FindObjectsByType<ScanTarget>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTargets)
+        {
+            if (t != null) t.gameObject.SetActive(true);
+        }
+
         foreach (var s in _cachedSceneSpecies)
         {
             if (s != null) s.gameObject.SetActive(true);
@@ -1085,15 +1198,6 @@ public class TutorialManager : MonoBehaviour
     private void PositionTutorialEntity(GameObject entity, float distanceAhead, float verticalOffset = 0f)
     {
         if (entity == null) return;
-
-        // Clean any unwanted model artifacts (such as Spotted Jellyfish's Cylinder.001)
-        foreach (var t in entity.GetComponentsInChildren<Transform>(true))
-        {
-            if (t != null && t.gameObject != entity && t.name.IndexOf("Cylinder", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                t.gameObject.SetActive(false);
-            }
-        }
 
         var player = FindFirstObjectByType<PlayerMovement>();
         Vector3 pPos = player != null ? player.transform.position : Vector3.zero;
@@ -1216,6 +1320,7 @@ public class TutorialManager : MonoBehaviour
     {
         if (customPromptModal != null)
         {
+            customPromptModal.transform.SetAsLastSibling();
             customPromptModal.SetActive(true);
             return;
         }
@@ -1223,6 +1328,7 @@ public class TutorialManager : MonoBehaviour
         BuildSkipConfirmModal();
         if (_skipConfirmModal != null)
         {
+            _skipConfirmModal.transform.SetAsLastSibling();
             _skipConfirmModal.SetActive(true);
         }
     }
@@ -1239,6 +1345,13 @@ public class TutorialManager : MonoBehaviour
         // Expanded 940x460 modal dialog container
         _skipConfirmModal = new GameObject("SkipTutorialConfirmModal", typeof(RectTransform), typeof(Image));
         _skipConfirmModal.transform.SetParent(_tutorialCanvas.transform, false);
+
+        // Dedicated top sorting order canvas so modal renders in front of all minigames and overlays
+        var modalCanvas = _skipConfirmModal.AddComponent<Canvas>();
+        modalCanvas.overrideSorting = true;
+        modalCanvas.sortingOrder = 32500;
+        var modalRaycaster = _skipConfirmModal.AddComponent<GraphicRaycaster>();
+        modalRaycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
         var modalRect = _skipConfirmModal.GetComponent<RectTransform>();
         modalRect.anchorMin = new Vector2(0.5f, 0.5f);
         modalRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -1400,6 +1513,11 @@ public class TutorialManager : MonoBehaviour
     {
         AbortTutorial();
         GameManager.SetTutorialCompleted(true);
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddRDP(100);
+            GameManager.Instance.SaveGame();
+        }
 
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
@@ -1427,6 +1545,13 @@ public class TutorialManager : MonoBehaviour
         TutorialArrowUI.Instance?.Hide();
         TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
         MinigameInstructionOverlay.Instance?.HideInstant();
+
+        // Forcibly abort and clean up any active minigame & restore normal controls
+        if (MinigameManager.Instance != null)
+        {
+            MinigameManager.Instance.CancelActiveMinigame();
+        }
+
         ObjectiveHUDUI.Instance?.SetObjective(ObjectiveHUDUI.PostTutorialDefaultObjective);
 
         if (customTutorialRoot != null) customTutorialRoot.SetActive(false);

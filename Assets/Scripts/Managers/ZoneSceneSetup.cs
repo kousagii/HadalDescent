@@ -122,7 +122,7 @@ public class ZoneSceneSetup : MonoBehaviour
         EnsureTag(topSpawnPoint, "ZoneTopSpawn");
 
         bottomSpawnPoint = EnsureGameObject("ZoneBottomSpawn", bottomSpawnPoint);
-        bottomSpawnPoint.transform.position = new Vector3(0f, -D + 15f, 0f); // slightly above floor
+        bottomSpawnPoint.transform.position = new Vector3(0f, -D + 25f, 0f); // 25m above floor/boundary
         EnsureTag(bottomSpawnPoint, "ZoneBottomSpawn");
 
         Debug.Log($"[ZoneSceneSetup] '{zone.zoneName}' boundaries created: " +

@@ -699,11 +699,11 @@ public class PauseMenuUI : MonoBehaviour
         _saveNotification.text = "";
         notifGO.SetActive(false);
 
-        // Buttons: Resume, Save Game, Settings, Exit Game (Aloha, 36px Bold, 440x72)
-        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 110f),  new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font, new Vector2(440f, 72f));
-        CreateMenuButton("SaveBtn",     "SAVE GAME", new Vector2(0f, 24f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
-        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -62f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
-        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -148f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 72f));
+        // Buttons: Resume, Save Game, Settings, Exit Game
+        CreateMenuButton("ResumeBtn",   "RESUME",    new Vector2(0f, 110f),  new Color(0.08f, 0.55f, 0.65f), OnResumeClicked,   _mainPausePanel.transform, font, new Vector2(440f, 68f));
+        CreateMenuButton("SaveBtn",     "SAVE GAME", new Vector2(0f, 24f),   new Color(0.12f, 0.45f, 0.40f), OnSaveGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
+        CreateMenuButton("SettingsBtn", "SETTINGS",  new Vector2(0f, -62f),  new Color(0.12f, 0.22f, 0.35f), OnSettingsClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
+        CreateMenuButton("ExitBtn",     "EXIT GAME", new Vector2(0f, -148f), new Color(0.55f, 0.15f, 0.15f), OnExitGameClicked, _mainPausePanel.transform, font, new Vector2(440f, 68f));
 
         // ── 2. Settings Panel ────────────────────────────────────────────
         _settingsPanel = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));

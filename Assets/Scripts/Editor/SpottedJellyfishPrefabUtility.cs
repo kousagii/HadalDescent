@@ -2,21 +2,21 @@ using UnityEngine;
 using UnityEditor;
 
 /// <summary>
-/// Editor utility that automatically deactivates the legacy opaque Cylinder artifact
-/// inside the Spotted Jellyfish prefab so it is clean both in Edit Mode and in Play Mode.
+/// Editor utility that ensures the Spotted Jellyfish tentacles (Cylinder.001 mesh)
+/// are active and properly restored in both Edit Mode and Play Mode.
 /// </summary>
 public static class SpottedJellyfishPrefabUtility
 {
     private const string PrefabPath = "Assets/Prefabs/Creatures/Sunlight Zone/Spotted Jellyfish.prefab";
 
     [InitializeOnLoadMethod]
-    private static void AutoCleanJellyfishPrefab()
+    private static void AutoRestoreJellyfishTentacles()
     {
-        CleanSpottedJellyfishPrefab();
+        RestoreSpottedJellyfishTentacles();
     }
 
-    [MenuItem("HadalDescent/Creatures/Fix Spotted Jellyfish Cylinders")]
-    public static void CleanSpottedJellyfishPrefab()
+    [MenuItem("HadalDescent/Creatures/Restore Spotted Jellyfish Tentacles")]
+    public static void RestoreSpottedJellyfishTentacles()
     {
         if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
             return;
@@ -31,9 +31,9 @@ public static class SpottedJellyfishPrefabUtility
             {
                 if (t != null && t.gameObject != root && t.name.IndexOf("Cylinder", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    if (t.gameObject.activeSelf)
+                    if (!t.gameObject.activeSelf)
                     {
-                        t.gameObject.SetActive(false);
+                        t.gameObject.SetActive(true);
                         changed = true;
                     }
                 }
@@ -41,7 +41,7 @@ public static class SpottedJellyfishPrefabUtility
 
             if (changed)
             {
-                Debug.Log($"[SpottedJellyfishPrefabUtility] Deactivated cylinder artifact in '{PrefabPath}'");
+                Debug.Log($"[SpottedJellyfishPrefabUtility] Restored tentacles in '{PrefabPath}'");
             }
         }
     }

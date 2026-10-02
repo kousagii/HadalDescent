@@ -171,7 +171,7 @@ public class CinematicSequencer : MonoBehaviour
         titleOverlayText.color = new Color(0.92f, 0.96f, 1f, 1f);
         titleOverlayText.alignment = TextAlignmentOptions.Center;
         titleOverlayText.raycastTarget = false;
-        titleOverlayText.text = "PHILIPPINE SEA — MARINE EXPEDITION\n<size=30><color=#00E5FF>BIODIVERSITY RESEARCH SUBMARINE 'HADAL EXPLORER'</color></size>";
+        titleOverlayText.text = "HADAL DESCENT — MARINE EXPEDITION\n<size=30><color=#00E5FF>BIODIVERSITY RESEARCH SUBMARINE 'HADAL EXPLORER'</color></size>";
     }
 
     private IEnumerator CinematicRoutine()

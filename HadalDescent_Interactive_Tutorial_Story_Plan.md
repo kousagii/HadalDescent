@@ -113,11 +113,11 @@ The game opens with a **simplified in-engine cinematic** (~15 seconds) utilizing
 
 ### 1D. Skip Tutorial System (Player Agency & Instant Bypass)
 
-To support returning players, playtesters, and experienced pilots, the tutorial can be skipped at **any time** through three distinct touchpoints:
+To support returning players, playtesters, and experienced pilots, the tutorial can be skipped at **any time**:
 
-1. **Top-Right HUD Skip Button:** A sleek `[ SKIP TUTORIAL ]` button is visible in the upper-right corner during the opening cinematic and throughout Steps 0–8.
+1. **Universal Top-Center HUD Skip Button:** A dedicated `[ SKIP TUTORIAL ]` button is visible and interactable at the top-center across all screens, modals, cinematic sequences, and active minigames (dedicated canvas sorting order 32,000, modal sorting order 32,500).
 2. **Radio Textbox Header:** A discrete `[ SKIP ]` button is embedded on the right side of the radio communication header next to Dr. Santos' title.
-3. **Pause Menu Option:** A prominent `[ SKIP TUTORIAL ]` button appears inside the pause menu whenever the tutorial state is active.
+3. **Clean 4-Button Pause Menu:** The Pause Menu maintains its standard, uncluttered 4-button layout (`RESUME`, `SAVE GAME`, `SETTINGS`, `EXIT GAME`) without redundant buttons, since the top-center skip button remains permanently accessible.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -137,7 +137,9 @@ To support returning players, playtesters, and experienced pilots, the tutorial 
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### What Happens When Tutorial is Skipped:
+#### What Happens When Tutorial is Skipped (Including Inside Minigames):
+- **Universal Availability:** The `[ SKIP TUTORIAL ]` button is rendered on a dedicated canvas overlay (`sortingOrder = 32000`) and the confirmation modal at `sortingOrder = 32500`, ensuring it is visible and interactable even during full-screen minigames or slideshow briefings.
+- **Forced Minigame Cleanup:** If skipped while inside a minigame or briefing, `MinigameManager.Instance.CancelActiveMinigame()` and `MinigameInstructionOverlay.Instance.HideInstant()` are immediately invoked. This destroys all minigame panels, resets `_minigameActive = false`, restores `Time.timeScale = 1.0f`, and re-enables submarine thrusters and camera touch controls (`PlayerMovement` & `TouchDragZone`).
 - Immediately closes any active radio transmission boxes, instruction overlays, or animated tutorial arrows.
 - Sets persistent flag `GameManager.SetTutorialCompleted(true)`.
 - Awards the standard `+100 RDP` expedition completion bonus so the player is not penalized for skipping.
@@ -390,6 +392,7 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
   5. ➡️ Arrow → **Bestiary Button** (top-right book icon): *"Marine Biodiversity Bestiary"*
 - **Objective Line (32px, green):** `OBJECTIVE: Familiarize yourself with HUD instruments`
 - **Advance Condition:** All 5 arrow pointers complete their sequential pulse (~8s total).
+- **Entity Visibility Invariant:** Marine species (mobile `SpeciesAI` and stationary `ScanTarget`) and debris clusters are strictly hidden and disabled during Step 1 (as well as Step 0 and Step 2). `SpeciesSpawner` spawns instances inactive prior to Step 3, `DistanceCullingManager` bypasses activation of inactive objects and is paused, and `TutorialManager` proactively enforces hidden state on `_Creatures` and `_DebrisClusters`. Creature #1 is only introduced when Step 3 officially starts.
 
 ---
 
@@ -424,6 +427,7 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 - **Objective Line (32px, green):** `OBJECTIVE: Track and approach a Cyan species signature on sonar`
 - **Advance Condition:** Submarine approaches within 35 metres of a scannable creature (`SpeciesAI`).
 - **Resilience / Non-Compliance:** If the player wanders away for >25s, Dr. Santos issues a gentle reminder, and the nearest species AI gently steers into the player's path.
+- **Early-Scan Resilience (Scanning Before Step 4A):** If the player locks reticle and scans Species #1 early during Step 3, the game forces Minigame 1 (`Capture & Focus`). Upon scan success, Dr. Santos immediately delivers the specimen logged congratulations, hides Step 3 sonar pointers, and smoothly transitions directly to **Step 4B** (Encounter 2), seamlessly bypassing Step 4A with no redundant prompts or soft-locks.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
   *"Contact visual confirmed! Target is within scanning distance."*
 

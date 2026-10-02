@@ -700,9 +700,6 @@ public class SpeciesSpawner : MonoBehaviour
 
         go.name = $"{data.commonName} [{data.speciesId}]";
 
-        // Clean up unwanted model artifacts (e.g. giant opaque Cylinder.001 inside Spotted Jellyfish GLB)
-        CleanModelArtifacts(go);
-
         // Natural Individual Scale Variation:
         // Applies organic size differences (juvenile to adult) and subtle axis offsets without distortion
         Vector3 baseScale = data.modelPrefab != null
@@ -715,6 +712,12 @@ public class SpeciesSpawner : MonoBehaviour
 
         if (data.isStationary) SetupStationary(go, data);
         else                   SetupMobile(go, data, center);
+
+        // Hide newly spawned species if tutorial is currently in early orientation/navigation phases
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive && TutorialManager.Instance.CurrentPhase < TutorialManager.TutorialPhase.Step3_SonarSystem)
+        {
+            go.SetActive(false);
+        }
     }
 
     /// <summary>
@@ -742,20 +745,6 @@ public class SpeciesSpawner : MonoBehaviour
             defaultBaseScale.y * uniformMul * jY,
             defaultBaseScale.z * uniformMul * jZ
         );
-    }
-
-    private static void CleanModelArtifacts(GameObject go)
-    {
-        if (go == null) return;
-        var transforms = go.GetComponentsInChildren<Transform>(true);
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            var t = transforms[i];
-            if (t != null && t.gameObject != go && t.name.IndexOf("Cylinder", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                t.gameObject.SetActive(false);
-            }
-        }
     }
 
     private GameObject CreatePlaceholder(SpeciesData data, Vector3 position, Quaternion rotation)

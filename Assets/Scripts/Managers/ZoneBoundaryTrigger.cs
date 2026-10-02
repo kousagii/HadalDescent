@@ -499,8 +499,8 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
         if (currentDepth >= maxDepth - 10f)
         {
-            // Push player upwards off the floor to safe depth (~185m, safely outside 3m threshold)
-            float safeY = bottomY + 8f;
+            // Push player upwards off the floor to safe depth (~170-175m, safely 25m on top of boundary)
+            float safeY = bottomY + 25f;
             sub.transform.position = new Vector3(sub.transform.position.x, safeY, sub.transform.position.z);
             if (rb != null)
             {
@@ -715,6 +715,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         }
 
         PausePlayerInput(false);
+        Time.timeScale = 1f;
     }
 
     private static void PausePlayerInput(bool pause)

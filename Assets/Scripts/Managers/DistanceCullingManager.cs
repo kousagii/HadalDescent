@@ -180,6 +180,12 @@ public class DistanceCullingManager : MonoBehaviour
     {
         if (_entries.Count == 0) return;
 
+        // Do not activate culled entities during early tutorial steps (Step 0, 1, 2)
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive && TutorialManager.Instance.CurrentPhase < TutorialManager.TutorialPhase.Step3_SonarSystem)
+        {
+            return;
+        }
+
         Vector3 playerPos = _playerTransform.position;
         int count = _entries.Count;
         int processed = 0;
@@ -198,6 +204,14 @@ public class DistanceCullingManager : MonoBehaviour
                 _entries.RemoveAt(_batchCursor);
                 count--;
                 if (_batchCursor >= count) _batchCursor = 0;
+                processed++;
+                continue;
+            }
+
+            // If the GameObject itself or its parent is inactive, do not activate its components
+            if (!entry.transform.gameObject.activeInHierarchy)
+            {
+                _batchCursor++;
                 processed++;
                 continue;
             }

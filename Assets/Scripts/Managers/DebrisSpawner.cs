@@ -126,6 +126,11 @@ public class DebrisSpawner : MonoBehaviour
 
         var cluster = go.GetComponent<DebrisCluster>();
         if (cluster == null) cluster = go.AddComponent<DebrisCluster>();
+
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive && TutorialManager.Instance.CurrentPhase < TutorialManager.TutorialPhase.Step6_DebrisCleanup)
+        {
+            go.SetActive(false);
+        }
     }
 
     private GameObject Create3DDebrisClusterObject(Vector3 pos)

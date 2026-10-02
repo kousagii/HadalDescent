@@ -1549,6 +1549,13 @@ public class UIManager : MonoBehaviour
                 rt.sizeDelta = new Vector2(320f, 50f);
                 rt.anchoredPosition = new Vector2(0f, -22f);
 
+                // High sorting order so button remains visible and clickable over any minigame or overlay
+                var btnCanvas = _hudSkipTutorialGO.AddComponent<Canvas>();
+                btnCanvas.overrideSorting = true;
+                btnCanvas.sortingOrder = 32000;
+                var raycaster = _hudSkipTutorialGO.AddComponent<GraphicRaycaster>();
+                raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
                 var img = _hudSkipTutorialGO.GetComponent<Image>();
                 img.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
 
@@ -1585,6 +1592,7 @@ public class UIManager : MonoBehaviour
                 onSkipClicked?.Invoke();
             });
 
+            _hudSkipTutorialGO.transform.SetAsLastSibling();
             _hudSkipTutorialGO.SetActive(true);
         }
         else

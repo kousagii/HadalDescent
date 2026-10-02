@@ -165,6 +165,10 @@ public class LoadingScreenUI : MonoBehaviour
         }
 
         ZoneManager.SetCurrentZone(zoneIndex);
+        ZoneManager.SetEnteredFromAbove(true);
+        PlayerPrefs.SetInt("Save_HasPosition", 0);
+        PlayerPrefs.Save();
+
         string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
         Instance.StartLoadRoutine(sceneName, onComplete, zoneIndex);
     }

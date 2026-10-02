@@ -483,6 +483,9 @@ public class ZoneSelectionUI : MonoBehaviour
         MinigameManager.Instance?.CancelActiveMinigame();
 
         ZoneManager.SetCurrentZone(zoneIndex);
+        ZoneManager.SetEnteredFromAbove(true);
+        PlayerPrefs.SetInt("Save_HasPosition", 0);
+        PlayerPrefs.Save();
 
         string sceneName = ZoneConfig.Zones[zoneIndex].sceneName;
         Debug.Log($"[ZoneSelectionUI] Entering Zone {zoneIndex} ('{sceneName}')...");
