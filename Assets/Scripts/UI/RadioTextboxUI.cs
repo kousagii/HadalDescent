@@ -117,6 +117,12 @@ public class RadioTextboxUI : MonoBehaviour
 
         if (panelRoot != null)
         {
+            var customTapBtn = panelRoot.GetComponent<Button>();
+            if (customTapBtn == null) customTapBtn = panelRoot.AddComponent<Button>();
+            customTapBtn.transition = Selectable.Transition.None;
+            customTapBtn.onClick.RemoveListener(OnPanelTapped);
+            customTapBtn.onClick.AddListener(OnPanelTapped);
+
             // Enforce gameplay font and correct wrapping rules on existing inspector-assigned UI
             if (speakerText != null)
             {
@@ -452,17 +458,8 @@ public class RadioTextboxUI : MonoBehaviour
         _isTyping = false;
         _typewriterCoroutine = null;
 
-        if (hasNextPage)
-        {
-            // Auto advance to next page after comfortable reading duration (3.0s)
-            _autoAdvanceCoroutine = StartCoroutine(AutoAdvanceRoutine(3.0f));
-        }
-        else
-        {
-            // Final page: stay on screen for autoDismissDelay BEFORE dismissing and completing
-            float dismissTime = _currentAutoDismissDelay > 0f ? _currentAutoDismissDelay : 1.5f;
-            _autoDismissCoroutine = StartCoroutine(AutoDismissRoutine(dismissTime));
-        }
+        // The radio box remains on screen until the player taps on it.
+        // No timer auto-advance or auto-dismiss.
     }
 
     private IEnumerator AutoAdvanceRoutine(float delay)
@@ -508,35 +505,31 @@ public class RadioTextboxUI : MonoBehaviour
             _isTyping = false;
             SetBodyText(_currentFullText);
 
-            bool hasNextPage = _currentDialogPageIndex < _dialogPages.Count - 1;
-            if (hasNextPage)
-            {
-                if (_autoAdvanceCoroutine != null) StopCoroutine(_autoAdvanceCoroutine);
-                _autoAdvanceCoroutine = StartCoroutine(AutoAdvanceRoutine(2.5f));
-            }
-            else
-            {
-                if (_autoDismissCoroutine != null) StopCoroutine(_autoDismissCoroutine);
-                float dismissTime = _currentAutoDismissDelay > 0f ? _currentAutoDismissDelay : 1.5f;
-                _autoDismissCoroutine = StartCoroutine(AutoDismissRoutine(dismissTime));
-            }
+            if (_autoAdvanceCoroutine != null) { StopCoroutine(_autoAdvanceCoroutine); _autoAdvanceCoroutine = null; }
+            if (_autoDismissCoroutine != null) { StopCoroutine(_autoDismissCoroutine); _autoDismissCoroutine = null; }
+            // Stays on screen waiting for the player's next tap to advance or dismiss
         }
         else
         {
-            // If already done typing and more pages exist, tap anywhere immediately advances to next page
+            if (_autoDismissCoroutine != null)
+            {
+                StopCoroutine(_autoDismissCoroutine);
+                _autoDismissCoroutine = null;
+            }
+            if (_autoAdvanceCoroutine != null)
+            {
+                StopCoroutine(_autoAdvanceCoroutine);
+                _autoAdvanceCoroutine = null;
+            }
+
+            // If already done typing and more pages exist, tap advances to next page
             if (_currentDialogPageIndex < _dialogPages.Count - 1)
             {
                 AdvanceToNextPage();
             }
             else
             {
-                // Tap on finished message dismisses it and advances to next queued message or invokes callback
-                if (_autoDismissCoroutine != null)
-                {
-                    StopCoroutine(_autoDismissCoroutine);
-                    _autoDismissCoroutine = null;
-                }
-
+                // Final page: tap dismisses the radio box and invokes callback or advances to next queued message
                 var cb = _onCompleteCallback;
                 _onCompleteCallback = null;
 

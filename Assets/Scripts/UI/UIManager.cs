@@ -1557,7 +1557,7 @@ public class UIManager : MonoBehaviour
                 raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
 
                 var img = _hudSkipTutorialGO.GetComponent<Image>();
-                img.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+                img.color = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f); // #1f5f7d (matches PREV/NEXT buttons)
 
                 var outline = _hudSkipTutorialGO.AddComponent<Outline>();
                 outline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
@@ -1565,6 +1565,13 @@ public class UIManager : MonoBehaviour
 
                 var btnComp = _hudSkipTutorialGO.GetComponent<Button>();
                 btnComp.targetGraphic = img;
+
+                var colors = btnComp.colors;
+                colors.normalColor = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f);
+                colors.highlightedColor = new Color(0.18f, 0.48f, 0.62f, 1.00f);
+                colors.pressedColor = new Color(0.08f, 0.26f, 0.35f, 1.00f);
+                colors.selectedColor = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f);
+                btnComp.colors = colors;
 
                 var txtGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
                 txtGO.transform.SetParent(_hudSkipTutorialGO.transform, false);
@@ -1578,11 +1585,17 @@ public class UIManager : MonoBehaviour
                 txt.font = UIThemeManager.AntoneFont;
                 txt.fontStyle = FontStyles.Normal;
                 txt.fontSize = 28f;
-                txt.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
+                txt.color = Color.white; // Pure white text
                 txt.alignment = TextAlignmentOptions.Center;
                 txt.raycastTarget = false;
                 txt.text = "SKIP TUTORIAL";
             }
+
+            // Ensure colors are updated even if previously instantiated
+            var existingImg = _hudSkipTutorialGO.GetComponent<Image>();
+            if (existingImg != null) existingImg.color = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f);
+            var existingTxt = _hudSkipTutorialGO.GetComponentInChildren<TextMeshProUGUI>();
+            if (existingTxt != null) existingTxt.color = Color.white;
 
             var btn = _hudSkipTutorialGO.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();

@@ -202,8 +202,11 @@ public class ScannerSystem : MonoBehaviour
             }
 
             bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestAI.Data.speciesId);
+            bool isBlockedTutorialSpecies = TutorialManager.Instance != null &&
+                                           TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step4B_ScanEncounter2 &&
+                                           TutorialManager.Instance.IsStep4ASpecies(bestAI.Data.speciesId);
 
-            if (isDiscovered)
+            if (isDiscovered || isBlockedTutorialSpecies)
             {
                 // Already Cataloged
                 _scanTargetAI = null;
@@ -245,8 +248,11 @@ public class ScannerSystem : MonoBehaviour
             }
 
             bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(bestStatic.Data.speciesId);
+            bool isBlockedStaticTutorial = TutorialManager.Instance != null &&
+                                          TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step4B_ScanEncounter2 &&
+                                          TutorialManager.Instance.IsStep4ASpecies(bestStatic.Data.speciesId);
 
-            if (isDiscovered)
+            if (isDiscovered || isBlockedStaticTutorial)
             {
                 // Already Cataloged
                 _scanTargetStatic = null;
@@ -523,9 +529,23 @@ public class ScannerSystem : MonoBehaviour
             SpeciesData data = _scanTargetAI.Data;
             var targetAI = _scanTargetAI;
 
-            if (GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.speciesId))
+            bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.speciesId);
+            bool isBlockedTutorial = TutorialManager.Instance != null &&
+                                     TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step4B_ScanEncounter2 &&
+                                     TutorialManager.Instance.IsStep4ASpecies(data.speciesId);
+
+            if (isDiscovered || isBlockedTutorial)
             {
-                Debug.Log($"[ScannerSystem] Scan pressed - species '{data.commonName}' already cataloged.");
+                Debug.Log($"[ScannerSystem] Scan pressed - species '{data.commonName}' already cataloged or Step 4A specimen.");
+                if (isBlockedTutorial)
+                {
+                    RadioTextboxUI.Instance?.DisplayMessage(
+                        "DR. SANTOS",
+                        "We've already cataloged that species! Scan a different creature with a distinct bio-signature to calibrate our secondary scanning protocol.",
+                        "Scan a different creature to calibrate all scanner modes",
+                        showSkipStep: false
+                    );
+                }
                 return;
             }
 
@@ -542,9 +562,23 @@ public class ScannerSystem : MonoBehaviour
             SpeciesData data = _scanTargetStatic.Data;
             var targetStatic = _scanTargetStatic;
 
-            if (GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.speciesId))
+            bool isDiscovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.speciesId);
+            bool isBlockedTutorial = TutorialManager.Instance != null &&
+                                     TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step4B_ScanEncounter2 &&
+                                     TutorialManager.Instance.IsStep4ASpecies(data.speciesId);
+
+            if (isDiscovered || isBlockedTutorial)
             {
-                Debug.Log($"[ScannerSystem] Scan pressed - species '{data.commonName}' already cataloged.");
+                Debug.Log($"[ScannerSystem] Scan pressed - species '{data.commonName}' already cataloged or Step 4A specimen.");
+                if (isBlockedTutorial)
+                {
+                    RadioTextboxUI.Instance?.DisplayMessage(
+                        "DR. SANTOS",
+                        "We've already cataloged that species! Scan a different creature with a distinct bio-signature to calibrate our secondary scanning protocol.",
+                        "Scan a different creature to calibrate all scanner modes",
+                        showSkipStep: false
+                    );
+                }
                 return;
             }
 

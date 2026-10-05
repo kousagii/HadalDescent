@@ -126,7 +126,7 @@ public class CinematicSequencer : MonoBehaviour
         skipRect.anchoredPosition = new Vector2(0f, -22f);
 
         var skipImg = skipGO.GetComponent<Image>();
-        skipImg.color = new Color(0.03f, 0.12f, 0.22f, 0.95f);
+        skipImg.color = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f); // #1f5f7d
 
         var skipOutline = skipGO.AddComponent<Outline>();
         skipOutline.effectColor = new Color(0.00f, 0.90f, 1.00f, 1.00f);
@@ -135,6 +135,13 @@ public class CinematicSequencer : MonoBehaviour
         skipTutorialButton = skipGO.GetComponent<Button>();
         skipTutorialButton.targetGraphic = skipImg;
         skipTutorialButton.onClick.AddListener(OnSkipClicked);
+
+        var colors = skipTutorialButton.colors;
+        colors.normalColor = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f);
+        colors.highlightedColor = new Color(0.18f, 0.48f, 0.62f, 1.00f);
+        colors.pressedColor = new Color(0.08f, 0.26f, 0.35f, 1.00f);
+        colors.selectedColor = new Color(0.1216f, 0.3725f, 0.4902f, 1.00f);
+        skipTutorialButton.colors = colors;
 
         // Child Text for button label
         var skipTxtGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -149,7 +156,7 @@ public class CinematicSequencer : MonoBehaviour
         skipTxt.font = font;
         skipTxt.fontStyle = FontStyles.Normal; // Strictly no bold
         skipTxt.fontSize = 28f;
-        skipTxt.color = new Color(0.00f, 0.90f, 1.00f, 1.00f);
+        skipTxt.color = Color.white; // Pure white text
         skipTxt.alignment = TextAlignmentOptions.Center;
         skipTxt.raycastTarget = false;
         skipTxt.text = "SKIP TUTORIAL";

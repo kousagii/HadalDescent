@@ -95,6 +95,31 @@ public class TutorialManager : MonoBehaviour
     private DebrisCluster _tutorialDebris;
     private readonly List<SpeciesAI> _cachedSceneSpecies = new List<SpeciesAI>();
     private readonly List<DebrisCluster> _cachedSceneDebris = new List<DebrisCluster>();
+    private bool _sunlightSpeciesSpawned = false;
+
+    // Step 4A species tracking for Step 4B distinction
+    private SpeciesData _step4ASpeciesData;
+    public SpeciesData Step4ASpeciesData => _step4ASpeciesData;
+    public string Step4ASpeciesId => _step4ASpeciesData != null ? _step4ASpeciesData.speciesId : (_tutorialSpecies1?.Data != null ? _tutorialSpecies1.Data.speciesId : "");
+
+    public bool IsStep4ASpecies(string speciesId)
+    {
+        if (string.IsNullOrEmpty(speciesId)) return false;
+
+        if (_step4ASpeciesData != null && !string.IsNullOrEmpty(_step4ASpeciesData.speciesId))
+        {
+            if (string.Equals(_step4ASpeciesData.speciesId, speciesId, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        if (_tutorialSpecies1 != null && _tutorialSpecies1.Data != null && !string.IsNullOrEmpty(_tutorialSpecies1.Data.speciesId))
+        {
+            if (string.Equals(_tutorialSpecies1.Data.speciesId, speciesId, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
 
     // Procedural Skip Confirmation Modal
     private GameObject _skipConfirmModal;
@@ -252,12 +277,16 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Familiarize yourself with HUD instruments",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step1_HUDOrientation)
+                {
+                    if (_step1Routine != null) StopCoroutine(_step1Routine);
+                    _step1Routine = StartCoroutine(Step1PointersRoutine());
+                }
+            },
             showSkipStep: false
         );
-
-        if (_step1Routine != null) StopCoroutine(_step1Routine);
-        _step1Routine = StartCoroutine(Step1PointersRoutine());
     }
 
     private IEnumerator Step1PointersRoutine()
@@ -352,20 +381,24 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Steer submarine with joystick for 2 seconds",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step2_Navigation)
+                {
+                    var arrow = TutorialArrowUI.Instance ?? FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
+                    var ui = UIManager.Instance;
+                    if (ui != null && arrow != null)
+                    {
+                        var stickRect = ui.GetJoystickRect();
+                        if (stickRect != null)
+                        {
+                            arrow.PointAtHUD(stickRect, "USE JOYSTICK TO NAVIGATE", TutorialArrowUI.ArrowDirection.Down);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        var arrow = TutorialArrowUI.Instance ?? FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
-        var ui = UIManager.Instance;
-        if (ui != null && arrow != null)
-        {
-            var stickRect = ui.GetJoystickRect();
-            if (stickRect != null)
-            {
-                arrow.PointAtHUD(stickRect, "USE JOYSTICK TO NAVIGATE", TutorialArrowUI.ArrowDirection.Down);
-            }
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -378,6 +411,7 @@ public class TutorialManager : MonoBehaviour
         ResetPhaseTimers();
 
         TutorialArrowUI.Instance?.Hide();
+        EnsureTutorialSpecies();
 
         string speech = "Keep an eye on your sonar radar. Different contact signatures emit distinct frequencies: "
                       + "Cyan markers indicate marine species. Yellow markers pinpoint habitat landmarks. "
@@ -388,25 +422,27 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Track and approach a Cyan species signature on sonar",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step3_SonarSystem)
+                {
+                    // Show Sonar Legend Card
+                    TutorialArrowUI.Instance?.SetSonarLegendVisible(true);
+
+                    // Point arrow to Sonar Map
+                    var ui = UIManager.Instance;
+                    if (ui != null)
+                    {
+                        var sonarRect = ui.GetSonarMapRect();
+                        if (sonarRect != null)
+                        {
+                            TutorialArrowUI.Instance?.PointAtHUD(sonarRect, "SONAR RADAR CONTACTS", TutorialArrowUI.ArrowDirection.Left);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        // Show Sonar Legend Card
-        TutorialArrowUI.Instance?.SetSonarLegendVisible(true);
-
-        // Point arrow to Sonar Map
-        var ui = UIManager.Instance;
-        if (ui != null)
-        {
-            var sonarRect = ui.GetSonarMapRect();
-            if (sonarRect != null)
-            {
-                TutorialArrowUI.Instance?.PointAtHUD(sonarRect, "SONAR RADAR CONTACTS", TutorialArrowUI.ArrowDirection.Left);
-            }
-        }
-
-        EnsureTutorialSpecies();
     }
 
     // -----------------------------------------------------------------------
@@ -418,6 +454,8 @@ public class TutorialManager : MonoBehaviour
         // Smooth early-scan bypass: If first specimen was already scanned during Step 3, smoothly proceed to Step 4B!
         if (_tutorialSpecies1 != null && _tutorialSpecies1.Data != null && GameManager.Instance != null && GameManager.Instance.IsDiscovered(_tutorialSpecies1.Data.speciesId))
         {
+            _step4ASpeciesData = _tutorialSpecies1.Data;
+            SpawnAllSunlightZoneSpecies();
             StartStep4B();
             return;
         }
@@ -434,20 +472,24 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Align creature in reticle and complete scan",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step4A_ScanEncounter1)
+                {
+                    // Point to Scan button
+                    var ui = UIManager.Instance;
+                    if (ui != null)
+                    {
+                        var scanRect = ui.GetScanButtonRect();
+                        if (scanRect != null)
+                        {
+                            TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        // Point to Scan button
-        var ui = UIManager.Instance;
-        if (ui != null)
-        {
-            var scanRect = ui.GetScanButtonRect();
-            if (scanRect != null)
-            {
-                TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
-            }
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -459,28 +501,34 @@ public class TutorialManager : MonoBehaviour
         _currentPhase = TutorialPhase.Step4B_ScanEncounter2;
         ResetPhaseTimers();
 
-        string speech = "There is an alternative way for the scanning module. Our automated scanner will switch to the alternative scanning module"
-                      + "Lock on and initiate scan.";
+        // After Step 4A, all species in the Sunlight Zone spawn!
+        SpawnAllSunlightZoneSpecies();
+
+        EnsureTutorialSpecies(isSecond: true);
+
+        string speech = "Notice the different bio-signature on this second creature? Our automated scanner will switch to the alternative scanning module. Lock on and initiate scan.";
 
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
             speech,
             "Scan second creature to calibrate all scanner modes",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2)
+                {
+                    var ui = UIManager.Instance;
+                    if (ui != null)
+                    {
+                        var scanRect = ui.GetScanButtonRect();
+                        if (scanRect != null)
+                        {
+                            TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        EnsureTutorialSpecies(isSecond: true);
-
-        var ui = UIManager.Instance;
-        if (ui != null)
-        {
-            var scanRect = ui.GetScanButtonRect();
-            if (scanRect != null)
-            {
-                TutorialArrowUI.Instance?.PointAtHUD(scanRect, "TAP TO SCAN", TutorialArrowUI.ArrowDirection.Down);
-            }
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -501,19 +549,23 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Open Bestiary and inspect your scanned species",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step5_BestiaryReview)
+                {
+                    var ui = UIManager.Instance;
+                    if (ui != null)
+                    {
+                        var bestiaryRect = ui.GetBestiaryButtonRect();
+                        if (bestiaryRect != null)
+                        {
+                            TutorialArrowUI.Instance?.PointAtHUD(bestiaryRect, "TAP TO OPEN BESTIARY", TutorialArrowUI.ArrowDirection.Right);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        var ui = UIManager.Instance;
-        if (ui != null)
-        {
-            var bestiaryRect = ui.GetBestiaryButtonRect();
-            if (bestiaryRect != null)
-            {
-                TutorialArrowUI.Instance?.PointAtHUD(bestiaryRect, "TAP TO OPEN BESTIARY", TutorialArrowUI.ArrowDirection.Right);
-            }
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -526,6 +578,7 @@ public class TutorialManager : MonoBehaviour
         ResetPhaseTimers();
 
         TutorialArrowUI.Instance?.Hide();
+        EnsureSeabedDebris();
 
         string speech = "Researcher, I'm detecting discarded ocean debris polluting the coral bed ahead. "
                       + "Human pollution disrupts fragile marine life. Maneuver in close and deploy your robotic collection arm to collect and sort the waste.";
@@ -534,26 +587,28 @@ public class TutorialManager : MonoBehaviour
             "DR. SANTOS",
             speech,
             "Approach orange dot on the sonar map and tap INTERACT to sort waste",
-            onComplete: null,
+            onComplete: () =>
+            {
+                if (_currentPhase == TutorialPhase.Step6_DebrisCleanup)
+                {
+                    if (_tutorialDebris != null)
+                    {
+                        TutorialArrowUI.Instance?.PointAtWorld(_tutorialDebris.transform, "DEBRIS CLUSTER", Vector3.up * 1.5f, TutorialArrowUI.ArrowDirection.Down);
+                    }
+
+                    var ui = UIManager.Instance;
+                    if (ui != null)
+                    {
+                        var interactRect = ui.GetInteractButtonRect();
+                        if (interactRect != null)
+                        {
+                            TutorialArrowUI.Instance?.PointAtHUD(interactRect, "TAP TO DEPLOY ARM", TutorialArrowUI.ArrowDirection.Down);
+                        }
+                    }
+                }
+            },
             showSkipStep: false
         );
-
-        EnsureSeabedDebris();
-
-        if (_tutorialDebris != null)
-        {
-            TutorialArrowUI.Instance?.PointAtWorld(_tutorialDebris.transform, "DEBRIS CLUSTER", Vector3.up * 1.5f, TutorialArrowUI.ArrowDirection.Down);
-        }
-
-        var ui = UIManager.Instance;
-        if (ui != null)
-        {
-            var interactRect = ui.GetInteractButtonRect();
-            if (interactRect != null)
-            {
-                TutorialArrowUI.Instance?.PointAtHUD(interactRect, "TAP TO DEPLOY ARM", TutorialArrowUI.ArrowDirection.Down);
-            }
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -709,13 +764,13 @@ public class TutorialManager : MonoBehaviour
         _phaseTimer += Time.unscaledDeltaTime;
 
         // Non-compliance checks
-        if (_phaseTimer >= 20f && !_tier1Nudged)
+        if (_phaseTimer >= 10f && !_tier1Nudged)
         {
             _tier1Nudged = true;
             ApplyTier1Nudge();
         }
 
-        if (_phaseTimer >= 40f && !_tier2Assisted)
+        if (_phaseTimer >= 20f && !_tier2Assisted)
         {
             _tier2Assisted = true;
             ApplyTier2Assist();
@@ -742,6 +797,15 @@ public class TutorialManager : MonoBehaviour
 
             case TutorialPhase.Step3_SonarSystem:
                 CheckStep3SonarProximity();
+                CheckStep4ASpeciesBoundary();
+                break;
+
+            case TutorialPhase.Step4A_ScanEncounter1:
+                CheckStep4ASpeciesBoundary();
+                break;
+
+            case TutorialPhase.Step4B_ScanEncounter2:
+                CheckStep4BSpeciesBoundary();
                 break;
 
             case TutorialPhase.Step5_BestiaryReview:
@@ -845,6 +909,74 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    private void CheckStep4ASpeciesBoundary()
+    {
+        if (_tutorialSpecies1 == null || !_tutorialSpecies1.gameObject.activeSelf) return;
+
+        Vector3 pos = _tutorialSpecies1.transform.position;
+        bool hitsBoundary = false;
+        Vector3 turnNormal = Vector3.zero;
+
+        // 1. Top surface player boundary (water surface is Y = 0; keep creature safely submerged below -3.5m)
+        if (pos.y >= -3.5f)
+        {
+            hitsBoundary = true;
+            turnNormal += Vector3.down;
+        }
+
+        // 2. Perimeter walls and bottom boundary
+        var steering = _tutorialSpecies1.GetComponent<ContextSteering>();
+        float halfW = steering != null ? steering.SafeHalfWidth : 270f;
+        float halfL = steering != null ? steering.SafeHalfLength : 270f;
+        float bottomY = steering != null ? steering.SafeBottomY : -180f;
+
+        if (pos.x >= halfW) { hitsBoundary = true; turnNormal += Vector3.left; }
+        else if (pos.x <= -halfW) { hitsBoundary = true; turnNormal += Vector3.right; }
+
+        if (pos.z >= halfL) { hitsBoundary = true; turnNormal += Vector3.back; }
+        else if (pos.z <= -halfL) { hitsBoundary = true; turnNormal += Vector3.forward; }
+
+        if (pos.y <= bottomY) { hitsBoundary = true; turnNormal += Vector3.up; }
+
+        if (hitsBoundary)
+        {
+            _tutorialSpecies1.TurnAwayFromBoundary(turnNormal.normalized);
+        }
+    }
+
+    private void CheckStep4BSpeciesBoundary()
+    {
+        if (_tutorialSpecies2 == null || !_tutorialSpecies2.gameObject.activeSelf) return;
+
+        Vector3 pos = _tutorialSpecies2.transform.position;
+        bool hitsBoundary = false;
+        Vector3 turnNormal = Vector3.zero;
+
+        if (pos.y >= -3.5f)
+        {
+            hitsBoundary = true;
+            turnNormal += Vector3.down;
+        }
+
+        var steering = _tutorialSpecies2.GetComponent<ContextSteering>();
+        float halfW = steering != null ? steering.SafeHalfWidth : 270f;
+        float halfL = steering != null ? steering.SafeHalfLength : 270f;
+        float bottomY = steering != null ? steering.SafeBottomY : -180f;
+
+        if (pos.x >= halfW) { hitsBoundary = true; turnNormal += Vector3.left; }
+        else if (pos.x <= -halfW) { hitsBoundary = true; turnNormal += Vector3.right; }
+
+        if (pos.z >= halfL) { hitsBoundary = true; turnNormal += Vector3.back; }
+        else if (pos.z <= -halfL) { hitsBoundary = true; turnNormal += Vector3.forward; }
+
+        if (pos.y <= bottomY) { hitsBoundary = true; turnNormal += Vector3.up; }
+
+        if (hitsBoundary)
+        {
+            _tutorialSpecies2.TurnAwayFromBoundary(turnNormal.normalized);
+        }
+    }
+
     private void CheckStep5Bestiary()
     {
         if (!_bestiaryOpenedInStep5)
@@ -924,6 +1056,15 @@ public class TutorialManager : MonoBehaviour
                 showSkipStep: false
             );
         }
+        else if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2)
+        {
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "Researcher, scan any other creature nearby to calibrate our secondary scanning protocol.",
+                "Scan any different creature to calibrate all scanner modes",
+                showSkipStep: false
+            );
+        }
     }
 
     private void ApplyTier2Assist()
@@ -947,6 +1088,28 @@ public class TutorialManager : MonoBehaviour
                 {
                     Vector3 steerDir = (player.transform.position + player.transform.forward * 8f - _tutorialSpecies1.transform.position).normalized;
                     _tutorialSpecies1.transform.position += steerDir * 2.5f;
+                }
+            }
+        }
+        else if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2)
+        {
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "I've highlighted a secondary specimen on your HUD. Align it in your reticle to initiate the scan.",
+                "Scan any different creature to calibrate all scanner modes",
+                showSkipStep: false
+            );
+
+            if (_tutorialSpecies2 != null)
+            {
+                TutorialArrowUI.Instance?.PointAtWorld(_tutorialSpecies2.transform, "TARGET SPECIMEN", Vector3.up * 1f, TutorialArrowUI.ArrowDirection.Down);
+
+                // Steer creature gently towards player
+                var player = FindFirstObjectByType<PlayerMovement>();
+                if (player != null)
+                {
+                    Vector3 steerDir = (player.transform.position + player.transform.forward * 8f - _tutorialSpecies2.transform.position).normalized;
+                    _tutorialSpecies2.transform.position += steerDir * 2.5f;
                 }
             }
         }
@@ -983,6 +1146,15 @@ public class TutorialManager : MonoBehaviour
                 StartStep4A();
                 break;
             case TutorialPhase.Step4A_ScanEncounter1:
+                if (_step4ASpeciesData == null && _tutorialSpecies1 != null)
+                {
+                    _step4ASpeciesData = _tutorialSpecies1.Data;
+                }
+                if (_step4ASpeciesData != null && GameManager.Instance != null)
+                {
+                    GameManager.Instance.DiscoverSpecies(_step4ASpeciesData.zoneIndex, _step4ASpeciesData.speciesId);
+                }
+                SpawnAllSunlightZoneSpecies();
                 StartStep4B();
                 break;
             case TutorialPhase.Step4B_ScanEncounter2:
@@ -1011,9 +1183,14 @@ public class TutorialManager : MonoBehaviour
     {
         if (_currentPhase == TutorialPhase.Step3_SonarSystem || _currentPhase == TutorialPhase.Step4A_ScanEncounter1)
         {
+            _step4ASpeciesData = data ?? _tutorialSpecies1?.Data;
             _species1VisualConfirmed = true;
             TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
             TutorialArrowUI.Instance?.Hide();
+
+            // After Step 4A, all species in the Sunlight Zone spawn!
+            SpawnAllSunlightZoneSpecies();
+
             RadioTextboxUI.Instance?.DisplayMessage(
                 "DR. SANTOS",
                 "First specimen logged! Excellent work. But our survey requires data on another nearby creature to calibrate our secondary scanning protocol.",
@@ -1025,6 +1202,19 @@ public class TutorialManager : MonoBehaviour
         }
         else if (_currentPhase == TutorialPhase.Step4B_ScanEncounter2)
         {
+            // For Step 4B: Any species EXCEPT the species from Step 4A scanned will be counted!
+            if (data != null && IsStep4ASpecies(data.speciesId))
+            {
+                Debug.Log($"[TutorialManager] Step 4B scan ignored: '{data.commonName}' was already scanned in Step 4A.");
+                RadioTextboxUI.Instance?.DisplayMessage(
+                    "DR. SANTOS",
+                    "We've already cataloged that species! Scan a different creature with a distinct bio-signature to calibrate our secondary scanning protocol.",
+                    "Scan a different creature to calibrate all scanner modes",
+                    showSkipStep: false
+                );
+                return;
+            }
+
             TutorialArrowUI.Instance?.Hide();
             RadioTextboxUI.Instance?.DisplayMessage(
                 "DR. SANTOS",
@@ -1078,6 +1268,8 @@ public class TutorialManager : MonoBehaviour
 
     private void HideAllTutorialEntities()
     {
+        _sunlightSpeciesSpawned = false;
+        _step4ASpeciesData = null;
         _cachedSceneSpecies.Clear();
         var allSpecies = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var s in allSpecies)
@@ -1156,6 +1348,56 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    private void SpawnAllSunlightZoneSpecies()
+    {
+        if (_sunlightSpeciesSpawned) return;
+        _sunlightSpeciesSpawned = true;
+
+        var creaturesParent = GameObject.Find("_Creatures");
+        if (creaturesParent != null)
+        {
+            for (int i = 0; i < creaturesParent.transform.childCount; i++)
+            {
+                var child = creaturesParent.transform.GetChild(i).gameObject;
+                if (child != null) child.SetActive(true);
+            }
+        }
+
+        var allTargets = FindObjectsByType<ScanTarget>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in allTargets)
+        {
+            if (t != null) t.gameObject.SetActive(true);
+        }
+
+        foreach (var s in _cachedSceneSpecies)
+        {
+            if (s != null) s.gameObject.SetActive(true);
+        }
+
+        var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var ai in allAI)
+        {
+            if (ai != null) ai.gameObject.SetActive(true);
+        }
+
+        // Safety fallback: if no creatures exist in the scene, invoke SpeciesSpawner to populate zone 0
+        if ((creaturesParent == null || creaturesParent.transform.childCount == 0) && allAI.Length == 0)
+        {
+            var spawner = FindFirstObjectByType<SpeciesSpawner>();
+            if (spawner != null)
+            {
+                spawner.SpawnForZone(0);
+            }
+        }
+
+        if (DistanceCullingManager.Instance != null && creaturesParent != null)
+        {
+            DistanceCullingManager.Instance.RegisterParent(creaturesParent.transform);
+        }
+
+        Debug.Log("[TutorialManager] Step 4A completed: All Sunlight Zone species spawned and activated!");
+    }
+
     private void RestoreAllTutorialEntities()
     {
         var creaturesParent = GameObject.Find("_Creatures");
@@ -1206,9 +1448,17 @@ public class TutorialManager : MonoBehaviour
         fwd.Normalize();
 
         Vector3 spawnPos = pPos + fwd * distanceAhead + Vector3.up * verticalOffset;
+        // Keep initial tutorial entity safely submerged below the surface boundary (Y <= -6m) and above seabed
+        spawnPos.y = Mathf.Clamp(spawnPos.y, -180f, -6f);
         entity.transform.position = spawnPos;
         entity.transform.forward = -fwd;
         entity.SetActive(true);
+
+        var ai = entity.GetComponent<SpeciesAI>();
+        if (ai != null && ai.Data != null)
+        {
+            ai.Initialize(ai.Data, spawnPos);
+        }
     }
 
     private void PositionTutorialDebris(GameObject debris, float distanceAhead)
@@ -1247,6 +1497,22 @@ public class TutorialManager : MonoBehaviour
         }
         else
         {
+            // Pick an unscanned or distinct species if _tutorialSpecies2 is null, matches _tutorialSpecies1, or matches Step 4A species
+            if (_tutorialSpecies2 == null || _tutorialSpecies2 == _tutorialSpecies1 || 
+                (_tutorialSpecies2.Data != null && IsStep4ASpecies(_tutorialSpecies2.Data.speciesId)))
+            {
+                var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                foreach (var ai in allAI)
+                {
+                    if (ai != null && ai != _tutorialSpecies1 && 
+                        (ai.Data == null || !IsStep4ASpecies(ai.Data.speciesId)))
+                    {
+                        _tutorialSpecies2 = ai;
+                        break;
+                    }
+                }
+            }
+
             if (_tutorialSpecies2 != null)
             {
                 PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
@@ -1254,16 +1520,25 @@ public class TutorialManager : MonoBehaviour
             }
         }
 
-        var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        if (!isSecond && allAI.Length > 0)
+        var allAIScene = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (!isSecond && allAIScene.Length > 0)
         {
-            _tutorialSpecies1 = allAI[0];
+            _tutorialSpecies1 = allAIScene[0];
             PositionTutorialEntity(_tutorialSpecies1.gameObject, 28f, 1f);
             return;
         }
-        else if (isSecond && allAI.Length > 1)
+        else if (isSecond && allAIScene.Length > 1)
         {
-            _tutorialSpecies2 = allAI[1];
+            foreach (var ai in allAIScene)
+            {
+                if (ai != null && ai != _tutorialSpecies1 && (ai.Data == null || !IsStep4ASpecies(ai.Data.speciesId)))
+                {
+                    _tutorialSpecies2 = ai;
+                    PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
+                    return;
+                }
+            }
+            _tutorialSpecies2 = allAIScene[1];
             PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
             return;
         }
@@ -1532,6 +1807,7 @@ public class TutorialManager : MonoBehaviour
     public void AbortTutorial()
     {
         _currentPhase = TutorialPhase.Inactive;
+        _step4ASpeciesData = null;
 
         if (_step1Routine != null)
         {

@@ -315,6 +315,7 @@ public class MainMenuController : MonoBehaviour
         GameManager.DeleteSaveData();
         GameManager.Instance?.ResetState();
         GameManager.SetTutorialCompleted(false);
+        MinigameInstructionOverlay.ResetShownTutorials();
         LoadingScreenUI.LoadScene(startingZoneSceneName);
     }
 

@@ -60,7 +60,26 @@ public class SpeciesSpawner : MonoBehaviour
             // TerrainGenerator will call SpawnForZone once mesh & props are baked!
             return;
         }
-        if (!_hasSpawned) SpawnForZone(0);
+        if (!_hasSpawned)
+        {
+            int zoneIdx = DetectCurrentZone();
+            SpawnForZone(zoneIdx);
+        }
+    }
+
+    private int DetectCurrentZone()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (sceneName.Contains("Twilight")) return 1;
+        if (sceneName.Contains("Midnight")) return 2;
+        if (sceneName.Contains("Abyss"))    return 3;
+        if (sceneName.Contains("Hadal"))    return 4;
+        if (sceneName.Contains("Sunlight")) return 0;
+
+        if (ZoneManager.Instance != null && ZoneManager.CurrentZoneIndex >= 0)
+            return ZoneManager.CurrentZoneIndex;
+
+        return 0;
     }
 
     public void SpawnForZone(int zoneIndex)

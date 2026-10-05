@@ -476,6 +476,7 @@ public class GameManager : MonoBehaviour
         _discoveredByZone.Clear();
         _zonePcgSeeds.Clear();
         SetTutorialCompleted(false);
+        MinigameInstructionOverlay.ResetShownTutorials();
 
         for (int i = 0; i < 5; i++)
         {

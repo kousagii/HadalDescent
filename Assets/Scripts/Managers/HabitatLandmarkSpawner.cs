@@ -48,7 +48,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
 
         if (!_hasSpawned)
         {
-            int zoneIdx = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : DetectZoneFromScene();
+            int zoneIdx = DetectZoneFromScene();
             SpawnLandmarksForZone(zoneIdx);
         }
     }

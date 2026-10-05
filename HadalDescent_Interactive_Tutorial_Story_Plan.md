@@ -449,6 +449,7 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
 - **Objective Line (32px, green):** `OBJECTIVE: Align creature in reticle and complete scan`
 - **Non-Compliance Safeguard:** If player ignores for >60s, `[ SKIP STEP ]` option appears on the radio textbox.
 - **Advance Condition:** Player completes Minigame 1.
+- **World State Update:** Immediately upon completing Step 4A (transition into Step 4B), all species in the Sunlight Zone spawn / are restored into the active scene (`_Creatures`, stationary scan targets, and free-swimming species). The ocean comes fully alive with biological activity on the sonar radar, and a second distinct specimen is highlighted ahead for Step 4B calibration.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
   *"First specimen logged! Excellent work. But our survey requires data on another nearby creature to calibrate our secondary scanning protocol."*
 
@@ -464,7 +465,7 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
   - **No separate instruction text** — image is self-contained
   - **Single slide:** `[CONTINUE TO SCAN]` button shown directly below image (34px, Cyan accent)
 - **Objective Line (32px, green):** `OBJECTIVE: Scan second creature to calibrate all scanner modes`
-- **Advance Condition:** Player completes the second minigame scan.
+- **Advance Condition:** Player completes Minigame 2 scan. **Any species** in the Sunlight Zone (ambient free-swimming or stationary benthic) scanned during Step 4B—**except** the species from Step 4A—counts towards completing the minigame and Step 4B. If the player attempts to scan the species from Step 4A, it is identified as already cataloged and does not advance the step.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  
   *"Both scanning modules calibrated! All species data has been automatically synced with your on-board encyclopedia. Let's review the Bestiary."*
 

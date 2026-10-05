@@ -51,7 +51,7 @@ public class ContextSteering : MonoBehaviour
     private float _playableHalfWidth  = 275f;
     private float _playableHalfLength = 275f;
     private float _zoneBottomY        = -182f;
-    private float _zoneTopY           = -1.5f;
+    private float _zoneTopY           = -3.5f;
     private bool  _zoneBoundsInitialized = false;
 
     // -----------------------------------------------------------------------
@@ -180,8 +180,8 @@ public class ContextSteering : MonoBehaviour
             _playableHalfWidth  = Mathf.Max(50f, (zone.playableWidth * 0.5f) - wallMargin);
             _playableHalfLength = Mathf.Max(50f, (zone.playableLength * 0.5f) - wallMargin);
 
-            // Water surface is at Y = 0. Stay at least 1.5m submerged
-            _zoneTopY = -1.5f;
+            // Water surface is at Y = 0. Stay at least 3.5m submerged well below player surface boundary
+            _zoneTopY = -3.5f;
 
             // Bottom trigger is at -zone.playableDepth. Keep at least 18m above it to avoid transition popups
             _zoneBottomY = -zone.playableDepth + 18f;
@@ -193,7 +193,7 @@ public class ContextSteering : MonoBehaviour
             if (tracker != null)
             {
                 _zoneBottomY = tracker.ZoneBottomY + 18f;
-                _zoneTopY    = tracker.ZoneTopY - 1.5f;
+                _zoneTopY    = tracker.ZoneTopY - 3.5f;
                 _zoneBoundsInitialized = true;
             }
         }
@@ -207,15 +207,17 @@ public class ContextSteering : MonoBehaviour
     {
         Vector3 pos = _rb.position;
         bool corrected = false;
+        Vector3 boundaryTurnNormal = Vector3.zero;
 
         // 1. Horizontal X boundary
         if (Mathf.Abs(pos.x) > _playableHalfWidth)
         {
             float sign = Mathf.Sign(pos.x);
             float overshoot = Mathf.Abs(pos.x) - _playableHalfWidth;
-            float correction = Mathf.Min(overshoot, overshoot * 4f * Time.fixedDeltaTime + 0.1f);
+            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
             pos.x -= sign * correction;
             corrected = true;
+            boundaryTurnNormal += new Vector3(-sign, 0f, 0f);
         }
 
         // 2. Horizontal Z boundary
@@ -223,35 +225,46 @@ public class ContextSteering : MonoBehaviour
         {
             float sign = Mathf.Sign(pos.z);
             float overshoot = Mathf.Abs(pos.z) - _playableHalfLength;
-            float correction = Mathf.Min(overshoot, overshoot * 4f * Time.fixedDeltaTime + 0.1f);
+            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
             pos.z -= sign * correction;
             corrected = true;
+            boundaryTurnNormal += new Vector3(0f, 0f, -sign);
         }
 
         // 3. Vertical Y boundary
         if (pos.y < _zoneBottomY)
         {
             float overshoot = _zoneBottomY - pos.y;
-            float correction = Mathf.Min(overshoot, overshoot * 4f * Time.fixedDeltaTime + 0.1f);
+            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
             pos.y += correction;
             corrected = true;
+            boundaryTurnNormal += Vector3.up;
         }
         else if (pos.y > _zoneTopY)
         {
             float overshoot = pos.y - _zoneTopY;
-            float correction = Mathf.Min(overshoot, overshoot * 4f * Time.fixedDeltaTime + 0.1f);
+            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
             pos.y -= correction;
             corrected = true;
+            boundaryTurnNormal += Vector3.down;
         }
 
         // Hard clamp absolute limits (never breach walls or trigger zones under any circumstance)
-        pos.x = Mathf.Clamp(pos.x, -_playableHalfWidth - 3f, _playableHalfWidth + 3f);
-        pos.z = Mathf.Clamp(pos.z, -_playableHalfLength - 3f, _playableHalfLength + 3f);
-        pos.y = Mathf.Clamp(pos.y, _zoneBottomY - 2f, _zoneTopY);
+        pos.x = Mathf.Clamp(pos.x, -_playableHalfWidth, _playableHalfWidth);
+        pos.z = Mathf.Clamp(pos.z, -_playableHalfLength, _playableHalfLength);
+        pos.y = Mathf.Clamp(pos.y, _zoneBottomY, _zoneTopY);
 
         if (corrected || pos != _rb.position)
         {
             _rb.MovePosition(pos);
+            if (boundaryTurnNormal.sqrMagnitude > 0.01f)
+            {
+                var ai = GetComponent<SpeciesAI>();
+                if (ai != null)
+                {
+                    ai.TurnAwayFromBoundary(boundaryTurnNormal.normalized);
+                }
+            }
         }
     }
 

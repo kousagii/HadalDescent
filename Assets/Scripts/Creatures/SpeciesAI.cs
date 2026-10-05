@@ -27,6 +27,7 @@ public class SpeciesAI : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private ContextSteering _steering;
+    private Rigidbody       _rb;
     private Transform       _playerTransform;
 
     // -----------------------------------------------------------------------
@@ -104,6 +105,7 @@ public class SpeciesAI : MonoBehaviour
 
     private void Awake()
     {
+        _rb          = GetComponent<Rigidbody>();
         _steering    = GetComponent<ContextSteering>();
         _spawnCenter = transform.position;
     }
@@ -330,6 +332,137 @@ public class SpeciesAI : MonoBehaviour
     {
         _state = AIState.Wandering;
         PickNewWanderTarget();
+    }
+
+    private float _lastBoundaryTurnTime = -10f;
+
+    /// <summary>
+    /// Forces the creature to turn away from a boundary (e.g. surface top boundary or perimeter wall).
+    /// </summary>
+    public void TurnAwayFromBoundary(Vector3 boundaryNormal)
+    {
+        if (Time.time - _lastBoundaryTurnTime < 0.35f) return;
+        _lastBoundaryTurnTime = Time.time;
+
+        if (boundaryNormal.sqrMagnitude < 0.01f)
+        {
+            boundaryNormal = Vector3.down;
+        }
+        boundaryNormal.Normalize();
+
+        // 1. Determine a turn direction that points away from the boundary and back toward safe waters
+        Vector3 turnDir = Vector3.Reflect(transform.forward, boundaryNormal).normalized;
+        if (Vector3.Dot(turnDir, boundaryNormal) < 0.3f)
+        {
+            turnDir = (boundaryNormal * 0.7f + turnDir * 0.3f).normalized;
+        }
+
+        // Bias toward spawn center or submarine so it doesn't wander deeper into corners
+        Vector3 toCenter = (_spawnCenter - transform.position).normalized;
+        if (toCenter.sqrMagnitude > 0.01f && Vector3.Dot(toCenter, boundaryNormal) > -0.2f)
+        {
+            turnDir = (turnDir * 0.6f + toCenter * 0.4f).normalized;
+        }
+
+        if (turnDir.sqrMagnitude < 0.01f)
+        {
+            turnDir = boundaryNormal;
+        }
+        turnDir.Normalize();
+
+        // 2. Rotate creature immediately toward the safe turn direction
+        transform.forward = turnDir;
+        if (_rb != null)
+        {
+            _rb.rotation = Quaternion.LookRotation(turnDir, Vector3.up);
+            _rb.linearVelocity = turnDir * (_steering != null ? _steering.MoveSpeed : 2.5f);
+        }
+
+        // 3. Establish a new wander goal well inside the playable volume
+        float wanderDist = Mathf.Max(18f, Data != null ? Data.wanderRadius : 22f);
+        Vector3 newGoal = transform.position + turnDir * wanderDist;
+
+        // Strict clamp to safe bounds
+        float safeHalfW = _steering != null ? _steering.SafeHalfWidth : 270f;
+        float safeHalfL = _steering != null ? _steering.SafeHalfLength : 270f;
+        float safeTop = _steering != null ? _steering.SafeTopY : -3.5f;
+        float safeBottom = _steering != null ? _steering.SafeBottomY : -180f;
+
+        newGoal.x = Mathf.Clamp(newGoal.x, -safeHalfW, safeHalfW);
+        newGoal.z = Mathf.Clamp(newGoal.z, -safeHalfL, safeHalfL);
+        newGoal.y = Mathf.Clamp(newGoal.y, safeBottom, safeTop);
+
+        _wanderTarget = newGoal;
+        if (_steering != null)
+        {
+            _steering.SetGoal(_wanderTarget);
+        }
+
+        // If spawn center was set too high near the surface, pull it deeper so creature doesn't gravitate back up
+        if (_spawnCenter.y > -5.0f)
+        {
+            _spawnCenter.y = Mathf.Min(transform.position.y - 3f, -8f);
+        }
+
+        _state = AIState.Wandering;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        HandleBoundaryCollision(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        HandleBoundaryCollision(other);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider != null)
+            HandleBoundaryCollision(collision.collider);
+    }
+
+    private void HandleBoundaryCollision(Collider other)
+    {
+        if (other == null) return;
+        if (Time.time - _lastBoundaryTurnTime < 0.35f) return;
+
+        bool isBoundary = other.GetComponent<ZoneBoundaryTrigger>() != null ||
+                          other.name.Contains("Boundary") ||
+                          other.name.Contains("Wall_") ||
+                          other.CompareTag("Boundary");
+
+        if (!isBoundary) return;
+
+        Vector3 normal = Vector3.zero;
+        if (other.name.Contains("TopBoundary") || (other.transform.position.y > transform.position.y && Mathf.Abs(other.transform.position.y - transform.position.y) < 15f))
+        {
+            normal = Vector3.down;
+        }
+        else if (other.name.Contains("BottomBoundary") || other.transform.position.y < transform.position.y)
+        {
+            normal = Vector3.up;
+        }
+        else
+        {
+            try
+            {
+                Vector3 closest = other.ClosestPoint(transform.position);
+                normal = (transform.position - closest).normalized;
+            }
+            catch
+            {
+                normal = (_spawnCenter - transform.position).normalized;
+            }
+
+            if (normal.sqrMagnitude < 0.01f)
+            {
+                normal = (_spawnCenter - transform.position).normalized;
+            }
+        }
+
+        TurnAwayFromBoundary(normal);
     }
 
     // -----------------------------------------------------------------------

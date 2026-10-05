@@ -125,6 +125,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneSelectionUI
   alohaFontAsset: {fileID: 0}
+  zoneScreenshots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   customRoot: {fileID: 0}
   customBackButton: {fileID: 0}
   customRdpText: {fileID: 0}

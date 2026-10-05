@@ -328,7 +328,13 @@ public class CreatureLocomotion : MonoBehaviour
         Vector3 effectiveDir = steerDir;
         if (isJellyfish)
         {
-            if (effectiveDir.sqrMagnitude < 0.01f)
+            // If approaching or hitting the top surface boundary (Y >= -4.0m), invert upward buoyancy
+            // so the jellyfish turns and dives downward instead of breaching the surface boundary!
+            if (transform.position.y >= -4.0f)
+            {
+                effectiveDir = (effectiveDir.normalized * 0.65f + Vector3.down * 0.45f).normalized;
+            }
+            else if (effectiveDir.sqrMagnitude < 0.01f)
             {
                 effectiveDir = (Vector3.up * 0.55f + transform.forward * 0.25f).normalized;
             }

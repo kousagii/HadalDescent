@@ -106,14 +106,16 @@ public class TerrainGenerator : MonoBehaviour
 
     private int DetectCurrentZone()
     {
-        if (ZoneManager.Instance != null && ZoneManager.CurrentZoneIndex >= 0)
-            return ZoneManager.CurrentZoneIndex;
-
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (sceneName.Contains("Twilight")) return 1;
         if (sceneName.Contains("Midnight")) return 2;
         if (sceneName.Contains("Abyss"))    return 3;
         if (sceneName.Contains("Hadal"))    return 4;
+        if (sceneName.Contains("Sunlight")) return 0;
+
+        if (ZoneManager.Instance != null && ZoneManager.CurrentZoneIndex >= 0)
+            return ZoneManager.CurrentZoneIndex;
+
         return 0;
     }
 

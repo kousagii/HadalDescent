@@ -154,6 +154,7 @@ MonoBehaviour:
   customResumeButton: {fileID: 0}
   customSaveGameButton: {fileID: 0}
   customSettingsButton: {fileID: 0}
+  customZonesButton: {fileID: 0}
   customExitGameButton: {fileID: 0}
   customMasterVolumeSlider: {fileID: 0}
   customMusicVolumeSlider: {fileID: 0}
@@ -163,6 +164,9 @@ MonoBehaviour:
   customInvertPitchToggle: {fileID: 0}
   customSettingsBackButton: {fileID: 0}
   customSaveNotificationText: {fileID: 0}
+  customExitConfirmPopupRoot: {fileID: 0}
+  customExitConfirmButton: {fileID: 0}
+  customExitCancelButton: {fileID: 0}
 --- !u!114 &4187155887438521678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,6 +180,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneSelectionUI
   alohaFontAsset: {fileID: 0}
+  zoneScreenshots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   customRoot: {fileID: 0}
   customBackButton: {fileID: 0}
   customRdpText: {fileID: 0}
@@ -1452,6 +1462,26 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2531471731023471389, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}

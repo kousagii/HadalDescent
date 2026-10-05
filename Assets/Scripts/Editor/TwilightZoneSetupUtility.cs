@@ -437,6 +437,7 @@ public static class TwilightZoneSetupUtility
         // 1. _PCGManager
         var pcgGO = EnsureGameObject("_PCGManager", managersGO.transform);
         pcgGO.transform.localPosition = Vector3.zero;
+        pcgGO.SetActive(true);
 
         var terrainGen = EnsureComponent<TerrainGenerator>(pcgGO);
         if (twilightProps != null)
