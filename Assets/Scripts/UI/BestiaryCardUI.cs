@@ -46,6 +46,22 @@ public class BestiaryCardUI : MonoBehaviour
     private SpeciesData _speciesData;
     private bool        _isDiscovered;
 
+    public RectTransform ThumbnailRect
+    {
+        get
+        {
+            if (thumbnailRawImage != null && thumbnailRawImage.gameObject.activeInHierarchy)
+                return thumbnailRawImage.rectTransform;
+            if (thumbnailImage != null && thumbnailImage.gameObject.activeInHierarchy)
+                return thumbnailImage.rectTransform;
+            return GetComponent<RectTransform>();
+        }
+    }
+
+    public RectTransform CardButtonRect => cardButton != null ? cardButton.GetComponent<RectTransform>() : GetComponent<RectTransform>();
+    public SpeciesData SpeciesData => _speciesData;
+    public bool IsDiscovered => _isDiscovered;
+
     private void Awake()
     {
         if (thumbnailRawImage == null) thumbnailRawImage = GetComponentInChildren<RawImage>();

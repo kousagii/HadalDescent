@@ -390,6 +390,10 @@ public class EnvPropScatterer : MonoBehaviour
         bool isRock = entry.targetBiome == BiomeBand.Rock || prefabName.Contains("rock") || prefabName.Contains("boulder") || prefabName.Contains("cone") || prefabName.Contains("cube") || prefabName.Contains("sphere") || prefabName.Contains("bisect");
         bool isSeagrass = prefabName.Contains("seagrass");
 
+        // Slope check: reject seagrass on near-vertical cliff walls (slope > 55 deg)
+        if (isSeagrass && normal.y < 0.57f)
+            return false;
+
         // Rotation & Scale with globalScaleMultiplier and non-uniform scale matrix
         float mult = propSet != null ? Mathf.Max(0.1f, propSet.globalScaleMultiplier) : 1f;
         float randomScale = Random.Range(entry.minScale, entry.maxScale) * mult * scaleOverride;
@@ -419,6 +423,20 @@ public class EnvPropScatterer : MonoBehaviour
         {
             // Initial spawn rotation is Identity; OrientRockFlat will dynamically align its shortest axis to the normal
             rot = Quaternion.identity;
+        }
+        else if (isSeagrass)
+        {
+            // Tilted at right rotation conforming to seabed slope, limited to about 45 degrees of tilt from vertical Up
+            float slopeAngle = Vector3.Angle(Vector3.up, normal);
+            float tiltAngle = Mathf.Min(slopeAngle, 45f);
+            Vector3 tiltAxis = Vector3.Cross(Vector3.up, normal);
+            Quaternion tiltRot = Quaternion.identity;
+            if (tiltAxis.sqrMagnitude > 0.001f)
+            {
+                tiltRot = Quaternion.AngleAxis(tiltAngle, tiltAxis.normalized);
+            }
+            Quaternion naturalSway = Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f));
+            rot = tiltRot * randomSpin * naturalSway;
         }
         else if (entry.alignToSurface)
         {
@@ -570,32 +588,53 @@ public class EnvPropScatterer : MonoBehaviour
             bool isClam = objName.Contains("clam") || objName.Contains("shell");
             bool isRock = objName.Contains("rock") || objName.Contains("boulder") || objName.Contains("cone") || objName.Contains("cube") || objName.Contains("sphere") || objName.Contains("bisect");
 
-            float sink;
+            float targetY;
+            Vector3 pos = go.transform.position;
+
             if (isSeagrass)
             {
-                sink = 0.02f; // Seagrass anchored right at the seabed base
-            }
-            else if (isClam)
-            {
-                sink = height * 0.48f; // Clam shell semi-buried flat in the sand, bottom half submerged
-            }
-            else if (isRock)
-            {
-                sink = height * Random.Range(0.28f, 0.38f); // Rocks firmly embedded into sediment
+                // Firmly root and plant seagrass into the ground across sloped terrain:
+                // Sample seabed elevation around base perimeter to find lowest ground contact point
+                float baseRadius = Mathf.Max(combinedBounds.extents.x, combinedBounds.extents.z) * 0.55f;
+                float minGroundY = trueFloorY;
+                for (int a = 0; a < 8; a++)
+                {
+                    float rad = a * (Mathf.PI * 2f / 8f);
+                    float sx = go.transform.position.x + Mathf.Cos(rad) * baseRadius;
+                    float sz = go.transform.position.z + Mathf.Sin(rad) * baseRadius;
+                    float sy = meshGen != null ? meshGen.SampleHeight(sx, sz) : trueFloorY;
+                    if (sy < minGroundY) minGroundY = sy;
+                }
+
+                // Plant roots firmly into sediment (14% height embed) anchored at lowest ground point
+                float sink = height * 0.14f;
+                targetY = Mathf.Min(trueFloorY, minGroundY) + bottomOffset - sink;
+                pos.y = targetY;
+                go.transform.position = pos;
             }
             else
             {
-                sink = height * naturalSinkFraction;
+                float sink;
+                if (isClam)
+                {
+                    sink = height * 0.48f; // Clam shell semi-buried flat in the sand, bottom half submerged
+                }
+                else if (isRock)
+                {
+                    sink = height * Random.Range(0.28f, 0.38f); // Rocks firmly embedded into sediment
+                }
+                else
+                {
+                    sink = height * naturalSinkFraction;
+                }
+
+                targetY = trueFloorY + bottomOffset - sink;
+
+                // Safety floor clamp: Ensure no prop base penetrates beyond/below the ocean floor
+                targetY = Mathf.Max(targetY, trueFloorY - sink);
+                pos.y = targetY;
+                go.transform.position = pos;
             }
-
-            float targetY = trueFloorY + bottomOffset - sink;
-
-            // Safety floor clamp: Ensure no prop base penetrates beyond/below the ocean floor
-            targetY = Mathf.Max(targetY, trueFloorY - (isSeagrass ? 0.04f : sink));
-
-            Vector3 pos = go.transform.position;
-            pos.y = targetY;
-            go.transform.position = pos;
 
             // 3. Ocean surface safety clamp: Ensure no prop breaches above water surface (Y = 0)
             float topOffset = combinedBounds.max.y - pivotY;

@@ -50,7 +50,7 @@ MonoBehaviour:
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1
-  uniformScaleRange: {x: 0.875, y: 1.0625}
+  uniformScaleRange: {x: 0.5, y: 2}
   maxAxisVariance: 0.035
   placeholderShape: 1
   placeholderColor: {r: 0.95, g: 0.3, b: 0.22, a: 1}

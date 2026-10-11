@@ -142,6 +142,9 @@ public static class SubmarinePrefabUtility
             if (cam != null)
             {
                 cam.nearClipPlane = 0.15f; // Prevents interior hull clipping
+                var lightCtrl = camTransform.GetComponent<SubmarineLightController>();
+                if (lightCtrl == null) lightCtrl = camTransform.gameObject.AddComponent<SubmarineLightController>();
+                lightCtrl.EnsureLightRigBuilt();
             }
         }
 

@@ -60,6 +60,12 @@ public class PlayerMovement : MonoBehaviour
             HideSubmarineVisuals();
         }
 
+        // Ensure diegetic sector boundary warning and soft deflection is active
+        if (GetComponent<SectorBoundaryWarning>() == null)
+        {
+            gameObject.AddComponent<SectorBoundaryWarning>();
+        }
+
         if (inputActionsAsset != null)
         {
             moveAction     = inputActionsAsset.FindAction("Move");

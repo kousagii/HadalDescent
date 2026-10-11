@@ -29,10 +29,11 @@ public class RadioTextboxUI : MonoBehaviour
                 _instance = FindFirstObjectByType<RadioTextboxUI>(FindObjectsInactive.Include);
                 if (_instance == null)
                 {
-                    var canvas = FindFirstObjectByType<Canvas>();
+                    var canvas = UIManager.GetExplorationCanvas();
                     var go = new GameObject("RadioTextboxUI");
                     if (canvas != null)
                         go.transform.SetParent(canvas.transform, false);
+                    DontDestroyOnLoad(go);
                     _instance = go.AddComponent<RadioTextboxUI>();
                 }
             }
@@ -162,9 +163,9 @@ public class RadioTextboxUI : MonoBehaviour
 
         // Find or create Canvas
         Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
+        if (canvas == null || canvas.name.Contains("Skip") || canvas.name.Contains("Arrow") || canvas.name.Contains("Pointer") || canvas.name.Contains("Popup") || canvas.GetComponent<CanvasScaler>() == null)
         {
-            canvas = FindFirstObjectByType<Canvas>();
+            canvas = UIManager.GetExplorationCanvas();
         }
 
         if (canvas == null)

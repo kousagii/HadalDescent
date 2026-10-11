@@ -61,15 +61,32 @@ public class SpeciesAI : MonoBehaviour
     // Initialization (called by SpeciesSpawner after AddComponent)
     // -----------------------------------------------------------------------
 
+    private float _speedMultiplier = 1f;
+
     public void Initialize(SpeciesData data, Vector3 spawnCenter)
     {
         Data         = data;
         _spawnCenter = spawnCenter;
         if (_steering == null) _steering = GetComponent<ContextSteering>();
+
+        float scaleRatio = 1f;
+        if (data != null && data.modelPrefab != null && data.modelPrefab.transform.localScale.magnitude > 0.01f)
+        {
+            scaleRatio = transform.localScale.magnitude / data.modelPrefab.transform.localScale.magnitude;
+        }
+        else if (data != null && data.placeholderScale.magnitude > 0.01f)
+        {
+            scaleRatio = transform.localScale.magnitude / data.placeholderScale.magnitude;
+        }
+
+        // Biological speed scaling: larger specimens cruise slightly faster; smaller specimens are more agile
+        _speedMultiplier = Mathf.Clamp(Mathf.Pow(scaleRatio, 0.35f), 0.75f, 1.35f);
+        float turnMul    = Mathf.Clamp(Mathf.Pow(scaleRatio, -0.25f), 0.8f, 1.25f);
+
         if (_steering != null && data != null)
         {
-            _steering.MoveSpeed = data.moveSpeed;
-            _steering.TurnSpeed = data.turnSpeed > 0f ? data.turnSpeed : 65f;
+            _steering.MoveSpeed = data.moveSpeed * _speedMultiplier;
+            _steering.TurnSpeed = (data.turnSpeed > 0f ? data.turnSpeed : 65f) * turnMul;
             _steering.ModelYawOffset = data.modelYawOffset;
         }
 
@@ -95,7 +112,7 @@ public class SpeciesAI : MonoBehaviour
     {
         if (_state == AIState.Fleeing) return;
         _state = AIState.Fleeing;
-        if (_steering != null) _steering.MoveSpeed = Data != null ? Data.fleeSpeed : 5f;
+        if (_steering != null) _steering.MoveSpeed = (Data != null ? Data.fleeSpeed : 5f) * _speedMultiplier;
         SetFleeGoalAwayFrom(threatWorldPosition);
     }
 
@@ -267,17 +284,21 @@ public class SpeciesAI : MonoBehaviour
         }
 
         float minSafeY = floorY + Mathf.Max(2.5f, _wanderArrivalThreshold);
-        candidate.y = Mathf.Max(candidate.y, minSafeY);
+        bool isSurfaceDrifter = Data != null && Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter;
+        if (isSurfaceDrifter)
+        {
+            candidate.y = -0.45f;
+        }
 
         // Retrieve safe boundary bounds (ensures creature never wanders outside player reach)
         float safeHalfW  = _steering != null ? _steering.SafeHalfWidth  : 275f;
         float safeHalfL  = _steering != null ? _steering.SafeHalfLength : 275f;
-        float safeTop    = _steering != null ? _steering.SafeTopY       : -1.5f;
+        float safeTop    = _steering != null ? _steering.SafeTopY       : (isSurfaceDrifter ? -0.2f : -1.5f);
         float safeBottom = _steering != null ? _steering.SafeBottomY    : -182f;
 
         candidate.x = Mathf.Clamp(candidate.x, -safeHalfW, safeHalfW);
         candidate.z = Mathf.Clamp(candidate.z, -safeHalfL, safeHalfL);
-        candidate.y = Mathf.Clamp(candidate.y, Mathf.Max(minSafeY, safeBottom), safeTop);
+        candidate.y = isSurfaceDrifter ? -0.45f : Mathf.Clamp(candidate.y, Mathf.Max(minSafeY, safeBottom), safeTop);
 
         _wanderTarget = candidate;
     }
@@ -325,12 +346,13 @@ public class SpeciesAI : MonoBehaviour
     private void EnterReturning()
     {
         _state = AIState.Returning;
-        if (_steering != null) _steering.MoveSpeed = Data != null ? Data.moveSpeed : 2f;
+        if (_steering != null) _steering.MoveSpeed = (Data != null ? Data.moveSpeed : 2f) * _speedMultiplier;
     }
 
     private void EnterWandering()
     {
         _state = AIState.Wandering;
+        if (_steering != null) _steering.MoveSpeed = (Data != null ? Data.moveSpeed : 2f) * _speedMultiplier;
         PickNewWanderTarget();
     }
 
@@ -344,7 +366,13 @@ public class SpeciesAI : MonoBehaviour
         if (Time.time - _lastBoundaryTurnTime < 0.35f) return;
         _lastBoundaryTurnTime = Time.time;
 
-        if (boundaryNormal.sqrMagnitude < 0.01f)
+        bool isSurfaceDrifter = Data != null && Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter;
+        if (isSurfaceDrifter)
+        {
+            boundaryNormal.y = 0f;
+            if (boundaryNormal.sqrMagnitude < 0.01f) return;
+        }
+        else if (boundaryNormal.sqrMagnitude < 0.01f)
         {
             boundaryNormal = Vector3.down;
         }
@@ -352,16 +380,31 @@ public class SpeciesAI : MonoBehaviour
 
         // 1. Determine a turn direction that points away from the boundary and back toward safe waters
         Vector3 turnDir = Vector3.Reflect(transform.forward, boundaryNormal).normalized;
-        if (Vector3.Dot(turnDir, boundaryNormal) < 0.3f)
+        if (isSurfaceDrifter)
         {
-            turnDir = (boundaryNormal * 0.7f + turnDir * 0.3f).normalized;
-        }
+            turnDir.y = 0f;
+            if (turnDir.sqrMagnitude < 0.01f) turnDir = boundaryNormal;
+            turnDir.Normalize();
 
-        // Bias toward spawn center or submarine so it doesn't wander deeper into corners
-        Vector3 toCenter = (_spawnCenter - transform.position).normalized;
-        if (toCenter.sqrMagnitude > 0.01f && Vector3.Dot(toCenter, boundaryNormal) > -0.2f)
+            var locomotion = GetComponent<CreatureLocomotion>();
+            if (locomotion != null)
+            {
+                locomotion.DeflectSurfaceDrifter(boundaryNormal);
+            }
+        }
+        else
         {
-            turnDir = (turnDir * 0.6f + toCenter * 0.4f).normalized;
+            if (Vector3.Dot(turnDir, boundaryNormal) < 0.3f)
+            {
+                turnDir = (boundaryNormal * 0.7f + turnDir * 0.3f).normalized;
+            }
+
+            // Bias toward spawn center or submarine so it doesn't wander deeper into corners
+            Vector3 toCenter = (_spawnCenter - transform.position).normalized;
+            if (toCenter.sqrMagnitude > 0.01f && Vector3.Dot(toCenter, boundaryNormal) > -0.2f)
+            {
+                turnDir = (turnDir * 0.6f + toCenter * 0.4f).normalized;
+            }
         }
 
         if (turnDir.sqrMagnitude < 0.01f)
@@ -385,12 +428,12 @@ public class SpeciesAI : MonoBehaviour
         // Strict clamp to safe bounds
         float safeHalfW = _steering != null ? _steering.SafeHalfWidth : 270f;
         float safeHalfL = _steering != null ? _steering.SafeHalfLength : 270f;
-        float safeTop = _steering != null ? _steering.SafeTopY : -3.5f;
+        float safeTop = _steering != null ? _steering.SafeTopY : (isSurfaceDrifter ? -0.2f : -3.5f);
         float safeBottom = _steering != null ? _steering.SafeBottomY : -180f;
 
         newGoal.x = Mathf.Clamp(newGoal.x, -safeHalfW, safeHalfW);
         newGoal.z = Mathf.Clamp(newGoal.z, -safeHalfL, safeHalfL);
-        newGoal.y = Mathf.Clamp(newGoal.y, safeBottom, safeTop);
+        newGoal.y = isSurfaceDrifter ? -0.45f : Mathf.Clamp(newGoal.y, safeBottom, safeTop);
 
         _wanderTarget = newGoal;
         if (_steering != null)
@@ -399,7 +442,7 @@ public class SpeciesAI : MonoBehaviour
         }
 
         // If spawn center was set too high near the surface, pull it deeper so creature doesn't gravitate back up
-        if (_spawnCenter.y > -5.0f)
+        if (!isSurfaceDrifter && _spawnCenter.y > -5.0f)
         {
             _spawnCenter.y = Mathf.Min(transform.position.y - 3f, -8f);
         }
@@ -430,10 +473,20 @@ public class SpeciesAI : MonoBehaviour
 
         bool isBoundary = other.GetComponent<ZoneBoundaryTrigger>() != null ||
                           other.name.Contains("Boundary") ||
-                          other.name.Contains("Wall_") ||
-                          other.CompareTag("Boundary");
+                          other.name.Contains("Wall_");
 
         if (!isBoundary) return;
+
+        bool isSurfaceDrifter = Data != null && Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter;
+        if (isSurfaceDrifter)
+        {
+            // Surface drifters naturally live at the surface (Y = -0.45m).
+            // Do NOT treat the top water boundary as an obstacle to turn away from!
+            if (other.name.Contains("TopBoundary") || other.transform.position.y > transform.position.y)
+            {
+                return;
+            }
+        }
 
         Vector3 normal = Vector3.zero;
         if (other.name.Contains("TopBoundary") || (other.transform.position.y > transform.position.y && Mathf.Abs(other.transform.position.y - transform.position.y) < 15f))

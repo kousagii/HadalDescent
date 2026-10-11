@@ -93,9 +93,33 @@ public class BestiaryManager : MonoBehaviour
     private int  _activeFilter = -1; // -1 = All Depths (Continuous Descent)
     private bool _isOpen       = false;
     public bool IsOpen => _isOpen || (bestiaryPanel != null && bestiaryPanel.activeSelf) || (detailModal != null && detailModal.activeSelf);
+    public bool IsModelInspectionModalOpen => GameObject.Find("_3DModelInspectionModal") != null || (customModelInspectionPrefab != null && GameObject.Find(customModelInspectionPrefab.name) != null);
+    public bool IsDetailModalOpen => detailModal != null && detailModal.activeSelf;
 
     // Maps speciesId -> the instantiated card RectTransform for scroll-to
     private readonly Dictionary<string, RectTransform> _cardMap = new Dictionary<string, RectTransform>();
+
+    public BestiaryCardUI GetCardUIForSpecies(string speciesId)
+    {
+        if (string.IsNullOrEmpty(speciesId)) return null;
+        if (_cardMap.TryGetValue(speciesId, out RectTransform rect) && rect != null)
+            return rect.GetComponent<BestiaryCardUI>();
+        return null;
+    }
+
+    public BestiaryCardUI GetFirstDiscoveredSpeciesCardUI()
+    {
+        foreach (var kvp in _cardMap)
+        {
+            if (kvp.Value != null)
+            {
+                var card = kvp.Value.GetComponent<BestiaryCardUI>();
+                if (card != null && card.IsDiscovered && card.SpeciesData != null)
+                    return card;
+            }
+        }
+        return null;
+    }
 
     // -----------------------------------------------------------------------
     // Unity Lifecycle

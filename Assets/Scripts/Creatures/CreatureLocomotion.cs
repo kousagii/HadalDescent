@@ -45,6 +45,9 @@ public class CreatureLocomotion : MonoBehaviour
     private float _currentBankAngle;
     private float _previousYaw;
 
+    public LocomotionArchetype Archetype => _data != null ? _data.locomotionArchetype : LocomotionArchetype.PelagicCruiser;
+    public SpeciesData Data => _data;
+
     // Per-instance random phase offsets for animation desync
     private float _hoverPhaseX;
     private float _hoverPhaseY;
@@ -57,6 +60,7 @@ public class CreatureLocomotion : MonoBehaviour
 
     // Surface drifter state
     private Vector3 _ambientCurrent = new Vector3(0.35f, 0f, 0.2f);
+    private float   _surfaceDriftYaw;
 
     // -----------------------------------------------------------------------
     // Initialization
@@ -88,12 +92,20 @@ public class CreatureLocomotion : MonoBehaviour
         _baseModelScale = _visualModel.localScale;
 
         _previousYaw = transform.eulerAngles.y;
+        _surfaceDriftYaw = transform.eulerAngles.y;
     }
 
     public void Initialize(SpeciesData data)
     {
         _data = data;
         _cycleTimer = Random.Range(0f, 20f); // wide desync window across individuals
+
+        if (_data != null && _data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+        {
+            float driftAngle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            _ambientCurrent = new Vector3(Mathf.Sin(driftAngle), 0f, Mathf.Cos(driftAngle)) * 0.35f;
+            _surfaceDriftYaw = Mathf.Atan2(_ambientCurrent.x, _ambientCurrent.z) * Mathf.Rad2Deg;
+        }
 
         // Per-instance random phase offsets for hover wobble desync
         _hoverPhaseX = Random.Range(0f, Mathf.PI * 2f);
@@ -125,8 +137,15 @@ public class CreatureLocomotion : MonoBehaviour
             float randomOffset = Random.Range(0f, 1f);
             _animator.Play(stateInfo.fullPathHash, 0, randomOffset);
 
-            // Subtle per-individual speed variation (±8%) so they drift apart naturally
-            _animator.speed *= Random.Range(0.92f, 1.08f);
+            // Natural biological animation cadence based on individual size:
+            // smaller juveniles beat fins/tails slightly faster; giant elders beat with slower, majestic sweeps
+            float scaleRatio = 1f;
+            if (_data != null && _data.modelPrefab != null && _data.modelPrefab.transform.localScale.magnitude > 0.01f)
+            {
+                scaleRatio = transform.localScale.magnitude / _data.modelPrefab.transform.localScale.magnitude;
+            }
+            float cadenceFactor = Mathf.Clamp(1f / Mathf.Sqrt(Mathf.Clamp(scaleRatio, 0.4f, 2.5f)), 0.75f, 1.35f);
+            _animator.speed *= cadenceFactor * Random.Range(0.94f, 1.06f);
         }
     }
 
@@ -209,13 +228,20 @@ public class CreatureLocomotion : MonoBehaviour
         // sideways or slide backwards into a turn, producing authentic hydrodynamic arcs.
         float forwardDot = Vector3.Dot(transform.forward, steerDir.normalized);
         float turnDrag = Mathf.Clamp01((forwardDot + 1f) * 0.5f); // 1.0 when facing target, ~0.5 at 90 deg
-        float forwardSpeed = _currentSpeed * Mathf.Lerp(0.55f, 1.0f, turnDrag);
+        float forwardSpeed = _currentSpeed * Mathf.Lerp(0.35f, 1.0f, turnDrag);
 
-        Vector3 moveStep = transform.forward * forwardSpeed * Time.fixedDeltaTime;
+        // When avoiding an obstacle (forwardDot < 0.6), smoothly deflect moveDir
+        // away from the collision vector so the creature immediately clears the obstacle
+        Vector3 moveDir = forwardDot < 0.6f
+            ? Vector3.Slerp(transform.forward, steerDir.normalized, 0.40f).normalized
+            : transform.forward;
+
+        Vector3 moveStep = moveDir * forwardSpeed * Time.fixedDeltaTime;
         _rb.MovePosition(_rb.position + moveStep);
 
-        // Smooth 3D swimming rotation towards steerDir
-        ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 30f);
+        // Boost turn rate during sharp obstacle evasion
+        float turnBoost = forwardDot < 0.5f ? 1.6f : 1.0f;
+        ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 30f, turnBoost: turnBoost);
 
         // Synchronize skeletal swimming animation speed with forward velocity
         if (_animator != null)
@@ -286,8 +312,14 @@ public class CreatureLocomotion : MonoBehaviour
 
     private void UpdatePulsatileJetter(Vector3 steerDir, float targetSpeed)
     {
-        // 1. Natural propulsion pulse cycle
-        float freq = Mathf.Max(0.2f, _data.pulseFrequency);
+        // 1. Natural propulsion pulse cycle (scaled subtly by individual size)
+        float scaleRatio = 1f;
+        if (_data != null && _data.modelPrefab != null && _data.modelPrefab.transform.localScale.magnitude > 0.01f)
+        {
+            scaleRatio = transform.localScale.magnitude / _data.modelPrefab.transform.localScale.magnitude;
+        }
+        float cadenceFactor = Mathf.Clamp(1f / Mathf.Sqrt(Mathf.Clamp(scaleRatio, 0.4f, 2.5f)), 0.75f, 1.35f);
+        float freq = Mathf.Max(0.2f, _data.pulseFrequency * cadenceFactor);
         float period = 1f / freq;
         float tau = _cycleTimer % period;
         float normalizedCycle = tau / period; // 0.0 to 1.0
@@ -436,8 +468,22 @@ public class CreatureLocomotion : MonoBehaviour
 
         Vector3 newPos = _rb.position + moveDir * forwardSpeed * Time.fixedDeltaTime;
 
-        // 5. Firmly clamp height to seabed clearance offset
-        float targetY = _groundY + Mathf.Max(0.2f, _data.benthicSurfaceOffset);
+        // 5. Firmly clamp height to seabed clearance offset (proportional to instance scale)
+        float scaleFactorY = 1.0f;
+        if (_data != null && _data.modelPrefab != null && _data.modelPrefab.transform.localScale.y > 0.001f)
+        {
+            scaleFactorY = transform.localScale.y / _data.modelPrefab.transform.localScale.y;
+        }
+        else if (_data != null && _data.placeholderScale.y > 0.001f)
+        {
+            scaleFactorY = transform.localScale.y / _data.placeholderScale.y;
+        }
+        else
+        {
+            scaleFactorY = transform.localScale.y;
+        }
+        float effectiveOffset = Mathf.Max(0.12f, _data.benthicSurfaceOffset * Mathf.Clamp(scaleFactorY, 0.4f, 2.5f));
+        float targetY = _groundY + effectiveOffset;
         if (_hasGroundHit)
         {
             newPos.y = Mathf.Lerp(newPos.y, targetY, 8f * Time.fixedDeltaTime);
@@ -462,10 +508,30 @@ public class CreatureLocomotion : MonoBehaviour
         if (mask == 0) mask = ~0;
 
         Vector3 rayOrigin = transform.position + Vector3.up * 5f;
-        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 40f, mask, QueryTriggerInteraction.Ignore))
+        var hits = Physics.RaycastAll(rayOrigin, Vector3.down, 40f, mask, QueryTriggerInteraction.Collide);
+        float highestY = float.MinValue;
+        Vector3 bestNormal = Vector3.up;
+        bool found = false;
+
+        for (int i = 0; i < hits.Length; i++)
         {
-            _groundNormal = hit.normal;
-            _groundY      = hit.point.y;
+            var h = hits[i];
+            if (h.collider != null && h.collider.transform.root != transform.root)
+            {
+                if (h.collider.CompareTag("Boundary") || h.collider.CompareTag("Species")) continue;
+                if (h.point.y > highestY)
+                {
+                    highestY = h.point.y;
+                    bestNormal = h.normal;
+                    found = true;
+                }
+            }
+        }
+
+        if (found)
+        {
+            _groundNormal = bestNormal;
+            _groundY      = highestY;
             _hasGroundHit = true;
         }
         else
@@ -492,9 +558,29 @@ public class CreatureLocomotion : MonoBehaviour
         pos += _ambientCurrent * (0.25f * Time.fixedDeltaTime);
         _rb.MovePosition(pos);
 
-        // Gentle roll bobbing
-        float roll = Mathf.Sin(_cycleTimer * 1.2f) * 6f;
-        _rb.MoveRotation(Quaternion.Euler(0f, transform.eulerAngles.y, roll));
+        // Gentle roll and pitch swell bobbing without spinning or jittering yaw
+        float roll = Mathf.Sin(_cycleTimer * 1.2f) * 5f;
+        float pitch = Mathf.Cos(_cycleTimer * 0.9f) * 2.5f;
+        _rb.MoveRotation(Quaternion.Euler(pitch, _surfaceDriftYaw, roll));
+    }
+
+    /// <summary>
+    /// Deflects surface drifter ambient drift current horizontally away from perimeter walls.
+    /// </summary>
+    public void DeflectSurfaceDrifter(Vector3 normal)
+    {
+        normal.y = 0f;
+        if (normal.sqrMagnitude > 0.01f)
+        {
+            normal.Normalize();
+            _ambientCurrent = Vector3.Reflect(_ambientCurrent, normal);
+            if (_ambientCurrent.sqrMagnitude < 0.04f)
+            {
+                _ambientCurrent = normal * 0.35f;
+            }
+            _ambientCurrent.y = 0f;
+            _surfaceDriftYaw = Mathf.Atan2(_ambientCurrent.x, _ambientCurrent.z) * Mathf.Rad2Deg;
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -515,16 +601,21 @@ public class CreatureLocomotion : MonoBehaviour
         // 1. Natural forward speed interpolation
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 3f * Time.fixedDeltaTime);
 
-        // 2. Physical propulsion along body forward
+        // 2. Physical propulsion along body forward with obstacle deflection
         float forwardDot = Vector3.Dot(transform.forward, steerDir.normalized);
         float turnDrag = Mathf.Clamp01((forwardDot + 1f) * 0.5f);
-        float forwardSpeed = _currentSpeed * Mathf.Lerp(0.5f, 1.0f, turnDrag);
+        float forwardSpeed = _currentSpeed * Mathf.Lerp(0.35f, 1.0f, turnDrag);
 
-        Vector3 moveStep = transform.forward * forwardSpeed * Time.fixedDeltaTime;
+        Vector3 moveDir = forwardDot < 0.6f
+            ? Vector3.Slerp(transform.forward, steerDir.normalized, 0.40f).normalized
+            : transform.forward;
+
+        Vector3 moveStep = moveDir * forwardSpeed * Time.fixedDeltaTime;
         _rb.MovePosition(_rb.position + moveStep);
 
         // 3. Smooth heading rotation
-        ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 30f);
+        float turnBoost = forwardDot < 0.5f ? 1.6f : 1.0f;
+        ApplySteeringRotation(steerDir, 0f, full3D: false, maxPitch: 30f, turnBoost: turnBoost);
 
         // 4. Animation / Visual deformation
         if (_animator != null)
@@ -551,7 +642,7 @@ public class CreatureLocomotion : MonoBehaviour
     // Rotation & Dynamic Banking
     // -----------------------------------------------------------------------
 
-    private void ApplySteeringRotation(Vector3 dir, float extraPitch, bool full3D = false, float maxPitch = 45f)
+    private void ApplySteeringRotation(Vector3 dir, float extraPitch, bool full3D = false, float maxPitch = 45f, float turnBoost = 1.0f)
     {
         if (dir.sqrMagnitude < 0.001f) return;
 
@@ -597,13 +688,16 @@ public class CreatureLocomotion : MonoBehaviour
         {
             // For large angle changes, turn at maxTurnRate (degrees/sec)
             // For small angle changes, gently ease in with a minimum floor
-            float effectiveRate = Mathf.Min(maxTurnRate, Mathf.Max(12f, angleDelta * 2.0f));
+            float effectiveRate = Mathf.Min(maxTurnRate * turnBoost, Mathf.Max(12f, angleDelta * 2.0f * turnBoost));
             _rb.MoveRotation(Quaternion.RotateTowards(_rb.rotation, targetRot, effectiveRate * Time.fixedDeltaTime));
         }
     }
 
     private void UpdateBankingAndYaw()
     {
+        if (_data != null && (_data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter || _data.locomotionArchetype == LocomotionArchetype.Sessile))
+            return;
+
         float currentYaw = transform.eulerAngles.y;
         float deltaYaw   = Mathf.DeltaAngle(_previousYaw, currentYaw);
         _previousYaw     = currentYaw;

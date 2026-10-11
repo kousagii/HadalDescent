@@ -26,7 +26,7 @@ public class ContextSteering : MonoBehaviour
 
     [SerializeField] private float moveSpeed = 2.5f;
 
-    [Tooltip("Layer mask for solid obstacles (Terrain layer).")]
+    [Tooltip("Layer mask for solid obstacles and environment props (Terrain + Default).")]
     [SerializeField] private LayerMask terrainLayer;
 
     [Header("Smoothing")]
@@ -46,6 +46,14 @@ public class ContextSteering : MonoBehaviour
     private Vector3            _goal;
     private Rigidbody          _rb;
     private CreatureLocomotion _locomotion;
+
+    // Physical dimensions & obstacle evasion state
+    private float   _bodyRadius = 0.8f;
+    private float   _bodyLength = 2.0f;
+    private float   _minSeabedClearance = 3.0f;
+    private bool    _hasMeasuredBody = false;
+    private Vector3 _closestHitNormal = Vector3.up;
+    private bool    _hasObstacleNearby = false;
 
     // Playable scannable boundary limits (keeps creature strictly inside player reach)
     private float _playableHalfWidth  = 275f;
@@ -92,7 +100,15 @@ public class ContextSteering : MonoBehaviour
     public float SafeHalfLength => _playableHalfLength;
 
     /// <summary>Safe top depth (stays below ocean surface).</summary>
-    public float SafeTopY => _zoneTopY;
+    public float SafeTopY
+    {
+        get
+        {
+            bool isSurfaceDrifter = (_locomotion != null && _locomotion.Archetype == LocomotionArchetype.SurfaceDrifter) ||
+                                    (GetComponent<SpeciesAI>()?.Data != null && GetComponent<SpeciesAI>().Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter);
+            return isSurfaceDrifter ? -0.2f : _zoneTopY;
+        }
+    }
 
     /// <summary>Safe bottom depth (stays safely above zone transition trigger).</summary>
     public float SafeBottomY => _zoneBottomY;
@@ -110,18 +126,43 @@ public class ContextSteering : MonoBehaviour
 
         _locomotion = GetComponent<CreatureLocomotion>();
 
-        // Auto-configure terrain layer (only Terrain layer to avoid false collisions with triggers/creatures)
+        // Auto-configure terrain & obstacle layer mask (Terrain + Default)
         if (terrainLayer.value == 0)
         {
-            int tMask = LayerMask.GetMask("Terrain");
-            terrainLayer = tMask != 0 ? tMask : LayerMask.GetMask("Default");
+            int tMask = LayerMask.GetMask("Terrain", "Default");
+            terrainLayer = tMask != 0 ? tMask : ~0;
         }
 
+        MeasureBodyDimensions();
         BuildRayDirections();
         _interest = new float[_rayDirs.Length];
         _danger   = new float[_rayDirs.Length];
 
         InitializeZoneBounds();
+    }
+
+    private void MeasureBodyDimensions()
+    {
+        var cols = GetComponentsInChildren<Collider>();
+        if (cols != null && cols.Length > 0)
+        {
+            Bounds b = cols[0].bounds;
+            for (int i = 1; i < cols.Length; i++)
+            {
+                if (cols[i] != null) b.Encapsulate(cols[i].bounds);
+            }
+            _bodyRadius = Mathf.Clamp(Mathf.Min(b.extents.x, b.extents.y), 0.4f, 4.0f);
+            _bodyLength = Mathf.Max(1.0f, b.extents.z);
+        }
+        else
+        {
+            Vector3 s = transform.lossyScale;
+            _bodyRadius = Mathf.Clamp(Mathf.Min(s.x, s.y) * 0.5f, 0.4f, 4.0f);
+            _bodyLength = Mathf.Max(1.0f, s.z);
+        }
+
+        _minSeabedClearance = Mathf.Max(2.5f, _bodyRadius * 2.2f);
+        _hasMeasuredBody = true;
     }
 
     private void FixedUpdate()
@@ -130,6 +171,9 @@ public class ContextSteering : MonoBehaviour
 
         if (!_zoneBoundsInitialized)
             InitializeZoneBounds();
+
+        if (!_hasMeasuredBody)
+            MeasureBodyDimensions();
 
         ComputeInterestMap();
         ComputeDangerMap();
@@ -158,6 +202,17 @@ public class ContextSteering : MonoBehaviour
                     float effectiveRate = Mathf.Min(turnSpeed, Mathf.Max(12f, angleDelta * 2.0f));
                     _rb.MoveRotation(Quaternion.RotateTowards(_rb.rotation, targetRot, effectiveRate * Time.fixedDeltaTime));
                 }
+            }
+        }
+
+        // Proactive contact cushion: if creature hull is touching/penetrating an obstacle, smoothly push away
+        float sphereRadius = Mathf.Clamp(_bodyRadius * 0.7f, 0.35f, 2.0f);
+        if (Physics.SphereCast(transform.position, sphereRadius, transform.forward, out RaycastHit forwardHit, 0.7f, terrainLayer, QueryTriggerInteraction.Collide))
+        {
+            if (IsValidObstacle(forwardHit.collider))
+            {
+                Vector3 push = forwardHit.normal * Mathf.Max(0.2f, 0.7f - forwardHit.distance);
+                _rb.MovePosition(_rb.position + push * (5f * Time.fixedDeltaTime));
             }
         }
 
@@ -231,28 +286,35 @@ public class ContextSteering : MonoBehaviour
             boundaryTurnNormal += new Vector3(0f, 0f, -sign);
         }
 
-        // 3. Vertical Y boundary
-        if (pos.y < _zoneBottomY)
+        // 3. Vertical Y boundary (Surface Drifters float at water surface Y = -0.45m; vertical bounds do not clamp them)
+        bool isSurfaceDrifter = (_locomotion != null && _locomotion.Archetype == LocomotionArchetype.SurfaceDrifter) ||
+                                (GetComponent<SpeciesAI>()?.Data != null && GetComponent<SpeciesAI>().Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter);
+
+        if (!isSurfaceDrifter)
         {
-            float overshoot = _zoneBottomY - pos.y;
-            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
-            pos.y += correction;
-            corrected = true;
-            boundaryTurnNormal += Vector3.up;
-        }
-        else if (pos.y > _zoneTopY)
-        {
-            float overshoot = pos.y - _zoneTopY;
-            float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
-            pos.y -= correction;
-            corrected = true;
-            boundaryTurnNormal += Vector3.down;
+            if (pos.y < _zoneBottomY)
+            {
+                float overshoot = _zoneBottomY - pos.y;
+                float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
+                pos.y += correction;
+                corrected = true;
+                boundaryTurnNormal += Vector3.up;
+            }
+            else if (pos.y > _zoneTopY)
+            {
+                float overshoot = pos.y - _zoneTopY;
+                float correction = Mathf.Min(overshoot, overshoot * 6f * Time.fixedDeltaTime + 0.2f);
+                pos.y -= correction;
+                corrected = true;
+                boundaryTurnNormal += Vector3.down;
+            }
+
+            pos.y = Mathf.Clamp(pos.y, _zoneBottomY, _zoneTopY);
         }
 
-        // Hard clamp absolute limits (never breach walls or trigger zones under any circumstance)
+        // Hard clamp horizontal limits (never breach walls under any circumstance)
         pos.x = Mathf.Clamp(pos.x, -_playableHalfWidth, _playableHalfWidth);
         pos.z = Mathf.Clamp(pos.z, -_playableHalfLength, _playableHalfLength);
-        pos.y = Mathf.Clamp(pos.y, _zoneBottomY, _zoneTopY);
 
         if (corrected || pos != _rb.position)
         {
@@ -321,7 +383,6 @@ public class ContextSteering : MonoBehaviour
         float boundaryTurnBias = 0f;
         if (minWallDist < 35f)
         {
-            // Smoothly ramp from 0 to 1 as creature nears the boundary margin
             boundaryTurnBias = Mathf.Clamp01(1f - (minWallDist / 35f));
         }
 
@@ -332,7 +393,6 @@ public class ContextSteering : MonoBehaviour
             if (boundaryTurnBias > 0f)
             {
                 float centerDot = Mathf.Max(0f, Vector3.Dot(_rayDirs[i], toCenter));
-                // Blend goal with inward turn bias so the creature loops back naturally
                 _interest[i] = Mathf.Lerp(goalDot, centerDot, boundaryTurnBias * 0.85f);
             }
             else
@@ -344,11 +404,57 @@ public class ContextSteering : MonoBehaviour
 
     private void ComputeDangerMap()
     {
-        float checkDist = baseDangerRadius;
+        if (!_hasMeasuredBody) MeasureBodyDimensions();
+
+        // Lookahead dynamically scales with speed and creature body length (crucial for 2x specimens)
+        float dynamicLookahead = _bodyLength + Mathf.Max(baseDangerRadius, moveSpeed * 2.2f);
+        float sphereRadius = Mathf.Clamp(_bodyRadius * 0.7f, 0.35f, 2.0f);
+        float castDist = Mathf.Max(2.0f, dynamicLookahead - sphereRadius);
+
+        _hasObstacleNearby = false;
+        _closestHitNormal = Vector3.up;
+        float closestDist = float.MaxValue;
+
+        // Downward seabed probe for swimming species (prevents skimming/clipping into seabed contours)
+        bool isSwimmingSpecies = _locomotion == null ||
+            (_locomotion.Archetype != LocomotionArchetype.BenthicFollower &&
+             _locomotion.Archetype != LocomotionArchetype.Sessile &&
+             _locomotion.Archetype != LocomotionArchetype.SurfaceDrifter);
+
+        float floorDangerMultiplier = 0f;
+        if (isSwimmingSpecies)
+        {
+            if (Physics.SphereCast(transform.position, sphereRadius, Vector3.down, out RaycastHit floorHit, _minSeabedClearance, terrainLayer, QueryTriggerInteraction.Collide))
+            {
+                if (IsValidObstacle(floorHit.collider))
+                {
+                    floorDangerMultiplier = 1f - Mathf.Clamp01(floorHit.distance / _minSeabedClearance);
+                    if (floorHit.distance < closestDist)
+                    {
+                        closestDist = floorHit.distance;
+                        _closestHitNormal = floorHit.normal;
+                        _hasObstacleNearby = true;
+                    }
+                }
+            }
+        }
+
+        // Inject upward lift into interest when swimming species approach seabed
+        if (isSwimmingSpecies && floorDangerMultiplier > 0.05f)
+        {
+            for (int i = 0; i < _rayDirs.Length; i++)
+            {
+                if (_rayDirs[i].y > 0.15f)
+                {
+                    _interest[i] = Mathf.Max(_interest[i], _rayDirs[i].y * floorDangerMultiplier * 1.1f);
+                }
+            }
+        }
+
         for (int i = 0; i < _rayDirs.Length; i++)
         {
             Vector3 rayDir = _rayDirs[i];
-            Vector3 projected = transform.position + rayDir * checkDist;
+            Vector3 projected = transform.position + rayDir * dynamicLookahead;
 
             // Virtual boundary check: any ray that points out-of-bounds receives severe danger score
             bool breachesBoundary = Mathf.Abs(projected.x) > _playableHalfWidth ||
@@ -358,48 +464,122 @@ public class ContextSteering : MonoBehaviour
 
             if (breachesBoundary)
             {
-                _danger[i] = -2f; // Proactively steer away from boundary walls
+                _danger[i] = 1.0f; // Maximum danger
                 continue;
             }
 
-            bool hit = Physics.Raycast(transform.position, rayDir, checkDist, terrainLayer, QueryTriggerInteraction.Ignore);
-            _danger[i] = hit ? -1f : 0f;
+            // Downward rays receive extra danger when near the seabed
+            float floorPenalty = 0f;
+            if (isSwimmingSpecies && floorDangerMultiplier > 0f && rayDir.y < -0.1f)
+            {
+                floorPenalty = (-rayDir.y) * floorDangerMultiplier;
+            }
+
+            // Volumetric SphereCast detects rocks, corals, props, and seabed contours on all sides
+            if (Physics.SphereCast(transform.position, sphereRadius, rayDir, out RaycastHit hit, castDist, terrainLayer, QueryTriggerInteraction.Collide))
+            {
+                if (IsValidObstacle(hit.collider))
+                {
+                    float normDist = Mathf.Clamp01(hit.distance / castDist);
+                    // Closer obstacles yield exponentially higher danger
+                    float obstacleDanger = Mathf.Lerp(1.0f, 0.25f, normDist);
+                    _danger[i] = Mathf.Clamp01(Mathf.Max(obstacleDanger, floorPenalty));
+
+                    if (hit.distance < closestDist)
+                    {
+                        closestDist = hit.distance;
+                        _closestHitNormal = hit.normal;
+                        _hasObstacleNearby = true;
+                    }
+                    continue;
+                }
+            }
+
+            _danger[i] = Mathf.Clamp01(floorPenalty);
         }
+    }
+
+    private bool IsValidObstacle(Collider col)
+    {
+        if (col == null) return false;
+        // Never collide with our own creature's colliders
+        if (col.transform.root == transform.root) return false;
+        // Ignore other creatures
+        if (col.CompareTag("Species") || col.gameObject.layer == LayerMask.NameToLayer("Creatures")) return false;
+        // Ignore zone boundary triggers
+        if (col.CompareTag("Boundary")) return false;
+        // Ignore player submarine (player avoidance is handled by shy-flee AI)
+        if (col.CompareTag("Player")) return false;
+        return true;
     }
 
     private Vector3 ChooseBestDirection()
     {
         Vector3 blendedDir = Vector3.zero;
         float totalWeight = 0f;
-        int bestIdx = 0;
-        float bestScore = float.NegativeInfinity;
+
+        float bestSafeScore = float.NegativeInfinity;
+        int bestSafeIdx = -1;
+
+        float lowestDanger = float.PositiveInfinity;
+        int leastDangerousIdx = 0;
 
         for (int i = 0; i < _rayDirs.Length; i++)
         {
-            float score = _interest[i] + _danger[i];
-            if (score > bestScore)
+            float danger = Mathf.Clamp01(_danger[i]);
+            float interest = Mathf.Clamp01(_interest[i]);
+
+            if (danger < lowestDanger)
             {
-                bestScore = score;
-                bestIdx = i;
+                lowestDanger = danger;
+                leastDangerousIdx = i;
             }
 
-            // Only blend directions that are completely free from danger
-            if (_danger[i] >= 0f && _interest[i] > 0.05f)
+            // Ray is viable if danger is low enough to navigate
+            if (danger < 0.40f)
             {
-                // Quadratic weighting gives strong preference to best aligned rays while smoothing transitions
-                float weight = _interest[i] * _interest[i];
-                blendedDir += _rayDirs[i] * weight;
-                totalWeight += weight;
+                float safeScore = interest * (1f - danger * 2.2f);
+                if (safeScore > bestSafeScore)
+                {
+                    bestSafeScore = safeScore;
+                    bestSafeIdx = i;
+                }
+
+                if (safeScore > 0.05f)
+                {
+                    float weight = safeScore * safeScore;
+                    blendedDir += _rayDirs[i] * weight;
+                    totalWeight += weight;
+                }
             }
         }
 
-        if (totalWeight > 0.001f)
+        // 1. Safe blended trajectory toward goal
+        if (totalWeight > 0.01f)
         {
             return blendedDir.normalized;
         }
 
-        // If no safe interest rays, fallback to highest scoring ray (unless completely blocked)
-        return _danger[bestIdx] < 0f ? Vector3.zero : _rayDirs[bestIdx];
+        // 2. Best individual safe ray
+        if (bestSafeIdx >= 0 && bestSafeScore > 0f)
+        {
+            return _rayDirs[bestSafeIdx];
+        }
+
+        // 3. OBSTACLE ESCAPE (Goal path is blocked):
+        // Deflect along the surface normal of the obstacle or choose the least dangerous ray.
+        // NEVER returns Vector3.zero!
+        if (_hasObstacleNearby && _closestHitNormal.sqrMagnitude > 0.01f)
+        {
+            Vector3 deflectDir = Vector3.ProjectOnPlane(transform.forward, _closestHitNormal).normalized;
+            if (deflectDir.sqrMagnitude < 0.01f)
+                deflectDir = _closestHitNormal;
+
+            Vector3 escapeDir = (deflectDir * 0.75f + _rayDirs[leastDangerousIdx] * 0.25f).normalized;
+            return escapeDir;
+        }
+
+        return _rayDirs[leastDangerousIdx];
     }
 
     // -----------------------------------------------------------------------
@@ -409,11 +589,12 @@ public class ContextSteering : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         if (_rayDirs == null) return;
+        float checkDist = baseDangerRadius;
         for (int i = 0; i < _rayDirs.Length; i++)
         {
-            bool hit = Physics.Raycast(transform.position, _rayDirs[i], baseDangerRadius, terrainLayer, QueryTriggerInteraction.Ignore);
+            bool hit = Physics.Raycast(transform.position, _rayDirs[i], checkDist, terrainLayer, QueryTriggerInteraction.Collide);
             Gizmos.color = hit ? Color.red : Color.green;
-            Gizmos.DrawRay(transform.position, _rayDirs[i] * baseDangerRadius);
+            Gizmos.DrawRay(transform.position, _rayDirs[i] * checkDist);
         }
         if (_goal != Vector3.zero)
         {

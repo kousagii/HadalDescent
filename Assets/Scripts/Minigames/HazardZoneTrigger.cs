@@ -33,31 +33,64 @@ public class HazardZoneTrigger : MonoBehaviour
     [Tooltip("If true, periodically triggers dynamic hazard alerts while exploring without needing a physical collision.")]
     [SerializeField] private bool enablePeriodicSurge = true;
 
+    [Header("Spatial Proximity Trigger")]
+    [Tooltip("If true, triggers when player gets close to this object's world position. False for global managers.")]
+    [SerializeField] private bool enableSpatialProximity = true;
+
+    [Header("Grace Period & Safety")]
+    [Tooltip("Startup grace period in seconds after zone loading before hazard can trigger.")]
+    [SerializeField] private float sceneStartGracePeriod = 25f;
+
+    [Tooltip("Minimum horizontal distance from zone spawn origin (0, y, 0) required for spatial triggering.")]
+    [SerializeField] private float minSafeDistanceFromOrigin = 40f;
+
     private SphereCollider  _collider;
     private SonarTrackable  _sonarTrackable;
     private PlayerMovement  _playerMovement;
-    private float           _lastTriggerTime = -999f;
+    private float           _sceneStartTime;
+    private float           _lastTriggerTime = 0f;
     private bool            _isTriggering    = false;
 
     private void Awake()
     {
-        _collider = GetComponent<SphereCollider>();
-        if (_collider == null) _collider = gameObject.AddComponent<SphereCollider>();
-        _collider.isTrigger = true;
-        _collider.radius = triggerRadius;
+        _sceneStartTime  = Time.time;
+        _lastTriggerTime = Time.time;
 
-        // Auto-configure SonarTrackable
-        _sonarTrackable = GetComponent<SonarTrackable>();
-        if (_sonarTrackable == null)
+        // Auto-detect manager objects placed at origin (0,0,0): these should NOT be spatial collision triggers!
+        if ((transform.parent != null && transform.parent.name.IndexOf("Manager", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            || transform.position.sqrMagnitude < 4f)
         {
-            _sonarTrackable = gameObject.AddComponent<SonarTrackable>();
+            enableSpatialProximity = false;
         }
-        _sonarTrackable.Initialize(SonarTrackable.SonarTargetType.Hazard, "Thermal / Current Hazard");
+
+        if (enableSpatialProximity)
+        {
+            _collider = GetComponent<SphereCollider>();
+            if (_collider == null) _collider = gameObject.AddComponent<SphereCollider>();
+            _collider.isTrigger = true;
+            _collider.radius = triggerRadius;
+
+            // Auto-configure SonarTrackable
+            _sonarTrackable = GetComponent<SonarTrackable>();
+            if (_sonarTrackable == null)
+            {
+                _sonarTrackable = gameObject.AddComponent<SonarTrackable>();
+            }
+            _sonarTrackable.Initialize(SonarTrackable.SonarTargetType.Hazard, "Thermal / Current Hazard");
+        }
+        else
+        {
+            var existingCol = GetComponent<Collider>();
+            if (existingCol != null) existingCol.enabled = false;
+            var existingTrackable = GetComponent<SonarTrackable>();
+            if (existingTrackable != null) existingTrackable.enabled = false;
+        }
     }
 
     private void Start()
     {
         _playerMovement = FindFirstObjectByType<PlayerMovement>();
+        _lastTriggerTime = Time.time;
 
         if (testTriggerOnStart)
         {
@@ -71,6 +104,10 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private bool IsHazardTriggerSuppressed()
     {
+        // 1. Startup grace period after zone loading
+        if (Time.time - _sceneStartTime < sceneStartGracePeriod) return true;
+        if (ZoneBoundaryTrigger._globalCooldownTimer > 0f) return true;
+
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
         {
             // Allow triggering if player is on Step 7 (Hazard Encounter)
@@ -82,6 +119,7 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private void Update()
     {
+        if (!enableSpatialProximity) return;
         if (IsHazardTriggerSuppressed()) return;
         if (_isTriggering) return;
         if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
@@ -91,7 +129,11 @@ public class HazardZoneTrigger : MonoBehaviour
         if (_playerMovement == null) _playerMovement = FindFirstObjectByType<PlayerMovement>();
         if (_playerMovement != null)
         {
-            float dist = Vector3.Distance(transform.position, _playerMovement.transform.position);
+            Vector3 pPos = _playerMovement.transform.position;
+            // Never trigger if player is still in the entry / spawn corridor
+            if (new Vector2(pPos.x, pPos.z).magnitude < minSafeDistanceFromOrigin) return;
+
+            float dist = Vector3.Distance(transform.position, pPos);
             if (dist <= triggerRadius)
             {
                 TriggerHazardMinigame();
@@ -101,6 +143,7 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!enableSpatialProximity) return;
         if (IsHazardTriggerSuppressed()) return;
         if (_isTriggering) return;
         if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
@@ -109,6 +152,9 @@ public class HazardZoneTrigger : MonoBehaviour
         // Check if player submarine entered trigger
         if (other.CompareTag("Player") || other.GetComponentInParent<PlayerMovement>() != null)
         {
+            Vector3 pPos = other.transform.position;
+            if (new Vector2(pPos.x, pPos.z).magnitude < minSafeDistanceFromOrigin) return;
+
             TriggerHazardMinigame();
         }
     }
@@ -148,6 +194,23 @@ public class HazardZoneTrigger : MonoBehaviour
     }
 
     /// <summary>
+    /// Deactivates this hazard zone trigger so it disappears both from the world (trigger zone) and the sonar map.
+    /// </summary>
+    public void DeactivateHazard()
+    {
+        _isTriggering = false;
+        if (_sonarTrackable != null)
+        {
+            _sonarTrackable.enabled = false;
+        }
+        if (_collider != null)
+        {
+            _collider.enabled = false;
+        }
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>
     /// Initiates Phase 1 & 2 of Mini-game 4.
     /// Can also be clicked directly from the Inspector component context menu!
     /// </summary>
@@ -161,13 +224,19 @@ public class HazardZoneTrigger : MonoBehaviour
         _lastTriggerTime = Time.time;
         _isTriggering = true;
 
+        // Disappear both from sonar map and trigger zone after it has been activated
+        if (_sonarTrackable != null) _sonarTrackable.enabled = false;
+        if (_collider != null) _collider.enabled = false;
+
         int activeZone = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : zoneIndex;
+
+        // Deactivate the hazard zone trigger GameObject immediately
+        DeactivateHazard();
 
         MinigameManager.Instance.TriggerHazardDodgeMinigame(
             activeZone,
             onSuccess: (bonusEarned) =>
             {
-                _isTriggering = false;
                 Debug.Log($"[HazardZoneTrigger] Hazard Dodge Cleared! +{bonusEarned} RDP");
                 if (TutorialManager.Instance != null && TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter)
                 {
@@ -176,7 +245,6 @@ public class HazardZoneTrigger : MonoBehaviour
             },
             onFail: () =>
             {
-                _isTriggering = false;
                 Debug.Log("[HazardZoneTrigger] Hazard Dodge Failed! Hull compromised, -50 RDP");
                 if (TutorialManager.Instance != null && TutorialManager.Instance.CurrentPhase == TutorialManager.TutorialPhase.Step7_HazardEncounter)
                 {
@@ -188,6 +256,9 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private IEnumerator PeriodicSurgeRoutine()
     {
+        // Initial grace period delay on zone entry before any periodic surge countdown starts
+        yield return new WaitForSeconds(sceneStartGracePeriod);
+
         while (true)
         {
             int activeZone = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : zoneIndex;

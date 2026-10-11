@@ -243,6 +243,12 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     {
         if (_popupActive || _globalCooldownTimer > 0f) return;
 
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+        {
+            PushPlayerAway();
+            return;
+        }
+
         int currentZone = ZoneManager.CurrentZoneIndex;
         if (!ZoneConfig.IsValidZone(currentZone)) return;
         ZoneDefinition curZone = ZoneConfig.Zones[currentZone];
@@ -302,6 +308,14 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
     private void HandleAscentBoundary()
     {
+        if (_popupActive || _globalCooldownTimer > 0f) return;
+
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
+        {
+            PushPlayerAway();
+            return;
+        }
+
         int currentZone   = ZoneManager.CurrentZoneIndex;
         int previousZone  = currentZone - 1;
 
@@ -359,7 +373,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     {
         if (boundaryPopupUI != null && hullWarningUI != null) return;
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = UIManager.GetExplorationCanvas();
         if (canvas == null) return;
 
         if (boundaryPopupUI == null)
@@ -386,6 +400,9 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         panel.transform.SetAsLastSibling();
 
         RectTransform rect = panel.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot     = new Vector2(0.5f, 0.5f);
         rect.sizeDelta = new Vector2(880, 480);
         rect.anchoredPosition = Vector2.zero;
 

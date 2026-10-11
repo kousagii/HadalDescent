@@ -276,6 +276,13 @@ public static class TwilightZoneSetupUtility
             urpCam.renderPostProcessing = true;
         }
 
+        // Submarine Headlights & Fog Penetration Controller
+        var lightCtrl = EnsureComponent<SubmarineLightController>(camGO);
+        if (lightCtrl != null)
+        {
+            lightCtrl.EnsureLightRigBuilt();
+        }
+
         // Player Scripts
         var pm = EnsureComponent<PlayerMovement>(playerGO);
         var pmSO = new SerializedObject(pm);
@@ -499,17 +506,16 @@ public static class TwilightZoneSetupUtility
         SetPrivateField(zoneSetup, "bottomSpawnPoint", boundaries.bottomSpawn);
         SetPrivateField(zoneSetup, "oceanFloor", oceanFloorGO);
 
-        // 3. HazardZoneTrigger
+        // 3. HazardZoneTrigger (Periodic Surge Manager only — spatial proximity disabled at spawn origin)
         var hazardGO = EnsureGameObject("HazardZoneTrigger", managersGO.transform);
         hazardGO.transform.localPosition = Vector3.zero;
-        var hCol = EnsureComponent<SphereCollider>(hazardGO);
-        hCol.isTrigger = false;
-        hCol.radius = 0.5f;
-        hCol.enabled = false;
+        var hCol = hazardGO.GetComponent<SphereCollider>();
+        if (hCol != null) Object.DestroyImmediate(hCol);
 
         var hazardTrigger = EnsureComponent<HazardZoneTrigger>(hazardGO);
         var hSO = new SerializedObject(hazardTrigger);
         SetProperty(hSO, "zoneIndex", ZoneIdx);
+        SetProperty(hSO, "enableSpatialProximity", false);
         SetProperty(hSO, "triggerRadius", 18f);
         SetProperty(hSO, "triggerCooldown", 180f);
         SetProperty(hSO, "enablePeriodicSurge", true);

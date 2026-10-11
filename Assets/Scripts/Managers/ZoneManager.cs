@@ -50,6 +50,12 @@ public class ZoneManager : MonoBehaviour
     /// <summary>Index into ZoneConfig.Zones for the currently loaded zone.</summary>
     public static int CurrentZoneIndex { get; private set; } = 0;
 
+    /// <summary>Base fog start distance for the current zone before any light penetration bonus.</summary>
+    public static float BaseFogStartDistance { get; private set; } = 25f;
+
+    /// <summary>Base fog end distance for the current zone before any light penetration bonus.</summary>
+    public static float BaseFogEndDistance { get; private set; } = 140f;
+
     /// <summary>Sets the current zone index and notifies UI/sensors.</summary>
     public static void SetCurrentZone(int zoneIndex)
     {
@@ -343,11 +349,23 @@ public class ZoneManager : MonoBehaviour
 
     public static void ApplyAtmosphere(ZoneDefinition zone)
     {
+        BaseFogStartDistance = zone.fogStartDistance;
+        BaseFogEndDistance   = zone.fogEndDistance;
+
+        float effectiveFogStart = zone.fogStartDistance;
+        float effectiveFogEnd   = zone.fogEndDistance;
+
+        if (SubmarineLightController.Instance != null && SubmarineLightController.Instance.AreLightsOn)
+        {
+            effectiveFogStart += SubmarineLightController.Instance.CurrentFogStartBonus;
+            effectiveFogEnd   += SubmarineLightController.Instance.CurrentFogEndBonus;
+        }
+
         RenderSettings.fog              = true;
         RenderSettings.fogMode          = FogMode.Linear;
         RenderSettings.fogColor         = zone.fogColor;
-        RenderSettings.fogStartDistance = zone.fogStartDistance;
-        RenderSettings.fogEndDistance   = zone.fogEndDistance;
+        RenderSettings.fogStartDistance = effectiveFogStart;
+        RenderSettings.fogEndDistance   = effectiveFogEnd;
         RenderSettings.fogDensity       = zone.fogDensity;
         RenderSettings.ambientLight     = zone.ambientLight;
         RenderSettings.ambientMode      = UnityEngine.Rendering.AmbientMode.Flat;
@@ -358,7 +376,7 @@ public class ZoneManager : MonoBehaviour
         {
             mainCam.clearFlags      = CameraClearFlags.SolidColor;
             mainCam.backgroundColor = zone.fogColor;
-            mainCam.farClipPlane    = Mathf.Max(zone.fogEndDistance + 25f, 120f);
+            mainCam.farClipPlane    = Mathf.Max(effectiveFogEnd + 35f, 140f);
         }
 
         var cams = Camera.allCameras;

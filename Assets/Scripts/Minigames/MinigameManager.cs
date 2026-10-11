@@ -386,7 +386,8 @@ public class MinigameManager : MonoBehaviour
 
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
         {
-            return TutorialManager.Instance.GetTutorialMinigamePick();
+            int tutPick = TutorialManager.Instance.GetTutorialMinigamePick();
+            if (tutPick == 1 || tutPick == 2) return tutPick;
         }
 
         return UnityEngine.Random.value < 0.5f ? 1 : 2;

@@ -146,10 +146,40 @@ public class GameManager : MonoBehaviour
         return _allDiscoveredSpecies.Contains(speciesId);
     }
 
-    /// <summary>How many distinct species have been discovered in this zone.</summary>
+    /// <summary>Returns true if the specified ID is an environmental landmark fact rather than a species.</summary>
+    public static bool IsLandmarkFactId(string id) => !string.IsNullOrEmpty(id) && id.StartsWith("fact_");
+
+    /// <summary>How many distinct species have been discovered in this zone (excluding surveyed habitat landmarks).</summary>
     public int GetDiscoveredCountInZone(int zoneIndex)
     {
-        return _discoveredByZone.TryGetValue(zoneIndex, out var set) ? set.Count : 0;
+        if (!_discoveredByZone.TryGetValue(zoneIndex, out var set)) return 0;
+        int count = 0;
+        foreach (var id in set)
+        {
+            if (!IsLandmarkFactId(id)) count++;
+        }
+        return count;
+    }
+
+    /// <summary>How many distinct habitat landmarks have been surveyed in this zone.</summary>
+    public int GetSurveyedLandmarksCountInZone(int zoneIndex)
+    {
+        if (!_discoveredByZone.TryGetValue(zoneIndex, out var set)) return 0;
+        int count = 0;
+        foreach (var id in set)
+        {
+            if (IsLandmarkFactId(id)) count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Survey a habitat landmark. Landmarks are tracked in Bestiary and save data,
+    /// but excluded from the zone species discovery progress count.
+    /// </summary>
+    public bool SurveyLandmark(int zoneIndex, string factId)
+    {
+        return DiscoverSpecies(zoneIndex, factId);
     }
 
     /// <summary>Returns 0.0–1.0 progress for zone unlock (discovered / totalSpecies).</summary>

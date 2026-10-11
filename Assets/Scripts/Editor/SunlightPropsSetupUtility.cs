@@ -119,8 +119,8 @@ public static class SunlightPropsSetupUtility
                 maxScale            = 3.2f,
                 scaleMultiplier     = Vector3.one,
                 rotationOffset      = Vector3.zero,
-                alignToSurface      = false,
-                surfaceTiltStrength = 0f,
+                alignToSurface      = true,
+                surfaceTiltStrength = 0.85f,
                 isObstacle          = false
             });
         }

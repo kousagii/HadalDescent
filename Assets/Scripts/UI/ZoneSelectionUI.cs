@@ -280,7 +280,12 @@ public class ZoneSelectionUI : MonoBehaviour
         if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
         if (customWarningModal != null) customWarningModal.SetActive(false);
         if (_proceduralWarningModal != null) _proceduralWarningModal.SetActive(false);
-        Time.timeScale = 1f;
+
+        bool isPaused = PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused;
+        if (!isPaused)
+        {
+            Time.timeScale = 1f;
+        }
     }
 
     private void OnDisable()
@@ -535,6 +540,11 @@ public class ZoneSelectionUI : MonoBehaviour
             return;
         }
 
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+        {
+            PauseMenuUI.Instance.ResumeGame();
+        }
+
         ZoneManager.SetCurrentZone(zoneIndex);
         ZoneManager.SetEnteredFromAbove(true);
         PlayerPrefs.SetInt("Save_HasPosition", 0);
@@ -707,6 +717,14 @@ public class ZoneSelectionUI : MonoBehaviour
             if (PauseMenuUI.Instance != null)
             {
                 PauseMenuUI.Instance.ShowPauseMenu();
+            }
+            else
+            {
+                string cur = SceneManager.GetActiveScene().name;
+                if (!UIManager.IsMenuScene(cur))
+                {
+                    UIManager.Instance?.SetExplorationHUDVisible(true);
+                }
             }
             return;
         }

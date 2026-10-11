@@ -93,7 +93,7 @@ public class EnvironmentFactTarget : MonoBehaviour
         {
             _isSurveyedLocal = value;
             if (value && GameManager.Instance != null)
-                GameManager.Instance.DiscoverSpecies(zoneIndex, FactId);
+                GameManager.Instance.SurveyLandmark(zoneIndex, FactId);
 
             var trackable = GetComponent<SonarTrackable>();
             if (trackable != null) trackable.IsDiscovered = value;

@@ -71,6 +71,8 @@ public class SonarMapUI : MonoBehaviour
     private float _currentDetectionRadius = 50f;
     private int   _lastKnownTier           = -1;
 
+    public float CurrentDetectionRadius => _currentDetectionRadius;
+
     // Cached procedural sprites
     private static Sprite _cachedBezelSprite;
     private static Sprite _cachedSweepSprite;
@@ -214,9 +216,12 @@ public class SonarMapUI : MonoBehaviour
             Vector3 targetPos = target.WorldPosition;
             Vector3 diff = targetPos - subPos;
 
-            float horizDist = Mathf.Sqrt(diff.x * diff.x + diff.z * diff.z);
+            // 3D spherical distance check across all axes (x, y, z):
+            // Ensures range (50m base or upgraded in shop) applies identically across all axes (x, y, z)
+            float dist3D = diff.magnitude;
+            if (dist3D > _currentDetectionRadius) continue;
 
-            if (horizDist > _currentDetectionRadius) continue;
+            float horizDist = Mathf.Sqrt(diff.x * diff.x + diff.z * diff.z);
 
             float worldAngle = Mathf.Atan2(diff.x, diff.z) * Mathf.Rad2Deg;
             float relativeAngle = Mathf.DeltaAngle(camYaw, worldAngle);

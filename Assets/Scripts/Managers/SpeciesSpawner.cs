@@ -39,6 +39,19 @@ public class SpeciesSpawner : MonoBehaviour
     [Tooltip("Maximum ground slope angle (degrees) for stationary benthic species. Prevents floating overhangs on steep slopes/cliffs.")]
     [SerializeField] private float maxStationarySlope = 18f;
 
+    [Header("In-Game Scale Variation")]
+    [Tooltip("Global toggle to randomize in-game species scales (juvenile to elder). Model previews in Bestiary/UI remain standard reference size.")]
+    [SerializeField] private bool enableInGameScaleVariation = true;
+    [Tooltip("Global minimum scale multiplier for in-game spawned species (0.5 = 2x smaller).")]
+    [Range(0.2f, 1f)]
+    [SerializeField] private float globalMinScale = 0.5f;
+    [Tooltip("Global maximum scale multiplier for in-game spawned species (2.0 = 2x bigger).")]
+    [Range(1f, 3f)]
+    [SerializeField] private float globalMaxScale = 2.0f;
+    [Tooltip("Distribution curvature: 1 = linear uniform, 2 = triangular, 3 = smooth bell curve clustering around standard adult size (1.0x).")]
+    [Range(1, 3)]
+    [SerializeField] private int scaleDistributionCurvature = 3;
+
     // -----------------------------------------------------------------------
     // Runtime
     // -----------------------------------------------------------------------
@@ -257,11 +270,18 @@ public class SpeciesSpawner : MonoBehaviour
 
             // 2. Strict Depth Band and Seabed Clearance Check
             float floorY = terrain != null ? terrain.SampleHeight(candidatePos.x, candidatePos.z) : -D;
-            float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
-            float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
-            if (minSwimY > maxSwimY) continue;
+            if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+            {
+                candidatePos.y = -0.45f;
+            }
+            else
+            {
+                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
+                float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                if (minSwimY > maxSwimY) continue;
 
-            candidatePos.y = Mathf.Clamp(candidatePos.y, minSwimY, maxSwimY);
+                candidatePos.y = Mathf.Clamp(candidatePos.y, minSwimY, maxSwimY);
+            }
 
             // 3. Minimum separation between companions (at least 3.2m to prevent overlapping)
             if (!IsSeparated(candidatePos, 3.2f)) continue;
@@ -367,6 +387,12 @@ public class SpeciesSpawner : MonoBehaviour
                 // Pillar 2: Natural, biologically accurate rotation (upright for branching corals & sponges, aligned for crawlers)
                 candidateRot = GetStationaryRotation(data, surfaceNormal);
             }
+            else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+            {
+                // Surface drifters (Bluebottle): lock to water surface, safely away from deep water column
+                candidatePos = new Vector3(rx, -0.45f, rz);
+                candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            }
             else
             {
                 // Mobile species: swim in depth band, safely above floor
@@ -462,6 +488,11 @@ public class SpeciesSpawner : MonoBehaviour
 
                     candidateRot = GetStationaryRotation(data, surfaceNormal);
                 }
+                else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+                {
+                    candidatePos = new Vector3(rx, -0.45f, rz);
+                    candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                }
                 else
                 {
                     float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
@@ -550,6 +581,11 @@ public class SpeciesSpawner : MonoBehaviour
             }
             resultRot = GetStationaryRotation(data, normal);
         }
+        else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+        {
+            resultPos = new Vector3(fallbackX, -0.45f, fallbackZ);
+            resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        }
         else
         {
             float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -2f);
@@ -583,6 +619,10 @@ public class SpeciesSpawner : MonoBehaviour
         {
             if (pos.y < lowerDepth) depthDist = lowerDepth - pos.y;
             else if (pos.y > upperDepth) depthDist = pos.y - upperDepth;
+        }
+        else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
+        {
+            depthDist = Mathf.Abs(pos.y - (-0.45f));
         }
         else
         {
@@ -720,12 +760,14 @@ public class SpeciesSpawner : MonoBehaviour
         go.name = $"{data.commonName} [{data.speciesId}]";
 
         // Natural Individual Scale Variation:
-        // Applies organic size differences (juvenile to adult) and subtle axis offsets without distortion
+        // Applies organic size differences (juvenile to adult, up to 2x smaller/bigger) and subtle axis offsets without distortion
         Vector3 baseScale = data.modelPrefab != null
             ? data.modelPrefab.transform.localScale
             : (data.placeholderScale != Vector3.zero ? data.placeholderScale : Vector3.one);
 
-        go.transform.localScale = ComputeInstanceScale(data, baseScale);
+        go.transform.localScale = enableInGameScaleVariation
+            ? ComputeInstanceScale(data, baseScale, globalMinScale, globalMaxScale, scaleDistributionCurvature)
+            : baseScale;
 
         Vector3 center = wanderCenter.HasValue ? wanderCenter.Value : position;
 
@@ -740,20 +782,51 @@ public class SpeciesSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Computes a natural individual scale with uniform size variance (e.g. juvenile vs adult)
+    /// Computes a natural individual scale with uniform size variance (up to 2x smaller juvenile to 2x bigger elder)
     /// plus subtle non-uniform axis jitter to give unique body proportions without distortion.
+    /// Only applied to in-game spawned entities, preserving default scales for UI/previews.
     /// </summary>
     public static Vector3 ComputeInstanceScale(SpeciesData data, Vector3 defaultBaseScale)
+    {
+        return ComputeInstanceScale(data, defaultBaseScale, 0.5f, 2.0f, 3);
+    }
+
+    /// <summary>
+    /// Computes an organic, natural individual scale with size variance ranging from
+    /// up to 2x smaller (juvenile: 0.5x) to up to 2x bigger (elder: 2.0x), plus subtle
+    /// non-uniform axis jitter (+/- 3.5%) to give unique body proportions without distortion.
+    /// </summary>
+    public static Vector3 ComputeInstanceScale(
+        SpeciesData data,
+        Vector3 defaultBaseScale,
+        float minMultiplier,
+        float maxMultiplier,
+        int curvature = 3)
     {
         if (data == null || !data.enableScaleVariation)
             return defaultBaseScale;
 
-        // 1. Uniform size multiplier (e.g., [0.875, 1.0625] scales base 4.0 dolphin to 3.5 - 4.25)
-        float minU = data.uniformScaleRange.x > 0.05f ? data.uniformScaleRange.x : 0.875f;
-        float maxU = data.uniformScaleRange.y >= minU ? data.uniformScaleRange.y : Mathf.Max(minU, 1.0625f);
-        float uniformMul = Random.Range(minU, maxU);
+        // 1. Resolve scale bounds: respect custom species overrides while defaulting to [0.5, 2.0]
+        float minU = minMultiplier > 0.01f ? minMultiplier : 0.5f;
+        float maxU = maxMultiplier >= minU ? maxMultiplier : Mathf.Max(minU, 2.0f);
 
-        // 2. Subtle non-uniform axis jitter (+/- 3.5% = ~0.25 total spread on scale 4) without visual distortion
+        if (data.uniformScaleRange.x > 0.05f && data.uniformScaleRange.y >= data.uniformScaleRange.x)
+        {
+            // If data defines custom bounds not matching legacy default (0.875, 1.0625), honor data bounds
+            bool isLegacy = Mathf.Approximately(data.uniformScaleRange.x, 0.875f) &&
+                            Mathf.Approximately(data.uniformScaleRange.y, 1.0625f);
+            if (!isLegacy)
+            {
+                minU = data.uniformScaleRange.x;
+                maxU = data.uniformScaleRange.y;
+            }
+        }
+
+        // 2. Natural biological size sampling:
+        // Irwin-Hall bell-curve distribution in logarithmic space centered on 1.0 (standard adult)
+        float uniformMul = SampleNaturalScale(minU, maxU, curvature);
+
+        // 3. Subtle non-uniform axis jitter (+/- 3.5% = ~0.25 total spread on scale 4) without visual distortion
         float jitter = Mathf.Clamp(data.maxAxisVariance > 0f ? data.maxAxisVariance : 0.035f, 0f, 0.065f);
         float jX = 1f + Random.Range(-jitter, jitter);
         float jY = 1f + Random.Range(-jitter, jitter);
@@ -764,6 +837,54 @@ public class SpeciesSpawner : MonoBehaviour
             defaultBaseScale.y * uniformMul * jY,
             defaultBaseScale.z * uniformMul * jZ
         );
+    }
+
+    /// <summary>
+    /// Generates a natural biological scale multiplier between [minScale, maxScale]
+    /// centered organically around standard adult size (1.0).
+    /// Uses an Irwin-Hall distribution in logarithmic space so that 2x smaller (0.5) and 2x bigger (2.0)
+    /// have symmetrical biological rarity, with the majority clustering around healthy adult proportions (0.85–1.25x).
+    /// </summary>
+    public static float SampleNaturalScale(float minScale, float maxScale, int curvature = 3)
+    {
+        if (minScale <= 0.01f) minScale = 0.5f;
+        if (maxScale < minScale) maxScale = minScale;
+
+        if (Mathf.Approximately(minScale, maxScale))
+            return minScale;
+
+        // Generate u in [-1.0, +1.0] centered on 0.0
+        float u;
+        if (curvature <= 1)
+        {
+            u = Random.Range(-1f, 1f);
+        }
+        else if (curvature == 2)
+        {
+            // Triangular distribution (sum of 2 uniforms)
+            u = (Random.value + Random.value) - 1f;
+        }
+        else
+        {
+            // Cubic Irwin-Hall bell curve (sum of 3 uniforms)
+            u = (Random.value + Random.value + Random.value - 1.5f) / 1.5f;
+        }
+
+        // Natural logarithmic mapping:
+        // u = 0 -> scale = 1.0 (average adult)
+        // u = -1 -> scale = minScale (e.g. 0.5 = 2x smaller)
+        // u = +1 -> scale = maxScale (e.g. 2.0 = 2x bigger)
+        if (minScale < 1f && maxScale > 1f)
+        {
+            float logMin = Mathf.Log(minScale);
+            float logMax = Mathf.Log(maxScale);
+            float logVal = u >= 0f ? (u * logMax) : (-u * logMin);
+            return Mathf.Exp(logVal);
+        }
+        else
+        {
+            return Mathf.Lerp(minScale, maxScale, (u + 1f) * 0.5f);
+        }
     }
 
     private GameObject CreatePlaceholder(SpeciesData data, Vector3 position, Quaternion rotation)
@@ -941,6 +1062,15 @@ public class SpeciesSpawner : MonoBehaviour
                 float cz = localBounds.center.z;
                 float yMin = localBounds.min.y;
 
+                float scaleFactorY = 1.0f;
+                if (data != null && data.modelPrefab != null && data.modelPrefab.transform.localScale.y > 0.001f)
+                    scaleFactorY = go.transform.localScale.y / data.modelPrefab.transform.localScale.y;
+                else if (data != null && data.placeholderScale.y > 0.001f)
+                    scaleFactorY = go.transform.localScale.y / data.placeholderScale.y;
+                else
+                    scaleFactorY = go.transform.localScale.y;
+                scaleFactorY = Mathf.Clamp(scaleFactorY, 0.4f, 2.5f);
+
                 if (isCoral || isSponge)
                 {
                     // Branching corals & upright sponges: anchor the central trunk base firmly into the seabed.
@@ -949,7 +1079,7 @@ public class SpeciesSpawner : MonoBehaviour
                     Vector3 trunkWorld = originalPos + originalRot * trunkLocal;
                     float gTrunk = SampleGroundAt(trunkWorld.x, trunkWorld.z);
 
-                    float sink = isCoral ? 0.08f : 0.06f;
+                    float sink = (isCoral ? 0.08f : 0.06f) * scaleFactorY;
                     Vector3 pos = originalPos;
                     pos.y = gTrunk - (originalRot * trunkLocal).y - sink;
                     go.transform.position = pos;
@@ -957,7 +1087,7 @@ public class SpeciesSpawner : MonoBehaviour
                 else if (isMoundOrClam)
                 {
                     // Sea Anemones & Giant Clams: sample 5 points across the base pad/hinge
-                    float baseR = Mathf.Clamp(localBounds.extents.x * 0.35f, 0.3f, 0.6f);
+                    float baseR = Mathf.Clamp(localBounds.extents.x * 0.35f, 0.25f * scaleFactorY, 0.8f * scaleFactorY);
                     Vector3[] localPts = new Vector3[]
                     {
                         new Vector3(cx, yMin, cz),
@@ -967,7 +1097,7 @@ public class SpeciesSpawner : MonoBehaviour
                         new Vector3(cx, yMin, cz - baseR)
                     };
 
-                    float sink = (data != null && data.taxonomicClass == TaxonomicClass.Bivalvia) ? 0.08f : 0.06f;
+                    float sink = ((data != null && data.taxonomicClass == TaxonomicClass.Bivalvia) ? 0.08f : 0.06f) * scaleFactorY;
                     float minRequiredY = float.MaxValue;
                     float centerTargetY = 0f;
 
@@ -982,7 +1112,7 @@ public class SpeciesSpawner : MonoBehaviour
 
                     // Sink so lowest edge touches ground; cap at max 12cm below center to keep upper body visible
                     Vector3 pos = originalPos;
-                    pos.y = Mathf.Max(minRequiredY, centerTargetY - 0.12f);
+                    pos.y = Mathf.Max(minRequiredY, centerTargetY - (0.12f * scaleFactorY));
                     go.transform.position = pos;
                 }
                 else
@@ -999,24 +1129,24 @@ public class SpeciesSpawner : MonoBehaviour
                         new Vector3(cx, yMin, cz - rz)
                     };
 
-                    float sink = 0.035f;
-                    float maxPen = 0.06f;
+                    float sink = 0.035f * scaleFactorY;
+                    float maxPen = 0.06f * scaleFactorY;
                     if (data != null)
                     {
                         if (data.taxonomicClass == TaxonomicClass.Asteroidea)
                         {
-                            sink = 0.025f; // Starfish: 2.5cm embed ensures all 5 arms touch sand without burial
-                            maxPen = 0.04f;
+                            sink = 0.025f * scaleFactorY; // Starfish: proportional embed ensures all 5 arms touch sand
+                            maxPen = 0.04f * scaleFactorY;
                         }
                         else if (data.taxonomicClass == TaxonomicClass.Malacostraca)
                         {
-                            sink = 0.045f; // Lobster: 4.5cm embed ensures legs touch seabed firmly
-                            maxPen = 0.08f;
+                            sink = 0.045f * scaleFactorY; // Lobster: proportional embed ensures legs touch seabed firmly
+                            maxPen = 0.08f * scaleFactorY;
                         }
                         else if (data.taxonomicClass == TaxonomicClass.Gastropoda)
                         {
-                            sink = 0.035f; // Cone Snail: 3.5cm embed
-                            maxPen = 0.06f;
+                            sink = 0.035f * scaleFactorY; // Cone Snail: proportional embed
+                            maxPen = 0.06f * scaleFactorY;
                         }
                     }
 

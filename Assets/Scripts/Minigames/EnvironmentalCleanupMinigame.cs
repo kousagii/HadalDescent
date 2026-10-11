@@ -775,26 +775,49 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (customTimerText == null) customTimerText = FindDeepChild<TMP_Text>(customUIRoot, "Timer", "TimerText", "Time");
             if (customTimerTextLegacy == null && customTimerText == null) customTimerTextLegacy = FindDeepChild<Text>(customUIRoot, "Timer", "TimerText", "Time");
 
-            // Ensure timer text is correctly anchored & pivoted so it is never cut off on wide aspect ratios, leaving room for pause button
+            if (customScoreText == null) customScoreText = FindDeepChild<TMP_Text>(customUIRoot, "Score", "ScoreText", "Collect");
+            if (customScoreTextLegacy == null && customScoreText == null) customScoreTextLegacy = FindDeepChild<Text>(customUIRoot, "Score", "ScoreText", "Collect");
+
+            // Ensure timer text is correctly positioned and anchored, leaving room for pause button (-50 to -200)
             if (customTimerText != null)
             {
                 var tRect = customTimerText.GetComponent<RectTransform>();
-                if (tRect != null && tRect.anchorMin.x >= 0.8f)
+                if (tRect != null)
                 {
-                    tRect.pivot = new Vector2(1f, tRect.pivot.y);
-                    if (tRect.anchoredPosition.x > -230f)
-                        tRect.anchoredPosition = new Vector2(-230f, tRect.anchoredPosition.y);
+                    tRect.anchorMin = new Vector2(1f, 1f);
+                    tRect.anchorMax = new Vector2(1f, 1f);
+                    tRect.pivot     = new Vector2(1f, 1f);
+                    tRect.anchoredPosition = new Vector2(-230f, -20f);
+                    tRect.sizeDelta = new Vector2(200f, 50f);
                     customTimerText.alignment = TextAlignmentOptions.Right;
+                    customTimerText.verticalAlignment = VerticalAlignmentOptions.Middle;
                 }
             }
 
-            if (customScoreText == null) customScoreText = FindDeepChild<TMP_Text>(customUIRoot, "Score", "ScoreText", "Collect");
-            if (customScoreTextLegacy == null && customScoreText == null) customScoreTextLegacy = FindDeepChild<Text>(customUIRoot, "Score", "ScoreText", "Collect");
+            // Ensure score text is placed cleanly to the left of the timer without overlapping
+            if (customScoreText != null)
+            {
+                var sRect = customScoreText.GetComponent<RectTransform>();
+                if (sRect != null)
+                {
+                    sRect.anchorMin = new Vector2(1f, 1f);
+                    sRect.anchorMax = new Vector2(1f, 1f);
+                    sRect.pivot     = new Vector2(1f, 1f);
+                    sRect.anchoredPosition = new Vector2(-460f, -20f);
+                    sRect.sizeDelta = new Vector2(220f, 50f);
+                    customScoreText.alignment = TextAlignmentOptions.Right;
+                    customScoreText.verticalAlignment = VerticalAlignmentOptions.Middle;
+                }
+            }
+
+            // Immediately initialize labels with uppercase formatted text to avoid unstyled placeholder flash
+            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{(int)_totalPhaseTime:00}");
+            SetText(customScoreText, customScoreTextLegacy, "COLLECT: 0");
 
             // Fallbacks in case HUD does not contain Timer/Score
             if (customTimerText == null && customTimerTextLegacy == null)
             {
-                customTimerText = CreateUIText(_dedicatedCanvasGO.transform, "TimerText_Auto", "Time: 0:25", 28, new Vector2(0.85f, 0.94f), TextAlignmentOptions.Right, Color.white);
+                customTimerText = CreateUIText(_dedicatedCanvasGO.transform, "TimerText_Auto", "TIME: 0:25", 28, new Vector2(0.85f, 0.94f), TextAlignmentOptions.Right, Color.white);
             }
             if (customScoreText == null && customScoreTextLegacy == null)
             {
@@ -892,7 +915,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var topBar = CreateUIPanel(_dedicatedCanvasGO.transform, "TopBar", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -45f), new Vector2(850f, 80f), new Color(0.02f, 0.08f, 0.15f, 0.92f));
         customScoreText = CreateUIText(topBar.transform, "CollectText", "COLLECT: 0", 26, new Vector2(0.20f, 0.5f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
         CreateUIText(topBar.transform, "PhaseTitle", "REMOVAL PHASE", 36, new Vector2(0.50f, 0.5f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
-        customTimerText = CreateUIText(topBar.transform, "TimerText", "Time: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
+        customTimerText = CreateUIText(topBar.transform, "TimerText", "TIME: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
 
         var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(560f, 50f), new Color(0.02f, 0.06f, 0.12f, 0.90f));
         _statusBannerRoot = bannerGO;
@@ -1123,7 +1146,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
             _phaseTimeRemaining -= Time.deltaTime;
             int seconds = Mathf.CeilToInt(_phaseTimeRemaining);
-            SetText(customTimerText, customTimerTextLegacy, $"Time: 0:{seconds:00}");
+            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{seconds:00}");
             SetText(customScoreText, customScoreTextLegacy, $"COLLECT: {_collectedDebris.Count}");
 
             HandleInputAndMotion();
@@ -1364,7 +1387,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         while (sortTime > 0f && _sortingIndex < _collectedDebris.Count)
         {
             sortTime -= Time.deltaTime;
-            SetText(customTimerText, customTimerTextLegacy, $"Time: 0:{Mathf.CeilToInt(sortTime):00}");
+            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{Mathf.CeilToInt(sortTime):00}");
 
             var kb = Keyboard.current;
             if (kb != null)

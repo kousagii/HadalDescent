@@ -11,7 +11,7 @@ using TMPro;
 /// Implements HadalDescent_Interactive_Tutorial_Story_Plan.md:
 ///   - Opening cinematic (~15s) via CinematicSequencer.cs
 ///   - Step 0: Mission Overview
-///   - Step 1: HUD Orientation (sequential 5 arrow pointers)
+///   - Step 1: HUD Orientation (sequential 8 arrow pointers)
 ///   - Step 2: Submarine Navigation (sustained joystick input >= 2.0s)
 ///   - Step 3: Sonar System & Color Radar Identification (Sonar legend + cyan blip proximity)
 ///   - Step 4A: Species Encounter 1 (Minigame 1 Capture & Focus slideshow + scan)
@@ -81,7 +81,12 @@ public class TutorialManager : MonoBehaviour
     private bool  _tier3SkipStepAvailable = false;
     private bool  _species1VisualConfirmed = false;
     private bool  _step2NavigationHandled = false;
+    private SpeciesData _step4BSpeciesData;
     private bool  _bestiaryOpenedInStep5 = false;
+    private bool  _step5ScrolledToCard = false;
+    private bool  _step5Inspected3DModel = false;
+    private bool  _step5ViewedDetailModal = false;
+    private bool  _step5ReviewCompleted = false;
     private bool  _step6DebrisHandled = false;
     private bool  _step6DebrisCleanedTriggered = false;
     private bool  _step7CompletedHandled = false;
@@ -261,7 +266,7 @@ public class TutorialManager : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
-    // STEP 1 — HUD Orientation (5 Sequential Pointers)
+    // STEP 1 — HUD Orientation (8 Sequential Pointers)
     // -----------------------------------------------------------------------
 
     public void StartStep1()
@@ -331,6 +336,30 @@ public class TutorialManager : MonoBehaviour
         {
             var r = ui.GetBestiaryButtonRect();
             if (r != null) arrow.PointAtHUD(r, "Marine Biodiversity Bestiary", TutorialArrowUI.ArrowDirection.Up);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 6. Submarine Light Button (bottom-right headlights icon, pointing Down from above)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetLightButtonRect();
+            if (r != null) arrow.PointAtHUD(r, "Submarine Headlights", TutorialArrowUI.ArrowDirection.Down);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 7. Interact Button (bottom-right robotic arm icon, pointing Down from above)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetInteractButtonRect();
+            if (r != null) arrow.PointAtHUD(r, "Robotic Arm (Interact)", TutorialArrowUI.ArrowDirection.Down);
+        }
+        yield return new WaitForSeconds(1.6f);
+
+        // 8. Scan Button (bottom-right scanner reticle icon, pointing Down from above)
+        if (ui != null && arrow != null)
+        {
+            var r = ui.GetScanButtonRect();
+            if (r != null) arrow.PointAtHUD(r, "Biodiversity Scanner (Scan)", TutorialArrowUI.ArrowDirection.Down);
         }
         yield return new WaitForSeconds(1.6f);
 
@@ -413,6 +442,19 @@ public class TutorialManager : MonoBehaviour
         TutorialArrowUI.Instance?.Hide();
         EnsureTutorialSpecies();
 
+        // Immediately show Sonar Legend card and point arrow to Sonar Map so player
+        // sees what Dr. Santos is talking about as she describes each frequency color!
+        TutorialArrowUI.Instance?.SetSonarLegendVisible(true);
+        var ui = UIManager.Instance;
+        if (ui != null)
+        {
+            var sonarRect = ui.GetSonarMapRect();
+            if (sonarRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(sonarRect, "SONAR RADAR CONTACTS", TutorialArrowUI.ArrowDirection.Left);
+            }
+        }
+
         string speech = "Keep an eye on your sonar radar. Different contact signatures emit distinct frequencies: "
                       + "Cyan markers indicate marine species. Yellow markers pinpoint habitat landmarks. "
                       + "Orange markers reveal collectible debris, and Red markers highlight dangerous hazard zones. "
@@ -426,11 +468,8 @@ public class TutorialManager : MonoBehaviour
             {
                 if (_currentPhase == TutorialPhase.Step3_SonarSystem)
                 {
-                    // Show Sonar Legend Card
+                    // Ensure Sonar Legend Card and pointer stay active during tracking phase
                     TutorialArrowUI.Instance?.SetSonarLegendVisible(true);
-
-                    // Point arrow to Sonar Map
-                    var ui = UIManager.Instance;
                     if (ui != null)
                     {
                         var sonarRect = ui.GetSonarMapRect();
@@ -539,6 +578,10 @@ public class TutorialManager : MonoBehaviour
     {
         _currentPhase = TutorialPhase.Step5_BestiaryReview;
         _bestiaryOpenedInStep5 = false;
+        _step5ScrolledToCard = false;
+        _step5Inspected3DModel = false;
+        _step5ViewedDetailModal = false;
+        _step5ReviewCompleted = false;
         ResetPhaseTimers();
 
         string speech = "Open the Bestiary to review your documented specimens. Every discovered entry features two interactive views: "
@@ -578,6 +621,10 @@ public class TutorialManager : MonoBehaviour
         ResetPhaseTimers();
 
         TutorialArrowUI.Instance?.Hide();
+        if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+        {
+            BestiaryManager.Instance.HideBestiary();
+        }
         EnsureSeabedDebris();
 
         string speech = "Researcher, I'm detecting discarded ocean debris polluting the coral bed ahead. "
@@ -642,6 +689,7 @@ public class TutorialManager : MonoBehaviour
                 if (!_step7CompletedHandled && MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)
                 {
                     TutorialArrowUI.Instance?.Hide();
+                    hazard?.DeactivateHazard();
                     MinigameManager.Instance.TriggerHazardDodgeMinigame(
                         0,
                         onSuccess: (reward) => OnHazardCompleted(survived: true),
@@ -661,6 +709,12 @@ public class TutorialManager : MonoBehaviour
         _step7CompletedHandled = true;
 
         TutorialArrowUI.Instance?.Hide();
+
+        var allHazards = FindObjectsByType<HazardZoneTrigger>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (var h in allHazards)
+        {
+            h.DeactivateHazard();
+        }
 
         string finishSpeech = survived
             ? "Masterful evasive piloting! You navigated the turbulence and secured valuable survey data."
@@ -887,7 +941,8 @@ public class TutorialManager : MonoBehaviour
         if (_tutorialSpecies1 != null)
         {
             float dist = Vector3.Distance(player.transform.position, _tutorialSpecies1.transform.position);
-            if (dist <= 35f)
+            // Species spawns at 28m ahead; player must actively navigate and approach to within 16m
+            if (dist <= 16f)
             {
                 // Wait until previous radio box (sonar explanation) has finished before proceeding
                 if (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy)
@@ -979,21 +1034,123 @@ public class TutorialManager : MonoBehaviour
 
     private void CheckStep5Bestiary()
     {
-        if (!_bestiaryOpenedInStep5)
+        if (BestiaryManager.Instance == null) return;
+
+        bool isOpen = BestiaryManager.Instance.IsOpen;
+
+        if (!isOpen)
         {
-            if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
-            {
-                _bestiaryOpenedInStep5 = true;
-                TutorialArrowUI.Instance?.Hide();
-            }
-        }
-        else
-        {
-            if (BestiaryManager.Instance != null && !BestiaryManager.Instance.IsOpen)
+            if (_step5ReviewCompleted)
             {
                 if (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy) return;
                 StartStep6();
+                return;
             }
+
+            // If Bestiary is closed and dialogue finished, point arrow at HUD Bestiary button
+            if (RadioTextboxUI.Instance != null && !RadioTextboxUI.Instance.IsBusy)
+            {
+                var ui = UIManager.Instance;
+                if (ui != null)
+                {
+                    var bestiaryRect = ui.GetBestiaryButtonRect();
+                    if (bestiaryRect != null)
+                    {
+                        TutorialArrowUI.Instance?.PointAtHUD(bestiaryRect, "TAP TO OPEN BESTIARY", TutorialArrowUI.ArrowDirection.Right);
+                    }
+                }
+            }
+            return;
+        }
+
+        // --- Bestiary IS OPEN ---
+        _bestiaryOpenedInStep5 = true;
+
+        // Resolve the scanned species to point to (scanned in 4A or 4B)
+        SpeciesData targetSpecies = _step4ASpeciesData ?? _step4BSpeciesData;
+        string speciesId = targetSpecies != null ? targetSpecies.speciesId : null;
+
+        // Auto-scroll to the scanned species once upon opening
+        if (!_step5ScrolledToCard)
+        {
+            _step5ScrolledToCard = true;
+            if (!string.IsNullOrEmpty(speciesId))
+            {
+                BestiaryManager.Instance.ShowBestiaryAndScrollTo(speciesId);
+            }
+        }
+
+        // Check if either modal is currently open
+        bool is3DModalOpen = BestiaryManager.Instance.IsModelInspectionModalOpen;
+        bool isDetailModalOpen = BestiaryManager.Instance.IsDetailModalOpen;
+
+        if (is3DModalOpen)
+        {
+            _step5Inspected3DModel = true;
+            TutorialArrowUI.Instance?.Hide();
+            return;
+        }
+
+        if (isDetailModalOpen)
+        {
+            _step5ViewedDetailModal = true;
+            TutorialArrowUI.Instance?.Hide();
+            return;
+        }
+
+        // Both modals are currently closed; locate the target card UI
+        BestiaryCardUI cardUI = null;
+        if (!string.IsNullOrEmpty(speciesId))
+        {
+            cardUI = BestiaryManager.Instance.GetCardUIForSpecies(speciesId);
+        }
+        if (cardUI == null)
+        {
+            cardUI = BestiaryManager.Instance.GetFirstDiscoveredSpeciesCardUI();
+        }
+
+        if (cardUI == null)
+        {
+            // Cards might still be instantiating in scrollview; wait for next frame
+            return;
+        }
+
+        // Option A Sequential flow:
+        // 1. Point at 3D Model thumbnail first (chevron points Left towards thumbnail, label on the right)
+        if (!_step5Inspected3DModel)
+        {
+            var thumbRect = cardUI.ThumbnailRect;
+            if (thumbRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(thumbRect, "3D MODAL", TutorialArrowUI.ArrowDirection.Left, TutorialArrowUI.LabelSide.Right);
+            }
+            return;
+        }
+
+        // 2. Point at Scientific Detail card body next (chevron points Left towards card body, label on the right)
+        if (!_step5ViewedDetailModal)
+        {
+            var cardBtnRect = cardUI.CardButtonRect;
+            if (cardBtnRect != null)
+            {
+                TutorialArrowUI.Instance?.PointAtHUD(cardBtnRect, "SCIENTIFIC DETAIL MODAL", TutorialArrowUI.ArrowDirection.Left, TutorialArrowUI.LabelSide.Right);
+            }
+            return;
+        }
+
+        // 3. Both have been reviewed! Complete Step 5 Bestiary review
+        if (!_step5ReviewCompleted)
+        {
+            _step5ReviewCompleted = true;
+            TutorialArrowUI.Instance?.Hide();
+            RadioTextboxUI.Instance?.DisplayMessage(
+                "DR. SANTOS",
+                "With 95 species across 5 depth zones, those search clues will be invaluable when exploring deeper waters.",
+                "Close Bestiary to proceed with expedition",
+                showSkipStep: false,
+                autoDismissDelay: 3.0f,
+                forceImmediate: true
+            );
         }
     }
 
@@ -1215,6 +1372,7 @@ public class TutorialManager : MonoBehaviour
                 return;
             }
 
+            _step4BSpeciesData = data;
             TutorialArrowUI.Instance?.Hide();
             RadioTextboxUI.Instance?.DisplayMessage(
                 "DR. SANTOS",
@@ -1480,6 +1638,7 @@ public class TutorialManager : MonoBehaviour
         {
             floorPos = hit.point;
         }
+        if (floorPos.y < -185f) floorPos.y = -185f;
 
         debris.transform.position = floorPos;
         debris.SetActive(true);
@@ -1578,6 +1737,7 @@ public class TutorialManager : MonoBehaviour
         {
             floorPos = hit.point;
         }
+        if (floorPos.y < -185f) floorPos.y = -185f;
 
         var debrisGO = new GameObject("Tutorial_DebrisCluster");
         debrisGO.transform.position = floorPos;

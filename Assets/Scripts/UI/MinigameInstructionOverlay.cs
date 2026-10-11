@@ -32,10 +32,11 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
                 _instance = FindFirstObjectByType<MinigameInstructionOverlay>(FindObjectsInactive.Include);
                 if (_instance == null)
                 {
-                    var canvas = FindFirstObjectByType<Canvas>();
+                    var canvas = UIManager.GetExplorationCanvas();
                     var go = new GameObject("MinigameInstructionOverlay");
                     if (canvas != null)
                         go.transform.SetParent(canvas.transform, false);
+                    DontDestroyOnLoad(go);
                     _instance = go.AddComponent<MinigameInstructionOverlay>();
                 }
             }
@@ -137,9 +138,9 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
 
         // Find or create Canvas
         Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
+        if (canvas == null || canvas.name.Contains("Skip") || canvas.name.Contains("Arrow") || canvas.name.Contains("Pointer") || canvas.name.Contains("Popup") || canvas.GetComponent<CanvasScaler>() == null)
         {
-            canvas = FindFirstObjectByType<Canvas>();
+            canvas = UIManager.GetExplorationCanvas();
         }
 
         if (canvas == null)
@@ -147,12 +148,13 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
             var cgo = new GameObject("TutorialBriefingCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = cgo.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 50;
+            canvas.sortingOrder = 28000;
 
             var scaler = cgo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
+            DontDestroyOnLoad(cgo);
         }
 
         TMP_FontAsset font = UIThemeManager.AntoneFont;
@@ -167,6 +169,13 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         _panelRect.anchorMax = Vector2.one;
         _panelRect.sizeDelta = Vector2.zero;
         _panelRect.anchoredPosition = Vector2.zero;
+
+        // Ensure instruction overlay renders above minigames (order 0) and bestiary (order 9999), below Skip button (32000)
+        var overlayCanvas = rootGO.AddComponent<Canvas>();
+        overlayCanvas.overrideSorting = true;
+        overlayCanvas.sortingOrder = 28000;
+        var raycaster = rootGO.AddComponent<GraphicRaycaster>();
+        raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
 
         // Dark vignette background
         var bgImage = rootGO.GetComponent<Image>();
@@ -392,6 +401,12 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
     /// </summary>
     public void ShowSlideshow(int minigameNumber, Action onFinished = null)
     {
+        if (minigameNumber < 1 || minigameNumber > 4)
+        {
+            onFinished?.Invoke();
+            return;
+        }
+
         if (_shownTutorials.Contains(minigameNumber))
         {
             onFinished?.Invoke();
@@ -426,8 +441,16 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         }
 
         _isOpen = true;
-        if (overlayRoot != null) overlayRoot.SetActive(true);
-        if (_panelRect != null) _panelRect.gameObject.SetActive(true);
+        if (overlayRoot != null)
+        {
+            overlayRoot.transform.SetAsLastSibling();
+            overlayRoot.SetActive(true);
+        }
+        if (_panelRect != null)
+        {
+            _panelRect.SetAsLastSibling();
+            _panelRect.gameObject.SetActive(true);
+        }
 
         if (_canvasGroup != null)
         {

@@ -312,6 +312,13 @@ public class PauseMenuUI : MonoBehaviour
             customExitConfirmPopupRoot.SetActive(false);
         }
 
+        string curScene = SceneManager.GetActiveScene().name;
+        if (!UIManager.IsMenuScene(curScene))
+        {
+            UIManager.Instance?.SetExplorationHUDVisible(true);
+            if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+        }
+
         AudioManager.Instance?.PlayButtonClick();
         Debug.Log("[PauseMenuUI] Game Resumed.");
     }
@@ -474,6 +481,12 @@ public class PauseMenuUI : MonoBehaviour
                 if (_mainPausePanel != null) _mainPausePanel.SetActive(true);
                 if (_settingsPanel != null)  _settingsPanel.SetActive(false);
             }
+        }
+
+        string curScene = SceneManager.GetActiveScene().name;
+        if (!UIManager.IsMenuScene(curScene))
+        {
+            UIManager.Instance?.SetExplorationHUDVisible(true);
         }
 
         LoadSettingsToUI();

@@ -27,10 +27,8 @@ public class TutorialArrowUI : MonoBehaviour
                 _instance = FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
                 if (_instance == null)
                 {
-                    var canvas = FindFirstObjectByType<Canvas>();
                     var go = new GameObject("TutorialArrowUI");
-                    if (canvas != null)
-                        go.transform.SetParent(canvas.transform, false);
+                    DontDestroyOnLoad(go);
                     _instance = go.AddComponent<TutorialArrowUI>();
                 }
             }
@@ -47,6 +45,15 @@ public class TutorialArrowUI : MonoBehaviour
         Down
     }
 
+    public enum LabelSide
+    {
+        Default, // Place behind arrow direction
+        Left,    // Force label to the left of the arrow
+        Right,   // Force label to the right of the arrow
+        Top,     // Force label above the arrow
+        Bottom   // Force label below the arrow
+    }
+
     private Canvas _canvas;
     private RectTransform _canvasRect;
     private GameObject _arrowRoot;
@@ -61,6 +68,7 @@ public class TutorialArrowUI : MonoBehaviour
     private Transform     _worldTarget;
     private Vector3       _worldOffset;
     private ArrowDirection _currentDirection = ArrowDirection.Left;
+    private LabelSide      _currentLabelSide = LabelSide.Default;
     private Vector2       _basePosition;
     private bool          _isPointing = false;
 
@@ -86,23 +94,31 @@ public class TutorialArrowUI : MonoBehaviour
     {
         if (_arrowRoot != null) return;
 
-        _canvas = GetComponentInParent<Canvas>();
         if (_canvas == null)
         {
-            _canvas = FindFirstObjectByType<Canvas>();
+            var existing = GameObject.Find("TutorialArrowCanvas");
+            if (existing != null)
+            {
+                _canvas = existing.GetComponent<Canvas>();
+            }
         }
 
         if (_canvas == null)
         {
-            var cgo = new GameObject("TutorialArrowCanvas", typeof(Canvas), typeof(CanvasScaler));
+            var cgo = new GameObject("TutorialArrowCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             _canvas = cgo.GetComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = 45;
+            _canvas.sortingOrder = 10005; // Always render above Bestiary (order 9999) and normal UI
 
             var scaler = cgo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
+
+            var raycaster = cgo.GetComponent<GraphicRaycaster>();
+            raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
+            DontDestroyOnLoad(cgo);
         }
 
         _canvasRect = _canvas.GetComponent<RectTransform>();
@@ -252,10 +268,11 @@ public class TutorialArrowUI : MonoBehaviour
 
     private void Update()
     {
-        // Suppress all tutorial arrows while player is playing a minigame
+        // Suppress all tutorial arrows and cards while player is playing a minigame
         if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
         {
             if (_arrowRoot != null && _arrowRoot.activeSelf) _arrowRoot.SetActive(false);
+            if (_sonarLegendRoot != null && _sonarLegendRoot.activeSelf) _sonarLegendRoot.SetActive(false);
             return;
         }
 
@@ -342,6 +359,29 @@ public class TutorialArrowUI : MonoBehaviour
         {
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_canvasRect, screenPoint + offset, canvasCam, out Vector2 localPoint))
             {
+                // Clamp arrow and label pill so neither ever clips off the screen edges
+                float canvasHalfW = _canvasRect.rect.width * 0.5f;
+                float canvasHalfH = _canvasRect.rect.height * 0.5f;
+
+                float pillW = _labelPillRect != null ? _labelPillRect.sizeDelta.x : 0f;
+                float minX = -canvasHalfW + 20f;
+                float maxX = canvasHalfW - 20f;
+
+                if (_labelPillRect != null)
+                {
+                    if (_labelPillRect.pivot.x < 0.2f) // Label extends to the right
+                    {
+                        maxX -= (pillW + 40f);
+                    }
+                    else if (_labelPillRect.pivot.x > 0.8f) // Label extends to the left
+                    {
+                        minX += (pillW + 40f);
+                    }
+                }
+
+                localPoint.x = Mathf.Clamp(localPoint.x, minX, maxX);
+                localPoint.y = Mathf.Clamp(localPoint.y, -canvasHalfH + 30f, canvasHalfH - 30f);
+
                 _arrowRootRect.anchoredPosition = localPoint;
             }
             else
@@ -358,7 +398,7 @@ public class TutorialArrowUI : MonoBehaviour
     /// <summary>
     /// Points arrow at a 2D HUD RectTransform with a descriptive label.
     /// </summary>
-    public void PointAtHUD(RectTransform target, string label, ArrowDirection direction = ArrowDirection.Left)
+    public void PointAtHUD(RectTransform target, string label, ArrowDirection direction = ArrowDirection.Left, LabelSide labelSide = LabelSide.Default)
     {
         if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
         {
@@ -372,8 +412,9 @@ public class TutorialArrowUI : MonoBehaviour
         _hudTargetRect = target;
         _worldTarget = null;
         _currentDirection = direction;
+        _currentLabelSide = labelSide;
 
-        ConfigureDirectionLayout(direction);
+        ConfigureDirectionLayout(direction, labelSide);
         SetLabel(label);
 
         _isPointing = true;
@@ -383,7 +424,7 @@ public class TutorialArrowUI : MonoBehaviour
     /// <summary>
     /// Points arrow at a 3D world-space target (e.g. marine creature or debris cluster).
     /// </summary>
-    public void PointAtWorld(Transform target, string label, Vector3 offset = default, ArrowDirection direction = ArrowDirection.Down)
+    public void PointAtWorld(Transform target, string label, Vector3 offset = default, ArrowDirection direction = ArrowDirection.Down, LabelSide labelSide = LabelSide.Default)
     {
         if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
         {
@@ -398,8 +439,9 @@ public class TutorialArrowUI : MonoBehaviour
         _worldTarget = target;
         _worldOffset = offset == default ? Vector3.up * 1.5f : offset;
         _currentDirection = direction;
+        _currentLabelSide = labelSide;
 
-        ConfigureDirectionLayout(direction);
+        ConfigureDirectionLayout(direction, labelSide);
         SetLabel(label);
 
         _isPointing = true;
@@ -409,7 +451,7 @@ public class TutorialArrowUI : MonoBehaviour
     /// <summary>
     /// Points arrow at an absolute screen position.
     /// </summary>
-    public void PointAtScreenPosition(Vector2 screenPos, string label, ArrowDirection direction = ArrowDirection.Down)
+    public void PointAtScreenPosition(Vector2 screenPos, string label, ArrowDirection direction = ArrowDirection.Down, LabelSide labelSide = LabelSide.Default)
     {
         if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
         {
@@ -423,15 +465,16 @@ public class TutorialArrowUI : MonoBehaviour
         _worldTarget = null;
         _basePosition = screenPos;
         _currentDirection = direction;
+        _currentLabelSide = labelSide;
 
-        ConfigureDirectionLayout(direction);
+        ConfigureDirectionLayout(direction, labelSide);
         SetLabel(label);
 
         _isPointing = true;
         _arrowRoot.SetActive(true);
     }
 
-    private void ConfigureDirectionLayout(ArrowDirection direction)
+    private void ConfigureDirectionLayout(ArrowDirection direction, LabelSide labelSide = LabelSide.Default)
     {
         float rotZ = 0f;
         Vector2 pillPos = Vector2.zero;
@@ -458,6 +501,27 @@ public class TutorialArrowUI : MonoBehaviour
                 rotZ = 90f;
                 pillPos = new Vector2(0f, 45f);
                 pillPivot = new Vector2(0.5f, 0f);
+                break;
+        }
+
+        // Apply explicit LabelSide override if specified
+        switch (labelSide)
+        {
+            case LabelSide.Right:
+                pillPos = new Vector2(40f, 0f);
+                pillPivot = new Vector2(0f, 0.5f);
+                break;
+            case LabelSide.Left:
+                pillPos = new Vector2(-40f, 0f);
+                pillPivot = new Vector2(1f, 0.5f);
+                break;
+            case LabelSide.Top:
+                pillPos = new Vector2(0f, 45f);
+                pillPivot = new Vector2(0.5f, 0f);
+                break;
+            case LabelSide.Bottom:
+                pillPos = new Vector2(0f, -45f);
+                pillPivot = new Vector2(0.5f, 1f);
                 break;
         }
 

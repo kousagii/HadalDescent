@@ -390,8 +390,11 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
   3. ➡️ Arrow → **RDP Counter** (top-right): *"Research Data Points"*
   4. ➡️ Arrow → **Shop Button** (top-right wrench icon): *"Submarine Upgrade Shop"*
   5. ➡️ Arrow → **Bestiary Button** (top-right book icon): *"Marine Biodiversity Bestiary"*
+  6. ⬇️ Arrow → **Light Button** (bottom-right headlights icon): *"Submarine Headlights"*
+  7. ⬇️ Arrow → **Interact Button** (bottom-right robotic arm icon): *"Robotic Arm (Interact)"*
+  8. ⬇️ Arrow → **Scan Button** (bottom-right scanner reticle icon): *"Biodiversity Scanner (Scan)"*
 - **Objective Line (32px, green):** `OBJECTIVE: Familiarize yourself with HUD instruments`
-- **Advance Condition:** All 5 arrow pointers complete their sequential pulse (~8s total).
+- **Advance Condition:** All 8 arrow pointers complete their sequential pulse (~12.8s total).
 - **Entity Visibility Invariant:** Marine species (mobile `SpeciesAI` and stationary `ScanTarget`) and debris clusters are strictly hidden and disabled during Step 1 (as well as Step 0 and Step 2). `SpeciesSpawner` spawns instances inactive prior to Step 3, `DistanceCullingManager` bypasses activation of inactive objects and is paused, and `TutorialManager` proactively enforces hidden state on `_Creatures` and `_DebrisClusters`. Creature #1 is only introduced when Step 3 officially starts.
 
 ---
@@ -425,7 +428,7 @@ All steps occur in the **Sunlight Zone (0–200m)** during the player's maiden d
   ╚══════════════════════════════════════════════╝
   ```
 - **Objective Line (32px, green):** `OBJECTIVE: Track and approach a Cyan species signature on sonar`
-- **Advance Condition:** Submarine approaches within 35 metres of a scannable creature (`SpeciesAI`).
+- **Advance Condition:** Submarine approaches within 16 metres of a scannable creature (`SpeciesAI`) (spawned at ~28m ahead).
 - **Resilience / Non-Compliance:** If the player wanders away for >25s, Dr. Santos issues a gentle reminder, and the nearest species AI gently steers into the player's path.
 - **Early-Scan Resilience (Scanning Before Step 4A):** If the player locks reticle and scans Species #1 early during Step 3, the game forces Minigame 1 (`Capture & Focus`). Upon scan success, Dr. Santos immediately delivers the specimen logged congratulations, hides Step 3 sonar pointers, and smoothly transitions directly to **Step 4B** (Encounter 2), seamlessly bypassing Step 4A with no redundant prompts or soft-locks.
 - **Completion Radio (Gameplay SDF, 34px, no bold):**  

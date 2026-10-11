@@ -76,6 +76,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Image scanButtonImage;
     [Tooltip("INTERACT button Image - tinted cyan when near a stationary species or debris cluster.")]
     [SerializeField] private UnityEngine.UI.Image interactButtonImage;
+    [Tooltip("LIGHT button Image - toggles submarine headlights (tinted cyan when ON, dark blue when OFF).")]
+    [SerializeField] private UnityEngine.UI.Image lightButtonImage;
 
     [Header("References (auto-found)")]
     [SerializeField] private DepthTracker   depthTracker;
@@ -83,8 +85,25 @@ public class UIManager : MonoBehaviour
 
     private Image _scanInnerGlow;
     private Image _interactInnerGlow;
+    private Image _lightInnerGlow;
     private Image _moveInnerGlow;
     private static Sprite _cachedInnerGlowSprite;
+
+    private CanvasGroup _scanCanvasGroup;
+    private CanvasGroup _interactCanvasGroup;
+    private CanvasGroup _lightCanvasGroup;
+
+    [Header("Button Opacity Settings")]
+    [Tooltip("Opacity of the Scan and Interact buttons when usable (locked on target / ready).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float usableButtonOpacity = 1.00f;
+
+    [Tooltip("Opacity of the Scan and Interact buttons when unusable / idle (default 75% = 0.75f).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float unusableButtonOpacity = 0.75f;
+
+    public const float BtnUsableOpacity   = 1.00f; // 100% opacity when locked on target / ready
+    public const float BtnUnusableOpacity = 0.75f; // 75% opacity when unusable / no target
 
     public static readonly UnityEngine.Color BtnDefault       = new UnityEngine.Color(0.02f, 0.08f, 0.13f, 1.00f); // #051421 (Sonar Map dark ocean, fully opaque)
     public static readonly UnityEngine.Color BtnActiveIcon     = new UnityEngine.Color(0.20f, 1.00f, 0.95f, 1.00f); // Clean, sharp, luminous cyan-white (Active Detection)
@@ -137,6 +156,16 @@ public class UIManager : MonoBehaviour
                 return;
             }
         }
+
+        if (_hudRoot == null)
+        {
+            var rootTr = transform.root;
+            if (rootTr != null)
+            {
+                var h = FindChildRecursive(rootTr, "HUD");
+                if (h != null) _hudRoot = h.gameObject;
+            }
+        }
     }
 
     private void Awake()
@@ -156,6 +185,9 @@ public class UIManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
+        SubmarineLightController.OnLightsChanged -= OnSubmarineLightsChanged;
+        SubmarineLightController.OnLightsChanged += OnSubmarineLightsChanged;
+
         EnsureHudRoot();
         HideMinigamesAndModals();
 
@@ -170,6 +202,12 @@ public class UIManager : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        SubmarineLightController.OnLightsChanged -= OnSubmarineLightsChanged;
+    }
+
+    private void OnSubmarineLightsChanged(bool lightsOn)
+    {
+        ShowLightButton(lightsOn);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -235,14 +273,16 @@ public class UIManager : MonoBehaviour
         {
             if (sonarMapImage != null)
             {
-                sonarMap = sonarMapImage.GetComponent<SonarMapUI>() ?? sonarMapImage.gameObject.AddComponent<SonarMapUI>();
+                sonarMap = sonarMapImage.GetComponent<SonarMapUI>();
+                if (sonarMap == null) sonarMap = sonarMapImage.gameObject.AddComponent<SonarMapUI>();
             }
             else
             {
                 var mapGO = GameObject.Find("SonarMap") ?? GameObject.Find("Map placeholder") ?? GameObject.Find("Map");
                 if (mapGO != null)
                 {
-                    sonarMap = mapGO.GetComponent<SonarMapUI>() ?? mapGO.AddComponent<SonarMapUI>();
+                    sonarMap = mapGO.GetComponent<SonarMapUI>();
+                    if (sonarMap == null) sonarMap = mapGO.AddComponent<SonarMapUI>();
                 }
                 else
                 {
@@ -363,6 +403,7 @@ public class UIManager : MonoBehaviour
         if (rdpLabel != null) rdpLabel.gameObject.SetActive(visible);
         if (scanButtonImage != null) scanButtonImage.gameObject.SetActive(visible);
         if (interactButtonImage != null) interactButtonImage.gameObject.SetActive(visible);
+        if (lightButtonImage != null) lightButtonImage.gameObject.SetActive(visible);
 
         var reticle = ScanReticleUI.Instance;
         if (reticle != null) reticle.SetVisible(visible);
@@ -380,9 +421,24 @@ public class UIManager : MonoBehaviour
                       ?? GameObject.Find("Floating Joystick") 
                       ?? GameObject.Find("Dynamic Joystick")
                       ?? GameObject.Find("Virtual Joystick");
+        if (joystickGO == null && _hudRoot != null)
+        {
+            var mcTr = FindChildRecursive(_hudRoot.transform, "MobileControls")
+                    ?? FindChildRecursive(_hudRoot.transform, "Joystick")
+                    ?? FindChildRecursive(_hudRoot.transform, "Fixed Joystick")
+                    ?? FindChildRecursive(_hudRoot.transform, "Floating Joystick")
+                    ?? FindChildRecursive(_hudRoot.transform, "Dynamic Joystick")
+                    ?? FindChildRecursive(_hudRoot.transform, "Virtual Joystick");
+            if (mcTr != null) joystickGO = mcTr.gameObject;
+        }
         if (joystickGO == null && canvas != null)
         {
-            var mcTr = canvas.transform.Find("HUD/MobileControls") ?? canvas.transform.Find("MobileControls");
+            var mcTr = FindChildRecursive(canvas.transform, "MobileControls")
+                    ?? FindChildRecursive(canvas.transform, "Joystick")
+                    ?? FindChildRecursive(canvas.transform, "Fixed Joystick")
+                    ?? FindChildRecursive(canvas.transform, "Floating Joystick")
+                    ?? FindChildRecursive(canvas.transform, "Dynamic Joystick")
+                    ?? FindChildRecursive(canvas.transform, "Virtual Joystick");
             if (mcTr != null) joystickGO = mcTr.gameObject;
         }
         if (joystickGO != null) joystickGO.SetActive(visible);
@@ -511,13 +567,35 @@ public class UIManager : MonoBehaviour
     // Button glow helpers
     // -----------------------------------------------------------------------
 
-    /// <summary>Tint the SCAN button when a target is ready to scan.</summary>
+    private CanvasGroup GetOrAddCanvasGroup(GameObject go)
+    {
+        if (go == null) return null;
+        var cg = go.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = go.AddComponent<CanvasGroup>();
+        }
+        cg.interactable = true;
+        cg.blocksRaycasts = true;
+        return cg;
+    }
+
+    /// <summary>Tint and adjust opacity of the SCAN button (100% when locked/ready, 75% when unusable).</summary>
     public void ShowScanButton(bool active)
     {
         ValidateAndRepairHUDButtonReferences();
-        var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (scanButtonImage != null)
         {
+            if (_scanCanvasGroup == null || _scanCanvasGroup.gameObject != scanButtonImage.gameObject)
+            {
+                _scanCanvasGroup = GetOrAddCanvasGroup(scanButtonImage.gameObject);
+            }
+            if (_scanCanvasGroup != null)
+            {
+                _scanCanvasGroup.alpha = active ? usableButtonOpacity : unusableButtonOpacity;
+            }
+
+            var targetColor = active ? BtnActiveIcon : BtnDefault;
             scanButtonImage.color = active ? BtnActiveRing : BtnDefault;
             for (int i = 0; i < scanButtonImage.transform.childCount; i++)
             {
@@ -538,19 +616,34 @@ public class UIManager : MonoBehaviour
                 btn.colors = cb;
             }
         }
+        if (_scanInnerGlow == null && scanButtonImage != null)
+        {
+            var glowTr = scanButtonImage.transform.Find("InnerGlow");
+            if (glowTr != null) _scanInnerGlow = glowTr.GetComponent<Image>();
+            else _scanInnerGlow = EnsureInnerGlow(scanButtonImage.gameObject, 0.85f);
+        }
         if (_scanInnerGlow != null)
         {
             _scanInnerGlow.color = active ? InnerGlowActive : InnerGlowIdle;
         }
     }
 
-    /// <summary>Tint the INTERACT button when near an interactive target or debris cluster.</summary>
+    /// <summary>Tint and adjust opacity of the INTERACT button (100% when near debris/target, 75% when unusable).</summary>
     public void ShowInteractButton(bool active)
     {
         ValidateAndRepairHUDButtonReferences();
-        var targetColor = active ? BtnActiveIcon : BtnDefault;
         if (interactButtonImage != null)
         {
+            if (_interactCanvasGroup == null || _interactCanvasGroup.gameObject != interactButtonImage.gameObject)
+            {
+                _interactCanvasGroup = GetOrAddCanvasGroup(interactButtonImage.gameObject);
+            }
+            if (_interactCanvasGroup != null)
+            {
+                _interactCanvasGroup.alpha = active ? usableButtonOpacity : unusableButtonOpacity;
+            }
+
+            var targetColor = active ? BtnActiveIcon : BtnDefault;
             interactButtonImage.color = active ? BtnActiveRing : BtnDefault;
             for (int i = 0; i < interactButtonImage.transform.childCount; i++)
             {
@@ -571,10 +664,69 @@ public class UIManager : MonoBehaviour
                 btn.colors = cb;
             }
         }
+        if (_interactInnerGlow == null && interactButtonImage != null)
+        {
+            var glowTr = interactButtonImage.transform.Find("InnerGlow");
+            if (glowTr != null) _interactInnerGlow = glowTr.GetComponent<Image>();
+            else _interactInnerGlow = EnsureInnerGlow(interactButtonImage.gameObject, 0.85f);
+        }
         if (_interactInnerGlow != null)
         {
             _interactInnerGlow.color = active ? InnerGlowActive : InnerGlowIdle;
         }
+    }
+
+    /// <summary>Tint and adjust opacity of the LIGHT button (100% and cyan when lights ON, 75% and dark blue when lights OFF).</summary>
+    public void ShowLightButton(bool active)
+    {
+        ValidateAndRepairHUDButtonReferences();
+        if (lightButtonImage != null)
+        {
+            if (_lightCanvasGroup == null || _lightCanvasGroup.gameObject != lightButtonImage.gameObject)
+            {
+                _lightCanvasGroup = GetOrAddCanvasGroup(lightButtonImage.gameObject);
+            }
+            if (_lightCanvasGroup != null)
+            {
+                _lightCanvasGroup.alpha = active ? usableButtonOpacity : unusableButtonOpacity;
+            }
+
+            var targetColor = active ? BtnActiveIcon : BtnDefault;
+            lightButtonImage.color = active ? BtnActiveRing : BtnDefault;
+            for (int i = 0; i < lightButtonImage.transform.childCount; i++)
+            {
+                var child = lightButtonImage.transform.GetChild(i);
+                if (child.name == "InnerGlow") continue;
+                var childImg = child.GetComponent<Image>();
+                if (childImg != null) childImg.color = targetColor;
+            }
+
+            var btn = lightButtonImage.GetComponent<Button>();
+            if (btn != null)
+            {
+                var cb = btn.colors;
+                cb.normalColor = lightButtonImage.color;
+                cb.highlightedColor = BtnActiveIcon;
+                cb.pressedColor = BtnActiveIcon;
+                cb.selectedColor = lightButtonImage.color;
+                btn.colors = cb;
+            }
+        }
+        if (_lightInnerGlow == null && lightButtonImage != null)
+        {
+            var glowTr = lightButtonImage.transform.Find("InnerGlow");
+            if (glowTr != null) _lightInnerGlow = glowTr.GetComponent<Image>();
+            else _lightInnerGlow = EnsureInnerGlow(lightButtonImage.gameObject, 0.85f);
+        }
+        if (_lightInnerGlow != null)
+        {
+            _lightInnerGlow.color = active ? InnerGlowActive : InnerGlowIdle;
+        }
+    }
+
+    public void OnLightButtonPressed()
+    {
+        ToggleSubmarineLights();
     }
 
     public void ShowScanPrompt(bool visible) => ShowScanButton(visible);
@@ -710,6 +862,15 @@ public class UIManager : MonoBehaviour
                     interactButtonImage = interactT.GetComponent<Image>() ?? interactT.GetComponentInChildren<Image>();
                 }
             }
+
+            if (lightButtonImage == null)
+            {
+                var lightT = FindChildRecursive(root, "LightButton") ?? FindChildRecursive(root, "LightOuterRing") ?? FindChildRecursive(root, "BtnLight") ?? FindChildRecursive(root, "Light");
+                if (lightT != null)
+                {
+                    lightButtonImage = lightT.GetComponent<Image>() ?? lightT.GetComponentInChildren<Image>();
+                }
+            }
         }
     }
 
@@ -791,6 +952,7 @@ public class UIManager : MonoBehaviour
             }
 
             RemoveGlowEffects(scanButtonImage.gameObject);
+            _scanCanvasGroup = GetOrAddCanvasGroup(scanButtonImage.gameObject);
             _scanInnerGlow = EnsureInnerGlow(scanButtonImage.gameObject, 0.85f);
             if (_scanInnerGlow != null)
             {
@@ -923,6 +1085,7 @@ public class UIManager : MonoBehaviour
             interactButtonImage.color = BtnDefault;
 
             // Inner glow placed at index 0 (behind child Icon)
+            _interactCanvasGroup = GetOrAddCanvasGroup(interactButtonImage.gameObject);
             _interactInnerGlow = EnsureInnerGlow(interactButtonImage.gameObject, 0.85f);
             if (_interactInnerGlow != null)
             {
@@ -945,12 +1108,124 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // Apply idle colors
-        ShowScanButton(false);
-        ShowInteractButton(false);
+        // 2b. Light Button (Submarine headlights toggle)
+        Button lightBtn = null;
+        if (lightButtonImage != null) lightBtn = lightButtonImage.GetComponent<Button>();
+        if (lightBtn == null && lightButtonImage != null)
+        {
+            lightBtn = lightButtonImage.gameObject.AddComponent<Button>();
+        }
+        if (lightBtn == null)
+        {
+            var btnTr = FindChildRecursive(root, "LightButton") ?? FindChildRecursive(root, "LightOuterRing") ?? FindChildRecursive(root, "BtnLight") ?? FindChildRecursive(root, "Light");
+            if (btnTr != null)
+            {
+                var btnGO = btnTr.gameObject;
+                lightButtonImage = btnGO.GetComponent<Image>() ?? btnGO.GetComponentInChildren<Image>();
+                lightBtn = btnGO.GetComponent<Button>() ?? btnGO.AddComponent<Button>();
+            }
+        }
+        if (lightBtn != null)
+        {
+            lightBtn.onClick.RemoveListener(OnLightButtonPressed);
+            lightBtn.onClick.AddListener(OnLightButtonPressed);
 
-        // MoveOuterRing: soft inner gradient only (no outside blur), child matches ring
-        var moveRingGO = GameObject.Find("MoveOuterRing");
+            var trigger = lightButtonImage.GetComponent<UnityEngine.EventSystems.EventTrigger>();
+            if (trigger == null) trigger = lightButtonImage.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            trigger.triggers.Clear();
+
+            var pDown = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
+            pDown.callback.AddListener((_) =>
+            {
+                if (_lightInnerGlow != null) _lightInnerGlow.color = InnerGlowActive;
+                if (lightButtonImage != null)
+                {
+                    for (int i = 0; i < lightButtonImage.transform.childCount; i++)
+                    {
+                        var ch = lightButtonImage.transform.GetChild(i);
+                        if (ch.name == "InnerGlow") continue;
+                        var img = ch.GetComponent<Image>();
+                        if (img != null) img.color = BtnActiveIcon;
+                    }
+                }
+            });
+            trigger.triggers.Add(pDown);
+
+            var pUp = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
+            pUp.callback.AddListener((_) =>
+            {
+                bool isLightActive = SubmarineLightController.Instance != null && SubmarineLightController.Instance.AreLightsOn;
+                ShowLightButton(isLightActive);
+            });
+            trigger.triggers.Add(pUp);
+        }
+        if (lightButtonImage != null)
+        {
+            RemoveGlowEffects(lightButtonImage.gameObject);
+
+            // Separate the custom light logo into a child Icon so that InnerGlow is rendered strictly BEHIND the logo
+            var ringSprite = GetOuterRingSprite();
+            var iconTr = lightButtonImage.transform.Find("Icon");
+            Image iconImg = null;
+            if (iconTr != null)
+            {
+                iconImg = iconTr.GetComponent<Image>();
+            }
+            else
+            {
+                Sprite customLightSprite = null;
+                if (lightButtonImage.sprite != null && lightButtonImage.sprite != ringSprite)
+                {
+                    customLightSprite = lightButtonImage.sprite;
+                }
+
+                var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconGO.transform.SetParent(lightButtonImage.transform, false);
+
+                var rt = iconGO.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.sizeDelta = Vector2.zero;
+                rt.anchoredPosition = Vector2.zero;
+
+                iconImg = iconGO.GetComponent<Image>();
+                iconImg.raycastTarget = false;
+                iconImg.preserveAspect = true;
+                if (customLightSprite != null) iconImg.sprite = customLightSprite;
+            }
+
+            // Set parent image to outer ring
+            if (ringSprite != null)
+            {
+                lightButtonImage.sprite = ringSprite;
+                lightButtonImage.type = Image.Type.Simple;
+                lightButtonImage.preserveAspect = true;
+            }
+
+            // Pre-attach CanvasGroup and Inner glow placed at index 0 (behind child Icon)
+            _lightCanvasGroup = GetOrAddCanvasGroup(lightButtonImage.gameObject);
+            _lightInnerGlow = EnsureInnerGlow(lightButtonImage.gameObject, 0.85f);
+            if (_lightInnerGlow != null)
+            {
+                _lightInnerGlow.transform.SetSiblingIndex(0);
+            }
+            if (iconImg != null)
+            {
+                iconImg.transform.SetAsLastSibling();
+            }
+
+            for (int i = 0; i < lightButtonImage.transform.childCount; i++)
+            {
+                var child = lightButtonImage.transform.GetChild(i);
+                if (child.name != "InnerGlow")
+                {
+                    RemoveGlowEffects(child.gameObject);
+                }
+            }
+        }
+
+        // 3. MoveOuterRing: soft inner gradient only (no outside blur), child matches ring
+        var moveRingGO = GameObject.Find("MoveOuterRing") ?? FindChildRecursive(root, "MoveOuterRing")?.gameObject;
         if (moveRingGO != null)
         {
             RemoveGlowEffects(moveRingGO);
@@ -970,8 +1245,8 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // 3. Top-Right Buttons Container: disable force expand so Inspector spacing controls distance manually
-        var buttonsGO = GameObject.Find("Buttons");
+        // 4. Top-Right Buttons Container: disable force expand so Inspector spacing controls distance manually
+        var buttonsGO = GameObject.Find("Buttons") ?? FindChildRecursive(root, "Buttons")?.gameObject;
         if (buttonsGO != null)
         {
             var hlg = buttonsGO.GetComponent<HorizontalLayoutGroup>();
@@ -982,15 +1257,29 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // 4. Top-Right: Shop, Bestiary, Pause (Outer ring styling: circular disk, inner glow, centered icon)
-        var shopGO = GameObject.Find("Shop") ?? GameObject.Find("ShopButton") ?? GameObject.Find("BtnShop");
+        // 5. Top-Right: Shop, Bestiary, Pause (Outer ring styling: circular disk, inner glow, centered icon)
+        var shopGO = FindChildRecursive(root, "Shop")?.gameObject 
+                     ?? FindChildRecursive(root, "ShopButton")?.gameObject 
+                     ?? FindChildRecursive(root, "BtnShop")?.gameObject 
+                     ?? GameObject.Find("Shop");
         SetupNavButtonLikeOuterRing(shopGO, OnShopButtonPressed);
 
-        var bestiaryGO = GameObject.Find("Bestiary") ?? GameObject.Find("BestiaryButton") ?? GameObject.Find("BtnBestiary");
+        var bestiaryGO = FindChildRecursive(root, "Bestiary")?.gameObject 
+                         ?? FindChildRecursive(root, "BestiaryButton")?.gameObject 
+                         ?? FindChildRecursive(root, "BtnBestiary")?.gameObject 
+                         ?? GameObject.Find("Bestiary");
         SetupNavButtonLikeOuterRing(bestiaryGO, OnBestiaryButtonPressed);
 
-        var pauseGO = GameObject.Find("Pause") ?? GameObject.Find("PauseButton") ?? GameObject.Find("BtnPause");
+        var pauseGO = FindChildRecursive(root, "Pause")?.gameObject 
+                      ?? FindChildRecursive(root, "PauseButton")?.gameObject 
+                      ?? FindChildRecursive(root, "BtnPause")?.gameObject 
+                      ?? GameObject.Find("Pause");
         SetupNavButtonLikeOuterRing(pauseGO, OnPauseButtonPressed);
+
+        // 6. Apply idle colors and opacity
+        ShowScanButton(false);
+        ShowInteractButton(false);
+        ShowLightButton(SubmarineLightController.Instance != null ? SubmarineLightController.Instance.AreLightsOn : true);
     }
 
     public static Sprite GetOrCreateInnerGlowSprite()
@@ -1141,7 +1430,9 @@ public class UIManager : MonoBehaviour
         RemoveGlowEffects(buttonGO);
 
         var btn = buttonGO.GetComponent<Button>() ?? buttonGO.GetComponentInChildren<Button>();
-        if (btn != null && onClickAction != null)
+        if (btn == null) btn = buttonGO.AddComponent<Button>();
+        btn.interactable = true;
+        if (onClickAction != null)
         {
             btn.onClick.RemoveListener(onClickAction);
             btn.onClick.AddListener(onClickAction);
@@ -1227,6 +1518,7 @@ public class UIManager : MonoBehaviour
             baseImg.color = BtnDefault;
             baseImg.type = Image.Type.Simple;
             baseImg.preserveAspect = true;
+            baseImg.raycastTarget = true;
         }
 
         // Match icon color exactly to border (baseImg.color)
@@ -1331,6 +1623,7 @@ public class UIManager : MonoBehaviour
                     return _cachedPauseIconSprite;
                 }
             }
+         
             var pImg = pauseGO.GetComponent<Image>();
             if (pImg != null && pImg.sprite != null && pImg.sprite != GetOuterRingSprite() && !pImg.sprite.name.Contains("8") && !pImg.sprite.name.Contains("14"))
             {
@@ -1343,21 +1636,39 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the main exploration Canvas, strictly excluding PauseMenu_Canvas.
+    /// Returns the main exploration Canvas, strictly excluding PauseMenu_Canvas and popup/button canvases.
     /// </summary>
     public static Canvas GetExplorationCanvas()
     {
         if (Instance != null)
         {
-            var c = Instance.GetComponentInParent<Canvas>();
-            if (c != null && c.name != "PauseMenu_Canvas") return c;
+            var c = Instance.GetComponentInParent<Canvas>() ?? Instance.GetComponent<Canvas>();
+            if (c != null && IsValidRootCanvas(c)) return c;
         }
-        var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         foreach (var c in allCanvases)
         {
-            if (c.name != "PauseMenu_Canvas" && c.name != "PauseCanvas") return c;
+            if (IsValidRootCanvas(c)) return c;
         }
-        return allCanvases.Length > 0 ? allCanvases[0] : null;
+
+        var inactiveCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var c in inactiveCanvases)
+        {
+            if (IsValidRootCanvas(c)) return c;
+        }
+
+        return null;
+    }
+
+    private static bool IsValidRootCanvas(Canvas c)
+    {
+        if (c == null) return false;
+        string n = c.name;
+        if (n.Contains("Pause") || n.Contains("Skip") || n.Contains("Arrow") || n.Contains("Pointer") 
+            || n.Contains("Popup") || n.Contains("Warning") || n.Contains("Briefing"))
+            return false;
+        return c.renderMode == RenderMode.ScreenSpaceOverlay && c.GetComponent<CanvasScaler>() != null;
     }
 
     /// <summary>
@@ -1500,14 +1811,26 @@ public class UIManager : MonoBehaviour
     {
         if (scanButtonImage != null) return scanButtonImage.rectTransform;
         var go = GameObject.Find("Scan") ?? GameObject.Find("ScanButton") ?? GameObject.Find("BtnScan");
-        return go != null ? go.GetComponent<RectTransform>() : null;
+        if (go != null) return go.GetComponent<RectTransform>();
+        if (_hudRoot != null)
+        {
+            var tr = FindChildRecursive(_hudRoot.transform, "ScanButton") ?? FindChildRecursive(_hudRoot.transform, "BtnScan") ?? FindChildRecursive(_hudRoot.transform, "Scan");
+            if (tr != null) return tr.GetComponent<RectTransform>();
+        }
+        return null;
     }
 
     public RectTransform GetInteractButtonRect()
     {
         if (interactButtonImage != null) return interactButtonImage.rectTransform;
         var go = GameObject.Find("Interact") ?? GameObject.Find("InteractButton") ?? GameObject.Find("BtnInteract");
-        return go != null ? go.GetComponent<RectTransform>() : null;
+        if (go != null) return go.GetComponent<RectTransform>();
+        if (_hudRoot != null)
+        {
+            var tr = FindChildRecursive(_hudRoot.transform, "InteractButton") ?? FindChildRecursive(_hudRoot.transform, "BtnInteract") ?? FindChildRecursive(_hudRoot.transform, "Interact");
+            if (tr != null) return tr.GetComponent<RectTransform>();
+        }
+        return null;
     }
 
     public RectTransform GetShopButtonRect()
@@ -1520,6 +1843,36 @@ public class UIManager : MonoBehaviour
     {
         var go = GameObject.Find("Bestiary") ?? GameObject.Find("BestiaryButton") ?? GameObject.Find("BtnBestiary");
         return go != null ? go.GetComponent<RectTransform>() : null;
+    }
+
+    public RectTransform GetLightButtonRect()
+    {
+        if (lightButtonImage != null) return lightButtonImage.rectTransform;
+        var go = GameObject.Find("LightButton") ?? GameObject.Find("LightOuterRing") ?? GameObject.Find("BtnLight") ?? GameObject.Find("Light");
+        if (go != null) return go.GetComponent<RectTransform>();
+        if (_hudRoot != null)
+        {
+            var tr = FindChildRecursive(_hudRoot.transform, "LightButton") ?? FindChildRecursive(_hudRoot.transform, "LightOuterRing") ?? FindChildRecursive(_hudRoot.transform, "BtnLight") ?? FindChildRecursive(_hudRoot.transform, "Light");
+            if (tr != null) return tr.GetComponent<RectTransform>();
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Toggles the submarine's exterior headlights on/off. Can be hooked to a UI button.
+    /// </summary>
+    public void ToggleSubmarineLights()
+    {
+        if (SubmarineLightController.Instance != null)
+        {
+            SubmarineLightController.Instance.ToggleLights();
+            ShowLightButton(SubmarineLightController.Instance.AreLightsOn);
+        }
+        else if (lightButtonImage != null)
+        {
+            bool isNowActive = lightButtonImage.color != BtnActiveRing;
+            ShowLightButton(isNowActive);
+        }
     }
 
     public RectTransform GetJoystickRect()
@@ -1536,7 +1889,7 @@ public class UIManager : MonoBehaviour
         {
             if (_hudSkipTutorialGO == null)
             {
-                var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                var canvas = GetExplorationCanvas() ?? (GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>());
                 if (canvas == null) return;
 
                 // Middle-top placement to avoid overlapping any HUD icons

@@ -680,19 +680,21 @@ public class ReconstructionScanMinigame : MonoBehaviour
         _timerText.alignment = TextAlignmentOptions.Center;
         _timerText.fontStyle = FontStyles.Bold;
 
-        // Grid container
+        // Grid container - enlarged so there's not much white space
         float canvasH  = canvasRect != null ? canvasRect.rect.height : 1080f;
         
         // Header banner bottom edge is at Y = -186 from canvas top.
-        // Available vertical space is canvasH - 186f.
-        float availableH = canvasH - 186f;
-        float maxGridH = availableH - 60f;
-        float gridAreaH = Mathf.Clamp(canvasH * 0.48f, 320f, Mathf.Min(maxGridH, 440f));
+        float swapReserve = (GetScannerTier() >= 4) ? 100f : 50f;
+        float availableH = canvasH - 186f - swapReserve;
+        float maxGridH = availableH - 20f;
+        float gridAreaH = Mathf.Clamp(canvasH * 0.70f, 320f, Mathf.Min(maxGridH, 740f));
         float gridAreaW = gridAreaH;
         _cellSize = gridAreaW / _n - 4f;
 
-        // Perfectly centered in the playable screen space below the header banner
-        float midY = -93f;
+        // Center in the playable screen space below the header banner
+        float headerBottomY = canvasH * 0.5f - 186f;
+        float bottomLimitY = -canvasH * 0.5f + swapReserve;
+        float midY = (headerBottomY + bottomLimitY) * 0.5f;
 
         var gridGO = new GameObject("Grid", typeof(RectTransform), typeof(Image));
         gridGO.transform.SetParent(_rootPanel, false);

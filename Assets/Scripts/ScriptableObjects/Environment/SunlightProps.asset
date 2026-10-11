@@ -24,8 +24,8 @@ MonoBehaviour:
     scaleMultiplier: {x: 1, y: 1, z: 1}
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
-    alignToSurface: 0
-    surfaceTiltStrength: 0
+    alignToSurface: 1
+    surfaceTiltStrength: 0.85
     isObstacle: 0
   - prefab: {fileID: 2186149373037722737, guid: 88869dd8f07a1d84697814aed446aea9, type: 3}
     targetBiome: 1
