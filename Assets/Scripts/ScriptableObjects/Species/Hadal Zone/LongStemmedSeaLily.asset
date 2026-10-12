@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: LongStemmedSeaLily
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: long_stemmed_sea_lily_001
+  commonName: "Long-stemmed Sea Lily"
+  scientificName: "Bathycrinus longicolumnalis"
+  taxonomicClass: 15
+  zoneIndex: 4
+  habitat: "Deep ocean trench (6,445–7,170 m)"
+  depthRangeText: "6,445–7,170 m"
+  explorationHint: "Deep ocean trench (6,445–7,170 m). Long stalk and feathery feeding arms."
+  secondaryZoneIndices: 
+  characteristics: "Long stalk and feathery feeding arms."
+  ecologicalRole: "Filters tiny particles from the surrounding water."
+  interestingFact: "The stalk is made of many small sections that work together like a long underwater stem."
+  rdpReward: 140
+  scanDifficulty: 5
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 2
+  minDepthFraction: 0.1
+  maxDepthFraction: 0.3
+  instanceCount: 3
+  wanderRadius: 0.0
+  moveSpeed: 0.0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 6
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 3
+  placeholderColor: {r: 0.88, g: 0.85, b: 0.78, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

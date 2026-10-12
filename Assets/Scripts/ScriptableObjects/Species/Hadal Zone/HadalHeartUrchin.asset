@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: HadalHeartUrchin
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: hadal_heart_urchin_001
+  commonName: "Hadal Heart Urchin"
+  scientificName: "Pourtalesia heptneri"
+  taxonomicClass: 6
+  zoneIndex: 4
+  habitat: "Deep ocean trench (7,335–7,340 m)"
+  depthRangeText: "7,335–7,340 m"
+  explorationHint: "Deep ocean trench (7,335–7,340 m). Small, narrow body covered with fine spines."
+  secondaryZoneIndices: 
+  characteristics: "Small, narrow body covered with fine spines."
+  ecologicalRole: "Feeds on organic material in deep sediment."
+  interestingFact: "The unusual narrow shape makes it look very different from common round sea urchins."
+  rdpReward: 140
+  scanDifficulty: 5
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0.25
+  maxDepthFraction: 0.35
+  instanceCount: 3
+  wanderRadius: 8.0
+  moveSpeed: 0.4
+  fleeSpeed: 0.7200000000000001
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 0
+  placeholderColor: {r: 0.6, g: 0.55, b: 0.52, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

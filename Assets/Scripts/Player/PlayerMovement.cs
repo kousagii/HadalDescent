@@ -242,8 +242,8 @@ public class PlayerMovement : MonoBehaviour
             (camForward  * moveInput.y +
              bodyRight   * moveInput.x) * effectiveSpeed;
 
-        // Allow submarine to surface halfway through the ocean surface (Y up to +1.0m)
-        const float maxSurfaceBreachY = 1.0f;
+        // Allow submarine to surface through the ocean surface (Y up to +1.5m)
+        const float maxSurfaceBreachY = 1.5f;
         if (rb.position.y >= maxSurfaceBreachY && targetVelocity.y > 0f)
         {
             targetVelocity.y = 0f;

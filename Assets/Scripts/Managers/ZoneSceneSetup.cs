@@ -118,7 +118,7 @@ public class ZoneSceneSetup : MonoBehaviour
 
         // ── Spawn Points ───────────────────────────────────────────────────
         topSpawnPoint = EnsureGameObject("ZoneTopSpawn", topSpawnPoint);
-        topSpawnPoint.transform.position = new Vector3(0f, -10f, 0f); // slightly below surface
+        topSpawnPoint.transform.position = new Vector3(0f, 0f, 0f); // surface entrance (Y = 0m, Depth = 0m)
         EnsureTag(topSpawnPoint, "ZoneTopSpawn");
 
         bottomSpawnPoint = EnsureGameObject("ZoneBottomSpawn", bottomSpawnPoint);

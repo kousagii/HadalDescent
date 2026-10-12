@@ -85,9 +85,9 @@ public static class ZoneConfig
             totalSpeciesCount = 15,
             unlockThreshold  = 0.5f,
 
-            // PCG — broad rolling dunes & shallow coral reef atolls (reach 15m-25m depth)
+            // PCG — broad rolling dunes & shallow coral reef atolls (highest seabed crest reaches 10m depth)
             pcgFrequency          = 0.0035f, // wide features (~280m wavelength)
-            pcgAmplitude          = 175f,    // base at -200m, highest reef plateaus at -25m
+            pcgAmplitude          = 190f,    // base at -200m, highest seabed plateau reaches at most 10m depth (Y = -10m)
             softBiomeThreshold    = 0.28f,
             hardBiomeThreshold    = 0.50f,
             rockBiomeThreshold    = 0.74f,

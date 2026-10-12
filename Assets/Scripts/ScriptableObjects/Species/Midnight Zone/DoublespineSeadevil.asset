@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: DoublespineSeadevil
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: doublespine_seadevil_001
+  commonName: "Doublespine Seadevil"
+  scientificName: "Diceratias bispinosus"
+  taxonomicClass: 0
+  zoneIndex: 2
+  habitat: "Deep ocean, 533–2,306 m"
+  depthRangeText: "533–2,306 m"
+  explorationHint: "Deep ocean, 533–2,306 m. Small, dark anglerfish with a glowing lure."
+  secondaryZoneIndices: 
+  characteristics: "Small, dark anglerfish with a glowing lure."
+  ecologicalRole: "Uses its lure to attract and catch prey."
+  interestingFact: "It has been recorded in Philippine and Indo-Pacific waters."
+  rdpReward: 110
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.5
+  instanceCount: 3
+  wanderRadius: 18.0
+  moveSpeed: 1.5
+  fleeSpeed: 2.7
+  fleeRange: 10
+  returnThreshold: 27.0
+  turnSpeed: 65
+  locomotionArchetype: 1
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 0
+  placeholderColor: {r: 0.18, g: 0.15, b: 0.22, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

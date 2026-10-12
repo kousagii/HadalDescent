@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: coral by Kelli Ray - 7Cs3rTEcpcD
       objectReference: {fileID: 0}
+    - target: {fileID: 6204501764649158659, guid: 92b5f1bf227f29d4c86437d077798502, type: 3}
+      propertyPath: m_TagString
+      value: Environment
+      objectReference: {fileID: 0}
     - target: {fileID: 6476538272834000303, guid: 92b5f1bf227f29d4c86437d077798502, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

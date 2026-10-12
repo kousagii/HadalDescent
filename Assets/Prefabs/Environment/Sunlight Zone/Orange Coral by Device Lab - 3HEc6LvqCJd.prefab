@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Orange Coral by Device Lab - 3HEc6LvqCJd
       objectReference: {fileID: 0}
+    - target: {fileID: 4918645590273039315, guid: 0eb5a9fba1c555f49908577a177895af, type: 3}
+      propertyPath: m_TagString
+      value: Environment
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

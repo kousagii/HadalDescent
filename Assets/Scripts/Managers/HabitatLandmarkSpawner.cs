@@ -33,6 +33,44 @@ public class HabitatLandmarkSpawner : MonoBehaviour
     private Transform _landmarksParent;
     private bool      _hasSpawned = false;
 
+    public struct LandmarkZone
+    {
+        public Vector3 center;
+        public float radius;
+        public string name;
+    }
+
+    private static readonly List<LandmarkZone> _registeredLandmarks = new List<LandmarkZone>();
+    public static IReadOnlyList<LandmarkZone> RegisteredLandmarks => _registeredLandmarks;
+
+    /// <summary>
+    /// Checks whether a given world coordinate falls inside the footprint of any active Habitat Landmark.
+    /// Used by SpeciesSpawner and SpeciesAI to strictly prevent species from spawning or wandering into landmark formations.
+    /// </summary>
+    public static bool IsInsideLandmarkZone(Vector3 worldPos, float extraPadding = 5.0f)
+    {
+        for (int i = 0; i < _registeredLandmarks.Count; i++)
+        {
+            float dx = worldPos.x - _registeredLandmarks[i].center.x;
+            float dz = worldPos.z - _registeredLandmarks[i].center.z;
+            float r = _registeredLandmarks[i].radius + extraPadding;
+            if (dx * dx + dz * dz <= r * r) return true;
+        }
+
+        // Fallback: query active EnvironmentFactTargets if list is empty
+        var targets = FindObjectsByType<EnvironmentFactTarget>(FindObjectsSortMode.None);
+        for (int i = 0; i < targets.Length; i++)
+        {
+            if (targets[i] == null) continue;
+            Vector3 c = targets[i].transform.position;
+            float dx = worldPos.x - c.x;
+            float dz = worldPos.z - c.z;
+            float r = 24.0f + extraPadding;
+            if (dx * dx + dz * dz <= r * r) return true;
+        }
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     // Unity Lifecycle
     // -----------------------------------------------------------------------
@@ -111,6 +149,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             }
         }
 
+        _registeredLandmarks.Clear();
         int count = Mathf.Max(landmarks.Count, existingTargets.Count);
         if (count == 0) return;
 
@@ -301,6 +340,13 @@ public class HabitatLandmarkSpawner : MonoBehaviour
 
             // Ensure landmarks are on Terrain layer and have valid trigger colliders for creature avoidance
             EnsureCollidersAndLayer(landmarkGO);
+
+            _registeredLandmarks.Add(new LandmarkZone
+            {
+                center = new Vector3(surfacePos.x, surfacePos.y, surfacePos.z),
+                radius = measuredFootprintRadius,
+                name = factComp.HabitatName
+            });
 
             Debug.Log($"[HabitatLandmarkSpawner] Successfully placed '{factComp.HabitatName}' atop ocean floor at {surfacePos} (normal: {surfaceNormal}, biome: {targetBiome}, scale: {landmarkGO.transform.localScale.x:F2}).");
         }
@@ -537,6 +583,8 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 box.isTrigger = true;
             }
         }
+
+        SetTagRecursive(go, "Environment");
     }
 
     private static void SetLayerRecursive(GameObject go, int layer)
@@ -544,6 +592,14 @@ public class HabitatLandmarkSpawner : MonoBehaviour
         go.layer = layer;
         foreach (Transform child in go.transform)
             SetLayerRecursive(child.gameObject, layer);
+    }
+
+    private static void SetTagRecursive(GameObject go, string tag)
+    {
+        if (go == null) return;
+        go.tag = tag;
+        foreach (Transform child in go.transform)
+            SetTagRecursive(child.gameObject, tag);
     }
 
     /// <summary>

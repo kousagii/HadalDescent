@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5039984879160977895}
   m_Layer: 0
   m_Name: prop_sun_sand_ripple
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

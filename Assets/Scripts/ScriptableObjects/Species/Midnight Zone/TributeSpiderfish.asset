@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: TributeSpiderfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: tribute_spiderfish_001
+  commonName: "Tribute Spiderfish"
+  scientificName: "Bathypterois guentheri"
+  taxonomicClass: 0
+  zoneIndex: 2
+  habitat: "Deep seafloor, 800–1,500 m"
+  depthRangeText: "800–1,500 m"
+  explorationHint: "Deep seafloor, 800–1,500 m. Has very long fins that support its body above the seafloor."
+  secondaryZoneIndices: 
+  characteristics: "Has very long fins that support its body above the seafloor."
+  ecologicalRole: "Waits for small animals drifting past."
+  interestingFact: "Its fins make it look like it is standing on stilts."
+  rdpReward: 110
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.35
+  instanceCount: 3
+  wanderRadius: 12.0
+  moveSpeed: 0.8
+  fleeSpeed: 1.4400000000000002
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 0
+  placeholderColor: {r: 0.6, g: 0.55, b: 0.5, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

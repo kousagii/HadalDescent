@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: DeepSeaSquatLobster
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: deep_sea_squat_lobster_001
+  commonName: "Deep-sea Squat Lobster"
+  scientificName: "Munidopsis lauensis"
+  taxonomicClass: 5
+  zoneIndex: 2
+  habitat: "Deep hydrothermal vents, 1,136–2,000 m"
+  depthRangeText: "1,136–2,000 m"
+  explorationHint: "Deep hydrothermal vents, 1,136–2,000 m. Small lobster-like animal with long legs."
+  secondaryZoneIndices: 
+  characteristics: "Small lobster-like animal with long legs."
+  ecologicalRole: "Feeds on food around deep-sea vents."
+  interestingFact: "It lives in some of the most extreme environments in the ocean."
+  rdpReward: 110
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 4
+  minDepthFraction: 0.05
+  maxDepthFraction: 0.4
+  instanceCount: 3
+  wanderRadius: 12.0
+  moveSpeed: 1.0
+  fleeSpeed: 1.8
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 2
+  placeholderColor: {r: 0.85, g: 0.8, b: 0.75, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

@@ -294,6 +294,28 @@ public class TutorialManager : MonoBehaviour
         );
     }
 
+    private IEnumerator WaitForStep1Duration(float duration)
+    {
+        float timer = 0f;
+        while (timer < duration)
+        {
+            if (_currentPhase != TutorialPhase.Step1_HUDOrientation) yield break;
+
+            bool isBlocked = (TutorialArrowUI.Instance != null && TutorialArrowUI.Instance.IsArrowBlocked())
+                          || (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+                          || (ShopManager.Instance != null && ShopManager.Instance.IsOpen)
+                          || (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+                          || Time.timeScale <= 0f;
+
+            if (!isBlocked)
+            {
+                timer += Time.unscaledDeltaTime;
+            }
+
+            yield return null;
+        }
+    }
+
     private IEnumerator Step1PointersRoutine()
     {
         var arrow = TutorialArrowUI.Instance ?? FindFirstObjectByType<TutorialArrowUI>(FindObjectsInactive.Include);
@@ -305,7 +327,7 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetDepthGaugeRect();
             if (r != null) arrow.PointAtHUD(r, "Current Depth (metres)", TutorialArrowUI.ArrowDirection.Left);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 2. Sonar Map (top-left circle)
         if (ui != null && arrow != null)
@@ -313,7 +335,7 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetSonarMapRect();
             if (r != null) arrow.PointAtHUD(r, "Sonar Radar", TutorialArrowUI.ArrowDirection.Left);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 3. RDP Counter (top-left cluster)
         if (ui != null && arrow != null)
@@ -321,7 +343,7 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetRDPCounterRect();
             if (r != null) arrow.PointAtHUD(r, "Research Data Points", TutorialArrowUI.ArrowDirection.Left);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 4. Shop Button (top-right wrench, pointing Up from below)
         if (ui != null && arrow != null)
@@ -329,7 +351,7 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetShopButtonRect();
             if (r != null) arrow.PointAtHUD(r, "Submarine Upgrade Shop", TutorialArrowUI.ArrowDirection.Up);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 5. Bestiary Button (top-right book, pointing Up from below)
         if (ui != null && arrow != null)
@@ -337,7 +359,7 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetBestiaryButtonRect();
             if (r != null) arrow.PointAtHUD(r, "Marine Biodiversity Bestiary", TutorialArrowUI.ArrowDirection.Up);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 6. Submarine Light Button (bottom-right headlights icon, pointing Down from above)
         if (ui != null && arrow != null)
@@ -345,28 +367,28 @@ public class TutorialManager : MonoBehaviour
             var r = ui.GetLightButtonRect();
             if (r != null) arrow.PointAtHUD(r, "Submarine Headlights", TutorialArrowUI.ArrowDirection.Down);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 7. Interact Button (bottom-right robotic arm icon, pointing Down from above)
         if (ui != null && arrow != null)
         {
             var r = ui.GetInteractButtonRect();
-            if (r != null) arrow.PointAtHUD(r, "Robotic Arm (Interact)", TutorialArrowUI.ArrowDirection.Down);
+            if (r != null) arrow.PointAtHUD(r, "Interact", TutorialArrowUI.ArrowDirection.Down);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         // 8. Scan Button (bottom-right scanner reticle icon, pointing Down from above)
         if (ui != null && arrow != null)
         {
             var r = ui.GetScanButtonRect();
-            if (r != null) arrow.PointAtHUD(r, "Biodiversity Scanner (Scan)", TutorialArrowUI.ArrowDirection.Down);
+            if (r != null) arrow.PointAtHUD(r, "Scan", TutorialArrowUI.ArrowDirection.Down);
         }
-        yield return new WaitForSeconds(1.6f);
+        yield return WaitForStep1Duration(1.6f);
 
         arrow?.Hide();
 
         // Finish all radio text from Step 1 before proceeding to Step 2
-        while (RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy)
+        while ((RadioTextboxUI.Instance != null && RadioTextboxUI.Instance.IsBusy) || IsTutorialPaused())
         {
             yield return null;
         }
@@ -809,11 +831,35 @@ public class TutorialManager : MonoBehaviour
     // Update Loop & Non-Compliance Escalation
     // -----------------------------------------------------------------------
 
+    /// <summary>
+    /// Returns true if tutorial progression and timers should pause because a blocking menu, modal, shop, pause, or minigame is open.
+    /// In Step 5, Bestiary is part of the objective so Bestiary doesn't pause Step 5.
+    /// In Step 8, Shop is part of the objective so Shop doesn't pause Step 8.
+    /// </summary>
+    public bool IsTutorialPaused()
+    {
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return true;
+        if (Time.timeScale <= 0f) return true;
+        if (ShopManager.Instance != null && ShopManager.Instance.IsOpen)
+        {
+            if (_currentPhase != TutorialPhase.Step8_UpgradeShop) return true;
+        }
+        if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+        {
+            if (_currentPhase != TutorialPhase.Step5_BestiaryReview) return true;
+        }
+        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
+        if (MinigameInstructionOverlay.Instance != null && MinigameInstructionOverlay.Instance.IsOpen) return true;
+        if (IsTutorialModalOpen) return true;
+        if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen) return true;
+        if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
+        return false;
+    }
+
     private void Update()
     {
         if (!IsTutorialActive) return;
-        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
-        if (Time.timeScale <= 0f) return;
+        if (IsTutorialPaused()) return;
 
         _phaseTimer += Time.unscaledDeltaTime;
 
@@ -1239,12 +1285,30 @@ public class TutorialManager : MonoBehaviour
             {
                 TutorialArrowUI.Instance?.PointAtWorld(_tutorialSpecies1.transform, "TARGET SPECIMEN", Vector3.up * 1f, TutorialArrowUI.ArrowDirection.Down);
 
-                // Steer creature gently towards player
+                // Steer creature gently towards player while keeping safe floor clearance and depth bounds
                 var player = FindFirstObjectByType<PlayerMovement>();
                 if (player != null)
                 {
                     Vector3 steerDir = (player.transform.position + player.transform.forward * 8f - _tutorialSpecies1.transform.position).normalized;
-                    _tutorialSpecies1.transform.position += steerDir * 2.5f;
+                    Vector3 nudgedPos = _tutorialSpecies1.transform.position + steerDir * 2.5f;
+
+                    float floorY = TerrainGenerator.Instance != null
+                        ? TerrainGenerator.Instance.SampleHeight(nudgedPos.x, nudgedPos.z)
+                        : -190f;
+                    nudgedPos.y = Mathf.Max(nudgedPos.y, floorY + 4.5f);
+
+                    if (_tutorialSpecies1.Data != null)
+                    {
+                        int zIdx = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : 0;
+                        float zDepth = ZoneConfig.IsValidZone(zIdx) ? ZoneConfig.Zones[zIdx].playableDepth : 200f;
+                        float sMaxY = -Mathf.Min(_tutorialSpecies1.Data.minDepthFraction, _tutorialSpecies1.Data.maxDepthFraction) * zDepth;
+                        float sMinY = -Mathf.Max(_tutorialSpecies1.Data.minDepthFraction, _tutorialSpecies1.Data.maxDepthFraction) * zDepth;
+                        nudgedPos.y = Mathf.Clamp(nudgedPos.y, sMinY, sMaxY);
+                    }
+
+                    _tutorialSpecies1.transform.position = nudgedPos;
+                    var rb1 = _tutorialSpecies1.GetComponent<Rigidbody>();
+                    if (rb1 != null) { rb1.position = nudgedPos; rb1.linearVelocity = Vector3.zero; }
                 }
             }
         }
@@ -1261,12 +1325,30 @@ public class TutorialManager : MonoBehaviour
             {
                 TutorialArrowUI.Instance?.PointAtWorld(_tutorialSpecies2.transform, "TARGET SPECIMEN", Vector3.up * 1f, TutorialArrowUI.ArrowDirection.Down);
 
-                // Steer creature gently towards player
+                // Steer creature gently towards player while keeping safe floor clearance and depth bounds
                 var player = FindFirstObjectByType<PlayerMovement>();
                 if (player != null)
                 {
                     Vector3 steerDir = (player.transform.position + player.transform.forward * 8f - _tutorialSpecies2.transform.position).normalized;
-                    _tutorialSpecies2.transform.position += steerDir * 2.5f;
+                    Vector3 nudgedPos = _tutorialSpecies2.transform.position + steerDir * 2.5f;
+
+                    float floorY = TerrainGenerator.Instance != null
+                        ? TerrainGenerator.Instance.SampleHeight(nudgedPos.x, nudgedPos.z)
+                        : -190f;
+                    nudgedPos.y = Mathf.Max(nudgedPos.y, floorY + 4.5f);
+
+                    if (_tutorialSpecies2.Data != null)
+                    {
+                        int zIdx = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : 0;
+                        float zDepth = ZoneConfig.IsValidZone(zIdx) ? ZoneConfig.Zones[zIdx].playableDepth : 200f;
+                        float sMaxY = -Mathf.Min(_tutorialSpecies2.Data.minDepthFraction, _tutorialSpecies2.Data.maxDepthFraction) * zDepth;
+                        float sMinY = -Mathf.Max(_tutorialSpecies2.Data.minDepthFraction, _tutorialSpecies2.Data.maxDepthFraction) * zDepth;
+                        nudgedPos.y = Mathf.Clamp(nudgedPos.y, sMinY, sMaxY);
+                    }
+
+                    _tutorialSpecies2.transform.position = nudgedPos;
+                    var rb2 = _tutorialSpecies2.GetComponent<Rigidbody>();
+                    if (rb2 != null) { rb2.position = nudgedPos; rb2.linearVelocity = Vector3.zero; }
                 }
             }
         }
@@ -1460,24 +1542,9 @@ public class TutorialManager : MonoBehaviour
             }
         }
 
-        // Pre-select two distinct species for Step 4A and Step 4B if available
-        if (_cachedSceneSpecies.Count > 0)
-        {
-            _tutorialSpecies1 = _cachedSceneSpecies[0];
-        }
-        if (_cachedSceneSpecies.Count > 1)
-        {
-            _tutorialSpecies2 = _cachedSceneSpecies[1];
-            for (int i = 1; i < _cachedSceneSpecies.Count; i++)
-            {
-                if (_cachedSceneSpecies[i].Data != null && _tutorialSpecies1?.Data != null &&
-                    _cachedSceneSpecies[i].Data != _tutorialSpecies1.Data)
-                {
-                    _tutorialSpecies2 = _cachedSceneSpecies[i];
-                    break;
-                }
-            }
-        }
+        // Reset tutorial specimens so they are dynamically resolved at Step 3/4B matching current player depth & habitat
+        _tutorialSpecies1 = null;
+        _tutorialSpecies2 = null;
 
         _cachedSceneDebris.Clear();
         var allDebris = FindObjectsByType<DebrisCluster>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -1605,17 +1672,105 @@ public class TutorialManager : MonoBehaviour
         if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
         fwd.Normalize();
 
-        Vector3 spawnPos = pPos + fwd * distanceAhead + Vector3.up * verticalOffset;
-        // Keep initial tutorial entity safely submerged below the surface boundary (Y <= -6m) and above seabed
-        spawnPos.y = Mathf.Clamp(spawnPos.y, -180f, -6f);
-        entity.transform.position = spawnPos;
-        entity.transform.forward = -fwd;
-        entity.SetActive(true);
+        Vector3 candPos = pPos + fwd * distanceAhead;
+
+        int zoneIdx = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : 0;
+        float zoneDepth = ZoneConfig.IsValidZone(zoneIdx) ? ZoneConfig.Zones[zoneIdx].playableDepth : 200f;
 
         var ai = entity.GetComponent<SpeciesAI>();
+        SpeciesData data = ai != null ? ai.Data : null;
+
+        // Depth limits in world Y coordinates (surface Y = 0, floor Y = -zoneDepth)
+        float speciesMaxY = -3.5f; // Keep safely below surface boundary
+        float speciesMinY = -zoneDepth + 15f; // Keep safely above bottom zone transition
+        bool isBenthic = false;
+
+        if (data != null)
+        {
+            float rawUpper = -Mathf.Min(data.minDepthFraction, data.maxDepthFraction) * zoneDepth;
+            float rawLower = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * zoneDepth;
+            bool isDrifter = data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter;
+            speciesMaxY = isDrifter ? -0.85f : Mathf.Min(-3.0f, rawUpper);
+            speciesMinY = rawLower;
+            isBenthic = data.isStationary || data.locomotionArchetype == LocomotionArchetype.BenthicFollower;
+        }
+
+        // Accurate seabed height query at candidate position (TerrainGenerator + Physics.Raycast)
+        float floorY = TerrainGenerator.Instance != null 
+            ? TerrainGenerator.Instance.SampleHeight(candPos.x, candPos.z) 
+            : -zoneDepth;
+
+        int terrainLayerMask = LayerMask.GetMask("Terrain", "Default");
+        if (terrainLayerMask == 0) terrainLayerMask = ~0;
+        Vector3 rayOrigin = new Vector3(candPos.x, pPos.y + 40f, candPos.z);
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 160f, terrainLayerMask, QueryTriggerInteraction.Ignore))
+        {
+            floorY = Mathf.Max(floorY, hit.point.y);
+        }
+
+        if (isBenthic)
+        {
+            // Benthic species sit directly atop the seabed with species surface offset
+            float surfaceOffset = data != null ? Mathf.Max(0.15f, data.benthicSurfaceOffset) : 0.35f;
+            candPos.y = floorY + surfaceOffset;
+            candPos.y = Mathf.Clamp(candPos.y, speciesMinY, speciesMaxY);
+
+            Vector3 normal = TerrainGenerator.Instance != null 
+                ? TerrainGenerator.Instance.SampleNormal(candPos.x, candPos.z) 
+                : Vector3.up;
+            entity.transform.rotation = Quaternion.FromToRotation(Vector3.up, normal) * Quaternion.LookRotation(-fwd, Vector3.up);
+        }
+        else
+        {
+            // Swimming / pelagic species: maintain safe vertical clearance from seabed so it never penetrates or touches floor
+            const float minFloorClearance = 5.0f;
+            float targetY = pPos.y + verticalOffset;
+
+            // Clamp strictly to creature's configured depth range
+            targetY = Mathf.Clamp(targetY, speciesMinY, speciesMaxY);
+
+            // Enforce clearance above seabed
+            if (targetY < floorY + minFloorClearance)
+            {
+                targetY = floorY + minFloorClearance;
+            }
+
+            // If seabed plateau rises above speciesMaxY, pull spawn position back horizontally toward player
+            if (targetY > speciesMaxY)
+            {
+                targetY = speciesMaxY;
+                if (targetY < floorY + 2.5f)
+                {
+                    candPos.x = Mathf.Lerp(pPos.x, candPos.x, 0.4f);
+                    candPos.z = Mathf.Lerp(pPos.z, candPos.z, 0.4f);
+                    float floorY2 = TerrainGenerator.Instance != null 
+                        ? TerrainGenerator.Instance.SampleHeight(candPos.x, candPos.z) 
+                        : floorY;
+                    targetY = Mathf.Max(floorY2 + minFloorClearance, speciesMinY);
+                    targetY = Mathf.Clamp(targetY, speciesMinY, speciesMaxY);
+                }
+            }
+
+            candPos.y = targetY;
+            entity.transform.forward = -fwd;
+        }
+
+        entity.transform.position = candPos;
+
+        // Zero out physics velocity & angular velocity so creature does not fling, oscillate, or jitter
+        var rb = entity.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.position = candPos;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        entity.SetActive(true);
+
         if (ai != null && ai.Data != null)
         {
-            ai.Initialize(ai.Data, spawnPos);
+            ai.Initialize(ai.Data, candPos);
         }
     }
 
@@ -1644,62 +1799,184 @@ public class TutorialManager : MonoBehaviour
         debris.SetActive(true);
     }
 
+    private SpeciesAI SelectBestTutorialSpecies(bool isSecond, Vector3 playerPos)
+    {
+        // Ensure scene species pool is cached
+        if (_cachedSceneSpecies.Count == 0)
+        {
+            var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var ai in allAI)
+            {
+                if (ai != null && !_cachedSceneSpecies.Contains(ai))
+                {
+                    _cachedSceneSpecies.Add(ai);
+                }
+            }
+        }
+
+        // Safety fallback: if no creatures exist in the scene, invoke SpeciesSpawner
+        if (_cachedSceneSpecies.Count == 0)
+        {
+            var spawner = FindFirstObjectByType<SpeciesSpawner>();
+            if (spawner != null)
+            {
+                spawner.SpawnForZone(0);
+                var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                foreach (var ai in allAI)
+                {
+                    if (ai != null && !_cachedSceneSpecies.Contains(ai))
+                    {
+                        _cachedSceneSpecies.Add(ai);
+                    }
+                }
+            }
+        }
+
+        int zoneIdx = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : 0;
+        float zoneDepth = ZoneConfig.IsValidZone(zoneIdx) ? ZoneConfig.Zones[zoneIdx].playableDepth : 200f;
+        float playerDepthM = Mathf.Abs(playerPos.y);
+
+        BiomeBand currentBiome = TerrainGenerator.Instance != null 
+            ? TerrainGenerator.Instance.GetBiomeAt(playerPos.x, playerPos.z) 
+            : BiomeBand.OpenWater;
+
+        float floorY = TerrainGenerator.Instance != null 
+            ? TerrainGenerator.Instance.SampleHeight(playerPos.x, playerPos.z) 
+            : -zoneDepth;
+        bool isNearSeabed = Mathf.Abs(playerPos.y - floorY) < 16f;
+
+        SpeciesAI bestCandidate = null;
+        float bestScore = float.MinValue;
+
+        for (int i = 0; i < _cachedSceneSpecies.Count; i++)
+        {
+            var ai = _cachedSceneSpecies[i];
+            if (ai == null || ai.Data == null) continue;
+            if (ai.Data.isStationary) continue; // Mobile species required for scanning tutorial
+
+            if (isSecond)
+            {
+                // Must be a different species than Step 4A
+                if (ai == _tutorialSpecies1 || IsStep4ASpecies(ai.Data.speciesId) ||
+                    (_tutorialSpecies1 != null && _tutorialSpecies1.Data != null && ai.Data == _tutorialSpecies1.Data))
+                {
+                    continue;
+                }
+            }
+
+            // 1. Depth alignment score
+            float minD = Mathf.Min(ai.Data.minDepthFraction, ai.Data.maxDepthFraction) * zoneDepth;
+            float maxD = Mathf.Max(ai.Data.minDepthFraction, ai.Data.maxDepthFraction) * zoneDepth;
+
+            float depthScore = 0f;
+            if (playerDepthM >= minD && playerDepthM <= maxD)
+            {
+                // Exact natural depth range match!
+                float dMid = (minD + maxD) * 0.5f;
+                depthScore = 1000f - Mathf.Abs(playerDepthM - dMid);
+            }
+            else
+            {
+                // Outside configured range: penalty based on depth distance
+                float dist = playerDepthM < minD ? (minD - playerDepthM) : (playerDepthM - maxD);
+                depthScore = Mathf.Max(0f, 600f - dist * 10f);
+            }
+
+            // 2. Biome alignment score
+            float biomeScore = 0f;
+            if (ai.Data.preferredBiome == currentBiome)
+            {
+                biomeScore = 300f;
+            }
+            else if (IsCompatibleBiome(ai.Data.preferredBiome, currentBiome))
+            {
+                biomeScore = 150f;
+            }
+
+            // 3. Locomotion archetype suitability
+            float locoScore = 0f;
+            if (ai.Data.locomotionArchetype == LocomotionArchetype.PelagicCruiser ||
+                ai.Data.locomotionArchetype == LocomotionArchetype.PulsatileJetter ||
+                ai.Data.locomotionArchetype == LocomotionArchetype.HoverBurst)
+            {
+                locoScore = 100f;
+            }
+            else if (ai.Data.locomotionArchetype == LocomotionArchetype.Serpentine)
+            {
+                locoScore = 60f;
+            }
+            else if (ai.Data.locomotionArchetype == LocomotionArchetype.BenthicFollower)
+            {
+                locoScore = isNearSeabed ? 80f : -250f;
+            }
+
+            float totalScore = depthScore + biomeScore + locoScore;
+            if (totalScore > bestScore)
+            {
+                bestScore = totalScore;
+                bestCandidate = ai;
+            }
+        }
+
+        // Secondary fallback if isSecond candidate wasn't found
+        if (isSecond && bestCandidate == null)
+        {
+            foreach (var ai in _cachedSceneSpecies)
+            {
+                if (ai != null && ai.Data != null && !ai.Data.isStationary &&
+                    ai != _tutorialSpecies1 && !IsStep4ASpecies(ai.Data.speciesId))
+                {
+                    bestCandidate = ai;
+                    break;
+                }
+            }
+        }
+
+        if (bestCandidate == null && _cachedSceneSpecies.Count > 0)
+        {
+            bestCandidate = _cachedSceneSpecies[0];
+        }
+
+        return bestCandidate;
+    }
+
+    private static bool IsCompatibleBiome(BiomeBand a, BiomeBand b)
+    {
+        if (a == b) return true;
+        if ((a == BiomeBand.Hard && b == BiomeBand.Rock) || (a == BiomeBand.Rock && b == BiomeBand.Hard)) return true;
+        if ((a == BiomeBand.Soft && b == BiomeBand.OpenWater) || (a == BiomeBand.OpenWater && b == BiomeBand.Soft)) return true;
+        return false;
+    }
+
     private void EnsureTutorialSpecies(bool isSecond = false)
     {
+        var player = FindFirstObjectByType<PlayerMovement>();
+        Vector3 playerPos = player != null ? player.transform.position : Vector3.zero;
+
         if (!isSecond)
         {
+            if (_tutorialSpecies1 == null || !_tutorialSpecies1.gameObject.activeSelf)
+            {
+                _tutorialSpecies1 = SelectBestTutorialSpecies(isSecond: false, playerPos);
+            }
+
             if (_tutorialSpecies1 != null)
             {
-                PositionTutorialEntity(_tutorialSpecies1.gameObject, 28f, 1f);
-                return;
+                PositionTutorialEntity(_tutorialSpecies1.gameObject, 26f, 1.5f);
             }
         }
         else
         {
-            // Pick an unscanned or distinct species if _tutorialSpecies2 is null, matches _tutorialSpecies1, or matches Step 4A species
             if (_tutorialSpecies2 == null || _tutorialSpecies2 == _tutorialSpecies1 || 
                 (_tutorialSpecies2.Data != null && IsStep4ASpecies(_tutorialSpecies2.Data.speciesId)))
             {
-                var allAI = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                foreach (var ai in allAI)
-                {
-                    if (ai != null && ai != _tutorialSpecies1 && 
-                        (ai.Data == null || !IsStep4ASpecies(ai.Data.speciesId)))
-                    {
-                        _tutorialSpecies2 = ai;
-                        break;
-                    }
-                }
+                _tutorialSpecies2 = SelectBestTutorialSpecies(isSecond: true, playerPos);
             }
 
             if (_tutorialSpecies2 != null)
             {
                 PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
-                return;
             }
-        }
-
-        var allAIScene = FindObjectsByType<SpeciesAI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        if (!isSecond && allAIScene.Length > 0)
-        {
-            _tutorialSpecies1 = allAIScene[0];
-            PositionTutorialEntity(_tutorialSpecies1.gameObject, 28f, 1f);
-            return;
-        }
-        else if (isSecond && allAIScene.Length > 1)
-        {
-            foreach (var ai in allAIScene)
-            {
-                if (ai != null && ai != _tutorialSpecies1 && (ai.Data == null || !IsStep4ASpecies(ai.Data.speciesId)))
-                {
-                    _tutorialSpecies2 = ai;
-                    PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
-                    return;
-                }
-            }
-            _tutorialSpecies2 = allAIScene[1];
-            PositionTutorialEntity(_tutorialSpecies2.gameObject, 22f, 2f);
-            return;
         }
     }
 

@@ -266,22 +266,116 @@ public class TutorialArrowUI : MonoBehaviour
         _sonarLegendRoot.SetActive(false);
     }
 
+    /// <summary>
+    /// Checks whether the tutorial arrow should be suppressed/hidden because a blocking panel, modal, or minigame is currently open.
+    /// Returns true if Shop, Pause, Bestiary (when target is outside Bestiary), minigame, or other blocking dialog is open.
+    /// </summary>
+    public bool IsArrowBlocked()
+    {
+        // 1. Minigame active or slideshow open
+        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+            return true;
+        if (MinigameInstructionOverlay.Instance != null && MinigameInstructionOverlay.Instance.IsOpen)
+            return true;
+
+        // 2. Pause Menu open
+        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            return true;
+
+        // 3. Shop open
+        if (ShopManager.Instance != null && ShopManager.Instance.IsOpen)
+            return true;
+
+        // 4. Bestiary open
+        if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
+        {
+            // If the target is inside the Bestiary (e.g. during Step 5 Bestiary review), Bestiary itself doesn't block it
+            bool targetInsideBestiary = false;
+            if (_hudTargetRect != null)
+            {
+                var bm = BestiaryManager.Instance;
+                if (bm != null && bm.IsTransformInsideBestiary(_hudTargetRect))
+                {
+                    targetInsideBestiary = true;
+                }
+            }
+
+            if (!targetInsideBestiary)
+            {
+                return true;
+            }
+
+            // But if target is inside Bestiary, check if a sub-modal (3D inspection modal or Scientific detail modal) is open
+            if (BestiaryManager.Instance.IsModelInspectionModalOpen || BestiaryManager.Instance.IsDetailModalOpen)
+            {
+                return true;
+            }
+        }
+
+        // 5. Other major full-screen or blocking popups
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialModalOpen)
+            return true;
+        if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen)
+            return true;
+        if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen)
+            return true;
+        if (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen)
+            return true;
+        if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen)
+            return true;
+
+        return false;
+    }
+
     private void Update()
     {
-        // Suppress all tutorial arrows and cards while player is playing a minigame
-        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+        bool blocked = IsArrowBlocked();
+
+        // 1. Sonar Legend Card suppression & unpaused display
+        if (_sonarLegendRoot != null)
+        {
+            bool legendShouldBeVisible = (_legendElapsedUnpaused < LegendFixedDuration);
+            if (blocked || !legendShouldBeVisible)
+            {
+                if (_sonarLegendRoot.activeSelf) _sonarLegendRoot.SetActive(false);
+            }
+            else
+            {
+                if (!_sonarLegendRoot.activeSelf) _sonarLegendRoot.SetActive(true);
+            }
+        }
+
+        // 2. Arrow pointer suppression
+        if (!_isPointing)
         {
             if (_arrowRoot != null && _arrowRoot.activeSelf) _arrowRoot.SetActive(false);
-            if (_sonarLegendRoot != null && _sonarLegendRoot.activeSelf) _sonarLegendRoot.SetActive(false);
             return;
         }
 
-        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+        if (blocked)
         {
+            // Suppress arrow while panel is open, but keep _isPointing true so it resumes when closed
+            if (_arrowRoot != null && _arrowRoot.activeSelf) _arrowRoot.SetActive(false);
             return;
         }
 
-        if (!_isPointing || _arrowRoot == null || !_arrowRoot.activeSelf) return;
+        // If target is inactive in hierarchy, hide arrow
+        if (_hudTargetRect != null && !_hudTargetRect.gameObject.activeInHierarchy)
+        {
+            if (_arrowRoot != null && _arrowRoot.activeSelf) _arrowRoot.SetActive(false);
+            return;
+        }
+        if (_worldTarget != null && !_worldTarget.gameObject.activeInHierarchy)
+        {
+            if (_arrowRoot != null && _arrowRoot.activeSelf) _arrowRoot.SetActive(false);
+            return;
+        }
+
+        // Unblocked and target is active -> ensure arrow is visible
+        if (_arrowRoot != null && !_arrowRoot.activeSelf)
+        {
+            _arrowRoot.SetActive(true);
+        }
 
         Vector2 screenPoint = Vector2.zero;
         float halfW = 0f;
@@ -400,12 +494,6 @@ public class TutorialArrowUI : MonoBehaviour
     /// </summary>
     public void PointAtHUD(RectTransform target, string label, ArrowDirection direction = ArrowDirection.Left, LabelSide labelSide = LabelSide.Default)
     {
-        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
-        {
-            Hide();
-            return;
-        }
-
         EnsureUI();
         if (target == null) return;
 
@@ -418,7 +506,11 @@ public class TutorialArrowUI : MonoBehaviour
         SetLabel(label);
 
         _isPointing = true;
-        _arrowRoot.SetActive(true);
+        bool blocked = IsArrowBlocked();
+        if (_arrowRoot != null)
+        {
+            _arrowRoot.SetActive(!blocked && target.gameObject.activeInHierarchy);
+        }
     }
 
     /// <summary>
@@ -426,12 +518,6 @@ public class TutorialArrowUI : MonoBehaviour
     /// </summary>
     public void PointAtWorld(Transform target, string label, Vector3 offset = default, ArrowDirection direction = ArrowDirection.Down, LabelSide labelSide = LabelSide.Default)
     {
-        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
-        {
-            Hide();
-            return;
-        }
-
         EnsureUI();
         if (target == null) return;
 
@@ -445,7 +531,11 @@ public class TutorialArrowUI : MonoBehaviour
         SetLabel(label);
 
         _isPointing = true;
-        _arrowRoot.SetActive(true);
+        bool blocked = IsArrowBlocked();
+        if (_arrowRoot != null)
+        {
+            _arrowRoot.SetActive(!blocked && target.gameObject.activeInHierarchy);
+        }
     }
 
     /// <summary>
@@ -453,12 +543,6 @@ public class TutorialArrowUI : MonoBehaviour
     /// </summary>
     public void PointAtScreenPosition(Vector2 screenPos, string label, ArrowDirection direction = ArrowDirection.Down, LabelSide labelSide = LabelSide.Default)
     {
-        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
-        {
-            Hide();
-            return;
-        }
-
         EnsureUI();
 
         _hudTargetRect = null;
@@ -471,7 +555,11 @@ public class TutorialArrowUI : MonoBehaviour
         SetLabel(label);
 
         _isPointing = true;
-        _arrowRoot.SetActive(true);
+        bool blocked = IsArrowBlocked();
+        if (_arrowRoot != null)
+        {
+            _arrowRoot.SetActive(!blocked);
+        }
     }
 
     private void ConfigureDirectionLayout(ArrowDirection direction, LabelSide labelSide = LabelSide.Default)
@@ -566,7 +654,7 @@ public class TutorialArrowUI : MonoBehaviour
         if (visible)
         {
             _legendElapsedUnpaused = 0f;
-            _sonarLegendRoot.SetActive(true);
+            _sonarLegendRoot.SetActive(!IsArrowBlocked());
             if (_legendHideCoroutine != null) StopCoroutine(_legendHideCoroutine);
             _legendHideCoroutine = StartCoroutine(AutoHideLegendRoutine(LegendFixedDuration));
         }
@@ -591,7 +679,7 @@ public class TutorialArrowUI : MonoBehaviour
     {
         while (_legendElapsedUnpaused < delay)
         {
-            if (PauseMenuUI.Instance == null || !PauseMenuUI.Instance.IsPaused)
+            if (!IsArrowBlocked())
             {
                 _legendElapsedUnpaused += Time.unscaledDeltaTime;
             }

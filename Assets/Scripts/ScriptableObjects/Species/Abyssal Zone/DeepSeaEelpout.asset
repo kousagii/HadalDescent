@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: DeepSeaEelpout
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: deep_sea_eelpout_001
+  commonName: "Deep-sea Eelpout"
+  scientificName: "Pachycara priedei"
+  taxonomicClass: 0
+  zoneIndex: 3
+  habitat: "Deep seafloor (reaches about 4,275 m)"
+  depthRangeText: "reaches about 4,275 m"
+  explorationHint: "Deep seafloor (reaches about 4,275 m). Long, pale body with smooth-looking skin."
+  secondaryZoneIndices: 
+  characteristics: "Long, pale body with smooth-looking skin."
+  ecologicalRole: "Feeds on small animals near the bottom."
+  interestingFact: "The species was named after deep-sea researcher Imants Priede."
+  rdpReward: 125
+  scanDifficulty: 4
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.25
+  instanceCount: 3
+  wanderRadius: 15.0
+  moveSpeed: 1.2
+  fleeSpeed: 2.16
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 1
+  placeholderColor: {r: 0.7, g: 0.65, b: 0.6, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

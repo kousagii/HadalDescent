@@ -159,7 +159,7 @@ public class CinematicSequencer : MonoBehaviour
         skipTxt.color = Color.white; // Pure white text
         skipTxt.alignment = TextAlignmentOptions.Center;
         skipTxt.raycastTarget = false;
-        skipTxt.text = "SKIP TUTORIAL";
+        skipTxt.text = "SKIP OPENING";
 
         // Title Overlay (Center Screen)
         var titleGO = new GameObject("ExpeditionTitleText", typeof(RectTransform), typeof(TextMeshProUGUI));

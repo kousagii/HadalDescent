@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: PhilippineCutthroatEel
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: philippine_cutthroat_eel_001
+  commonName: "Philippine Cutthroat Eel"
+  scientificName: "Ilyophis robinsae"
+  taxonomicClass: 0
+  zoneIndex: 3
+  habitat: "Deep water off the Philippines (up to 4,800 m)"
+  depthRangeText: "up to 4,800 m"
+  explorationHint: "Deep water off the Philippines (up to 4,800 m). Long, narrow eel-like body with a small head."
+  secondaryZoneIndices: 
+  characteristics: "Long, narrow eel-like body with a small head."
+  ecologicalRole: "Feeds on small deep-water animals."
+  interestingFact: "FishBase specifically records the species off the Philippines."
+  rdpReward: 125
+  scanDifficulty: 4
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.45
+  instanceCount: 3
+  wanderRadius: 25.0
+  moveSpeed: 1.8
+  fleeSpeed: 3.24
+  fleeRange: 10
+  returnThreshold: 37.5
+  turnSpeed: 65
+  locomotionArchetype: 5
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 3
+  placeholderColor: {r: 0.35, g: 0.33, b: 0.32, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

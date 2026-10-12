@@ -311,7 +311,7 @@ To complement your reusable rock starter pack, here is the curated production ch
 - **Month 1: Systems Integration & Data Setup (COMPLETED)**
   - `EnvPropSet` connected with `BiomeBand` filtering.
   - `SunlightProps.asset` and `TwilightProps.asset` populated.
-  - All 95 species defined in `SpeciesRegistry.asset` and species definitions.
+  - Core 32 species defined in `SpeciesRegistry.asset` across Zone 0 (15) and Zone 1 (17); remaining 63 species scheduled for Zones 2–4 in future production.
   - Procedural terrain and dynamic atmospheric lighting verified.
 - **Month 2: Sunlight Polish & Twilight Props (Blender)**
   - Model 3 core Twilight biological props: `prop_twi_coldcoral_bush`, `prop_twi_glass_vase_sponge`, and `prop_twi_silt_mound`.
@@ -344,9 +344,9 @@ To resolve the academic adviser critique ("environment looks boring") and transf
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                    ADVANCED ECOLOGICAL IMMERSION ARCHITECTURE                          │
 ├────────────────────────────┬─────────────────────────────┬─────────────────────────────┤
-│ 1. Natural Scale Variation │ 2. Population Multiplier    │ 3. Social Pod Spawning      │
-│    • Base 4.0 → 3.38 - 4.40│    • 2x - 3x spawn count    │    • Bottlenose Dolphin Pods│
-│    • Axis jitter (max ~0.25│    • High-density marine life│   • Clownfish/Anemone Home  │
+│ 1. Natural Scale Variation │ 2. Base Species Population  │ 3. Social Pods & Symbiosis  │
+│    • Uniform 0.75x - 1.25x │    • 1:1 instanceCount base │    • Bottlenose Dolphin Pods│
+│    • Cubic bell curve      │    • 55 fauna in Zone 0     │    • Biome-clamped openwater│
 ├────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
 │ 4. "Oasis vs Desert" Biome │ 5. Vertical Pinnacles (12m+)│ 6. Silhouette Fog Horizon   │
 │    • 40% denser coral beds │    • Non-uniform rock spires│    • 40m - 70m silhouettes  │
@@ -354,25 +354,26 @@ To resolve the academic adviser critique ("environment looks boring") and transf
 └────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
 ```
 
-### A. Natural Scale & Individual Proportion Variance
+### A. Natural Scale Variation (Cubic Bell Curve Distribution)
 In nature, organisms of the same species are never identical clones. In [`SpeciesData.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/ScriptableObjects/Species/SpeciesData.cs) and [`SpeciesSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/SpeciesSpawner.cs):
-* **Uniform Size Range:** Sampled per instance across `uniformScaleRange` ($[0.875, 1.0625]$ by default). For Indo-Pacific Bottlenose Dolphins with a base authoring scale of $(4.0, 4.0, 4.0)$, individual instances spawn between $3.38\text{m}$ and $4.40\text{m}$, representing juveniles, mature adults, and dominant alphas.
-* **Organic Axis Jitter (Non-Uniform Proportions):** Subtle independent offsets on $X, Y, Z$ within `maxAxisVariance` ($\pm 3.5\%$) yield slightly stockier, leaner, or longer individuals while mathematically bounding the maximum inter-axis difference to $\le 0.28\text{ units}$ (average $0.14\text{ units}$). Silhouettes remain anatomically authentic without any visual distortion.
-* **Locomotion & Contact Interplay:** Applied directly to `go.transform.localScale` before calling `SetupMobile` / `SetupStationary`. `CreatureLocomotion.cs` automatically caches the scaled transform so procedural swimming pulses and undulations scale proportionately, while `AdjustContactHeight()` measures the true scaled mesh bounds for zero-gap seabed planting.
+* **Uniform Size Range:** Sampled per instance between `globalMinScale` ($0.75\text{x}$) and `globalMaxScale` ($1.25\text{x}$) with a cubic distribution curvature (`scaleDistributionCurvature = 3`). This produces a smooth biological bell curve clustering around standard adult size ($1.0\text{x}$) while yielding natural juveniles and elder specimens.
+* **Physics Collider Stability:** Scaling is kept strictly uniform across $X, Y, Z$ (`Vector3.one * scaleFactor`) to eliminate non-uniform collider distortion and prevent physics jitter against terrain and props.
+* **Locomotion & Contact Interplay:** Applied directly to `go.transform.localScale` before calling `SetupMobile` / `SetupStationary`. `CreatureLocomotion.cs` caches the scaled transform so procedural swimming pulses and undulations scale proportionately, while `AdjustContactHeight()` measures the true scaled mesh bounds for zero-gap seabed planting.
 
-### B. Global Population Multiplier (Double / Triple Density)
-* **`spawnMultiplier` (Slider: 1x to 4x, Default: 2x):** Multiplies `data.instanceCount` dynamically at runtime in [`SpeciesSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/SpeciesSpawner.cs).
-* **Population Scale:** In Zone 0 (Sunlight Zone), total fauna expands from ~45 individuals to ~90 (2x) or ~135 (3x) specimens.
-* **Performance Safeguards:** Spacing threshold `minSeparation` is adjusted to $3.5\text{m}$, and all spawned creatures are registered with `DistanceCullingManager.cs` to ensure mobile devices maintain smooth 60 FPS.
+### B. Base Species Population Model
+* **Direct ScriptableObject Authority:** In [`SpeciesSpawner.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Managers/SpeciesSpawner.cs), the spawned population is derived strictly from `data.instanceCount` without arbitrary multipliers (`targetCount = Mathf.Max(1, data.instanceCount)`).
+* **Population Scale:** In Zone 0 (Sunlight Zone), total fauna consists of exactly 55 specimens across 15 species (e.g. 3 Dolphins, 2 Sharks, 6 Clownfish, 4 Anemones, 6 Fan Corals). In Zone 1 (Twilight Zone), total fauna consists of 65 specimens across 17 species.
+* **Performance Safeguards:** Spacing threshold `minSeparation` is maintained at $3.5\text{m}$, and all spawned creatures are registered with `DistanceCullingManager.cs` to ensure mobile devices maintain smooth 60 FPS.
 
-### C. Idea B: Social Dolphin Pod Spawning & Clownfish Symbiosis
+### C. Social Dolphin Pod Spawning & Biome-Constrained Pelagic Roaming
 * **Bottlenose Dolphin Social Pods:**
-  * When spawning dolphins (`dolphin_001`), `SpawnDolphinPods()` establishes cohesive pods of 3 to 4 individuals rather than solitary wanderers.
-  * **Leader Spawning:** Strictly obeys depth range ($1\text{m} - 50\text{m}$, `0.005 - 0.25` depth fraction), OpenWater biome, and ground clearance ($> 2.5\text{m}$).
+  * When spawning dolphins (`dolphin_001`), `SpawnDolphinPods()` establishes cohesive pods of 3 individuals cruising in loose formation within deep open water.
+  * **Leader Spawning:** Strictly obeys depth range ($1\text{m} - 50\text{m}$, `0.005 - 0.25` depth fraction), `OpenWater` biome, and ground clearance ($> 5.5\text{m}$).
   * **Companion Formation:** Pod companions spawn within a $5.5\text{m} - 15.0\text{m}$ horizontal radius with compressed vertical depth variance ($\pm 2.0\text{m}$), aligned to the leader's cruising heading ($\pm 25^\circ$) with $\ge 3.2\text{m}$ individual clearance.
-  * **Shared Wandering Centroid:** Companions receive the leader's position as their `wanderCenter` in `SpeciesAI.cs`, ensuring the entire pod cruises, feeds, and turns together across the same territory.
+  * **Shared Wandering Centroid & Habitat Fencing:** In [`SpeciesAI.cs`](file:///c:/Unity/HadalDescent/Assets/Scripts/Creatures/SpeciesAI.cs), `IsValidPelagicBiome()` continuously verifies candidate wander headings against `TerrainGenerator.GetBiomeAt()`. Open-water cruisers automatically avoid shallow reef plateaus ($Y > -30\text{m}$) and `BiomeBand.Hard` (Coral Reef), while runtime habitat guards steer drifting creatures back into deep open water.
+  * **Calibrated Territory:** Dolphin `wanderRadius` is set to $55\text{m}$ (with $75\text{m}$ return threshold), ensuring pods roam their natural pelagic territory without trespassing onto coastal lagoons or shallow reefs.
 * **Clownfish & Anemone Symbiosis:**
-  * Uses recorded `_anemonePositions` to spawn Clownfish hovering directly above host Sea Anemones ($0.6\text{m} - 2.2\text{m}$ horizontal, $0.8\text{m} - 2.2\text{m}$ vertical), creating authentic Philippine coral reef mutualism.
+  * Uses recorded `_anemonePositions` to spawn Clownfish hovering directly above host Sea Anemones ($0.6\text{m} - 2.2\text{m}$ horizontal, $0.8\text{m} - 2.2\text{m}$ vertical), creating authentic Philippine coral reef mutualism across the full 0–200m depth capability of Bubble-tip Anemones.
 
 ### D. Idea A: "Oasis vs. Desert" Biome Density Contrast
 * **Vibrant Coral Oases (Hard Biome / Reef Plateaus):**

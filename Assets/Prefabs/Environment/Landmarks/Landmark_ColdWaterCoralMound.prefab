@@ -238,7 +238,7 @@ GameObject:
   - component: {fileID: 6350555312135727551}
   m_Layer: 0
   m_Name: Landmark_ColdWaterCoralMound
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -326,6 +326,8 @@ MonoBehaviour:
     currents.
   rdpReward: 100
   habitatPhoto: {fileID: 0}
+  _targetBiome: 2
+  _citationSource: NOAA Coral Reef Conservation Program / Smithsonian Ocean Portal
 --- !u!1 &6745562398873996894
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,16 +3,43 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Procedural VFX for Zone 0 (Sunlight Zone):
-///   1. Sunlit Godrays: Angled light shafts descending from the surface (Y=0 down to Y=-60m)
-///      with gentle caustic wave oscillation.
-///   2. Plankton / Marine Snow: Floating particulate dust simulating in a sphere around the player
-///      using Unity's ParticleSystem with gentle noise drift.
+/// Procedural VFX and Atmosphere for Zone 0 (Sunlight Zone):
+///   1. Water Surface Plane (Y = 0m):
+///      - Generates an infinite rolling ocean surface dividing water from open air.
+///      - Double-sided geometry: glistening ocean plane from above, sunlit caustics ceiling from below.
+///   2. Above-Water Atmosphere & Skybox Transition (Y >= 0m):
+///      - Smoothly transitions from murky underwater fog (#2E84B8, 25-140m) to radiant sunny open sky
+///        (#70B5F9, 140-700m clear visibility).
+///      - Switches Camera clearFlags to daytime Skybox (Skybox_Daytime) with glowing sun disc and blue atmosphere.
+///      - Shifting ambient light to warm sunny daylight.
+///   3. Sunlit Godrays:
+///      - Angled light shafts descending from the surface (Y=0 down into the deep) with gentle wave oscillation.
+///      - Fades out dynamically when surfaced above water.
+///   4. Marine Snow / Plankton:
+///      - Ambient drifting particulate in water column; stops emitting when breaching into open air.
 /// </summary>
 public class SunlightAtmosphereVFX : MonoBehaviour
 {
     private static SunlightAtmosphereVFX _instance;
     public static SunlightAtmosphereVFX Instance => _instance;
+
+    [Header("Water Surface Settings (Y = 0m)")]
+    [SerializeField] private float waterSize = 800f;
+    [SerializeField] private int   waterGridResolution = 40;
+    [SerializeField] private float waveSpeed = 1.25f;
+    [SerializeField] private float waveHeight = 0.18f;
+    [SerializeField] private float waveFrequency = 0.06f;
+    [SerializeField] private Color waterSurfaceColor = new Color(0.12f, 0.56f, 0.76f, 0.70f);
+    [SerializeField] private Color waterUndersideColor = new Color(0.25f, 0.72f, 0.95f, 0.20f);
+
+    [Header("Surface / Sky Transition Settings")]
+    [SerializeField] private float surfaceThresholdY = 0.0f;
+    [SerializeField] private float transitionSpan = 0.5f;
+    [SerializeField] private Color skyFogColor = new Color(0.62f, 0.82f, 0.98f, 1.0f);
+    [SerializeField] private Color skyAmbientColor = new Color(0.96f, 0.95f, 0.90f, 1.0f);
+    [SerializeField] private Color skyZenithColor = new Color(0.42f, 0.70f, 0.96f, 1.0f);
+    [SerializeField] private float skyFogStart = 140f;
+    [SerializeField] private float skyFogEnd = 700f;
 
     [Header("Godrays Settings")]
     [SerializeField] private int   godrayCount = 10;
@@ -30,11 +57,27 @@ public class SunlightAtmosphereVFX : MonoBehaviour
     [SerializeField] private float sphereRadius = 22f;
 
     private Transform      _playerTransform;
+    private Camera         _mainCam;
     private ParticleSystem _planktonPS;
     private GameObject     _godraysRoot;
     private Transform[]    _rayPillars;
     private float[]        _rayPhases;
     private Material       _rayMat;
+
+    // Water surface runtime
+    private GameObject     _waterPlaneGO;
+    private Mesh           _waterMesh;
+    private Vector3[]      _waterBaseVerts;
+    private Vector3[]      _waterDisplacedVerts;
+    private Material       _waterMat;
+
+    // Skybox & Atmosphere transition runtime
+    private Material       _skyboxMat;
+    private Color          _underwaterFogColor = new Color(0.18f, 0.52f, 0.72f, 1f);
+    private float          _underwaterFogStart = 25f;
+    private float          _underwaterFogEnd   = 140f;
+    private Color          _underwaterAmbient  = new Color(0.12f, 0.28f, 0.40f, 1f);
+    private float          _currentBlend = 0f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void InitSceneListener()
@@ -73,8 +116,9 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         {
             _instance.gameObject.SetActive(true);
             _instance.FindPlayerSub();
-            if (_instance._planktonPS == null) _instance.CreatePlanktonParticleSystem();
-            if (_instance._godraysRoot == null) _instance.CreateGodrayLightShafts();
+            if (_instance._planktonPS == null)   _instance.CreatePlanktonParticleSystem();
+            if (_instance._godraysRoot == null)  _instance.CreateGodrayLightShafts();
+            if (_instance._waterPlaneGO == null) _instance.CreateWaterSurfacePlane();
             return;
         }
 
@@ -83,8 +127,9 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         {
             _instance = existing;
             _instance.FindPlayerSub();
-            if (_instance._planktonPS == null) _instance.CreatePlanktonParticleSystem();
-            if (_instance._godraysRoot == null) _instance.CreateGodrayLightShafts();
+            if (_instance._planktonPS == null)   _instance.CreatePlanktonParticleSystem();
+            if (_instance._godraysRoot == null)  _instance.CreateGodrayLightShafts();
+            if (_instance._waterPlaneGO == null) _instance.CreateWaterSurfacePlane();
             return;
         }
 
@@ -107,24 +152,32 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         }
         _instance = this;
 
-        // Ensure rays remain soft and ethereal (never blinding) even with old serialized scene values
         if (surfaceRayOpacity > 0.15f) surfaceRayOpacity = 0.08f;
         if (deepRayOpacity > 0.05f)    deepRayOpacity = 0.02f;
-    }
-
-    private void OnDestroy()
-    {
-        if (_instance == this)
-        {
-            _instance = null;
-        }
     }
 
     private void Start()
     {
         FindPlayerSub();
+        CacheInitialAtmosphere();
+        LoadSkyboxMaterial();
+        CreateWaterSurfacePlane();
         CreatePlanktonParticleSystem();
         CreateGodrayLightShafts();
+    }
+
+    private void OnDestroy()
+    {
+        RestoreInitialAtmosphere();
+
+        if (_waterPlaneGO != null) Destroy(_waterPlaneGO);
+        if (_waterMesh != null) Destroy(_waterMesh);
+        if (_waterMat != null) Destroy(_waterMat);
+
+        if (_instance == this)
+        {
+            _instance = null;
+        }
     }
 
     private void FindPlayerSub()
@@ -132,6 +185,47 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         var pm = FindFirstObjectByType<PlayerMovement>();
         if (pm != null) _playerTransform = pm.transform;
         else if (Camera.main != null) _playerTransform = Camera.main.transform;
+
+        if (_mainCam == null)
+            _mainCam = Camera.main ?? FindFirstObjectByType<Camera>();
+    }
+
+    private void CacheInitialAtmosphere()
+    {
+        if (RenderSettings.fog)
+        {
+            _underwaterFogColor = RenderSettings.fogColor;
+            _underwaterFogStart = RenderSettings.fogStartDistance > 0f ? RenderSettings.fogStartDistance : 25f;
+            _underwaterFogEnd   = RenderSettings.fogEndDistance > 0f   ? RenderSettings.fogEndDistance   : 140f;
+            _underwaterAmbient  = RenderSettings.ambientLight;
+        }
+    }
+
+    private void LoadSkyboxMaterial()
+    {
+        _skyboxMat = Resources.Load<Material>("Materials/Skybox_Daytime");
+        if (_skyboxMat == null)
+        {
+            _skyboxMat = Resources.Load<Material>("Skybox_Daytime");
+        }
+    }
+
+    private void RestoreInitialAtmosphere()
+    {
+        if (!Application.isPlaying) return;
+
+        RenderSettings.skybox           = null;
+        RenderSettings.fogColor         = _underwaterFogColor;
+        RenderSettings.fogStartDistance = _underwaterFogStart;
+        RenderSettings.fogEndDistance   = _underwaterFogEnd;
+        RenderSettings.ambientLight     = _underwaterAmbient;
+
+        if (_mainCam != null && _mainCam.targetTexture == null)
+        {
+            _mainCam.clearFlags      = CameraClearFlags.SolidColor;
+            _mainCam.backgroundColor = _underwaterFogColor;
+            _mainCam.farClipPlane    = _underwaterFogEnd + 35f;
+        }
     }
 
     private void Update()
@@ -142,13 +236,21 @@ public class SunlightAtmosphereVFX : MonoBehaviour
             return;
         }
 
-        // 1. Anchor plankton simulation around player submarine
+        // 1. Water surface follows player horizontally so the ocean is infinite
+        if (_waterPlaneGO != null)
+        {
+            Vector3 pPos = _playerTransform.position;
+            _waterPlaneGO.transform.position = new Vector3(pPos.x, surfaceThresholdY, pPos.z);
+            AnimateWaterWaves();
+        }
+
+        // 2. Anchor plankton simulation around player submarine
         if (_planktonPS != null)
         {
             _planktonPS.transform.position = _playerTransform.position;
         }
 
-        // 2. Horizontally follow player submarine so godrays always stream down overhead
+        // 3. Horizontally follow player submarine so godrays always stream down overhead
         if (_godraysRoot != null)
         {
             Vector3 pPos = _playerTransform.position;
@@ -159,19 +261,22 @@ public class SunlightAtmosphereVFX : MonoBehaviour
             _godraysRoot.transform.position = rootPos;
         }
 
-        // 3. Dynamic Depth Opacity: Sunlight rays fade gracefully the deeper the player descends
+        // 4. Dynamic Depth Opacity: Godrays fade in deep water AND vanish above water surface
         if (_rayMat != null)
         {
             float playerDepth = Mathf.Abs(_playerTransform.position.y);
             float depthFactor = Mathf.Clamp01(playerDepth / 150f);
-            // Smooth natural attenuation from bright surface to subtle deep glow
             float depthAlpha = Mathf.Lerp(surfaceRayOpacity, deepRayOpacity, depthFactor);
+
+            // Attenuate to 0 when surfaced in the open air
+            depthAlpha *= Mathf.Clamp01(1f - _currentBlend);
+
             Color dynColor = new Color(rayColor.r, rayColor.g, rayColor.b, depthAlpha);
             _rayMat.SetColor("_BaseColor", dynColor);
             _rayMat.SetColor("_Color", dynColor);
         }
 
-        // 4. Gentle caustic wave oscillation for godrays
+        // 5. Gentle caustic wave oscillation for godrays
         if (_rayPillars != null)
         {
             float t = Time.time;
@@ -182,6 +287,250 @@ public class SunlightAtmosphereVFX : MonoBehaviour
                 float tilt = Mathf.Cos(t * 0.40f + _rayPhases[i]) * 1.8f;
                 _rayPillars[i].localRotation = Quaternion.Euler(14f + tilt, _rayPhases[i] * Mathf.Rad2Deg + sway, 0f);
             }
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // Execute atmosphere and camera updates in LateUpdate so camera position is finalized
+        UpdateAtmosphereTransition();
+    }
+
+    // -----------------------------------------------------------------------
+    // Water Surface Plane Generation & Wave Displacement
+    // -----------------------------------------------------------------------
+
+    private void CreateWaterSurfacePlane()
+    {
+        if (_waterPlaneGO != null) return;
+
+        _waterPlaneGO = new GameObject("OceanWaterSurface_Y0");
+        _waterPlaneGO.transform.SetParent(transform, false);
+        _waterPlaneGO.transform.position = new Vector3(0f, surfaceThresholdY, 0f);
+
+        var mf = _waterPlaneGO.AddComponent<MeshFilter>();
+        var mr = _waterPlaneGO.AddComponent<MeshRenderer>();
+
+        _waterMesh = GenerateWaterMesh(waterSize, waterGridResolution);
+        mf.sharedMesh = _waterMesh;
+
+        _waterBaseVerts = _waterMesh.vertices;
+        _waterDisplacedVerts = new Vector3[_waterBaseVerts.Length];
+        System.Array.Copy(_waterBaseVerts, _waterDisplacedVerts, _waterBaseVerts.Length);
+
+        // Attempt loading project material, fallback to procedural double-sided transparent material
+        Material loadedMat = Resources.Load<Material>("Materials/OceanSurfaceWater");
+        if (loadedMat == null) loadedMat = Resources.Load<Material>("OceanSurfaceWater");
+
+        if (loadedMat != null)
+        {
+            _waterMat = Instantiate(loadedMat);
+            _waterMat.name = "OceanSurfaceWater_Instance";
+            _waterMat.SetColor("_BaseColor", waterSurfaceColor);
+        }
+        else
+        {
+            _waterMat = CreateDefaultWaterMaterial();
+        }
+
+        mr.sharedMaterial = _waterMat;
+        mr.shadowCastingMode = ShadowCastingMode.Off;
+        mr.receiveShadows = true;
+    }
+
+    private Mesh GenerateWaterMesh(float size, int res)
+    {
+        int vertsPerSide = (res + 1) * (res + 1);
+        int totalVerts = vertsPerSide * 2; // Double sided: top and bottom
+
+        Vector3[] verts   = new Vector3[totalVerts];
+        Vector2[] uvs     = new Vector2[totalVerts];
+        Vector3[] normals = new Vector3[totalVerts];
+        Color[]   colors  = new Color[totalVerts];
+        int[]     tris    = new int[res * res * 6 * 2];
+
+        float halfSize = size * 0.5f;
+        float step = size / res;
+
+        // Top side (facing +Y, looking down from open air)
+        for (int z = 0; z <= res; z++)
+        {
+            for (int x = 0; x <= res; x++)
+            {
+                int i = z * (res + 1) + x;
+                float px = -halfSize + x * step;
+                float pz = -halfSize + z * step;
+                verts[i] = new Vector3(px, 0f, pz);
+                uvs[i]   = new Vector2((float)x / res * 16f, (float)z / res * 16f);
+                normals[i] = Vector3.up;
+                colors[i]  = waterSurfaceColor;
+            }
+        }
+
+        // Bottom side (facing -Y, looking up from underwater)
+        int offset = vertsPerSide;
+        for (int z = 0; z <= res; z++)
+        {
+            for (int x = 0; x <= res; x++)
+            {
+                int i = offset + z * (res + 1) + x;
+                float px = -halfSize + x * step;
+                float pz = -halfSize + z * step;
+                verts[i] = new Vector3(px, 0f, pz);
+                uvs[i]   = new Vector2((float)x / res * 16f, (float)z / res * 16f);
+                normals[i] = Vector3.down;
+                colors[i]  = waterUndersideColor;
+            }
+        }
+
+        int t = 0;
+        for (int z = 0; z < res; z++)
+        {
+            for (int x = 0; x < res; x++)
+            {
+                int bl = z * (res + 1) + x;
+                int br = bl + 1;
+                int tl = bl + (res + 1);
+                int tr = tl + 1;
+
+                // Top side quads
+                tris[t++] = bl;
+                tris[t++] = tl;
+                tris[t++] = br;
+                tris[t++] = br;
+                tris[t++] = tl;
+                tris[t++] = tr;
+
+                // Bottom side quads
+                int blB = offset + bl;
+                int brB = offset + br;
+                int tlB = offset + tl;
+                int trB = offset + tr;
+
+                tris[t++] = blB;
+                tris[t++] = brB;
+                tris[t++] = tlB;
+                tris[t++] = brB;
+                tris[t++] = trB;
+                tris[t++] = tlB;
+            }
+        }
+
+        Mesh mesh = new Mesh();
+        mesh.name = "OceanSurfaceGrid";
+        mesh.vertices  = verts;
+        mesh.uv        = uvs;
+        mesh.normals   = normals;
+        mesh.colors    = colors;
+        mesh.triangles = tris;
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    private void AnimateWaterWaves()
+    {
+        if (_waterMesh == null || _waterBaseVerts == null || _waterDisplacedVerts == null) return;
+
+        float t = Time.time * waveSpeed;
+        int half = _waterBaseVerts.Length / 2;
+
+        for (int i = 0; i < half; i++)
+        {
+            Vector3 b = _waterBaseVerts[i];
+            float wave = Mathf.Sin(b.x * waveFrequency + t) * waveHeight * 0.6f
+                       + Mathf.Cos(b.z * (waveFrequency * 1.3f) + t * 0.85f) * waveHeight * 0.4f;
+
+            _waterDisplacedVerts[i]        = new Vector3(b.x, wave, b.z);
+            _waterDisplacedVerts[i + half] = new Vector3(b.x, wave, b.z);
+        }
+
+        _waterMesh.vertices = _waterDisplacedVerts;
+    }
+
+    private Material CreateDefaultWaterMaterial()
+    {
+        Shader s = Shader.Find("Universal Render Pipeline/Lit")
+                ?? Shader.Find("Standard");
+
+        Material mat = new Material(s);
+        mat.name = "ProceduralOceanWaterMat";
+        mat.SetFloat("_Surface", 1f); // Transparent
+        mat.SetFloat("_Blend", 0f);   // Alpha blend
+        mat.SetInt("_Cull", 0);       // Double-sided
+        mat.SetFloat("_Smoothness", 0.94f);
+        mat.SetFloat("_Metallic", 0.15f);
+        mat.SetColor("_BaseColor", waterSurfaceColor);
+        mat.renderQueue = (int)RenderQueue.Transparent - 10;
+        return mat;
+    }
+
+    // -----------------------------------------------------------------------
+    // Atmosphere & Sky Dynamic Height Transition
+    // -----------------------------------------------------------------------
+
+    private void UpdateAtmosphereTransition()
+    {
+        if (_mainCam == null)
+        {
+            _mainCam = Camera.main ?? FindFirstObjectByType<Camera>();
+            if (_mainCam == null) return;
+        }
+
+        float camY = _mainCam.transform.position.y;
+
+        // Calculate blend factor:
+        // camY <= -transitionSpan * 0.5f  => 0.0 (Underwater)
+        // camY >= +transitionSpan * 0.5f  => 1.0 (Surfaced / Open Sky)
+        float targetBlend = Mathf.Clamp01(Mathf.InverseLerp(
+            surfaceThresholdY - transitionSpan * 0.5f,
+            surfaceThresholdY + transitionSpan * 0.5f,
+            camY));
+
+        _currentBlend = Mathf.MoveTowards(_currentBlend, targetBlend, Time.deltaTime * 4.0f);
+
+        // 1. Fog Color, Distances, and Ambient Light
+        Color curFogColor = Color.Lerp(_underwaterFogColor, skyFogColor, _currentBlend);
+        float curFogStart = Mathf.Lerp(_underwaterFogStart, skyFogStart, _currentBlend);
+        float curFogEnd   = Mathf.Lerp(_underwaterFogEnd, skyFogEnd, _currentBlend);
+        Color curAmbient  = Color.Lerp(_underwaterAmbient, skyAmbientColor, _currentBlend);
+
+        RenderSettings.fogColor         = curFogColor;
+        RenderSettings.fogStartDistance = curFogStart;
+        RenderSettings.fogEndDistance   = curFogEnd;
+        RenderSettings.ambientLight     = curAmbient;
+
+        // 2. Camera Background / Skybox
+        if (_mainCam.targetTexture == null)
+        {
+            _mainCam.farClipPlane = Mathf.Lerp(_underwaterFogEnd + 35f, skyFogEnd + 50f, _currentBlend);
+
+            if (camY >= surfaceThresholdY)
+            {
+                // Surfaced into the open atmosphere!
+                if (_skyboxMat != null)
+                {
+                    RenderSettings.skybox = _skyboxMat;
+                    _mainCam.clearFlags   = CameraClearFlags.Skybox;
+                }
+                else
+                {
+                    _mainCam.clearFlags      = CameraClearFlags.SolidColor;
+                    _mainCam.backgroundColor = Color.Lerp(_underwaterFogColor, skyZenithColor, _currentBlend);
+                }
+            }
+            else
+            {
+                // Submerged in the ocean
+                _mainCam.clearFlags      = CameraClearFlags.SolidColor;
+                _mainCam.backgroundColor = curFogColor;
+            }
+        }
+
+        // 3. Suppress marine snow / plankton in the open air
+        if (_planktonPS != null)
+        {
+            var emission = _planktonPS.emission;
+            emission.rateOverTime = spawnRate * (1f - _currentBlend);
         }
     }
 
@@ -200,7 +549,6 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         _planktonPS = psGO.AddComponent<ParticleSystem>();
         var psr = psGO.GetComponent<ParticleSystemRenderer>();
 
-        // Material: soft additive particle material with procedural circular glow texture
         Texture2D glowTex = CreateSoftParticleTexture();
         Material mat = CreateAdditiveMaterial("Mat_Sun_Plankton", new Color(0.85f, 0.98f, 1.0f, 0.85f));
         mat.mainTexture = glowTex;
@@ -208,7 +556,6 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         mat.SetTexture("_MainTex", glowTex);
         psr.material = mat;
 
-        // Main Module
         var main = _planktonPS.main;
         main.maxParticles         = maxParticles;
         main.startLifetime        = new ParticleSystem.MinMaxCurve(5f, 9f);
@@ -221,30 +568,25 @@ public class SunlightAtmosphereVFX : MonoBehaviour
         main.playOnAwake          = true;
         main.loop                 = true;
 
-        // Emission Module
         var emission = _planktonPS.emission;
         emission.rateOverTime = spawnRate;
 
-        // Shape Module: sphere surrounding player
         var shape = _planktonPS.shape;
         shape.shapeType = ParticleSystemShapeType.Sphere;
         shape.radius    = sphereRadius;
 
-        // Velocity over Lifetime: gentle downward drift
         var vol = _planktonPS.velocityOverLifetime;
         vol.enabled = true;
         vol.x = new ParticleSystem.MinMaxCurve(-0.06f, 0.06f);
         vol.y = new ParticleSystem.MinMaxCurve(-0.14f, -0.03f);
         vol.z = new ParticleSystem.MinMaxCurve(-0.06f, 0.06f);
 
-        // Noise Module: fluid organic turbulence
         var noise = _planktonPS.noise;
         noise.enabled   = true;
         noise.strength  = 0.40f;
         noise.frequency = 0.25f;
         noise.scrollSpeed = 0.18f;
 
-        // Color over Lifetime: smooth fade in and fade out
         var col = _planktonPS.colorOverLifetime;
         col.enabled = true;
         Gradient grad = new Gradient();
@@ -308,7 +650,6 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
     private Mesh CreateGodrayMesh()
     {
-        // 8-sided tapered volumetric cylinder/cone with smooth vertical falloff
         int segments = 8;
         int rings = 5;
         int vertCount = segments * rings;
@@ -318,7 +659,6 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
         float[] ringY      = new float[] { 0.0f, -0.18f, -0.48f, -0.78f, -1.0f };
         float[] ringRadii  = new float[] { 0.35f, 0.65f, 1.15f, 1.65f, 2.10f };
-        // Gentle, translucent falloff (max 0.35 alpha on topmost rim instead of 1.0)
         float[] ringAlphas = new float[] { 0.35f, 0.28f, 0.16f, 0.06f, 0.01f };
 
         for (int r = 0; r < rings; r++)
@@ -353,7 +693,6 @@ public class SunlightAtmosphereVFX : MonoBehaviour
                 int botL = nextRStart + s;
                 int botR = nextRStart + nextS;
 
-                // Double sided quads so rays look full from all viewing angles
                 triangles[ti++] = topL; triangles[ti++] = botL; triangles[ti++] = topR;
                 triangles[ti++] = topR; triangles[ti++] = botL; triangles[ti++] = botR;
             }
@@ -379,8 +718,8 @@ public class SunlightAtmosphereVFX : MonoBehaviour
 
         Material mat = new Material(s);
         mat.name = name;
-        mat.SetFloat("_Surface", 1f); // Transparent
-        mat.SetFloat("_Blend", 1f);   // Additive
+        mat.SetFloat("_Surface", 1f);
+        mat.SetFloat("_Blend", 1f);
         mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
         mat.SetInt("_DstBlend", (int)BlendMode.One);
         mat.SetInt("_ZWrite", 0);
@@ -410,7 +749,7 @@ public class SunlightAtmosphereVFX : MonoBehaviour
                 float dy = (y - center) / maxR;
                 float d = Mathf.Sqrt(dx * dx + dy * dy);
                 float a = Mathf.Clamp01(1f - d);
-                a = a * a * (3f - 2f * a); // Smoothstep falloff
+                a = a * a * (3f - 2f * a);
                 tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
             }
         }

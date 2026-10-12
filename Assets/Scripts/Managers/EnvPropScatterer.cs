@@ -499,6 +499,9 @@ public class EnvPropScatterer : MonoBehaviour
         // Ensure collider exists
         EnsureCollider(go);
 
+        // Ensure all environment props and child colliders have the "Environment" tag
+        SetTagRecursive(go, "Environment");
+
         placedPositions.Add(new Vector3(px, floorY, pz));
         return true;
     }
@@ -905,5 +908,13 @@ public class EnvPropScatterer : MonoBehaviour
         go.layer = layer;
         foreach (Transform child in go.transform)
             SetLayerRecursive(child.gameObject, layer);
+    }
+
+    private static void SetTagRecursive(GameObject go, string tag)
+    {
+        if (go == null) return;
+        go.tag = tag;
+        foreach (Transform child in go.transform)
+            SetTagRecursive(child.gameObject, tag);
     }
 }

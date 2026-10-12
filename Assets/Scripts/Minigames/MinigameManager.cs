@@ -271,11 +271,12 @@ public class MinigameManager : MonoBehaviour
 
         _minigameActive = true;
         DisableControls();
+        UIManager.Instance?.SetExplorationHUDVisible(false);
         TutorialArrowUI.Instance?.Hide();
         RadioTextboxUI.Instance?.HideInstant();
 
-        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); AudioManager.Instance?.StopClawSFX(); onSuccess?.Invoke(); };
-        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); AudioManager.Instance?.StopClawSFX(); onFail?.Invoke(); };
+        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onSuccess?.Invoke(); };
+        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onFail?.Invoke(); };
 
         Action startMG3 = () =>
         {

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: PortugueseDogfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: portuguese_dogfish_001
+  commonName: "Portuguese Dogfish"
+  scientificName: "Centroscymnus coelolepis"
+  taxonomicClass: 1
+  zoneIndex: 2
+  habitat: "Deep underwater slopes, 128–3,675 m"
+  depthRangeText: "128–3,675 m"
+  explorationHint: "Deep underwater slopes, 128–3,675 m. Small, dark shark with large eyes."
+  secondaryZoneIndices: 
+  characteristics: "Small, dark shark with large eyes."
+  ecologicalRole: "Hunts and scavenges for deep-sea animals."
+  interestingFact: "It is one of the deepest-living sharks known."
+  rdpReward: 110
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 3
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.9
+  instanceCount: 3
+  wanderRadius: 45.0
+  moveSpeed: 3.0
+  fleeSpeed: 5.4
+  fleeRange: 10
+  returnThreshold: 67.5
+  turnSpeed: 65
+  locomotionArchetype: 0
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 1
+  placeholderColor: {r: 0.25, g: 0.24, b: 0.22, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

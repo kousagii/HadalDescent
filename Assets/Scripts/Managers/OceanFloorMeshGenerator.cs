@@ -41,6 +41,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
     private float[] _heightMap;
     private int     _resX, _resZ;
+    private int     _zoneIndex = -1;
 
     // -----------------------------------------------------------------------
     // Public API
@@ -81,7 +82,10 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
         float h0 = Mathf.Lerp(h00, h10, fx);
         float h1 = Mathf.Lerp(h01, h11, fx);
-        return Mathf.Lerp(h0, h1, fz);
+        float sampled = Mathf.Lerp(h0, h1, fz);
+        if (IsSunlightZone())
+            sampled = Mathf.Min(sampled, -10.0f);
+        return sampled;
     }
 
     /// <summary>
@@ -101,14 +105,24 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         return Vector3.Cross(tangentZ, tangentX).normalized;
     }
 
+    public bool IsSunlightZone()
+    {
+        return (_zoneIndex == 0) ||
+               (ZoneManager.CurrentZoneIndex == 0) ||
+               (_baseY <= -195f && _baseY >= -205f) ||
+               (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Sunlight"));
+    }
+
     /// <summary>
     /// Generate the ocean floor mesh for a zone.
     /// </summary>
     public void Generate(float width, float length, float baseY,
                          float frequency, float amplitude, float seed,
                          float biomeFreq, float biomeSeed,
-                         Material seabedMaterial)
+                         Material seabedMaterial,
+                         int zoneIndex = -1)
     {
+        _zoneIndex = zoneIndex;
         _width     = width;
         _length    = length;
         _baseY     = baseY;
@@ -120,7 +134,8 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         _resX      = resolution;
         _resZ      = resolution;
 
-        // CRITICAL: Ensure the GameObject transform is centered at world origin (0, 0, 0)
+        // CRITICAL: Ensure the GameObject transform is unparented and centered at world origin (0, 0, 0)
+        transform.SetParent(null);
         transform.position   = Vector3.zero;
         transform.rotation   = Quaternion.identity;
         transform.localScale = Vector3.one;
@@ -167,6 +182,8 @@ public class OceanFloorMeshGenerator : MonoBehaviour
                 float worldZ = -meshL * 0.5f + nz * meshL;
 
                 float y = ComputeHeight(worldX, worldZ);
+                if (IsSunlightZone())
+                    y = Mathf.Min(y, -10.0f);
 
                 int idx = z * _resX + x;
                 vertices[idx]   = new Vector3(worldX, y, worldZ);
@@ -217,66 +234,96 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
     /// <summary>
     /// Compute height at a world position.
-    /// Synthesizes broad shallow coral reef plateaus (Depth 10m-30m), reef slopes, and deep basins.
+    /// Synthesizes authentic marine geomorphology with 4 ecological depth tiers:
+    ///   - Tier 1: Shallow Sunlit Reef Platform (Depth 8m-18m) for Cone Snails, Clownfish & Anemones
+    ///   - Tier 2: Mid-Reef Shelf & Terraces (Depth 18m-50m) for Lobsters, Rays, Giant Clams
+    ///   - Tier 3: Drop-Off Wall & Outer Reef Slope (Depth 50m-100m) for Sharks, Dolphins, Squids
+    ///   - Tier 4: Deep Basin Floor & Rolling Dunes (Depth 100m-190m)
     /// </summary>
     private float ComputeHeight(float wx, float wz)
     {
-        // â”€â”€ Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~250m) â”€â”€â”€â”€â”€â”€â”€â”€
-        float macro1 = SmoothNoise(wx, wz, _frequency * 0.6f, _seed, 0f);
-        float macro2 = SmoothNoise(wx, wz, _frequency * 1.0f, _seed, 350f);
+        // ── Domain Warping (Breaks artificial grid alignment; forms natural curved atolls) ──
+        float warpX = (SmoothNoise(wx, wz, _frequency * 0.45f, _seed, 2100f) - 0.5f) * 45f;
+        float warpZ = (SmoothNoise(wx, wz, _frequency * 0.45f, _seed, 2600f) - 0.5f) * 45f;
+        float sampleX = wx + warpX;
+        float sampleZ = wz + warpZ;
+
+        // ── Layer 1: Broad Macro Basin & Reef Banks (Wavelength ~250m) ────────
+        float macro1 = SmoothNoise(sampleX, sampleZ, _frequency * 0.6f, _seed, 0f);
+        float macro2 = SmoothNoise(sampleX, sampleZ, _frequency * 1.0f, _seed, 350f);
         float macro  = macro1 * 0.65f + macro2 * 0.35f;
 
-        // â”€â”€ Layer 2: Reef Mounds & Terraces (Wavelength ~80m) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        float mound1 = SmoothNoise(wx, wz, _frequency * 2.2f, _seed, 700f);
-        float mound2 = SmoothNoise(wx, wz, _frequency * 3.4f, _seed, 1050f);
+        // ── Layer 2: Reef Mounds & Terraces (Wavelength ~80m) ──────────────────
+        float mound1 = SmoothNoise(sampleX, sampleZ, _frequency * 2.2f, _seed, 700f);
+        float mound2 = SmoothNoise(sampleX, sampleZ, _frequency * 3.4f, _seed, 1050f);
         float mound  = mound1 * 0.6f + mound2 * 0.4f;
 
         // Combine macro and mounds
         float rawShape = macro * 0.68f + mound * 0.32f;
 
-        // â”€â”€ Biome Influence (Coral / Hard reef areas strongly elevated) â”€â”€â”€â”€â”€â”€â”€
+        // ── Biome Influence (Coral / Hard reef areas strongly elevated) ───────
         float biomeVal = Mathf.PerlinNoise(
-            wx * _biomeFreq + _biomeSeed,
-            wz * _biomeFreq + _biomeSeed + 50f);
-        float biomeElevation = Mathf.Lerp(-0.10f, 0.18f, biomeVal);
+            sampleX * _biomeFreq + _biomeSeed,
+            sampleZ * _biomeFreq + _biomeSeed + 50f);
+        float biomeElevation = Mathf.Lerp(-0.08f, 0.22f, biomeVal);
         rawShape += biomeElevation;
 
-        // â”€â”€ Contrast Expansion (Overcome Central Limit clustering around 0.5) â”€
-        float contrast = Mathf.InverseLerp(0.24f, 0.76f, rawShape);
+        // ── Contrast Expansion ────────────────────────────────────────────────
+        float contrast = Mathf.InverseLerp(0.22f, 0.78f, rawShape);
         contrast = Mathf.Clamp01(contrast);
 
-        // â”€â”€ Stepped Coral Reef Plateau & Basin Shaping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // Creates 3 distinct zones:
-        // 1. High Coral Reef Plateaus & Atolls (contrast > 0.58) â†’ Depth 10m to 30m
-        // 2. Reef Slopes & Drop-off Walls (0.38 < contrast < 0.58) â†’ Depth 30m to 100m
-        // 3. Sandy Basins & Canyons (contrast < 0.38) â†’ Depth 100m to 180m
+        // ── 4-Tier Ecological Depth Bathymetry Shaping ────────────────────────
         float plateauShape;
-        if (contrast > 0.58f)
+        if (contrast > 0.62f)
         {
-            float t = Mathf.InverseLerp(0.58f, 1.0f, contrast);
-            plateauShape = Mathf.Lerp(0.72f, 0.95f, Mathf.SmoothStep(0f, 1f, t));
+            // Tier 1: Shallow Sunlit Reef Platform (Depth 10m to 18m, Y = -18m to -10m)
+            // Crests at exactly 10m depth (Y = -10m); optimal for Geography Cone Snails (6-17m), Clownfish (1-15m) & Sea Anemones (1-15m)
+            float t = Mathf.InverseLerp(0.62f, 1.0f, contrast);
+            plateauShape = Mathf.Lerp(0.948f, 1.0f, SmoothStepQuintic(t));
         }
-        else if (contrast < 0.38f)
+        else if (contrast > 0.44f)
         {
-            float t = Mathf.InverseLerp(0f, 0.38f, contrast);
-            plateauShape = Mathf.Lerp(0.10f, 0.32f, Mathf.SmoothStep(0f, 1f, t));
+            // Tier 2: Mid-Reef Shelf & Terraces (Depth 18m to 50m, Y = -50m to -18m)
+            // Home to Ornate Spiny Lobsters (1-50m), Blue-spotted Rays (0-20m), Giant Clams, Fan Corals
+            float t = Mathf.InverseLerp(0.44f, 0.62f, contrast);
+            plateauShape = Mathf.Lerp(0.781f, 0.948f, Mathf.SmoothStep(0f, 1f, t));
+        }
+        else if (contrast > 0.26f)
+        {
+            // Tier 3: Drop-Off Wall & Outer Reef Slope (Depth 50m to 100m, Y = -100m to -50m)
+            // Patrol routes for Blacktip Reef Sharks (0-75m), Dolphins (1-50m), Squids (0-100m)
+            float t = Mathf.InverseLerp(0.26f, 0.44f, contrast);
+            plateauShape = Mathf.Lerp(0.521f, 0.781f, Mathf.SmoothStep(0f, 1f, t));
         }
         else
         {
-            float t = Mathf.InverseLerp(0.38f, 0.58f, contrast);
-            plateauShape = Mathf.Lerp(0.32f, 0.72f, Mathf.SmoothStep(0f, 1f, t));
+            // Tier 4: Deep Basin Floor & Rolling Dunes (Depth 100m to 190m, Y = -190m to -100m)
+            float t = Mathf.InverseLerp(0f, 0.26f, contrast);
+            plateauShape = Mathf.Lerp(0.052f, 0.521f, Mathf.SmoothStep(0f, 1f, t));
         }
 
-        // â”€â”€ Layer 3: Gentle Sand Ripples (Micro-scale, low amp) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        float ripple = (SmoothNoise(wx, wz, _frequency * 6f, _seed, 1400f) - 0.5f) * 0.03f;
+        // ── Layer 3: Organic Sediment Micro-Relief (Gentle Sand Dunes & Ripples) ─
+        float ripple = (SmoothNoise(sampleX, sampleZ, _frequency * 6.5f, _seed, 1400f) - 0.5f) * 0.016f;
         plateauShape = Mathf.Clamp01(plateauShape + ripple);
 
-        // â”€â”€ Edge Falloff: Smoothly blends perimeter to baseline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Edge Falloff: Smoothly blends perimeter to baseline ───────────────
         float edgeFade = EdgeFalloff(wx, wz);
         plateauShape *= edgeFade;
 
         // Map normalized [0..1] to world Y
-        return _baseY + plateauShape * _amplitude;
+        // Guaranteed ceiling: highest seabed point reaches at most 10m depth (Y <= -10.0m) in Sunlight Zone
+        bool isSunlight = IsSunlightZone();
+        float maxAllowedSeabedY = isSunlight ? -10.0f : (_baseY + _amplitude);
+        float computedY = _baseY + plateauShape * _amplitude;
+        if (isSunlight)
+            computedY = Mathf.Min(computedY, -10.0f);
+        return Mathf.Min(computedY, maxAllowedSeabedY);
+    }
+
+    private static float SmoothStepQuintic(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return t * t * t * (t * (t * 6f - 15f) + 10f);
     }
 
     /// <summary>

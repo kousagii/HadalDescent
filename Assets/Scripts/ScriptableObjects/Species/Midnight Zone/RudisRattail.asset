@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: RudisRattail
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: rudis_rattail_001
+  commonName: "Rudis Rattail"
+  scientificName: "Coryphaenoides rudis"
+  taxonomicClass: 0
+  zoneIndex: 2
+  habitat: "Deep ocean and seafloor, 600–2,380 m"
+  depthRangeText: "600–2,380 m"
+  explorationHint: "Deep ocean and seafloor, 600–2,380 m. Has a large head and a long, thin tail."
+  secondaryZoneIndices: 
+  characteristics: "Has a large head and a long, thin tail."
+  ecologicalRole: "Eats small animals and food that falls to the seafloor."
+  interestingFact: "It has been recorded from deep waters near the Philippines."
+  rdpReward: 110
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 1
+  minDepthFraction: 0.0
+  maxDepthFraction: 0.55
+  instanceCount: 3
+  wanderRadius: 20.0
+  moveSpeed: 1.8
+  fleeSpeed: 3.24
+  fleeRange: 10
+  returnThreshold: 30.0
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 1
+  placeholderColor: {r: 0.45, g: 0.4, b: 0.38, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

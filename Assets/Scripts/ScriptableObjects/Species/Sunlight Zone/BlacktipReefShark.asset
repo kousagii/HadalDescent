@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: BlacktipReefShark
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: blacktip_shark_001
+  commonName: Blacktip Reef Shark
+  scientificName: Carcharhinus melanopterus
+  taxonomicClass: 1
+  zoneIndex: 0
+  habitat: "Shallow coral reef flats and drop-offs (0\u201375 m)"
+  depthRangeText: "0\u201375 m"
+  explorationHint: "Shallow coral reef flats and drop-offs (0–75 m)"
+  secondaryZoneIndices: 
+  characteristics: Gray-brown body with black-tipped fins.
+  ecologicalRole: Helps control reef fish and cephalopod populations.
+  interestingFact: It can keep swimming to move water over its gills.
+  rdpReward: 50
+  scanDifficulty: 3
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0
+  maxDepthFraction: 0.375
+  instanceCount: 2
+  wanderRadius: 65
+  moveSpeed: 6.5
+  fleeSpeed: 10
+  fleeRange: 12
+  returnThreshold: 85
+  turnSpeed: 35
+  locomotionArchetype: 0
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 1.6
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0.45
+  modelPrefab: {fileID: 9173094734863184733, guid: 5895fdcb73a88b64790e591ba9d0c01c, type: 3}
+  modelYawOffset: 0
+  previewScaleMultiplier: 0.8
+  placeholderShape: 1
+  placeholderColor: {r: 0.4, g: 0.45, b: 0.5, a: 1}
+  placeholderScale: {x: 1.2, y: 3.5, z: 1.2}
+  photo: {fileID: 21300000, guid: 115f5c9c8f67af346a4db6f0284e640b, type: 3}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

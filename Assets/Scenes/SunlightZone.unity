@@ -578,11 +578,19 @@ MonoBehaviour:
   lightRigRoot: {fileID: 1910475324}
   portSpotlight: {fileID: 1242083455}
   starboardSpotlight: {fileID: 186583266}
-  centerSpotlight: {fileID: 898765928}
   cockpitFillLight: {fileID: 793941964}
   lightToggleSFX: {fileID: 8300000, guid: d5c0f48c643697544a0caad65319fbe6, type: 3}
-  showVolumetricBeamCone: 1
-  beamConeOpacity: 0.12
+  lampIntensityMultiplier: 1.3
+  useLightCookie: 1
+  cookieStrength: 0.75
+  fogTintAmount: 0.06
+  lightBlendDuration: 0.4
+  showMarineSnow: 1
+  marineSnowMaxParticles: 60
+  snowBrightnessOn: 0.45
+  snowBrightnessOff: 0.12
+  marineSnowMaterialOverride: {fileID: 0}
+  disableAllBeamEffects: 0
   tierSettings:
   - tier: 1
     tierName: Narrow Halogen Beam
@@ -790,7 +798,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1553539003}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &439554831
 MonoBehaviour:
@@ -806,7 +814,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesSpawner
   registry: {fileID: 11400000, guid: 05dcc7946436ea643aa3eb5ed6990174, type: 2}
   terrain: {fileID: 439554832}
-  spawnMultiplier: 2
+  spawnMultiplier: 1
   maxAttempts: 30
   minSeparation: 8
   overlapRadius: 1.5
@@ -815,6 +823,10 @@ MonoBehaviour:
     m_Bits: 64
   creatureParent: {fileID: 0}
   maxStationarySlope: 18
+  enableInGameScaleVariation: 1
+  globalMinScale: 0.75
+  globalMaxScale: 1.25
+  scaleDistributionCurvature: 3
 --- !u!114 &439554832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1176,7 +1188,7 @@ Transform:
   m_GameObject: {fileID: 694726293}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -150, z: 0}
+  m_LocalPosition: {x: 0, y: -200, z: 0}
   m_LocalScale: {x: 100, y: 1, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1862,7 +1874,7 @@ Transform:
   m_GameObject: {fileID: 1094067461}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: -10, z: 0}
+  m_LocalPosition: {x: 0, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1972,7 +1984,7 @@ Transform:
   m_GameObject: {fileID: 1106511973}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1061.9415, y: -550.6387, z: -1228.3029}
+  m_LocalPosition: {x: -1061.9415, y: -540.6387, z: -1228.3029}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2243,13 +2255,12 @@ Transform:
   m_GameObject: {fileID: 1553539002}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -46.05296, y: 9.81353, z: 282.51675}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2039418608}
   - {fileID: 1023888056}
-  - {fileID: 439554830}
   - {fileID: 2131907212}
   - {fileID: 1117612172}
   - {fileID: 1302282770}
@@ -2663,3 +2674,4 @@ SceneRoots:
   - {fileID: 1579478627}
   - {fileID: 256178648}
   - {fileID: 977825193}
+  - {fileID: 439554830}

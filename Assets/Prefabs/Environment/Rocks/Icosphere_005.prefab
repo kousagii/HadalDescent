@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Icosphere_005
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1c94162224bd6b34797ded8964df3d36, type: 3}
+      propertyPath: m_TagString
+      value: Environment
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

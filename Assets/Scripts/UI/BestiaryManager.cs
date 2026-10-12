@@ -96,6 +96,19 @@ public class BestiaryManager : MonoBehaviour
     public bool IsModelInspectionModalOpen => GameObject.Find("_3DModelInspectionModal") != null || (customModelInspectionPrefab != null && GameObject.Find(customModelInspectionPrefab.name) != null);
     public bool IsDetailModalOpen => detailModal != null && detailModal.activeSelf;
 
+    /// <summary>
+    /// Returns true if the given transform is a child of the bestiary panel or entry container.
+    /// Used by TutorialArrowUI to determine if an arrow target is pointing inside the Bestiary.
+    /// </summary>
+    public bool IsTransformInsideBestiary(Transform t)
+    {
+        if (t == null) return false;
+        if (bestiaryPanel != null && t.IsChildOf(bestiaryPanel.transform)) return true;
+        if (entryContainer != null && t.IsChildOf(entryContainer)) return true;
+        if (t.IsChildOf(transform)) return true;
+        return false;
+    }
+
     // Maps speciesId -> the instantiated card RectTransform for scroll-to
     private readonly Dictionary<string, RectTransform> _cardMap = new Dictionary<string, RectTransform>();
 

@@ -23,9 +23,9 @@ public class SpeciesSpawner : MonoBehaviour
     [SerializeField] private TerrainGenerator terrain;
 
     [Header("Spawn Parameters")]
-    [Tooltip("Global species spawn multiplier (2 = double population, 3 = triple population).")]
+    [Tooltip("Global species spawn multiplier (1 = base population as authored in ScriptableObjects).")]
     [Range(1, 4)]
-    [SerializeField] private int spawnMultiplier = 2;
+    [SerializeField] private int spawnMultiplier = 1;
     [Tooltip("Max random placement attempts per creature instance before giving up.")]
     [SerializeField] private int   maxAttempts   = 70;
     [Tooltip("Minimum distance between two spawned entities.")]
@@ -42,12 +42,12 @@ public class SpeciesSpawner : MonoBehaviour
     [Header("In-Game Scale Variation")]
     [Tooltip("Global toggle to randomize in-game species scales (juvenile to elder). Model previews in Bestiary/UI remain standard reference size.")]
     [SerializeField] private bool enableInGameScaleVariation = true;
-    [Tooltip("Global minimum scale multiplier for in-game spawned species (0.5 = 2x smaller).")]
-    [Range(0.2f, 1f)]
-    [SerializeField] private float globalMinScale = 0.5f;
-    [Tooltip("Global maximum scale multiplier for in-game spawned species (2.0 = 2x bigger).")]
-    [Range(1f, 3f)]
-    [SerializeField] private float globalMaxScale = 2.0f;
+    [Tooltip("Global minimum scale multiplier for in-game spawned species (0.75 = 0.75x smaller).")]
+    [Range(0.5f, 1f)]
+    [SerializeField] private float globalMinScale = 0.75f;
+    [Tooltip("Global maximum scale multiplier for in-game spawned species (1.25 = 1.25x bigger).")]
+    [Range(1f, 2f)]
+    [SerializeField] private float globalMaxScale = 1.25f;
     [Tooltip("Distribution curvature: 1 = linear uniform, 2 = triangular, 3 = smooth bell curve clustering around standard adult size (1.0x).")]
     [Range(1, 3)]
     [SerializeField] private int scaleDistributionCurvature = 3;
@@ -126,11 +126,14 @@ public class SpeciesSpawner : MonoBehaviour
 
         var allSpecies = registry.GetSpeciesAvailableForZone(zoneIndex);
 
-        // Sort so benthic host species (e.g. Sea Anemone) spawn before their symbiotic partners (Clownfish)
+        // Sort so host species (e.g. Bubble-tip Sea Anemone) spawn before their symbiotic partners (Clownfish)
         var sortedSpecies = new List<SpeciesData>(allSpecies);
         sortedSpecies.Sort((a, b) =>
         {
             if (a == null || b == null) return 0;
+            bool aAnemone = a.speciesId == "anemone_001" || a.commonName.ToLower().Contains("anemone");
+            bool bAnemone = b.speciesId == "anemone_001" || b.commonName.ToLower().Contains("anemone");
+            if (aAnemone != bAnemone) return bAnemone.CompareTo(aAnemone);
             if (a.isStationary != b.isStationary)
                 return b.isStationary.CompareTo(a.isStationary);
             return 0;
@@ -161,7 +164,8 @@ public class SpeciesSpawner : MonoBehaviour
         bool isAnemone = data.speciesId == "anemone_001" || data.commonName.ToLower().Contains("anemone");
         bool isDolphin = data.speciesId == "dolphin_001" || data.commonName.ToLower().Contains("dolphin");
 
-        int targetCount = Mathf.Max(1, data.instanceCount * spawnMultiplier);
+        if (spawnMultiplier < 1) spawnMultiplier = 1;
+        int targetCount = Mathf.Max(1, data.instanceCount);
 
         // Idea B: Social Pod Spawning for Indo-Pacific Bottlenose Dolphins
         if (isDolphin)
@@ -171,9 +175,9 @@ public class SpeciesSpawner : MonoBehaviour
 
         for (int i = 0; i < targetCount; i++)
         {
-            if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot))
+            if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot, out Vector3? wanderCenter))
             {
-                SpawnInstance(data, pos, rot);
+                SpawnInstance(data, pos, rot, wanderCenter);
                 _usedPositions.Add(pos);
                 if (isAnemone)
                 {
@@ -262,6 +266,10 @@ public class SpeciesSpawner : MonoBehaviour
             float vOffset = Random.Range(-2.0f, 2.0f);
 
             Vector3 candidatePos = new Vector3(podCenter.x + hOffset.x, podCenter.y + vOffset, podCenter.z + hOffset.y);
+            float safeHalfW = _zoneDef != null ? Mathf.Max(40f, (_zoneDef.playableWidth * 0.5f) - 75f) : 225f;
+            float safeHalfL = _zoneDef != null ? Mathf.Max(40f, (_zoneDef.playableLength * 0.5f) - 75f) : 225f;
+            candidatePos.x = Mathf.Clamp(candidatePos.x, -safeHalfW, safeHalfW);
+            candidatePos.z = Mathf.Clamp(candidatePos.z, -safeHalfL, safeHalfL);
 
             // 1. Biome verification
             BiomeBand biome = terrain != null ? terrain.GetBiomeAt(candidatePos.x, candidatePos.z) : data.preferredBiome;
@@ -272,12 +280,13 @@ public class SpeciesSpawner : MonoBehaviour
             float floorY = terrain != null ? terrain.SampleHeight(candidatePos.x, candidatePos.z) : -D;
             if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
             {
-                candidatePos.y = -0.45f;
+                candidatePos.y = -1.15f;
             }
             else
             {
-                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
-                float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                float clearance = data.locomotionArchetype == LocomotionArchetype.PelagicCruiser ? 5.5f : 3.0f;
+                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + clearance);
+                float maxSwimY = Mathf.Min(upperDepthLimit, -3.0f);
                 if (minSwimY > maxSwimY) continue;
 
                 candidatePos.y = Mathf.Clamp(candidatePos.y, minSwimY, maxSwimY);
@@ -300,75 +309,131 @@ public class SpeciesSpawner : MonoBehaviour
 
     private bool TryFindSpawnPosition(SpeciesData data, out Vector3 resultPos, out Quaternion resultRot)
     {
+        return TryFindSpawnPosition(data, out resultPos, out resultRot, out _);
+    }
+
+    private bool TryFindSpawnPosition(SpeciesData data, out Vector3 resultPos, out Quaternion resultRot, out Vector3? wanderCenter)
+    {
         float W = _zoneDef != null ? _zoneDef.playableWidth : 600f;
         float L = _zoneDef != null ? _zoneDef.playableLength : 600f;
         float D = _zoneDef != null ? _zoneDef.playableDepth : 200f;
 
         resultPos = Vector3.zero;
         resultRot = Quaternion.identity;
-
-        bool isClownfish = data.speciesId == "clownfish_001" || data.commonName.ToLower().Contains("clownfish");
-        if (isClownfish && _anemonePositions.Count > 0)
-        {
-            // Biological Symbiosis: Clownfish spawn directly hovering above/around host Sea Anemones
-            Vector3 anemonePos = _anemonePositions[Random.Range(0, _anemonePositions.Count)];
-            Vector2 hOffset = Random.insideUnitCircle * Random.Range(0.6f, 2.2f);
-            float yOffset = Random.Range(0.8f, 2.2f);
-            resultPos = new Vector3(anemonePos.x + hOffset.x, anemonePos.y + yOffset, anemonePos.z + hOffset.y);
-            resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-            return true;
-        }
-
-        int terrainLayerMask = LayerMask.GetMask("Terrain", "Default");
-        if (terrainLayerMask == 0) terrainLayerMask = ~0;
+        wanderCenter = null;
 
         // Depth bounds in world Y coordinates:
         // minDepthFraction = 0 (surface Y=0m), maxDepthFraction = 1 (floor Y=-Dm)
         float upperDepthLimit = -Mathf.Min(data.minDepthFraction, data.maxDepthFraction) * D;
         float rawLowerLimit   = -Mathf.Max(data.minDepthFraction, data.maxDepthFraction) * D;
-        // Mobile swimming species must never spawn in the bottom boundary popup zone
-        float lowerDepthLimit = data.isStationary ? rawLowerLimit : Mathf.Max(rawLowerLimit, -D + 16f);
 
-        float halfW = W * 0.44f;
-        float halfL = L * 0.44f;
+        // All species except Bluebottle (SurfaceDrifter) must spawn strictly below 3m depth (Y <= -3.0m)
+        if (data.locomotionArchetype != LocomotionArchetype.SurfaceDrifter)
+        {
+            upperDepthLimit = Mathf.Min(upperDepthLimit, -3.0f);
+        }
+
+        bool isBenthic = data.isStationary || data.locomotionArchetype == LocomotionArchetype.BenthicFollower;
+        float lowerDepthLimit = isBenthic ? rawLowerLimit : Mathf.Max(rawLowerLimit, -D + 16f);
+
+        bool isClownfish = data.speciesId == "clownfish_001" || data.commonName.ToLower().Contains("clownfish");
+        if (isClownfish)
+        {
+            if (_anemonePositions.Count == 0 && registry != null)
+            {
+                var anemoneData = registry.FindById("anemone_001");
+                if (anemoneData != null)
+                {
+                    if (TryFindSpawnPosition(anemoneData, out Vector3 aPos, out Quaternion aRot))
+                    {
+                        SpawnInstance(anemoneData, aPos, aRot);
+                        _usedPositions.Add(aPos);
+                        _anemonePositions.Add(aPos);
+                    }
+                }
+            }
+
+            if (_anemonePositions.Count > 0)
+            {
+                // Biological Symbiosis: Clownfish spawn naturally distributed around host Sea Anemones
+                Vector3 anemonePos = _anemonePositions[Random.Range(0, _anemonePositions.Count)];
+                Vector2 hOffset = Random.insideUnitCircle.normalized * Random.Range(1.8f, 5.0f);
+                float yOffset = Random.Range(1.2f, 2.5f);
+                resultPos = new Vector3(anemonePos.x + hOffset.x, anemonePos.y + yOffset, anemonePos.z + hOffset.y);
+                resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                wanderCenter = anemonePos;
+                return true;
+            }
+        }
+
+        int terrainLayerMask = LayerMask.GetMask("Terrain", "Default");
+        if (terrainLayerMask == 0) terrainLayerMask = ~0;
+
+        float halfW = Mathf.Max(40f, (W * 0.5f) - 75f);
+        float halfL = Mathf.Max(40f, (L * 0.5f) - 75f);
 
         Vector3 bestCandidatePos = Vector3.zero;
         Quaternion bestCandidateRot = Quaternion.identity;
         float bestScore = float.MinValue;
 
         // ── Phase 1: Random Search (Strict Habitat + Depth Band + Separation) ──
-        int attempts = Mathf.Max(maxAttempts, 80);
+        int attempts = Mathf.Max(maxAttempts, 90);
         for (int attempt = 0; attempt < attempts; attempt++)
         {
-            float rx = Random.Range(-halfW, halfW);
-            float rz = Random.Range(-halfL, halfL);
+            float rx, rz;
+            if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter && attempt < 35)
+            {
+                // Ensure surface drifters (Bluebottles) have visible specimens floating near exploration start area (35m - 80m)
+                Vector2 nearOffset = Random.insideUnitCircle.normalized * Random.Range(35f, 80f);
+                rx = nearOffset.x;
+                rz = nearOffset.y;
+            }
+            else
+            {
+                rx = Random.Range(-halfW, halfW);
+                rz = Random.Range(-halfL, halfL);
+            }
 
             BiomeBand biome = terrain != null ? terrain.GetBiomeAt(rx, rz) : data.preferredBiome;
             float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
 
+            // Strictly exclude positions inside Habitat Landmark exclusion zones
+            if (HabitatLandmarkSpawner.IsInsideLandmarkZone(new Vector3(rx, floorY, rz), 5.0f))
+                continue;
+
             Vector3 candidatePos;
             Quaternion candidateRot;
 
-            if (data.isStationary)
+            if (isBenthic)
             {
-                // Benthic / stationary species MUST be planted on the ocean floor or reef structures.
+                // Benthic species MUST be placed on the ocean floor or reef structures.
+                // Seabed height must be within the species' configured depth range.
+                if (floorY < lowerDepthLimit - 2.5f || floorY > upperDepthLimit + 2.5f)
+                    continue;
+
                 Vector3 surfaceNormal = terrain != null ? terrain.SampleNormal(rx, rz) : Vector3.up;
                 float slopeAngle = Vector3.Angle(Vector3.up, surfaceNormal);
 
-                // Pillar 1: Filter out steep slopes based on species anatomy (gentle slope for wide branching corals)
                 float maxSlope = GetMaxSlopeForSpecies(data);
                 if (slopeAngle > maxSlope)
                     continue;
 
-                // Footprint clearance check: prevents wide branches/bases from intersecting dunes or ridges
                 if (!CheckFootprintFlatness(rx, rz, data))
                     continue;
 
                 Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
-                    // Strict benthic check: must sit on seabed or grounded rock, never in mid-water
-                    if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                    bool isProp = ContextSteering.IsEnvironmentProp(hit.collider) ||
+                                  hit.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                                  hit.collider.CompareTag("Environment");
+                    if (isProp)
+                    {
+                        // NEVER spawn benthic species on top of corals, rocks, or landmarks!
+                        continue;
+                    }
+
+                    if (hit.point.y <= floorY + 0.6f && hit.point.y >= floorY - 1.0f)
                     {
                         candidatePos = hit.point;
                         if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
@@ -384,23 +449,26 @@ public class SpeciesSpawner : MonoBehaviour
                     candidatePos = new Vector3(rx, floorY, rz);
                 }
 
-                // Pillar 2: Natural, biologically accurate rotation (upright for branching corals & sponges, aligned for crawlers)
+                if (!data.isStationary)
+                {
+                    candidatePos.y += Mathf.Max(0.08f, data.benthicSurfaceOffset);
+                }
+
                 candidateRot = GetStationaryRotation(data, surfaceNormal);
             }
             else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
             {
-                // Surface drifters (Bluebottle): lock to water surface, safely away from deep water column
-                candidatePos = new Vector3(rx, -0.45f, rz);
+                candidatePos = new Vector3(rx, -1.15f, rz);
                 candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
             else
             {
-                // Mobile species: swim in depth band, safely above floor
-                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
-                float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                // Pelagic / swimming species: swim in depth band, safely above floor (strictly below 3m depth)
+                float clearance = data.locomotionArchetype == LocomotionArchetype.PelagicCruiser ? 5.5f : 3.0f;
+                float minSwimY = Mathf.Max(lowerDepthLimit, floorY + clearance);
+                float maxSwimY = Mathf.Min(upperDepthLimit, -3.0f);
                 if (minSwimY > maxSwimY)
                 {
-                    // Water column too shallow for this depth band here
                     continue;
                 }
                 float ry = Random.Range(minSwimY, maxSwimY);
@@ -408,7 +476,6 @@ public class SpeciesSpawner : MonoBehaviour
                 candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
 
-            // Track candidate score for fallback
             float score = EvaluateCandidate(candidatePos, biome, data, lowerDepthLimit, upperDepthLimit, floorY);
             if (score > bestScore)
             {
@@ -420,15 +487,13 @@ public class SpeciesSpawner : MonoBehaviour
             // Strict check: Biome must match preferred habitat
             if (biome != data.preferredBiome) continue;
 
-            // Strict check: Depth for stationary species
-            if (data.isStationary)
-            {
-                if (candidatePos.y < lowerDepthLimit - 3f || candidatePos.y > upperDepthLimit + 3f)
-                    continue;
-            }
+            // Strict check: Depth
+            if (candidatePos.y < lowerDepthLimit - 3f || candidatePos.y > upperDepthLimit + 3f)
+                continue;
 
             // Separation check
-            if (!IsSeparated(candidatePos, minSeparation)) continue;
+            float speciesMinSep = GetMinSeparationForSpecies(data);
+            if (!IsSeparated(candidatePos, speciesMinSep)) continue;
 
             resultPos = candidatePos;
             resultRot = candidateRot;
@@ -436,7 +501,8 @@ public class SpeciesSpawner : MonoBehaviour
         }
 
         // ── Phase 2: Targeted Grid Search (Guarantee Habitat & Closest Depth) ──
-        int gridSteps = 16;
+        float speciesSep = GetMinSeparationForSpecies(data);
+        int gridSteps = 18;
         float stepX = (halfW * 2f) / gridSteps;
         float stepZ = (halfL * 2f) / gridSteps;
 
@@ -452,11 +518,17 @@ public class SpeciesSpawner : MonoBehaviour
                     continue;
 
                 float floorY = terrain != null ? terrain.SampleHeight(rx, rz) : -D;
+                if (HabitatLandmarkSpawner.IsInsideLandmarkZone(new Vector3(rx, floorY, rz), 4.0f))
+                    continue;
+
                 Vector3 candidatePos;
                 Quaternion candidateRot;
 
-                if (data.isStationary)
+                if (isBenthic)
                 {
+                    if (floorY < lowerDepthLimit - 3.5f || floorY > upperDepthLimit + 3.5f)
+                        continue;
+
                     Vector3 surfaceNormal = terrain != null ? terrain.SampleNormal(rx, rz) : Vector3.up;
                     float slopeAngle = Vector3.Angle(Vector3.up, surfaceNormal);
 
@@ -470,7 +542,13 @@ public class SpeciesSpawner : MonoBehaviour
                     Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                     {
-                        if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                        bool isProp = ContextSteering.IsEnvironmentProp(hit.collider) ||
+                                      hit.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                                      hit.collider.CompareTag("Environment");
+                        if (isProp)
+                            continue;
+
+                        if (hit.point.y <= floorY + 0.6f && hit.point.y >= floorY - 1.0f)
                         {
                             candidatePos = hit.point;
                             if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f)
@@ -486,17 +564,22 @@ public class SpeciesSpawner : MonoBehaviour
                         candidatePos = new Vector3(rx, floorY, rz);
                     }
 
+                    if (!data.isStationary)
+                    {
+                        candidatePos.y += Mathf.Max(0.08f, data.benthicSurfaceOffset);
+                    }
+
                     candidateRot = GetStationaryRotation(data, surfaceNormal);
                 }
                 else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
                 {
-                    candidatePos = new Vector3(rx, -0.45f, rz);
+                    candidatePos = new Vector3(rx, -1.15f, rz);
                     candidateRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                 }
                 else
                 {
                     float minSwimY = Mathf.Max(lowerDepthLimit, floorY + 2.5f);
-                    float maxSwimY = Mathf.Min(upperDepthLimit, -1.5f);
+                    float maxSwimY = Mathf.Min(upperDepthLimit, -3.0f);
                     if (minSwimY > maxSwimY) continue;
                     float ry = Random.Range(minSwimY, maxSwimY);
                     candidatePos = new Vector3(rx, ry, rz);
@@ -511,8 +594,8 @@ public class SpeciesSpawner : MonoBehaviour
                     bestCandidateRot = candidateRot;
                 }
 
-                // In Phase 2, accept relaxed separation (50%)
-                if (IsSeparated(candidatePos, minSeparation * 0.5f))
+                // In Phase 2, accept slightly relaxed separation (75%) but never stack
+                if (IsSeparated(candidatePos, speciesSep * 0.75f))
                 {
                     if (biome == data.preferredBiome)
                     {
@@ -524,17 +607,52 @@ public class SpeciesSpawner : MonoBehaviour
             }
         }
 
-        // ── Phase 3: Guaranteed Placement Fallback ──
+        // ── Phase 3: Guaranteed Placement Fallback (Strict Non-Overlapping Offset) ──
         if (bestCandidatePos != Vector3.zero)
         {
-            if (data.isStationary)
+            // If bestCandidate violates separation from an already placed creature, search an outward ring
+            if (!IsSeparated(bestCandidatePos, speciesSep * 0.65f))
+            {
+                bool foundOffset = false;
+                for (float dist = speciesSep * 0.85f; dist <= speciesSep * 4.0f; dist += 2.5f)
+                {
+                    for (int angleDeg = 0; angleDeg < 360; angleDeg += 30)
+                    {
+                        float rad = angleDeg * Mathf.Deg2Rad;
+                        float ox = bestCandidatePos.x + Mathf.Cos(rad) * dist;
+                        float oz = bestCandidatePos.z + Mathf.Sin(rad) * dist;
+                        if (Mathf.Abs(ox) > halfW || Mathf.Abs(oz) > halfL) continue;
+
+                        float ofy = terrain != null ? terrain.SampleHeight(ox, oz) : bestCandidatePos.y;
+                        if (isBenthic)
+                        {
+                            if (ofy < lowerDepthLimit - 3f || ofy > upperDepthLimit + 3f) continue;
+                            if (HabitatLandmarkSpawner.IsInsideLandmarkZone(new Vector3(ox, ofy, oz), 4.0f)) continue;
+                        }
+
+                        Vector3 testOff = new Vector3(ox, ofy, oz);
+                        if (IsSeparated(testOff, speciesSep * 0.65f))
+                        {
+                            bestCandidatePos = testOff;
+                            foundOffset = true;
+                            break;
+                        }
+                    }
+                    if (foundOffset) break;
+                }
+            }
+
+            if (isBenthic)
             {
                 float floorY = terrain != null ? terrain.SampleHeight(bestCandidatePos.x, bestCandidatePos.z) : bestCandidatePos.y;
                 Vector3 normal = terrain != null ? terrain.SampleNormal(bestCandidatePos.x, bestCandidatePos.z) : Vector3.up;
                 Vector3 rayOrigin = new Vector3(bestCandidatePos.x, floorY + 30f, bestCandidatePos.z);
                 if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
                 {
-                    if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
+                    bool isProp = ContextSteering.IsEnvironmentProp(hit.collider) ||
+                                  hit.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                                  hit.collider.CompareTag("Environment");
+                    if (!isProp && hit.point.y <= floorY + 0.6f && hit.point.y >= floorY - 1.0f)
                     {
                         bestCandidatePos = hit.point;
                         if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
@@ -548,6 +666,10 @@ public class SpeciesSpawner : MonoBehaviour
                 {
                     bestCandidatePos.y = floorY;
                 }
+                if (!data.isStationary)
+                {
+                    bestCandidatePos.y += Mathf.Max(0.08f, data.benthicSurfaceOffset);
+                }
                 bestCandidateRot = GetStationaryRotation(data, normal);
             }
             resultPos = bestCandidatePos;
@@ -555,44 +677,88 @@ public class SpeciesSpawner : MonoBehaviour
             return true;
         }
 
-        // Final safety fallback if terrain sampling was completely degenerate
+        // Final safety fallback searching along physical depth contour with separation check
+        if (isBenthic)
+        {
+            resultPos = FindBenthicFallbackPosition(data, lowerDepthLimit, upperDepthLimit, halfW, halfL, terrainLayerMask, out resultRot);
+            return true;
+        }
+
         float fallbackX = Random.Range(-halfW * 0.5f, halfW * 0.5f);
         float fallbackZ = Random.Range(-halfL * 0.5f, halfL * 0.5f);
-        if (data.isStationary)
+        if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
         {
-            float floorY = terrain != null ? terrain.SampleHeight(fallbackX, fallbackZ) : -D;
-            Vector3 normal = terrain != null ? terrain.SampleNormal(fallbackX, fallbackZ) : Vector3.up;
-            Vector3 rayOrigin = new Vector3(fallbackX, floorY + 30f, fallbackZ);
-            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, terrainLayerMask, QueryTriggerInteraction.Ignore))
-            {
-                if (hit.point.y <= floorY + 3.5f && hit.point.y >= floorY - 2.0f)
-                {
-                    resultPos = hit.point;
-                    if (hit.normal.sqrMagnitude > 0.1f && hit.normal.y > 0.1f) normal = hit.normal;
-                }
-                else
-                {
-                    resultPos = new Vector3(fallbackX, floorY, fallbackZ);
-                }
-            }
-            else
-            {
-                resultPos = new Vector3(fallbackX, floorY, fallbackZ);
-            }
-            resultRot = GetStationaryRotation(data, normal);
-        }
-        else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
-        {
-            resultPos = new Vector3(fallbackX, -0.45f, fallbackZ);
+            resultPos = new Vector3(fallbackX, -1.15f, fallbackZ);
             resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
         }
         else
         {
-            float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -2f);
+            float fallbackY = Mathf.Clamp(Mathf.Lerp(lowerDepthLimit, upperDepthLimit, 0.5f), -D + 5f, -3.0f);
             resultPos = new Vector3(fallbackX, fallbackY, fallbackZ);
             resultRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
         }
         return true;
+    }
+
+    private Vector3 FindBenthicFallbackPosition(SpeciesData data, float lowerDepthLimit, float upperDepthLimit, float halfW, float halfL, int terrainLayerMask, out Quaternion rot)
+    {
+        float bestScore = float.MinValue;
+        Vector3 bestPos = Vector3.zero;
+        Quaternion bestRot = Quaternion.identity;
+        float speciesMinSep = GetMinSeparationForSpecies(data);
+
+        for (int i = 0; i < 90; i++)
+        {
+            float fx = Random.Range(-halfW * 0.85f, halfW * 0.85f);
+            float fz = Random.Range(-halfL * 0.85f, halfL * 0.85f);
+            float fy = terrain != null ? terrain.SampleHeight(fx, fz) : -50f;
+            if (HabitatLandmarkSpawner.IsInsideLandmarkZone(new Vector3(fx, fy, fz), 4.0f))
+                continue;
+            BiomeBand b = terrain != null ? terrain.GetBiomeAt(fx, fz) : data.preferredBiome;
+
+            float score = 0f;
+            if (b == data.preferredBiome) score += 200f;
+            else if (IsCompatibleBiome(b, data.preferredBiome)) score += 100f;
+            else score -= 150f;
+
+            if (fy >= lowerDepthLimit && fy <= upperDepthLimit)
+            {
+                score += 150f;
+            }
+            else
+            {
+                float diff = fy < lowerDepthLimit ? (lowerDepthLimit - fy) : (fy - upperDepthLimit);
+                score -= diff * 15f;
+            }
+
+            Vector3 testCandidate = new Vector3(fx, fy, fz);
+            if (!IsSeparated(testCandidate, speciesMinSep * 0.65f))
+            {
+                score -= 800f; // Strongly penalize overlapping positions!
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                Vector3 norm = terrain != null ? terrain.SampleNormal(fx, fz) : Vector3.up;
+                float off = data.isStationary ? 0f : Mathf.Max(0.08f, data.benthicSurfaceOffset);
+                bestPos = new Vector3(fx, fy + off, fz);
+                bestRot = GetStationaryRotation(data, norm);
+            }
+        }
+
+        rot = bestRot;
+        return bestPos;
+    }
+
+    private float GetMinSeparationForSpecies(SpeciesData data)
+    {
+        if (data == null) return minSeparation;
+        bool isRay = data.taxonomicClass == TaxonomicClass.Chondrichthyes || (data.commonName != null && data.commonName.IndexOf("ray", System.StringComparison.OrdinalIgnoreCase) >= 0);
+        if (isRay) return Mathf.Max(minSeparation, 7.0f);
+        if (data.locomotionArchetype == LocomotionArchetype.BenthicFollower) return Mathf.Max(minSeparation, 5.0f);
+        if (data.locomotionArchetype == LocomotionArchetype.PelagicCruiser) return Mathf.Max(minSeparation, 7.5f);
+        return minSeparation;
     }
 
     private bool IsSeparated(Vector3 pos, float minDist)
@@ -615,14 +781,15 @@ public class SpeciesSpawner : MonoBehaviour
 
         // 2. Depth alignment score
         float depthDist = 0f;
-        if (data.isStationary)
+        bool isBenthic = data.isStationary || data.locomotionArchetype == LocomotionArchetype.BenthicFollower;
+        if (isBenthic)
         {
             if (pos.y < lowerDepth) depthDist = lowerDepth - pos.y;
             else if (pos.y > upperDepth) depthDist = pos.y - upperDepth;
         }
         else if (data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
         {
-            depthDist = Mathf.Abs(pos.y - (-0.45f));
+            depthDist = Mathf.Abs(pos.y - (-1.15f));
         }
         else
         {
@@ -633,17 +800,18 @@ public class SpeciesSpawner : MonoBehaviour
         score += Mathf.Max(0f, 300f - depthDist * 4f);
 
         // 3. Spacing score
+        float speciesSep = GetMinSeparationForSpecies(data);
         float nearest = float.MaxValue;
         for (int i = 0; i < _usedPositions.Count; i++)
         {
             float d = Vector3.Distance(pos, _usedPositions[i]);
             if (d < nearest) nearest = d;
         }
-        if (nearest < minSeparation) score -= (minSeparation - nearest) * 20f;
+        if (nearest < speciesSep) score -= (speciesSep - nearest) * 60f + 250f;
         else score += 100f;
 
-        // 4. Slope flatness score for stationary species (favors flat plateaus & basins)
-        if (data.isStationary && terrain != null)
+        // 4. Slope flatness score for benthic species (favors flat plateaus & gentle shelves)
+        if (isBenthic && terrain != null)
         {
             Vector3 normal = terrain.SampleNormal(pos.x, pos.z);
             float slope = Vector3.Angle(Vector3.up, normal);
@@ -659,18 +827,21 @@ public class SpeciesSpawner : MonoBehaviour
 
     private float GetMaxSlopeForSpecies(SpeciesData data)
     {
-        if (data == null || !data.isStationary) return 90f;
+        if (data == null) return 90f;
+        if (!data.isStationary && data.locomotionArchetype != LocomotionArchetype.BenthicFollower) return 90f;
         // Wide branching corals need flat ground to prevent branches hitting or getting buried in slopes
         if (data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0) return 6f;
-        if (data.taxonomicClass == TaxonomicClass.Anthozoa) return 12f;
-        if (data.taxonomicClass == TaxonomicClass.Demospongiae) return 12f;
-        if (data.taxonomicClass == TaxonomicClass.Bivalvia) return 12f;
+        if (data.taxonomicClass == TaxonomicClass.Anthozoa) return 24f; // Sea anemones easily cling to rocky slopes & reef heads
+        if (data.taxonomicClass == TaxonomicClass.Demospongiae) return 18f;
+        if (data.taxonomicClass == TaxonomicClass.Bivalvia) return 18f;
+        if (data.locomotionArchetype == LocomotionArchetype.BenthicFollower) return 25f;
         return maxStationarySlope;
     }
 
     private bool CheckFootprintFlatness(float cx, float cz, SpeciesData data)
     {
-        if (data == null || !data.isStationary || terrain == null) return true;
+        bool isBenthic = data != null && (data.isStationary || data.locomotionArchetype == LocomotionArchetype.BenthicFollower);
+        if (!isBenthic || terrain == null) return true;
 
         float checkRadius = 0f;
         float maxAllowedVariance = 0f;
@@ -685,8 +856,8 @@ public class SpeciesSpawner : MonoBehaviour
                  data.taxonomicClass == TaxonomicClass.Demospongiae ||
                  data.taxonomicClass == TaxonomicClass.Bivalvia)
         {
-            checkRadius = 1.2f;
-            maxAllowedVariance = 0.20f;
+            checkRadius = 1.0f;
+            maxAllowedVariance = 0.40f;
         }
         else
         {
@@ -739,7 +910,7 @@ public class SpeciesSpawner : MonoBehaviour
         return Quaternion.FromToRotation(Vector3.up, clampedNormal) * randomYaw;
     }
 
-    private static bool IsCompatibleBiome(BiomeBand a, BiomeBand b)
+    public static bool IsCompatibleBiome(BiomeBand a, BiomeBand b)
     {
         if (a == b) return true;
         if ((a == BiomeBand.Hard && b == BiomeBand.Rock) || (a == BiomeBand.Rock && b == BiomeBand.Hard)) return true;
@@ -788,13 +959,13 @@ public class SpeciesSpawner : MonoBehaviour
     /// </summary>
     public static Vector3 ComputeInstanceScale(SpeciesData data, Vector3 defaultBaseScale)
     {
-        return ComputeInstanceScale(data, defaultBaseScale, 0.5f, 2.0f, 3);
+        return ComputeInstanceScale(data, defaultBaseScale, 0.75f, 1.25f, 3);
     }
 
     /// <summary>
-    /// Computes an organic, natural individual scale with size variance ranging from
-    /// up to 2x smaller (juvenile: 0.5x) to up to 2x bigger (elder: 2.0x), plus subtle
-    /// non-uniform axis jitter (+/- 3.5%) to give unique body proportions without distortion.
+    /// Computes an organic, natural individual scale with safe size variance (0.75x to 1.25x)
+    /// strictly preserving uniform scale on all 3 axes to prevent collider distortion,
+    /// PhysX jitter, and physics clipping.
     /// </summary>
     public static Vector3 ComputeInstanceScale(
         SpeciesData data,
@@ -806,13 +977,12 @@ public class SpeciesSpawner : MonoBehaviour
         if (data == null || !data.enableScaleVariation)
             return defaultBaseScale;
 
-        // 1. Resolve scale bounds: respect custom species overrides while defaulting to [0.5, 2.0]
-        float minU = minMultiplier > 0.01f ? minMultiplier : 0.5f;
-        float maxU = maxMultiplier >= minU ? maxMultiplier : Mathf.Max(minU, 2.0f);
+        // 1. Resolve scale bounds: respect custom species overrides while defaulting to [0.75, 1.25]
+        float minU = minMultiplier > 0.01f ? minMultiplier : 0.75f;
+        float maxU = maxMultiplier >= minU ? maxMultiplier : Mathf.Max(minU, 1.25f);
 
         if (data.uniformScaleRange.x > 0.05f && data.uniformScaleRange.y >= data.uniformScaleRange.x)
         {
-            // If data defines custom bounds not matching legacy default (0.875, 1.0625), honor data bounds
             bool isLegacy = Mathf.Approximately(data.uniformScaleRange.x, 0.875f) &&
                             Mathf.Approximately(data.uniformScaleRange.y, 1.0625f);
             if (!isLegacy)
@@ -822,21 +992,17 @@ public class SpeciesSpawner : MonoBehaviour
             }
         }
 
+        // Clamp scale multipliers to safe variation [0.75, 1.25]
+        minU = Mathf.Clamp(minU, 0.75f, 1.0f);
+        maxU = Mathf.Clamp(maxU, 1.0f, 1.25f);
+
         // 2. Natural biological size sampling:
         // Irwin-Hall bell-curve distribution in logarithmic space centered on 1.0 (standard adult)
         float uniformMul = SampleNaturalScale(minU, maxU, curvature);
 
-        // 3. Subtle non-uniform axis jitter (+/- 3.5% = ~0.25 total spread on scale 4) without visual distortion
-        float jitter = Mathf.Clamp(data.maxAxisVariance > 0f ? data.maxAxisVariance : 0.035f, 0f, 0.065f);
-        float jX = 1f + Random.Range(-jitter, jitter);
-        float jY = 1f + Random.Range(-jitter, jitter);
-        float jZ = 1f + Random.Range(-jitter, jitter);
-
-        return new Vector3(
-            defaultBaseScale.x * uniformMul * jX,
-            defaultBaseScale.y * uniformMul * jY,
-            defaultBaseScale.z * uniformMul * jZ
-        );
+        // 3. Strictly UNIFORM scaling:
+        // Preserves collider proportions, BoxCollider aspect ratios, and mass distribution without non-uniform distortion
+        return defaultBaseScale * uniformMul;
     }
 
     /// <summary>
@@ -969,7 +1135,10 @@ public class SpeciesSpawner : MonoBehaviour
         }
         rb.useGravity     = false;
         rb.freezeRotation = true;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.isKinematic    = false;
+        rb.linearDamping  = 2f;
+        rb.interpolation  = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
         var col = go.GetComponent<Collider>();
         if (col == null)
@@ -1005,6 +1174,11 @@ public class SpeciesSpawner : MonoBehaviour
         if (trackable == null) trackable = go.AddComponent<SonarTrackable>();
         bool discovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.zoneIndex, data.speciesId);
         trackable.Initialize(SonarTrackable.SonarTargetType.Species, data.commonName, discovered);
+
+        if (data.locomotionArchetype == LocomotionArchetype.BenthicFollower)
+        {
+            AdjustContactHeight(go, data);
+        }
     }
 
     private void AdjustContactHeight(GameObject go, SpeciesData data)
@@ -1031,12 +1205,18 @@ public class SpeciesSpawner : MonoBehaviour
                 Vector3 ray = new Vector3(wx, trueFloorY + 25f, wz);
                 if (Physics.Raycast(ray, Vector3.down, out RaycastHit h, 35f, terrainMask, QueryTriggerInteraction.Ignore))
                 {
-                    if (h.point.y <= trueFloorY + 3.5f && h.point.y >= trueFloorY - 2.0f)
+                    bool isProp = ContextSteering.IsEnvironmentProp(h.collider) ||
+                                  h.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                                  h.collider.CompareTag("Environment");
+                    if (isProp) return trueFloorY;
+
+                    if (h.point.y <= trueFloorY + 0.5f && h.point.y >= trueFloorY - 1.0f)
                         return h.point.y;
                 }
                 return trueFloorY;
             }
 
+            float bottomToPivot = 0f;
             var renderers = go.GetComponentsInChildren<Renderer>();
             if (renderers != null && renderers.Length > 0)
             {
@@ -1061,6 +1241,7 @@ public class SpeciesSpawner : MonoBehaviour
                 float cx = localBounds.center.x;
                 float cz = localBounds.center.z;
                 float yMin = localBounds.min.y;
+                bottomToPivot = Mathf.Max(0f, -yMin);
 
                 float scaleFactorY = 1.0f;
                 if (data != null && data.modelPrefab != null && data.modelPrefab.transform.localScale.y > 0.001f)
@@ -1175,12 +1356,13 @@ public class SpeciesSpawner : MonoBehaviour
                 go.transform.position = pos;
             }
 
-            // Absolute safeguard: stationary benthic organisms must never float above the true seabed
+            // Absolute safeguard: stationary and benthic organisms must never float or perch above the true seabed
             float groundTruthY = terrain != null ? terrain.SampleHeight(go.transform.position.x, go.transform.position.z) : -D;
-            if (go.transform.position.y > groundTruthY + 3.5f)
+            float maxAllowedY = groundTruthY + bottomToPivot + 0.35f;
+            if (go.transform.position.y > maxAllowedY)
             {
                 Vector3 clampedPos = go.transform.position;
-                clampedPos.y = groundTruthY;
+                clampedPos.y = groundTruthY + bottomToPivot;
                 go.transform.position = clampedPos;
             }
         }

@@ -57,9 +57,10 @@ public class TerrainGenerator : MonoBehaviour
     /// </summary>
     public float SampleHeight(float worldX, float worldZ)
     {
-        if (_meshGen != null)
-            return _meshGen.SampleHeight(worldX, worldZ);
-        return _seabedY;
+        float h = _meshGen != null ? _meshGen.SampleHeight(worldX, worldZ) : _seabedY;
+        if (_zoneIndex == 0 || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Sunlight"))
+            h = Mathf.Min(h, -10.0f);
+        return h;
     }
 
     /// <summary>
@@ -91,9 +92,21 @@ public class TerrainGenerator : MonoBehaviour
         return ValueToBiome(v);
     }
 
-    // -----------------------------------------------------------------------
-    // Entry point
-    // -----------------------------------------------------------------------
+    public static TerrainGenerator Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        transform.SetParent(null);
+        transform.position   = Vector3.zero;
+        transform.rotation   = Quaternion.identity;
+        transform.localScale = Vector3.one;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
 
     private void Start()
     {
@@ -160,7 +173,8 @@ public class TerrainGenerator : MonoBehaviour
             _zoneW, _zoneL, _seabedY,
             _pcgFreq, _pcgAmp, _pcgSeed,
             _pcgFreq, _pcgSeed,   // biome freq + seed for height biasing
-            seabedMat
+            seabedMat,
+            zoneIndex
         );
 
         // --- Prepare distance culling (must exist before spawners register objects) ---

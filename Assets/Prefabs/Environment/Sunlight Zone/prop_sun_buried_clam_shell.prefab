@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: prop_sun_buried_clam_shell
       objectReference: {fileID: 0}
+    - target: {fileID: -6689036041284674117, guid: 64c2c845ad183534d99f2396a9e41750, type: 3}
+      propertyPath: m_TagString
+      value: Environment
+      objectReference: {fileID: 0}
     - target: {fileID: 2774220344278030320, guid: 64c2c845ad183534d99f2396a9e41750, type: 3}
       propertyPath: m_LocalScale.x
       value: 2

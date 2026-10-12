@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: LargePrincaxelia
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: large_princaxelia_001
+  commonName: "Large Princaxelia"
+  scientificName: "Princaxelia magna"
+  taxonomicClass: 5
+  zoneIndex: 4
+  habitat: "Deep ocean trenches (7,190–8,942 m)"
+  depthRangeText: "7,190–8,942 m"
+  explorationHint: "Deep ocean trenches (7,190–8,942 m). Compact body with many legs and long antennae."
+  secondaryZoneIndices: 
+  characteristics: "Compact body with many legs and long antennae."
+  ecologicalRole: "Feeds on small animals and dead material."
+  interestingFact: "A larger body gives more room for strong muscles and feeding parts."
+  rdpReward: 140
+  scanDifficulty: 5
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 3
+  minDepthFraction: 0.25
+  maxDepthFraction: 0.65
+  instanceCount: 3
+  wanderRadius: 20.0
+  moveSpeed: 2.0
+  fleeSpeed: 3.6
+  fleeRange: 10
+  returnThreshold: 30.0
+  turnSpeed: 65
+  locomotionArchetype: 3
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 1
+  placeholderColor: {r: 0.86, g: 0.81, b: 0.76, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

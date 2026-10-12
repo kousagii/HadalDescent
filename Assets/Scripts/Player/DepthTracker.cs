@@ -38,11 +38,11 @@ public class DepthTracker : MonoBehaviour
     // Boundaries (set by ZoneManager after scene load)
     // -----------------------------------------------------------------------
 
-    /// <summary>World Y of the zone entrance (top). Default = 0.</summary>
+    /// <summary>World Y of the zone entrance (top). Ocean surface is always Y = 0m.</summary>
     public float ZoneTopY    { get; set; } = 0f;
 
-    /// <summary>World Y of the zone exit (bottom). Default = -playableDepth.</summary>
-    public float ZoneBottomY { get; set; } = -150f;
+    /// <summary>World Y of the zone exit (bottom). Default = -200m.</summary>
+    public float ZoneBottomY { get; set; } = -200f;
 
     // -----------------------------------------------------------------------
     // Unity lifecycle
@@ -81,6 +81,11 @@ public class DepthTracker : MonoBehaviour
         }
 
         ZoneDefinition zone = ZoneConfig.Zones[zoneIndex];
+
+        // The ocean surface is universally at world Y = 0m (Display Depth = displayDepthMin).
+        // The zone bottom is universally at world Y = -playableDepth (Display Depth = displayDepthMax).
+        ZoneTopY    = 0f;
+        ZoneBottomY = -zone.playableDepth;
 
         float t = Mathf.InverseLerp(ZoneTopY, ZoneBottomY, transform.position.y);
         t = Mathf.Clamp01(t);

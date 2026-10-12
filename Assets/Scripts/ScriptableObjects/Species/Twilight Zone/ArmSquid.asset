@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: ArmSquid
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: arm_squid_001
+  commonName: Arm Squid
+  scientificName: Brachioteuthis picta
+  taxonomicClass: 4
+  zoneIndex: 1
+  habitat: "Open ocean (500\u20131,000 m)"
+  depthRangeText: "500\u20131,000 m"
+  explorationHint: Drifting in deep, dim water with arms outstretched to snag prey.
+  secondaryZoneIndices: 
+  characteristics: Small squid with a soft body and long arms.
+  ecologicalRole: Eats tiny sea animals and becomes food for larger predators.
+  interestingFact: Like other squid, it can shoot water from its body to move quickly.
+  rdpReward: 80
+  scanDifficulty: 2
+  isStationary: 0
+  isShy: 0
+  preferredBiome: 0
+  minDepthFraction: 0.375
+  maxDepthFraction: 1
+  instanceCount: 4
+  wanderRadius: 18
+  moveSpeed: 3
+  fleeSpeed: 6
+  fleeRange: 10
+  returnThreshold: 40
+  turnSpeed: 65
+  locomotionArchetype: 2
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 0
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 6369235343148264114, guid: 08d33cc0abd03cc488b96d43d4bcef7b, type: 3}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 1
+  placeholderColor: {r: 0.72, g: 0.35, b: 0.4, a: 1}
+  placeholderScale: {x: 0.5, y: 1.4, z: 0.5}
+  photo: {fileID: 21300000, guid: 99ec9e5748d416e48b1d37e471f8f164, type: 3}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

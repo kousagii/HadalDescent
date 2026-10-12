@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: prop_sun_seagrass_patch
       objectReference: {fileID: 0}
+    - target: {fileID: 2197285818294033429, guid: 2dd69e03c6ce75a4183df757cb7cd676, type: 3}
+      propertyPath: m_TagString
+      value: Environment
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -80,7 +84,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

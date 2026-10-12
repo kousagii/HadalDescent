@@ -233,8 +233,8 @@ public class ZoneManager : MonoBehaviour
         depthTracker = FindFirstObjectByType<DepthTracker>();
         if (depthTracker != null)
         {
-            depthTracker.ZoneTopY    = _topSpawn    != null ? _topSpawn.position.y    : 0f;
-            depthTracker.ZoneBottomY = _bottomSpawn != null ? _bottomSpawn.position.y : -zone.playableDepth;
+            depthTracker.ZoneTopY    = 0f;
+            depthTracker.ZoneBottomY = -zone.playableDepth;
         }
 
         // 4. Move submarine to correct spawn position (or restore saved position on Continue)
@@ -281,7 +281,7 @@ public class ZoneManager : MonoBehaviour
                 Quaternion spawnRot = Quaternion.identity;
                 if (spawnPoint != null)
                 {
-                    // If entered from above, spawn slightly below surface (Depth ~8m)
+                    // If entered from above, spawn safely below surface (Y = -5m, Depth = 5m), well above the highest 10m seabed
                     // If entered from below (or returning from deeper levels), spawn 25m on top of boundary
                     Vector3 offset = EnteredFromAbove ? new Vector3(0f, -5f, 0f) : new Vector3(0f, 25f, 0f);
                     spawnPos = spawnPoint.position + offset;
@@ -289,8 +289,8 @@ public class ZoneManager : MonoBehaviour
                 }
                 else
                 {
-                    // Fallback: top-centre or 25m above bottom-centre of zone
-                    float spawnY = EnteredFromAbove ? -6f : -zone.playableDepth + 25f;
+                    // Fallback: top-centre (Y = -5m, Depth = 5m) or 25m above bottom-centre of zone
+                    float spawnY = EnteredFromAbove ? -5f : -zone.playableDepth + 25f;
                     spawnPos = new Vector3(0f, spawnY, 0f);
                 }
 

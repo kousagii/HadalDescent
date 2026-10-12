@@ -413,7 +413,11 @@ public class RadioTextboxUI : MonoBehaviour
         _typewriterCoroutine = StartCoroutine(TypewriterRoutine(_currentFullText, hasNextPage));
     }
 
-    public static bool IsGamePaused => (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) || Time.timeScale <= 0f;
+    public static bool IsGamePaused => 
+        (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) ||
+        (ShopManager.Instance != null && ShopManager.Instance.IsOpen) ||
+        (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen && (TutorialManager.Instance == null || TutorialManager.Instance.CurrentPhase != TutorialManager.TutorialPhase.Step5_BestiaryReview)) ||
+        Time.timeScale <= 0f;
 
     private IEnumerator WaitWhileUnpaused(float duration)
     {

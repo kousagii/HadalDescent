@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e81f7d5a231807847b19fbb00eb4b3b2, type: 3}
+  m_Name: DeepTrenchClam
+  m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
+  speciesId: deep_trench_clam_001
+  commonName: "Deep Trench Clam"
+  scientificName: "Vesicomya sergeevi"
+  taxonomicClass: 11
+  zoneIndex: 4
+  habitat: "Deep ocean trench (7,600–9,530 m)"
+  depthRangeText: "7,600–9,530 m"
+  explorationHint: "Deep ocean trench (7,600–9,530 m). Small shell with two rounded halves."
+  secondaryZoneIndices: 
+  characteristics: "Small shell with two rounded halves."
+  ecologicalRole: "Gets nutrients with help from bacteria living in its tissues."
+  interestingFact: "Helpful bacteria provide nutrients when ordinary food is scarce."
+  rdpReward: 140
+  scanDifficulty: 5
+  isStationary: 1
+  isShy: 0
+  preferredBiome: 4
+  minDepthFraction: 0.35
+  maxDepthFraction: 0.8
+  instanceCount: 3
+  wanderRadius: 0.0
+  moveSpeed: 0.0
+  fleeSpeed: 0
+  fleeRange: 10
+  returnThreshold: 25
+  turnSpeed: 65
+  locomotionArchetype: 6
+  pulseFrequency: 0.8
+  pulseDutyCycle: 0.35
+  bankingAngle: 25
+  undulationFrequency: 2
+  undulationAmplitude: 12
+  benthicSurfaceOffset: 0.4
+  minCruiseSpeedFraction: 0
+  modelPrefab: {fileID: 0}
+  modelYawOffset: 0
+  previewScaleMultiplier: 1
+  enableScaleVariation: 1
+  uniformScaleRange: {x: 0.75, y: 1.25}
+  maxAxisVariance: 0.035
+  placeholderShape: 0
+  placeholderColor: {r: 0.82, g: 0.8, b: 0.75, a: 1.0}
+  placeholderScale: {x: 1, y: 1, z: 1}
+  photo: {fileID: 0}
+  fullImage: {fileID: 0}
+  silhouette: {fileID: 0}

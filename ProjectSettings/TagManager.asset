@@ -8,6 +8,7 @@ TagManager:
   - ZoneBottomSpawn
   - Species
   - Boundary
+  - Environment
   layers:
   - Default
   - TransparentFX

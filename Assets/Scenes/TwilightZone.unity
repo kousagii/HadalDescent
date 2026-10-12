@@ -312,7 +312,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesSpawner
   registry: {fileID: 11400000, guid: 05dcc7946436ea643aa3eb5ed6990174, type: 2}
   terrain: {fileID: 149623832}
-  spawnMultiplier: 2
+  spawnMultiplier: 1
   maxAttempts: 30
   minSeparation: 8
   overlapRadius: 1.5

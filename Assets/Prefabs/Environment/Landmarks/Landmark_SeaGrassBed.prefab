@@ -4494,7 +4494,7 @@ GameObject:
   - component: {fileID: 7570762523038870345}
   m_Layer: 0
   m_Name: Landmark_SeaGrassBed
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4644,7 +4644,7 @@ MonoBehaviour:
   habitatName: Seagrass Bed
   category: Marine Angiosperm Meadow
   zoneIndex: 0
-  depthRangeText: "5–40 m"
+  depthRangeText: "5\u201340 m"
   habitatDescription: A towering underwater forest anchored to shallow rock pinnacles,
     spreading gas-filled pneumatocysts toward the sunny surface waters.
   ecologicalSignificance: Operates as a high-volume blue carbon sink, creating vertical
@@ -4653,6 +4653,8 @@ MonoBehaviour:
     at an astonishing rate of up to 60 cm (2 feet) every single day.
   rdpReward: 75
   habitatPhoto: {fileID: 21300000, guid: 448e208ca3517e648953db4e00c34caa, type: 3}
+  _targetBiome: 2
+  _citationSource: NOAA Coral Reef Conservation Program / Smithsonian Ocean Portal
 --- !u!1 &4521179622538100874
 GameObject:
   m_ObjectHideFlags: 0

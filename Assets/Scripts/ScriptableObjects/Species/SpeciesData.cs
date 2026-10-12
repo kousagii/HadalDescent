@@ -167,8 +167,8 @@ public class SpeciesData : ScriptableObject
     [Tooltip("If true, spawned individuals in-game will vary organically in overall size and axis proportions (up to 2x smaller or bigger). Model previews in UI/Bestiary remain at canonical size.")]
     public bool enableScaleVariation = true;
 
-    [Tooltip("Overall uniform scale multiplier range [Min, Max] applied only in game. Default (0.5, 2.0) allows natural organic variation up to 2x smaller (juvenile: 0.5x) or 2x bigger (elder: 2.0x).")]
-    public Vector2 uniformScaleRange = new Vector2(0.5f, 2.0f);
+    [Tooltip("Overall uniform scale multiplier range [Min, Max] applied only in game. Default (0.75, 1.25) allows natural organic variation up to 0.75x smaller or 1.25x bigger.")]
+    public Vector2 uniformScaleRange = new Vector2(0.75f, 1.25f);
 
     [Tooltip("Maximum subtle variation per axis (+/- %) to create unique body proportions without distortion. 0.035 = +/-3.5% (~0.25 total delta on scale 4).")]
     [Range(0f, 0.08f)]
