@@ -319,6 +319,8 @@ public class TutorialArrowUI : MonoBehaviour
             return true;
         if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen)
             return true;
+        if (ObjectivesClearedPopupUI.Instance != null && ObjectivesClearedPopupUI.Instance.IsOpen)
+            return true;
         if (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen)
             return true;
         if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen)

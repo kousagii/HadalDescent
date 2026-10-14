@@ -14,7 +14,7 @@ public static class SpeciesDataGenerator
     [MenuItem("HadalDescent/Populate All Species (Sunlight Zone)")]
     public static void GenerateSunlightSpecies()
     {
-        string folder = "Assets/Scripts/ScriptableObjects/Species";
+        string folder = "Assets/Scripts/ScriptableObjects/Species/Sunlight Zone";
         if (!AssetDatabase.IsValidFolder(folder))
         {
             AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects", "Species");
@@ -568,8 +568,38 @@ public static class SpeciesDataGenerator
 
     public static SpeciesData CreateOrUpdateSpecies(string folder, string assetName, SpeciesDataConfig config)
     {
+        if (!AssetDatabase.IsValidFolder(folder))
+        {
+            string[] parts = folder.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+                current = next;
+            }
+        }
+
         string path = $"{folder}/{assetName}.asset";
         SpeciesData asset = AssetDatabase.LoadAssetAtPath<SpeciesData>(path);
+        if (asset == null)
+        {
+            // Fallback search across project
+            string[] guids = AssetDatabase.FindAssets($"{assetName} t:SpeciesData");
+            foreach (var g in guids)
+            {
+                string p = AssetDatabase.GUIDToAssetPath(g);
+                if (System.IO.Path.GetFileNameWithoutExtension(p) == assetName)
+                {
+                    asset = AssetDatabase.LoadAssetAtPath<SpeciesData>(p);
+                    break;
+                }
+            }
+        }
+
         if (asset == null)
         {
             asset = ScriptableObject.CreateInstance<SpeciesData>();
@@ -664,6 +694,7 @@ public static class SpeciesDataGenerator
         }
 
         existingList.AddRange(speciesList);
+        existingList.Sort((a, b) => a.zoneIndex.CompareTo(b.zoneIndex));
 
         allSpeciesProp.ClearArray();
         for (int i = 0; i < existingList.Count; i++)

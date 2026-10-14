@@ -77,13 +77,21 @@ public class UpgradeCardUI : MonoBehaviour
         if (perkDescriptionText != null)
             perkDescriptionText.text = perkDesc;
 
-        // Pips (Optional legacy indicators - only colored if populated)
+        // Pips (Optional legacy indicators - only colored if populated, hidden if beyond maxTier)
         if (pipImages != null && pipImages.Length > 0)
         {
             for (int i = 0; i < pipImages.Length; i++)
             {
                 if (pipImages[i] == null) continue;
-                pipImages[i].color = (i < currentTier) ? new Color(0.12f, 0.95f, 0.78f, 1f) : new Color(0.15f, 0.20f, 0.28f, 0.8f);
+                if (i >= maxTier)
+                {
+                    pipImages[i].gameObject.SetActive(false);
+                }
+                else
+                {
+                    pipImages[i].gameObject.SetActive(true);
+                    pipImages[i].color = (i < currentTier) ? new Color(0.12f, 0.95f, 0.78f, 1f) : new Color(0.15f, 0.20f, 0.28f, 0.8f);
+                }
             }
         }
 

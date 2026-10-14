@@ -7,7 +7,7 @@ public static class TwilightSpeciesData
 {
     public static void Generate()
     {
-        string folder = "Assets/Scripts/ScriptableObjects/Species";
+        string folder = "Assets/Scripts/ScriptableObjects/Species/Twilight Zone";
         if (!AssetDatabase.IsValidFolder(folder))
             AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects", "Species");
 

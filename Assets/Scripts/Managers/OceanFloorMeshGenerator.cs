@@ -272,6 +272,8 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         float contrast = Mathf.InverseLerp(0.22f, 0.78f, rawShape);
         contrast = Mathf.Clamp01(contrast);
 
+        bool isSunlight = IsSunlightZone();
+
         // ── 4-Tier Ecological Depth Bathymetry Shaping ────────────────────────
         float plateauShape;
         if (contrast > 0.62f)
@@ -297,14 +299,18 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         }
         else
         {
-            // Tier 4: Deep Basin Floor & Rolling Dunes (Depth 100m to 190m, Y = -190m to -100m)
+            // Tier 4: Deep Basin Floor & Rolling Dunes
+            // In deep zones (e.g. Twilight Zone), allow deep trenches/basins to reach below the zone bottom (below 1000m)
+            // so the blue ocean floor plane at 1000m is exposed as the seabed floor beneath the terrain
             float t = Mathf.InverseLerp(0f, 0.26f, contrast);
-            plateauShape = Mathf.Lerp(0.052f, 0.521f, Mathf.SmoothStep(0f, 1f, t));
+            float minTier4 = isSunlight ? 0.052f : -0.08f;
+            plateauShape = Mathf.Lerp(minTier4, 0.521f, Mathf.SmoothStep(0f, 1f, t));
         }
 
         // ── Layer 3: Organic Sediment Micro-Relief (Gentle Sand Dunes & Ripples) ─
         float ripple = (SmoothNoise(sampleX, sampleZ, _frequency * 6.5f, _seed, 1400f) - 0.5f) * 0.016f;
-        plateauShape = Mathf.Clamp01(plateauShape + ripple);
+        float minClamp = isSunlight ? 0f : -0.10f;
+        plateauShape = Mathf.Clamp(plateauShape + ripple, minClamp, 1f);
 
         // ── Edge Falloff: Smoothly blends perimeter to baseline ───────────────
         float edgeFade = EdgeFalloff(wx, wz);
@@ -312,7 +318,6 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
         // Map normalized [0..1] to world Y
         // Guaranteed ceiling: highest seabed point reaches at most 10m depth (Y <= -10.0m) in Sunlight Zone
-        bool isSunlight = IsSunlightZone();
         float maxAllowedSeabedY = isSunlight ? -10.0f : (_baseY + _amplitude);
         float computedY = _baseY + plateauShape * _amplitude;
         if (isSunlight)

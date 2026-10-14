@@ -7,7 +7,7 @@ public static class MidnightSpeciesData
 {
     public static void Generate()
     {
-        string folder = "Assets/Scripts/ScriptableObjects/Species";
+        string folder = "Assets/Scripts/ScriptableObjects/Species/Midnight Zone";
         if (!AssetDatabase.IsValidFolder(folder))
             AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects", "Species");
 

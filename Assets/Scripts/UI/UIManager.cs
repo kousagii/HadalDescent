@@ -50,6 +50,7 @@ public class UIManager : MonoBehaviour
         if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen) return true;
         if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen) return true;
         if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
+        if (ObjectivesClearedPopupUI.Instance != null && ObjectivesClearedPopupUI.Instance.IsOpen) return true;
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialModalOpen) return true;
         if (includeMinigames && MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
         return false;
@@ -772,11 +773,12 @@ public class UIManager : MonoBehaviour
         PauseMenuUI.Instance?.ResumeGame();
         ZoneSelectionUI.Instance?.CloseZoneSelection();
         ZoneBoundaryPopupUI.Instance?.HideAll();
+        ObjectivesClearedPopupUI.Instance?.Hide();
         if (FactCardUI.Instance != null) FactCardUI.Instance.Hide();
 
         // 4. Ensure inner popup panels are deactivated on startup
         var root = transform.root;
-        string[] innerPanels = { "ShopPanel", "DetailModal", "BestiaryPanel", "ZoneSelectionPanel", "PausePanel", "CardPanel", "FactCardPanel", "BoundaryPopupPanel", "HullWarningPanel" };
+        string[] innerPanels = { "ShopPanel", "DetailModal", "BestiaryPanel", "ZoneSelectionPanel", "PausePanel", "CardPanel", "FactCardPanel", "BoundaryPopupPanel", "HullWarningPanel", "ObjectivesClearedPopup_Root" };
         foreach (var name in innerPanels)
         {
             var t = FindChildRecursive(root, name);

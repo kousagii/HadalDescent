@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
     [Range(1, 5)] public int SonarTier     = 1;
     [Range(1, 5)] public int ScannerTier   = 1;
     [Range(1, 5)] public int LightTier     = 1;
-    [Range(1, 5)] public int UtilitiesTier = 1;
+    [Range(1, 3)] public int UtilitiesTier = 1;
 
     [Header("Collectibles")]
     public int ClamShells = 0;
@@ -305,7 +305,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("Save_SonarTier", SonarTier);
         PlayerPrefs.SetInt("Save_ScannerTier", ScannerTier);
         PlayerPrefs.SetInt("Save_LightTier", LightTier);
-        PlayerPrefs.SetInt("Save_UtilitiesTier", UtilitiesTier);
+        PlayerPrefs.SetInt("Save_UtilitiesTier", Mathf.Clamp(UtilitiesTier, 1, 3));
         PlayerPrefs.SetInt("Save_ClamShells", ClamShells);
         PlayerPrefs.SetInt("Save_CurrentZone", ZoneManager.CurrentZoneIndex);
 
@@ -364,7 +364,7 @@ public class GameManager : MonoBehaviour
         SonarTier     = PlayerPrefs.GetInt("Save_SonarTier", 1);
         ScannerTier   = PlayerPrefs.GetInt("Save_ScannerTier", 1);
         LightTier     = PlayerPrefs.GetInt("Save_LightTier", 1);
-        UtilitiesTier = PlayerPrefs.GetInt("Save_UtilitiesTier", 1);
+        UtilitiesTier = Mathf.Clamp(PlayerPrefs.GetInt("Save_UtilitiesTier", 1), 1, 3);
         ClamShells    = PlayerPrefs.GetInt("Save_ClamShells", 0);
 
         // Load PCG Seeds
@@ -486,6 +486,7 @@ public class GameManager : MonoBehaviour
         {
             PlayerPrefs.DeleteKey($"Save_ZoneSeed_{i}");
             PlayerPrefs.DeleteKey($"Save_DiscoveredByZone_{i}");
+            PlayerPrefs.DeleteKey($"Save_ObjectivesCleared_Shown_{i}");
         }
 
         PlayerPrefs.Save();
@@ -512,6 +513,7 @@ public class GameManager : MonoBehaviour
         {
             PlayerPrefs.DeleteKey($"Save_ZoneSeed_{i}");
             PlayerPrefs.DeleteKey($"Save_DiscoveredByZone_{i}");
+            PlayerPrefs.DeleteKey($"Save_ObjectivesCleared_Shown_{i}");
         }
 
         UIManager.Instance?.RefreshHUD();

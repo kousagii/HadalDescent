@@ -698,7 +698,7 @@ public class TutorialManager : MonoBehaviour
             TutorialArrowUI.Instance?.PointAtWorld(hazard.transform, "HAZARD ZONE", Vector3.up * 2f, TutorialArrowUI.ArrowDirection.Down);
         }
 
-        string speech = "DANGERS AHEAD — Turbulent reef current and seamount terrain detected! "
+        string speech = "DANGERS AHEAD - Turbulent reef current and seamount terrain detected! "
                       + "Engage emergency evasive navigation.";
 
         RadioTextboxUI.Instance?.DisplayMessage(
@@ -813,7 +813,7 @@ public class TutorialManager : MonoBehaviour
         RadioTextboxUI.Instance?.DisplayMessage(
             "DR. SANTOS",
             speech,
-            "TUTORIAL COMPLETE — +100 RDP EXPEDITION BONUS!",
+            "TUTORIAL COMPLETE - +100 RDP EXPEDITION BONUS!",
             onComplete: () =>
             {
                 _currentPhase = TutorialPhase.Completed;
@@ -853,6 +853,7 @@ public class TutorialManager : MonoBehaviour
         if (IsTutorialModalOpen) return true;
         if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen) return true;
         if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
+        if (ObjectivesClearedPopupUI.Instance != null && ObjectivesClearedPopupUI.Instance.IsOpen) return true;
         return false;
     }
 
@@ -2238,7 +2239,7 @@ public class TutorialManager : MonoBehaviour
             autoDismissDelay: 3.0f
         );
 
-        Debug.Log("[TutorialManager] Tutorial skipped by player — proceeding directly to free gameplay.");
+        Debug.Log("[TutorialManager] Tutorial skipped by player - proceeding directly to free gameplay.");
     }
 
     public void AbortTutorial()

@@ -36,7 +36,8 @@ public class UpgradeCategoryConfig
     public UpgradeCategory category;
     public string          displayName;
     public Sprite          icon;
-    public UpgradeTierInfo[] tiers = new UpgradeTierInfo[5];
+    public UpgradeTierInfo[] tiers = new UpgradeTierInfo[0];
+    public int MaxTier => (tiers != null && tiers.Length > 0) ? tiers.Length : ((category == UpgradeCategory.Utilities) ? 3 : 5);
 }
 
 /// <summary>
@@ -194,7 +195,15 @@ public class ShopManager : MonoBehaviour
 
     private void InitializeDefaultConfigs()
     {
-        if (categoryConfigs != null && categoryConfigs.Count > 0) return;
+        if (categoryConfigs != null && categoryConfigs.Count > 0)
+        {
+            var utilCfg = categoryConfigs.Find(c => c.category == UpgradeCategory.Utilities);
+            if (utilCfg != null && utilCfg.tiers != null && utilCfg.tiers.Length > 3)
+            {
+                Array.Resize(ref utilCfg.tiers, 3);
+            }
+            return;
+        }
 
         categoryConfigs = new List<UpgradeCategoryConfig>
         {
@@ -273,7 +282,7 @@ public class ShopManager : MonoBehaviour
                 }
             },
 
-            // 6. UTILITIES UPGRADES (Total: 2,750 RDP)
+            // 6. UTILITIES UPGRADES (Total: 500 RDP, Tiers 1-3)
             new UpgradeCategoryConfig
             {
                 category    = UpgradeCategory.Utilities,
@@ -282,9 +291,7 @@ public class ShopManager : MonoBehaviour
                 {
                     new UpgradeTierInfo(1, 0,    "Mechanical claw \nSingle-slot debris collection"),
                     new UpgradeTierInfo(2, 150,  "Hydraulic suction \n+25% claw drop and retrieval speed"),
-                    new UpgradeTierInfo(3, 350,  "Multi-grip arm \nCollects up to 2 items per drop"),
-                    new UpgradeTierInfo(4, 750,  "Auto-sort scanner\nHighlights correct bins in sorting UI"),
-                    new UpgradeTierInfo(5, 1500, "Magnetic extraction \nCleans clusters of debris simultaneously")
+                    new UpgradeTierInfo(3, 350,  "Multi-grip arm \nCollects up to 2 items per drop")
                 }
             }
         };
@@ -381,10 +388,21 @@ public class ShopManager : MonoBehaviour
         };
     }
 
+    public int GetMaxTier(UpgradeCategory category)
+    {
+        var config = GetConfig(category);
+        if (config != null && config.tiers != null && config.tiers.Length > 0)
+        {
+            return config.tiers.Length;
+        }
+        return (category == UpgradeCategory.Utilities) ? 3 : 5;
+    }
+
     public void SetTier(UpgradeCategory category, int tier)
     {
         if (GameManager.Instance == null) return;
-        tier = Mathf.Clamp(tier, 1, 5);
+        int maxTier = GetMaxTier(category);
+        tier = Mathf.Clamp(tier, 1, maxTier);
 
         switch (category)
         {
@@ -405,7 +423,8 @@ public class ShopManager : MonoBehaviour
     public int GetNextTierCost(UpgradeCategory category)
     {
         int currentTier = GetCurrentTier(category);
-        if (currentTier >= 5) return 0;
+        int maxTier = GetMaxTier(category);
+        if (currentTier >= maxTier) return 0;
 
         var config = GetConfig(category);
         if (config != null && config.tiers != null && currentTier < config.tiers.Length)
@@ -418,7 +437,8 @@ public class ShopManager : MonoBehaviour
     public bool TryPurchaseUpgrade(UpgradeCategory category)
     {
         int currentTier = GetCurrentTier(category);
-        if (currentTier >= 5) return false;
+        int maxTier = GetMaxTier(category);
+        if (currentTier >= maxTier) return false;
 
         int cost = GetNextTierCost(category);
         if (GameManager.Instance == null || !GameManager.Instance.TrySpendRDP(cost))
@@ -462,12 +482,13 @@ public class ShopManager : MonoBehaviour
             foreach (var cfg in categoryConfigs)
             {
                 int currentTier = GetCurrentTier(cfg.category);
+                int maxTier     = GetMaxTier(cfg.category);
                 int nextCost    = GetNextTierCost(cfg.category);
                 bool canAfford  = currentRDP >= nextCost;
 
-                string perkDesc = (currentTier < cfg.tiers.Length)
-                    ? cfg.tiers[currentTier < 5 ? currentTier : 4].perkDescription
-                    : "";
+                string perkDesc = (currentTier < maxTier && cfg.tiers != null && currentTier < cfg.tiers.Length)
+                    ? cfg.tiers[currentTier].perkDescription
+                    : (cfg.tiers != null && cfg.tiers.Length > 0 ? cfg.tiers[cfg.tiers.Length - 1].perkDescription : "");
 
                 var cardGO = Instantiate(upgradeCardPrefab, entryContainer);
                 var cardUI = cardGO.GetComponent<UpgradeCardUI>();
@@ -478,7 +499,7 @@ public class ShopManager : MonoBehaviour
                         GetCategoryIcon(cfg.category),
                         cfg.displayName,
                         currentTier,
-                        5,
+                        maxTier,
                         nextCost,
                         perkDesc,
                         canAfford,
@@ -497,19 +518,20 @@ public class ShopManager : MonoBehaviour
                 var cfg = categoryConfigs[i];
 
                 int currentTier = GetCurrentTier(cfg.category);
+                int maxTier     = GetMaxTier(cfg.category);
                 int nextCost    = GetNextTierCost(cfg.category);
                 bool canAfford  = currentRDP >= nextCost;
 
-                string perkDesc = (currentTier < cfg.tiers.Length)
-                    ? cfg.tiers[currentTier < 5 ? currentTier : 4].perkDescription
-                    : "";
+                string perkDesc = (currentTier < maxTier && cfg.tiers != null && currentTier < cfg.tiers.Length)
+                    ? cfg.tiers[currentTier].perkDescription
+                    : (cfg.tiers != null && cfg.tiers.Length > 0 ? cfg.tiers[cfg.tiers.Length - 1].perkDescription : "");
 
                 staticCards[i].Setup(
                     cfg.category,
                     GetCategoryIcon(cfg.category),
                     cfg.displayName,
                     currentTier,
-                    5,
+                    maxTier,
                     nextCost,
                     perkDesc,
                     canAfford,

@@ -48,6 +48,11 @@ public class DepthTracker : MonoBehaviour
     // Unity lifecycle
     // -----------------------------------------------------------------------
 
+    private void Awake()
+    {
+        RecalculateDepth();
+    }
+
     private void Update()
     {
         RecalculateDepth();

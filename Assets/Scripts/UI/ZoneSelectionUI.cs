@@ -242,6 +242,10 @@ public class ZoneSelectionUI : MonoBehaviour
                 }
                 _proceduralRoot.SetActive(true);
                 _proceduralRoot.transform.SetAsLastSibling();
+                if (_proceduralWarningModal != null)
+                {
+                    _proceduralWarningModal.transform.SetAsLastSibling();
+                }
             }
         }
 
@@ -278,6 +282,7 @@ public class ZoneSelectionUI : MonoBehaviour
         IsAfterTutorialFlow = false;
         if (customRoot != null) customRoot.SetActive(false);
         if (_proceduralRoot != null) _proceduralRoot.SetActive(false);
+        if (_proceduralCanvasGO != null) _proceduralCanvasGO.SetActive(false);
         if (customWarningModal != null) customWarningModal.SetActive(false);
         if (_proceduralWarningModal != null) _proceduralWarningModal.SetActive(false);
 
@@ -285,6 +290,12 @@ public class ZoneSelectionUI : MonoBehaviour
         if (!isPaused)
         {
             Time.timeScale = 1f;
+            string curScene = SceneManager.GetActiveScene().name;
+            if (!UIManager.IsMenuScene(curScene))
+            {
+                UIManager.Instance?.SetExplorationHUDVisible(true);
+                if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+            }
         }
     }
 
@@ -493,9 +504,23 @@ public class ZoneSelectionUI : MonoBehaviour
         if (ZoneConfig.IsValidZone(zoneIndex) && currentScene == ZoneConfig.Zones[zoneIndex].sceneName)
         {
             IsAfterTutorialFlow = false;
+            OpenedFromPauseMenu = false;
             // Player chose "GO BACK" or "PROCEED" to resume dive
-            Time.timeScale = 1f;
             CloseZoneSelection();
+
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            {
+                PauseMenuUI.Instance.ResumeGame();
+            }
+            else
+            {
+                Time.timeScale = 1f;
+                if (!UIManager.IsMenuScene(currentScene))
+                {
+                    UIManager.Instance?.SetExplorationHUDVisible(true);
+                    if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+                }
+            }
 
             // Push back the player safely and dismiss any boundary popups
             ZoneBoundaryTrigger.PushPlayerFromActiveBoundary();
@@ -536,6 +561,7 @@ public class ZoneSelectionUI : MonoBehaviour
             {
                 Time.timeScale = 1f;
                 UIManager.Instance?.SetExplorationHUDVisible(true);
+                if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
             }
             return;
         }
@@ -589,6 +615,13 @@ public class ZoneSelectionUI : MonoBehaviour
         if (customWarningModal != null)
         {
             UIThemeManager.ApplyAlohaTheme(customWarningModal);
+            customWarningModal.transform.SetAsLastSibling();
+            var c = customWarningModal.GetComponent<Canvas>() ?? customWarningModal.AddComponent<Canvas>();
+            c.overrideSorting = true;
+            c.sortingOrder = 32767;
+            var r = customWarningModal.GetComponent<GraphicRaycaster>() ?? customWarningModal.AddComponent<GraphicRaycaster>();
+            r.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
             if (customWarningTitleText != null)
             {
                 customWarningTitleText.text = title;
@@ -626,8 +659,20 @@ public class ZoneSelectionUI : MonoBehaviour
             return;
         }
 
+        if (_proceduralWarningModal == null && _proceduralCanvasGO != null)
+        {
+            BuildProceduralWarningModal(_proceduralCanvasGO.transform, GetAlohaFont());
+        }
+
         if (_proceduralWarningModal != null)
         {
+            _proceduralWarningModal.transform.SetAsLastSibling();
+            var c = _proceduralWarningModal.GetComponent<Canvas>() ?? _proceduralWarningModal.AddComponent<Canvas>();
+            c.overrideSorting = true;
+            c.sortingOrder = 32767;
+            var r = _proceduralWarningModal.GetComponent<GraphicRaycaster>() ?? _proceduralWarningModal.AddComponent<GraphicRaycaster>();
+            r.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+
             if (_proceduralWarningTitle != null) _proceduralWarningTitle.text = title;
             if (_proceduralWarningDesc != null)
             {
@@ -724,15 +769,32 @@ public class ZoneSelectionUI : MonoBehaviour
                 if (!UIManager.IsMenuScene(cur))
                 {
                     UIManager.Instance?.SetExplorationHUDVisible(true);
+                    if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
                 }
             }
             return;
         }
 
-        Time.timeScale = 1f;
         CloseZoneSelection();
 
         string curScene = SceneManager.GetActiveScene().name;
+        if (!UIManager.IsMenuScene(curScene))
+        {
+            // If in active gameplay zone, returning from zone selection resumes gameplay with HUD
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            {
+                PauseMenuUI.Instance.ResumeGame();
+            }
+            else
+            {
+                Time.timeScale = 1f;
+                UIManager.Instance?.SetExplorationHUDVisible(true);
+                if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+            }
+            return;
+        }
+
+        Time.timeScale = 1f;
         if (curScene != "MainMenu")
         {
             LoadingScreenUI.LoadScene("MainMenu");
@@ -1108,6 +1170,12 @@ public class ZoneSelectionUI : MonoBehaviour
         _proceduralWarningModal = new GameObject("PressureWarningModal", typeof(RectTransform), typeof(Image));
         _proceduralWarningModal.transform.SetParent(canvasParent, false);
         _proceduralWarningModal.transform.SetAsLastSibling();
+
+        var modalCanvas = _proceduralWarningModal.AddComponent<Canvas>();
+        modalCanvas.overrideSorting = true;
+        modalCanvas.sortingOrder = 32767;
+        var modalRaycaster = _proceduralWarningModal.AddComponent<GraphicRaycaster>();
+        modalRaycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
 
         var bgR = _proceduralWarningModal.GetComponent<RectTransform>();
         bgR.anchorMin = Vector2.zero;

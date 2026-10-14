@@ -7,13 +7,45 @@ public static class HadalSpeciesData
 {
     public static void Generate()
     {
-        string folder = "Assets/Scripts/ScriptableObjects/Species";
+        string folder = "Assets/Scripts/ScriptableObjects/Species/Hadal Zone";
         if (!AssetDatabase.IsValidFolder(folder))
-            AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects", "Species");
+            AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects/Species", "Hadal Zone");
 
         var createdAssets = new List<SpeciesData>();
 
-        // 1. Mariana Snailfish (Actinopterygii)
+        // 1. Faceless Cusk (Actinopterygii)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "FacelessCusk", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "faceless_cusk_001",
+            commonName             = "Faceless Cusk",
+            scientificName         = "Typhlonus nasus",
+            taxonomicClass         = TaxonomicClass.Actinopterygii,
+            zoneIndex              = 4,
+            habitat                = "Deep-sea floor (3,935–5,100 m)",
+            depthRangeText         = "3,935–5,100 m",
+            explorationHint        = "Strange snout with no apparent eyes or distinct face cruising the trench floor.",
+            characteristics        = "Soft body, rounded head, tiny hidden eyes.",
+            ecologicalRole         = "Helps regulate small deep-sea animals.",
+            interestingFact        = "Its face is difficult to see, but it is not truly faceless.",
+            rdpReward              = 160,
+            scanDifficulty         = 4,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.PelagicCruiser,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.30f,
+            instanceCount          = 3,
+            wanderRadius           = 16f,
+            moveSpeed              = 1.8f,
+            fleeSpeed              = 4.0f,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.80f, 0.75f, 0.70f, 1f),
+            placeholderScale       = new Vector3(0.55f, 1.8f, 0.55f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 2. Mariana Snailfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "MarianaSnailfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "mariana_snailfish_001",
@@ -44,7 +76,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 2. Northwest Pacific Snailfish (Actinopterygii)
+        // 3. Northwest Pacific Snailfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "NorthwestPacificSnailfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "nw_pacific_snailfish_001",
@@ -75,7 +107,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 3. Belyaev's Snailfish (Actinopterygii)
+        // 4. Belyaev's Snailfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "BelyaevsSnailfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "belyaev_snailfish_001",
@@ -106,7 +138,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 4. Galathea Cusk-eel (Actinopterygii)
+        // 5. Galathea Cusk-eel (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "GalatheaCuskeel", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "galathea_cuskeel_001",
@@ -137,7 +169,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 5. Palau Trench Sea Lily (Crinoidea)
+        // 6. Palau Trench Sea Lily (Crinoidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "PalauTrenchSeaLily", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "palau_sea_lily_001",
@@ -165,7 +197,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 6. Long-stemmed Sea Lily (Crinoidea)
+        // 7. Long-stemmed Sea Lily (Crinoidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "LongstemmedSeaLily", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "longstemmed_sea_lily_001",
@@ -193,7 +225,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 7. Palau Trench Starfish (Asteroidea)
+        // 8. Palau Trench Starfish (Asteroidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "PalauTrenchStarfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "palau_starfish_001",
@@ -221,7 +253,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 8. Hadal Heart Urchin (Echinoidea)
+        // 9. Hadal Heart Urchin (Echinoidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "HadalHeartUrchin", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "hadal_urchin_001",
@@ -249,7 +281,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 9. Philippine Trench Sea Cucumber (Holothuroidea)
+        // 10. Philippine Trench Sea Cucumber (Holothuroidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "PhilippineTrenchSeaCucumber", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "scotoplanes_galatheae_001",
@@ -277,7 +309,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 10. Long-bodied Trench Sea Cucumber (Holothuroidea)
+        // 11. Long-bodied Trench Sea Cucumber (Holothuroidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "LongbodiedTrenchSeaCucumber", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "myriotrochus_001",
@@ -305,7 +337,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 11. Deep Trench Clam (Bivalvia)
+        // 12. Deep Trench Clam (Bivalvia)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepTrenchClam", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "vesicomya_sergeevi_001",
@@ -333,7 +365,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 12. Ultraabyssal Clam (Bivalvia)
+        // 13. Ultraabyssal Clam (Bivalvia)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "UltraabyssalClam", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "parayoldiella_ultraabyssalis_001",
@@ -361,7 +393,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 13. Median Hadal Clam (Bivalvia)
+        // 14. Median Hadal Clam (Bivalvia)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "MedianHadalClam", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "parayoldiella_mediana_001",
@@ -389,7 +421,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 14. Deep Sea Amphipod (Malacostraca)
+        // 15. Deep Sea Amphipod (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepSeaAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "bathyschraderia_001",
@@ -408,6 +440,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.20f,
             maxDepthFraction       = 0.78f,
             instanceCount          = 6,
@@ -420,7 +453,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 15. Giant Hadal Amphipod (Malacostraca)
+        // 16. Giant Hadal Amphipod (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "GiantHadalAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "hirondellea_gigas_001",
@@ -439,6 +472,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.80f,
             maxDepthFraction       = 1.00f,
             instanceCount          = 6,
@@ -451,7 +485,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 16. Small-eyed Hadal Amphipod (Malacostraca)
+        // 17. Small-eyed Hadal Amphipod (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "SmallEyedHadalAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "paralicella_microps_001",
@@ -470,6 +504,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.12f,
             maxDepthFraction       = 0.50f,
             instanceCount          = 5,
@@ -482,7 +517,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 17. Abyssal Trench Amphipod (Malacostraca)
+        // 18. Abyssal Trench Amphipod (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "AbyssalTrenchAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "princaxelia_abyssalis_001",
@@ -501,6 +536,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.08f,
             maxDepthFraction       = 0.71f,
             instanceCount          = 4,
@@ -513,7 +549,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 18. Jamieson's Amphipod (Malacostraca)
+        // 19. Jamieson's Amphipod (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "JamiesonsAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "princaxelia_jamiesoni_001",
@@ -532,6 +568,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.34f,
             maxDepthFraction       = 0.66f,
             instanceCount          = 4,
@@ -544,7 +581,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 19. Large Princaxelia (Malacostraca)
+        // 20. Large Princaxelia (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "LargePrincaxelia", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "princaxelia_magna_001",
@@ -563,6 +600,7 @@ public static class HadalSpeciesData
             isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.24f,
             maxDepthFraction       = 0.59f,
             instanceCount          = 4,
@@ -575,7 +613,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 20. Ultra-abyssal Lepechinella (Malacostraca)
+        // 21. Ultra-abyssal Lepechinella (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "UltraAbyssalLepechinella", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "lepechinella_ultra_001",
@@ -594,6 +632,7 @@ public static class HadalSpeciesData
             isStationary           = true,
             isShy                  = false,
             preferredBiome         = BiomeBand.Hard,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.10f,
             maxDepthFraction       = 0.40f,
             instanceCount          = 4,
@@ -603,7 +642,7 @@ public static class HadalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 21. Glass-like Lepechinella (Malacostraca)
+        // 22. Glass-like Lepechinella (Malacostraca)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "GlassLikeLepechinella", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "lepechinella_vitrea_001",
@@ -622,12 +661,45 @@ public static class HadalSpeciesData
             isStationary           = true,
             isShy                  = false,
             preferredBiome         = BiomeBand.Hard,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             minDepthFraction       = 0.24f,
             maxDepthFraction       = 0.27f,
             instanceCount          = 4,
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.85f, 0.90f, 0.95f, 0.8f),
             placeholderScale       = new Vector3(0.45f, 0.25f, 0.7f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 23. Supergiant Amphipod (Malacostraca)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "SupergiantAmphipod", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "supergiant_amphipod_001",
+            commonName             = "Supergiant Amphipod",
+            scientificName         = "Alicella gigantea",
+            taxonomicClass         = TaxonomicClass.Malacostraca,
+            zoneIndex              = 4,
+            habitat                = "Deep Sea Floor(4,850–7,000 m)",
+            depthRangeText         = "4,850–7,000 m",
+            explorationHint        = "Colossal pure white amphipod scuttling over abyssal trench edges.",
+            characteristics        = "Pure white, large, and shrimp-like body with many legs.",
+            ecologicalRole         = "Eats dead animals and helps clean the ocean floor.",
+            interestingFact        = "One of the largest known amphipods, growing up to about 34 cm long.",
+            rdpReward              = 175,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.35f,
+            instanceCount          = 4,
+            wanderRadius           = 18f,
+            moveSpeed              = 2.0f,
+            fleeSpeed              = 4.5f,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.96f, 0.96f, 0.98f, 1f),
+            placeholderScale       = new Vector3(0.6f, 1.8f, 0.6f),
             previewScaleMultiplier = 1.0f
         }));
 

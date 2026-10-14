@@ -60,7 +60,7 @@ public class TerrainGenerator : MonoBehaviour
         float h = _meshGen != null ? _meshGen.SampleHeight(worldX, worldZ) : _seabedY;
         if (_zoneIndex == 0 || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Sunlight"))
             h = Mathf.Min(h, -10.0f);
-        return h;
+        return Mathf.Max(h, _seabedY);
     }
 
     /// <summary>

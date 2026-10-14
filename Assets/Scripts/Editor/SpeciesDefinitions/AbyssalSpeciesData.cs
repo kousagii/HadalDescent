@@ -7,13 +7,44 @@ public static class AbyssalSpeciesData
 {
     public static void Generate()
     {
-        string folder = "Assets/Scripts/ScriptableObjects/Species";
+        string folder = "Assets/Scripts/ScriptableObjects/Species/Abyssal Zone";
         if (!AssetDatabase.IsValidFolder(folder))
-            AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects", "Species");
+            AssetDatabase.CreateFolder("Assets/Scripts/ScriptableObjects/Species", "Abyssal Zone");
 
         var createdAssets = new List<SpeciesData>();
 
-        // 1. Rough Abyssal Grenadier (Actinopterygii)
+        // 1. Abyssal Grenadier (Actinopterygii)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "AbyssalGrenadier", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "abyssal_grenadier_001",
+            commonName             = "Abyssal Grenadier",
+            scientificName         = "Coryphaenoides armatus",
+            taxonomicClass         = TaxonomicClass.Actinopterygii,
+            zoneIndex              = 3,
+            habitat                = "Deep seafloor (282-5,180 m)",
+            depthRangeText         = "282–5,180 m",
+            explorationHint        = "Long tapering body and broad head scouring the deep seafloor.",
+            characteristics        = "Long body, large head, tapering tail",
+            ecologicalRole         = "Scavenges food on the seafloor",
+            interestingFact        = "Uses sensitive sensory structures to locate food in darkness",
+            rdpReward              = 120,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.65f,
+            instanceCount          = 3,
+            wanderRadius           = 22f,
+            moveSpeed              = 2.0f,
+            fleeSpeed              = 4.0f,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.40f, 0.38f, 0.35f, 1f),
+            placeholderScale       = new Vector3(0.7f, 2.2f, 0.7f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 2. Rough Abyssal Grenadier (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "RoughAbyssalGrenadier", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "rough_grenadier_001",
@@ -44,20 +75,20 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 2. Threadfin Grenadier (Actinopterygii)
+        // 3. Threadfin grenadier (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "ThreadfinGrenadier", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "threadfin_grenadier_001",
-            commonName             = "Threadfin Grenadier",
+            commonName             = "Threadfin grenadier",
             scientificName         = "Coryphaenoides filicauda",
             taxonomicClass         = TaxonomicClass.Actinopterygii,
             zoneIndex              = 3,
-            habitat                = "Abyssal slopes and plains (2,000–5,500 m)",
-            depthRangeText         = "2,000–5,500 m",
+            habitat                = "Deep water( 2500 - 5000 m)",
+            depthRangeText         = "2,500–5,000 m",
             explorationHint        = "Watch for a delicate whip-like filament trailing behind its slender tail.",
-            characteristics        = "Very slender abyssal grenadier with delicate elongate tail filament.",
-            ecologicalRole         = "Scavenges benthic organic matter and hunts deep worms.",
-            interestingFact        = "Its thread-like tail helps it detect water movements in pitch darkness.",
+            characteristics        = "Elongated body, pointed snout, and long, tapering tail.",
+            ecologicalRole         = "Deep-sea predator that helps maintain the food web.",
+            interestingFact        = "Can grow up to 40 cm long and lives at abyssal depths.",
             rdpReward              = 110,
             scanDifficulty         = 3,
             isStationary           = false,
@@ -75,7 +106,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 3. Abyssal Spiderfish (Actinopterygii)
+        // 4. Abyssal Spiderfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "AbyssalSpiderfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "abyssal_spiderfish_001",
@@ -103,7 +134,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 4. Highfin Lizardfish (Actinopterygii)
+        // 5. Highfin Lizardfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "HighfinLizardfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "highfin_lizardfish_001",
@@ -131,7 +162,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 5. Pudgy Cusk-eel (Actinopterygii)
+        // 6. Pudgy Cusk-eel (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "PudgyCuskeel", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "pudgy_cuskeel_001",
@@ -162,7 +193,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 0.9f
         }));
 
-        // 6. Philippine Cutthroat Eel (Actinopterygii)
+        // 7. Philippine Cutthroat Eel (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "PhilippineCutthroatEel", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "cutthroat_eel_001",
@@ -193,7 +224,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 7. Deep-water Arrowtooth Eel (Actinopterygii)
+        // 8. Deep-water Arrowtooth Eel (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepWaterArrowtoothEel", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "arrowtooth_eel_001",
@@ -224,7 +255,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 8. Headlight Fish (Actinopterygii)
+        // 9. Headlight Fish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "HeadlightFish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "headlight_fish_001",
@@ -255,7 +286,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 9. Flabby Whalefish (Actinopterygii)
+        // 10. Flabby Whalefish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "FlabbyWhalefish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "flabby_whalefish_001",
@@ -286,7 +317,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 10. Oceanic Lightfish (Actinopterygii)
+        // 11. Oceanic Lightfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "OceanicLightfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "oceanic_lightfish_001",
@@ -317,7 +348,170 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 11. Barbeled Dragonfish (Actinopterygii)
+        // 12. Blind Cirrate Octopus (Cephalopoda)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "BlindCirrateOctopus", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "blind_cirrate_octopus_001",
+            commonName             = "Blind Cirrate Octopus",
+            scientificName         = "Cirrothauma murrayi",
+            taxonomicClass         = TaxonomicClass.Cephalopoda,
+            zoneIndex              = 3,
+            habitat                = "Below the ocean’s surface (1,500 - 4,500 m)",
+            depthRangeText         = "1,500–4,500 m",
+            explorationHint        = "Gelatinous body with paddle-like fins drifting gently in midwater abyssal currents.",
+            characteristics        = "Gelatinous body, large ear-like fins, webbed arms, and reduced eyes.",
+            ecologicalRole         = "Deep-sea predator that likely feeds on small crustaceans and other invertebrates.",
+            interestingFact        = "Its eyes lack lenses and cannot form images, but they can still detect light.",
+            rdpReward              = 135,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.OpenWater,
+            locomotionArchetype    = LocomotionArchetype.PulsatileJetter,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.35f,
+            instanceCount          = 3,
+            wanderRadius           = 18f,
+            moveSpeed              = 1.8f,
+            fleeSpeed              = 3.8f,
+            pulseFrequency         = 0.6f,
+            pulseDutyCycle         = 0.35f,
+            placeholderShape       = PlaceholderShape.Sphere,
+            placeholderColor       = new Color(0.95f, 0.85f, 0.90f, 0.75f),
+            placeholderScale       = new Vector3(1.0f, 1.0f, 1.0f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 13. Emperor Dumbo Octopus (Cephalopoda)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "EmperorDumboOctopus", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "emperor_dumbo_octopus_001",
+            commonName             = "Emperor Dumbo Octopus",
+            scientificName         = "Grimpoteuthis imperator",
+            taxonomicClass         = TaxonomicClass.Cephalopoda,
+            zoneIndex              = 3,
+            habitat                = "Deep-water (3900–4400m)",
+            depthRangeText         = "3,900–4,400 m",
+            explorationHint        = "Flapping ear-like fins gracefully navigating just above the abyssal plain.",
+            characteristics        = "Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers.",
+            ecologicalRole         = "Predator that likely feeds on small deep-sea invertebrates.",
+            interestingFact        = "Scientists described the species in 2021 using MRI and CT scanning to preserve its rare specimen.",
+            rdpReward              = 140,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.PulsatileJetter,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.25f,
+            instanceCount          = 3,
+            wanderRadius           = 16f,
+            moveSpeed              = 1.6f,
+            fleeSpeed              = 3.5f,
+            pulseFrequency         = 0.7f,
+            pulseDutyCycle         = 0.35f,
+            placeholderShape       = PlaceholderShape.Sphere,
+            placeholderColor       = new Color(0.85f, 0.50f, 0.65f, 0.85f),
+            placeholderScale       = new Vector3(1.1f, 1.1f, 1.1f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 14. Bony-eared Assfish (Actinopterygii)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "BonyEaredAssfish", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "bony_eared_assfish_001",
+            commonName             = "Bony-eared Assfish",
+            scientificName         = "Acanthonus armatus",
+            taxonomicClass         = TaxonomicClass.Actinopterygii,
+            zoneIndex              = 3,
+            habitat                = "Deep-water (1171 - 4415 m)",
+            depthRangeText         = "1,171–4,415 m",
+            explorationHint        = "Enormous bulbous spiny head tapering to a tiny tail hovering above sediment.",
+            characteristics        = "Large head, tapering body, small eyes, and prominent head spines.",
+            ecologicalRole         = "Deep-sea consumer that contributes to the marine food web.",
+            interestingFact        = "Has one of the smallest brain-to-body size ratios among bony fishes.",
+            rdpReward              = 120,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.PelagicCruiser,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.25f,
+            instanceCount          = 3,
+            wanderRadius           = 18f,
+            moveSpeed              = 1.8f,
+            fleeSpeed              = 3.8f,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.60f, 0.55f, 0.50f, 1f),
+            placeholderScale       = new Vector3(0.6f, 1.8f, 0.6f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 15. Tripodfish (Actinopterygii)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "Tripodfish", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "tripodfish_001",
+            commonName             = "Tripodfish",
+            scientificName         = "Bathypterois grallator",
+            taxonomicClass         = TaxonomicClass.Actinopterygii,
+            zoneIndex              = 3,
+            habitat                = "Deep- water (878 - 4720 m)",
+            depthRangeText         = "878–4,720 m",
+            explorationHint        = "Perched motionless on elongated tripod stilts facing incoming bottom currents.",
+            characteristics        = "Slender body with extremely long pelvic and tail fin rays.",
+            ecologicalRole         = "Feeds on copepods and other small planktonic crustaceans.",
+            interestingFact        = "Uses its elongated fins to stand above the seafloor while facing the current.",
+            rdpReward              = 130,
+            scanDifficulty         = 3,
+            isStationary           = true, // Tripod bottom-stander
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.40f,
+            instanceCount          = 4,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.70f, 0.65f, 0.60f, 1f),
+            placeholderScale       = new Vector3(0.4f, 1.8f, 0.4f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 16. Kaup's Arrowtooth Eel (Actinopterygii)
+        createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "KaupsArrowtoothEel", new SpeciesDataGenerator.SpeciesDataConfig
+        {
+            speciesId              = "kaups_arrowtooth_eel_001",
+            commonName             = "Kaup's Arrowtooth Eel",
+            scientificName         = "Synaphobranchus kaupii",
+            taxonomicClass         = TaxonomicClass.Actinopterygii,
+            zoneIndex              = 3,
+            habitat                = "Deep-water (120 - 4800 m)",
+            depthRangeText         = "120–4,800 m",
+            explorationHint        = "Dark purplish-gray eel undulating sinuously over abyssal slopes.",
+            characteristics        = "Long, eel-like body with dark purplish-gray coloration.",
+            ecologicalRole         = "Predator of crustaceans, fishes, and cephalopods.",
+            interestingFact        = "Larger individuals primarily eat fish, while smaller ones prefer crustaceans.",
+            rdpReward              = 115,
+            scanDifficulty         = 3,
+            isStationary           = false,
+            isShy                  = false,
+            preferredBiome         = BiomeBand.Soft,
+            locomotionArchetype    = LocomotionArchetype.Serpentine,
+            minDepthFraction       = 0.00f,
+            maxDepthFraction       = 0.45f,
+            instanceCount          = 3,
+            wanderRadius           = 20f,
+            moveSpeed              = 2.4f,
+            fleeSpeed              = 4.8f,
+            undulationFrequency    = 1.6f,
+            undulationAmplitude    = 14f,
+            placeholderShape       = PlaceholderShape.Capsule,
+            placeholderColor       = new Color(0.28f, 0.22f, 0.32f, 1f),
+            placeholderScale       = new Vector3(0.4f, 2.2f, 0.4f),
+            previewScaleMultiplier = 1.0f
+        }));
+
+        // 17. Barbeled Dragonfish (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "BarbeledDragonfish", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "barbeled_dragonfish_001",
@@ -348,7 +542,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 12. Longnose Grenadier (Actinopterygii)
+        // 18. Longnose Grenadier (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "LongnoseGrenadier", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "longnose_grenadier_001",
@@ -379,7 +573,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 13. Deep-sea Eelpout (Actinopterygii)
+        // 19. Deep-sea Eelpout (Actinopterygii)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepSeaEelpout", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "deepsea_eelpout_001",
@@ -410,7 +604,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 14. Deep-sea Sea Cucumber (Holothuroidea)
+        // 20. Deep-sea Sea Cucumber (Holothuroidea)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepSeaSeaCucumber", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "psychropotes_cucumber_001",
@@ -438,7 +632,7 @@ public static class AbyssalSpeciesData
             previewScaleMultiplier = 1.0f
         }));
 
-        // 15. Deep-sea Sea Spider (Pycnogonida)
+        // 21. Deep-sea Sea Spider (Pycnogonida)
         createdAssets.Add(SpeciesDataGenerator.CreateOrUpdateSpecies(folder, "DeepSeaSeaSpider", new SpeciesDataGenerator.SpeciesDataConfig
         {
             speciesId              = "colossendeis_spider_001",

@@ -155,7 +155,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7545853986324416495
 RectTransform:
   m_ObjectHideFlags: 0
@@ -400,6 +400,41 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &565814357127929470
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7489733382884001079}
+  m_Layer: 5
+  m_Name: Horizontal
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &7489733382884001079
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 565814357127929470}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2104062926790001415}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -1320, y: -130}
+  m_SizeDelta: {x: -2760, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &992631972278450935
 GameObject:
   m_ObjectHideFlags: 0
@@ -1129,12 +1164,13 @@ RectTransform:
   - {fileID: 8322112946649929020}
   - {fileID: 3186986434059380333}
   - {fileID: 2222117129258684249}
+  - {fileID: 7489733382884001079}
   m_Father: {fileID: 7988473766426680245}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &3548012870638891079
 GameObject:
@@ -1281,16 +1317,14 @@ MonoBehaviour:
   perkDescriptionText: {fileID: 4463359203968877478}
   upgradeButton: {fileID: 7114345198999399436}
   buttonLabel: {fileID: 2714111242926604288}
+  buttonCanAfford: {r: 0.08, g: 0.75, b: 0.68, a: 1}
+  buttonCannot: {r: 0.35, g: 0.38, b: 0.45, a: 0.6}
   pipImages:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  pipFilledColor: {r: 0.12, g: 0.95, b: 0.78, a: 1}
-  pipEmptyColor: {r: 0.15, g: 0.2, b: 0.28, a: 0.8}
-  buttonCanAfford: {r: 0.08, g: 0.75, b: 0.68, a: 1}
-  buttonCannot: {r: 0.35, g: 0.38, b: 0.45, a: 0.6}
 --- !u!1 &4175053787403945079
 GameObject:
   m_ObjectHideFlags: 0
@@ -1324,7 +1358,7 @@ RectTransform:
   m_Father: {fileID: 8091243683588474341}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1602,7 +1636,129 @@ MonoBehaviour:
   entryContainer: {fileID: 8434095183678901182}
   upgradeCardPrefab: {fileID: 1438245527434704413, guid: b291f3026b70ed44eb998e0899963801, type: 3}
   staticCards: []
-  categoryConfigs: []
+  hullLogo: {fileID: 0}
+  sonarLogo: {fileID: 0}
+  scannerLogo: {fileID: 0}
+  engineLogo: {fileID: 0}
+  lightsLogo: {fileID: 0}
+  utilitiesLogo: {fileID: 0}
+  buyUpgradeSFX: {fileID: 0}
+  categoryConfigs:
+  - category: 0
+    displayName: Reinforced Hull
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "Sunlight Zone (0 m depth rated) \nStandard pressure hull"
+    - tier: 2
+      costRDP: 350
+      perkDescription: "Twilight Zone (200 m depth rated) \nUnlocks Zone 2 descent"
+    - tier: 3
+      costRDP: 900
+      perkDescription: "Midnight Zone (1,000 m depth rated) \nUnlocks Zone 3 descent"
+    - tier: 4
+      costRDP: 1800
+      perkDescription: "Abyssal Zone (4,000 m depth rated) \nUnlocks Zone 4 descent"
+    - tier: 5
+      costRDP: 3200
+      perkDescription: "Hadal Zone (6,000 m depth rated) \nMaximum trench pressure
+        rating"
+  - category: 1
+    displayName: Active Sonar Array
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "50 m detection radius \nBasic dot blips"
+    - tier: 2
+      costRDP: 150
+      perkDescription: "100 m detection radius \nCategory icons (fish, debris, hazard)"
+    - tier: 3
+      costRDP: 350
+      perkDescription: "150 m detection radius \nElevation indicators (\u25B2 / \u25BC)"
+    - tier: 4
+      costRDP: 750
+      perkDescription: "200 m detection radius \nFaster sweep & pulse glow"
+    - tier: 5
+      costRDP: 1500
+      perkDescription: "250 m detection radius \nMaximum range coverage"
+  - category: 2
+    displayName: Research Scanner
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "15% Focus Bar (MG1) \nStandard puzzle countdown timer (MG2)"
+    - tier: 2
+      costRDP: 150
+      perkDescription: "20% Focus Bar (MG1) \n+10s extra puzzle reconstruction time
+        (MG2)"
+    - tier: 3
+      costRDP: 350
+      perkDescription: "30% Focus Bar (MG1) \n+20s extra puzzle reconstruction time
+        (MG2)"
+    - tier: 4
+      costRDP: 750
+      perkDescription: "40% Focus Bar (MG1) \n1x Direct Tile Swap perk (MG2)"
+    - tier: 5
+      costRDP: 1500
+      perkDescription: "50% Focus Bar (MG1) \n2x Direct Tile Swaps & +15s bonus time
+        (MG2)"
+  - category: 3
+    displayName: Propulsion Engine
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "Base exploration speed \nStandard turning response"
+    - tier: 2
+      costRDP: 150
+      perkDescription: "+20% speed \nFaster vertical ascent and descent"
+    - tier: 3
+      costRDP: 350
+      perkDescription: "+40% speed \nImproved current resistance"
+    - tier: 4
+      costRDP: 750
+      perkDescription: "+65% speed \n+25% lane-shift speed in Hazard Dodge"
+    - tier: 5
+      costRDP: 1500
+      perkDescription: "+100% speed \nBoost burst against strong underwater currents"
+  - category: 4
+    displayName: Submersible Floodlights
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "25 m illumination reach \nNarrow halogen beam (Sunlight Zone)"
+    - tier: 2
+      costRDP: 150
+      perkDescription: "50 m illumination reach \nHigh-intensity LED beam (45\xB0
+        angle)"
+    - tier: 3
+      costRDP: 350
+      perkDescription: "80 m illumination reach \nWide floodlight matrix (75\xB0
+        angle)"
+    - tier: 4
+      costRDP: 750
+      perkDescription: "120 m illumination reach \nDeep-penetrating xenon spotlights
+        (100\xB0 angle)"
+    - tier: 5
+      costRDP: 1500
+      perkDescription: "170 m illumination reach \nFull-field visibility"
+  - category: 5
+    displayName: Utilities & Extraction Arm
+    icon: {fileID: 0}
+    tiers:
+    - tier: 1
+      costRDP: 0
+      perkDescription: "Mechanical claw \nSingle-slot debris collection"
+    - tier: 2
+      costRDP: 150
+      perkDescription: "Hydraulic suction \n+25% claw drop and retrieval speed"
+    - tier: 3
+      costRDP: 350
+      perkDescription: "Multi-grip arm \nCollects up to 2 items per drop"
 --- !u!1 &4735864534799547123
 GameObject:
   m_ObjectHideFlags: 0
@@ -3222,8 +3378,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: -790}
-  m_SizeDelta: {x: -20, y: 780}
+  m_AnchoredPosition: {x: 0, y: -850}
+  m_SizeDelta: {x: -20, y: 730}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &7267563612795644904
 CanvasRenderer:

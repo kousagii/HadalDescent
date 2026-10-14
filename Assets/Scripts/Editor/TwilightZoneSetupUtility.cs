@@ -337,12 +337,10 @@ public static class TwilightZoneSetupUtility
         }
 
         var meshRenderer = EnsureComponent<MeshRenderer>(floorGO);
-        Material seabedMat = (twilightProps != null && twilightProps.seabedMaterial != null)
-            ? twilightProps.seabedMaterial
-            : AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/OceanFloor.mat");
-        if (seabedMat != null)
+        Material oceanFloorMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/OceanFloor.mat");
+        if (oceanFloorMat != null)
         {
-            meshRenderer.sharedMaterial = seabedMat;
+            meshRenderer.sharedMaterial = oceanFloorMat;
         }
 
         var meshCol = EnsureComponent<MeshCollider>(floorGO);

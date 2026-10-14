@@ -39,7 +39,7 @@ public class SectorBoundaryWarning : MonoBehaviour
     // Immersion-preserving dialogue lines spoken by Dr. Santos
     private static readonly string[] SantosBoundaryDialogues = new string[]
     {
-        "Dr. Santos here. You're drifting outside our designated survey coordinates. The acoustic sensor relay won't reach out there—bring her back around to the active transect.",
+        "Dr. Santos here. You're drifting outside our designated survey coordinates. The acoustic sensor relay won't reach out there, bring her back around to the active transect.",
         "Researcher, our telemetry indicates you're approaching the edge of our authorized study sector. There's no cataloging scheduled out in open water; steer back to the survey grid.",
         "Telemetry warning: acoustic tracking signal is degrading. You're beyond our expedition's research perimeter. Adjust heading back toward the central trench.",
         "Careful out there. That area lies beyond our bathymetric sensor grid and acoustic beacon coverage. Let's keep our focus within the active research sector."

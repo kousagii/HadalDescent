@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 5825510617409785806}
   - component: {fileID: 4187155887438521678}
   - component: {fileID: 5460405044819702716}
+  - component: {fileID: 7119283746501928374}
   m_Layer: 0
   m_Name: PersistentCanvasUI
   m_TagString: Untagged
@@ -133,8 +134,11 @@ MonoBehaviour:
   rdpLabel: {fileID: 8252387908377986703}
   scanButtonImage: {fileID: 2591745527942049960}
   interactButtonImage: {fileID: 8675187279160573103}
+  lightButtonImage: {fileID: 7576592827386897745}
   depthTracker: {fileID: 0}
   scannerSystem: {fileID: 0}
+  usableButtonOpacity: 1
+  unusableButtonOpacity: 0.75
 --- !u!114 &5825510617409785806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,6 +158,7 @@ MonoBehaviour:
   customResumeButton: {fileID: 0}
   customSaveGameButton: {fileID: 0}
   customSettingsButton: {fileID: 0}
+  customZonesButton: {fileID: 0}
   customExitGameButton: {fileID: 0}
   customMasterVolumeSlider: {fileID: 0}
   customMusicVolumeSlider: {fileID: 0}
@@ -163,6 +168,9 @@ MonoBehaviour:
   customInvertPitchToggle: {fileID: 0}
   customSettingsBackButton: {fileID: 0}
   customSaveNotificationText: {fileID: 0}
+  customExitConfirmPopupRoot: {fileID: 0}
+  customExitConfirmButton: {fileID: 0}
+  customExitCancelButton: {fileID: 0}
 --- !u!114 &4187155887438521678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,6 +184,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneSelectionUI
   alohaFontAsset: {fileID: 0}
+  zoneScreenshots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   customRoot: {fileID: 0}
   customBackButton: {fileID: 0}
   customRdpText: {fileID: 0}
@@ -211,6 +225,29 @@ MonoBehaviour:
   customCompletionModal: {fileID: 0}
   customCompletionProceedBtn: {fileID: 0}
   customCompletionReplayBtn: {fileID: 0}
+--- !u!114 &7119283746501928374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8551868794284813441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67b953eac3fd29c459f6c2f0a5eb0c3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectiveHUDUI
+  missionLogo: {fileID: 224547090, guid: eb7b4ea1c898475418fa03565d198e37, type: 3}
+  startCollapsed: 0
+  panelRect: {fileID: 0}
+  canvasGroup: {fileID: 0}
+  logoImage: {fileID: 0}
+  headerButton: {fileID: 0}
+  headerText: {fileID: 0}
+  chevronText: {fileID: 0}
+  bodyContainer: {fileID: 0}
+  bodyCanvasGroup: {fileID: 0}
+  objectiveBodyText: {fileID: 0}
 --- !u!1001 &427968860803592219
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -353,6 +390,17 @@ MonoBehaviour:
 --- !u!114 &5752302155294920844 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5342460187325309079, guid: ade4d83a06078e84eb3ebb56af30e77d, type: 3}
+  m_PrefabInstance: {fileID: 427968860803592219}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+--- !u!114 &7576592827386897745 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7842179144670205258, guid: ade4d83a06078e84eb3ebb56af30e77d, type: 3}
   m_PrefabInstance: {fileID: 427968860803592219}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -1452,6 +1500,26 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2531471731023471389, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2714573794280277967, guid: 677bc00d80c81c54cb02735ceec7b73e, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}

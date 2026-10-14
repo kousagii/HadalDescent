@@ -88,6 +88,19 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         {
             col.isTrigger = true;
             int zoneIdx = ZoneManager.CurrentZoneIndex;
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (!ZoneConfig.IsValidZone(zoneIdx) || ZoneConfig.Zones[zoneIdx].sceneName != activeScene)
+            {
+                for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+                {
+                    if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        zoneIdx = i;
+                        break;
+                    }
+                }
+            }
+
             if (ZoneConfig.IsValidZone(zoneIdx))
             {
                 ZoneDefinition zone = ZoneConfig.Zones[zoneIdx];
@@ -96,8 +109,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
                 if (isBottomBoundary)
                 {
-                    var tracker = FindFirstObjectByType<DepthTracker>();
-                    float floorY = tracker != null ? tracker.ZoneBottomY : -145f;
+                    float floorY = -zone.playableDepth;
                     transform.position = new Vector3(0f, floorY, 0f);
                     col.size = new Vector3(w, 35f, l);
                     col.center = Vector3.zero;
@@ -151,14 +163,26 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         if (tracker != null)
         {
             int currentZone = ZoneManager.CurrentZoneIndex;
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (!ZoneConfig.IsValidZone(currentZone) || ZoneConfig.Zones[currentZone].sceneName != activeScene)
+            {
+                for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+                {
+                    if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentZone = i;
+                        break;
+                    }
+                }
+            }
+
             if (ZoneConfig.IsValidZone(currentZone))
             {
                 ZoneDefinition zone = ZoneConfig.Zones[currentZone];
 
                 if (isBottomBoundary)
                 {
-                    // STRICT 3m difference: only trigger if depth is within 3m of the bottom
-                    if (tracker.CurrentDepth >= zone.displayDepthMax - 3f)
+                    if (IsNearBottomBoundary(tracker, zone))
                     {
                         HandleDescentBoundary();
                     }
@@ -178,7 +202,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
                     else
                     {
                         // Deeper zones: trigger when ascending to zone entrance depth
-                        if (tracker.CurrentDepth <= zone.displayDepthMin + 3f)
+                        if (IsNearTopBoundary(tracker, zone))
                         {
                             HandleAscentBoundary();
                         }
@@ -198,12 +222,25 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         if (tracker == null) return;
 
         int currentZone = ZoneManager.CurrentZoneIndex;
+        string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (!ZoneConfig.IsValidZone(currentZone) || ZoneConfig.Zones[currentZone].sceneName != activeScene)
+        {
+            for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+            {
+                if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    currentZone = i;
+                    break;
+                }
+            }
+        }
+
         if (!ZoneConfig.IsValidZone(currentZone)) return;
         ZoneDefinition zone = ZoneConfig.Zones[currentZone];
 
         if (isBottomBoundary)
         {
-            if (tracker.CurrentDepth >= zone.displayDepthMax - 3f)
+            if (IsNearBottomBoundary(tracker, zone))
             {
                 HandleDescentBoundary();
             }
@@ -221,7 +258,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
             }
             else
             {
-                if (tracker.CurrentDepth <= zone.displayDepthMin + 3f)
+                if (IsNearTopBoundary(tracker, zone))
                 {
                     HandleAscentBoundary();
                 }
@@ -239,6 +276,33 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     // Boundary logic
     // -----------------------------------------------------------------------
 
+    public static bool IsNearBottomBoundary(DepthTracker tracker, ZoneDefinition zone)
+    {
+        if (tracker == null || zone == null) return false;
+
+        float hudMetersPerWorldMeter = zone.playableDepth > 0f
+            ? (zone.displayDepthMax - zone.displayDepthMin) / zone.playableDepth
+            : 1f;
+
+        // Submarine collider (height 2m) resting on the ocean floor collider (height 2m)
+        // stops ~2 world meters above -playableDepth. In deeper zones where 1 world meter = 3.2m to 12.5m HUD,
+        // a 3.5 world-meter buffer (or minimum 10 HUD meters) reliably triggers upon touching the seabed.
+        float depthBuffer = Mathf.Max(10f, hudMetersPerWorldMeter * 3.5f);
+        return tracker.CurrentDepth >= (zone.displayDepthMax - depthBuffer);
+    }
+
+    public static bool IsNearTopBoundary(DepthTracker tracker, ZoneDefinition zone)
+    {
+        if (tracker == null || zone == null) return false;
+
+        float hudMetersPerWorldMeter = zone.playableDepth > 0f
+            ? (zone.displayDepthMax - zone.displayDepthMin) / zone.playableDepth
+            : 1f;
+
+        float depthBuffer = Mathf.Max(10f, hudMetersPerWorldMeter * 3.5f);
+        return tracker.CurrentDepth <= (zone.displayDepthMin + depthBuffer);
+    }
+
     private void HandleDescentBoundary()
     {
         if (_popupActive || _globalCooldownTimer > 0f) return;
@@ -250,11 +314,24 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         }
 
         int currentZone = ZoneManager.CurrentZoneIndex;
+        string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (!ZoneConfig.IsValidZone(currentZone) || ZoneConfig.Zones[currentZone].sceneName != activeScene)
+        {
+            for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+            {
+                if (ZoneConfig.Zones[i].sceneName.Equals(activeScene, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    currentZone = i;
+                    break;
+                }
+            }
+        }
+
         if (!ZoneConfig.IsValidZone(currentZone)) return;
         ZoneDefinition curZone = ZoneConfig.Zones[currentZone];
 
         var tracker = FindFirstObjectByType<DepthTracker>();
-        if (tracker != null && tracker.CurrentDepth < curZone.displayDepthMax - 3f) return;
+        if (tracker != null && !IsNearBottomBoundary(tracker, curZone)) return;
 
         int nextZone = currentZone + 1;
 
@@ -347,6 +424,8 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         }
 
         ZoneDefinition prev = ZoneConfig.Zones[previousZone];
+        var tracker = FindFirstObjectByType<DepthTracker>();
+        if (tracker != null && !IsNearTopBoundary(tracker, ZoneConfig.Zones[currentZone])) return;
         ShowBoundaryPopup(
             $"Return to {prev.zoneName}?",
             confirmAction: () =>
@@ -507,16 +586,16 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         var sub = pm.gameObject;
         var rb = sub.GetComponent<Rigidbody>();
 
-        float topY = tracker != null ? tracker.ZoneTopY : 0f;
-        float bottomY = tracker != null ? tracker.ZoneBottomY : -145f;
-        float currentDepth = tracker != null ? tracker.CurrentDepth : 10f;
-
         int currentZone = ZoneManager.CurrentZoneIndex;
-        float maxDepth = ZoneConfig.IsValidZone(currentZone) ? ZoneConfig.Zones[currentZone].displayDepthMax : 200f;
+        float playableDepth = ZoneConfig.IsValidZone(currentZone) ? ZoneConfig.Zones[currentZone].playableDepth : 200f;
+        float topY = tracker != null ? tracker.ZoneTopY : 0f;
+        float bottomY = tracker != null ? tracker.ZoneBottomY : -playableDepth;
 
-        if (currentDepth >= maxDepth - 10f)
+        bool isAtBottom = sub.transform.position.y < (topY + bottomY) * 0.5f;
+
+        if (isAtBottom)
         {
-            // Push player upwards off the floor to safe depth (~170-175m, safely 25m on top of boundary)
+            // Push player upwards off the floor to safe depth (~25m above floor boundary)
             float safeY = bottomY + 25f;
             sub.transform.position = new Vector3(sub.transform.position.x, safeY, sub.transform.position.z);
             if (rb != null)
@@ -527,7 +606,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
         }
         else
         {
-            // Push player downwards below the surface to safe depth (~8-10m, safely outside 3m threshold)
+            // Push player downwards below the surface to safe depth (5m below top boundary)
             float safeY = topY - 5f;
             sub.transform.position = new Vector3(sub.transform.position.x, safeY, sub.transform.position.z);
             if (rb != null)

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 5825510617409785806}
   - component: {fileID: 4187155887438521678}
   - component: {fileID: 5460405044819702716}
+  - component: {fileID: 7119283746501928374}
   m_Layer: 0
   m_Name: PersistentCanvasUI
   m_TagString: Untagged
@@ -224,6 +225,29 @@ MonoBehaviour:
   customCompletionModal: {fileID: 0}
   customCompletionProceedBtn: {fileID: 0}
   customCompletionReplayBtn: {fileID: 0}
+--- !u!114 &7119283746501928374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8551868794284813441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67b953eac3fd29c459f6c2f0a5eb0c3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectiveHUDUI
+  missionLogo: {fileID: 224547090, guid: eb7b4ea1c898475418fa03565d198e37, type: 3}
+  startCollapsed: 0
+  panelRect: {fileID: 0}
+  canvasGroup: {fileID: 0}
+  logoImage: {fileID: 0}
+  headerButton: {fileID: 0}
+  headerText: {fileID: 0}
+  chevronText: {fileID: 0}
+  bodyContainer: {fileID: 0}
+  bodyCanvasGroup: {fileID: 0}
+  objectiveBodyText: {fileID: 0}
 --- !u!1001 &427968860803592219
 PrefabInstance:
   m_ObjectHideFlags: 0
