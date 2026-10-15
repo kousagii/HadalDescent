@@ -46,6 +46,9 @@ public class SubmarineCamera : MonoBehaviour
     private Vector2 _lastTouchPos;
     private bool    _hasLastTouch;
 
+    // Cockpit offset & anti-clip protection
+    private Vector3 _defaultLocalPosition;
+
     /// <summary>World-space yaw the camera is currently pointing.</summary>
     public float CameraYaw   => _smoothYaw;
 
@@ -66,6 +69,7 @@ public class SubmarineCamera : MonoBehaviour
         _pitch      = 0f;
         _smoothYaw  = _yaw;
         _smoothPitch = _pitch;
+        _defaultLocalPosition = transform.localPosition;
     }
 
     private void Start()
@@ -74,13 +78,19 @@ public class SubmarineCamera : MonoBehaviour
             dragZone = FindFirstObjectByType<TouchDragZone>();
 
         var cam = GetComponent<Camera>();
-        if (cam != null && RenderSettings.fog)
+        if (cam != null)
         {
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = RenderSettings.fogColor;
-            if (RenderSettings.fogMode == FogMode.Linear && RenderSettings.fogEndDistance > 0f)
+            // Reduce near clip plane to prevent clipping into terrain/obstacles on close approach
+            cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, 0.03f);
+
+            if (RenderSettings.fog)
             {
-                cam.farClipPlane = Mathf.Max(RenderSettings.fogEndDistance + 25f, 120f);
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = RenderSettings.fogColor;
+                if (RenderSettings.fogMode == FogMode.Linear && RenderSettings.fogEndDistance > 0f)
+                {
+                    cam.farClipPlane = Mathf.Max(RenderSettings.fogEndDistance + 25f, 120f);
+                }
             }
         }
     }
@@ -189,6 +199,31 @@ public class SubmarineCamera : MonoBehaviour
 
         // --- 3. Apply rotation: pitch is always relative to world up ---
         transform.rotation = Quaternion.Euler(_smoothPitch, _smoothYaw, 0f);
+
+        // --- 4. Anti-clip protection: prevent camera viewport from piercing terrain / obstacles ---
+        if (transform.parent != null)
+        {
+            Vector3 parentPos = transform.parent.position;
+            Vector3 targetWorldPos = transform.parent.TransformPoint(_defaultLocalPosition);
+            Vector3 ray = targetWorldPos - parentPos;
+            float targetDist = ray.magnitude;
+
+            if (targetDist > 0.001f)
+            {
+                Vector3 rayDir = ray / targetDist;
+                const float probeRadius = 0.08f;
+                if (Physics.SphereCast(parentPos, probeRadius, rayDir, out RaycastHit hit, targetDist, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (hit.collider != null && hit.collider.transform.root != transform.root)
+                    {
+                        float safeDist = Mathf.Max(0.02f, hit.distance - 0.04f);
+                        transform.position = parentPos + rayDir * safeDist;
+                        return;
+                    }
+                }
+            }
+            transform.localPosition = _defaultLocalPosition;
+        }
     }
 
     private static bool IsOverClickableUI(Vector2 screenPos)

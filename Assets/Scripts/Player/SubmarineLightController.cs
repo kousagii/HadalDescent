@@ -214,6 +214,8 @@ public class SubmarineLightController : MonoBehaviour
 
     private bool  _isLightOn           = true;
     private int   _currentAppliedTier = -1;
+    private int   _lastToggleFrame    = -1;
+    private float _lastToggleTime     = -1f;
     private Camera _cam;
     private Coroutine _fogBlendCoroutine;
 
@@ -454,6 +456,10 @@ public class SubmarineLightController : MonoBehaviour
     /// </summary>
     public void ToggleLights()
     {
+        if (Time.frameCount == _lastToggleFrame || (Time.unscaledTime - _lastToggleTime < 0.15f))
+            return;
+        _lastToggleFrame = Time.frameCount;
+        _lastToggleTime = Time.unscaledTime;
         SetLightsState(!_isLightOn);
     }
 

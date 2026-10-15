@@ -52,8 +52,90 @@ public class UIManager : MonoBehaviour
         if (ZoneBoundaryPopupUI.Instance != null && ZoneBoundaryPopupUI.Instance.IsOpen) return true;
         if (ObjectivesClearedPopupUI.Instance != null && ObjectivesClearedPopupUI.Instance.IsOpen) return true;
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialModalOpen) return true;
-        if (includeMinigames && MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive) return true;
+        if (includeMinigames && IsAnyMinigameActive()) return true;
         return false;
+    }
+
+    /// <summary>
+    /// Returns true if any minigame (MG1, MG2, MG3, MG4 or Instruction Slideshow) is currently active and not finished.
+    /// </summary>
+    public static bool IsAnyMinigameActive()
+    {
+        if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+            return true;
+
+        if (MinigameInstructionOverlay.Instance != null && MinigameInstructionOverlay.Instance.IsOpen)
+            return true;
+
+        var mg1 = FindFirstObjectByType<CaptureAndFocusMinigame>(FindObjectsInactive.Include);
+        if (mg1 != null && mg1.IsActive)
+            return true;
+
+        var mg2 = FindFirstObjectByType<ReconstructionScanMinigame>(FindObjectsInactive.Include);
+        if (mg2 != null && mg2.IsActive)
+            return true;
+
+        var mg3 = FindFirstObjectByType<EnvironmentalCleanupMinigame>(FindObjectsInactive.Include);
+        if (mg3 != null && mg3.IsActive)
+            return true;
+
+        var mg4 = FindFirstObjectByType<HazardDodgeMinigame>(FindObjectsInactive.Include);
+        if (mg4 != null && mg4.IsActive)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures that any in-minigame pause button is active, visible, interactable, and on top of other minigame UI elements.
+    /// </summary>
+    public static void EnsureMinigamePauseButtonActive()
+    {
+        bool found = false;
+        var allButtons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var b in allButtons)
+        {
+            if (b != null && b.gameObject.name == "MinigamePauseButton" && b.gameObject.scene.isLoaded)
+            {
+                b.gameObject.SetActive(true);
+                b.interactable = true;
+                b.transform.SetAsLastSibling();
+                found = true;
+            }
+        }
+
+        if (!found)
+        {
+            var mg2 = FindFirstObjectByType<ReconstructionScanMinigame>(FindObjectsInactive.Include);
+            if (mg2 != null && mg2.IsActive && mg2.RootPanel != null)
+            {
+                CreateMinigamePauseButton(mg2.RootPanel);
+                return;
+            }
+
+            var mg1 = FindFirstObjectByType<CaptureAndFocusMinigame>(FindObjectsInactive.Include);
+            if (mg1 != null && mg1.IsActive && mg1.RootPanel != null)
+            {
+                CreateMinigamePauseButton(mg1.RootPanel);
+                return;
+            }
+
+            var mg3 = FindFirstObjectByType<EnvironmentalCleanupMinigame>(FindObjectsInactive.Include);
+            if (mg3 != null && mg3.IsActive)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null) CreateMinigamePauseButton(canvas.transform);
+                return;
+            }
+
+            var mg4 = FindFirstObjectByType<HazardDodgeMinigame>(FindObjectsInactive.Include);
+            if (mg4 != null && mg4.IsActive)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null) CreateMinigamePauseButton(canvas.transform);
+                return;
+            }
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -377,6 +459,12 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SetExplorationHUDVisible(bool visible)
     {
+        // Guard: If something attempts to turn on the exploration HUD while a minigame is active, ignore the request!
+        if (visible && IsAnyMinigameActive())
+        {
+            return;
+        }
+
         _isExplorationHUDVisible = visible;
 
         EnsureHudRoot();
@@ -865,12 +953,21 @@ public class UIManager : MonoBehaviour
                 }
             }
 
-            if (lightButtonImage == null)
+            if (lightButtonImage == null || (lightButtonImage != null && lightButtonImage.gameObject.name.IndexOf("Interact", StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 var lightT = FindChildRecursive(root, "LightButton") ?? FindChildRecursive(root, "LightOuterRing") ?? FindChildRecursive(root, "BtnLight") ?? FindChildRecursive(root, "Light");
                 if (lightT != null)
                 {
                     lightButtonImage = lightT.GetComponent<Image>() ?? lightT.GetComponentInChildren<Image>();
+                }
+            }
+
+            if (interactButtonImage != null && interactButtonImage.gameObject.name.IndexOf("Light", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var interactT = FindChildRecursive(root, "InteractButton") ?? FindChildRecursive(root, "InteractOuterRing") ?? FindChildRecursive(root, "Interact");
+                if (interactT != null)
+                {
+                    interactButtonImage = interactT.GetComponent<Image>() ?? interactT.GetComponentInChildren<Image>();
                 }
             }
         }
@@ -1111,6 +1208,18 @@ public class UIManager : MonoBehaviour
         }
 
         // 2b. Light Button (Submarine headlights toggle)
+        if (lightButtonImage != null)
+        {
+            // Remove any legacy OnScreenButton left over on LightButton so touching/clicking lights
+            // never simulates a Gamepad buttonNorth (Interact) input action.
+            var onScreen = lightButtonImage.GetComponent<UnityEngine.InputSystem.OnScreen.OnScreenButton>();
+            if (onScreen != null)
+            {
+                if (Application.isPlaying) Destroy(onScreen);
+                else DestroyImmediate(onScreen);
+            }
+        }
+
         Button lightBtn = null;
         if (lightButtonImage != null) lightBtn = lightButtonImage.GetComponent<Button>();
         if (lightBtn == null && lightButtonImage != null)
@@ -1129,6 +1238,7 @@ public class UIManager : MonoBehaviour
         }
         if (lightBtn != null)
         {
+            lightBtn.onClick.RemoveListener(OnInteractButtonPressed);
             lightBtn.onClick.RemoveListener(OnLightButtonPressed);
             lightBtn.onClick.AddListener(OnLightButtonPressed);
 

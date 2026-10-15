@@ -80,7 +80,7 @@ public class ScanReticleUI : MonoBehaviour
     private void Update()
     {
         bool hideReticle = (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen)
-                        || (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
+                        || UIManager.IsAnyMinigameActive()
                         || (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen)
                         || (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen)
                         || (ShopManager.Instance != null && ShopManager.Instance.IsOpen)

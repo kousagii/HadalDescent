@@ -48,6 +48,10 @@ public class ReconstructionScanMinigame : MonoBehaviour
     private bool  _finished;
     private bool  _hintShown;
 
+    public bool IsFinished => _finished;
+    public bool IsActive => !_finished && _rootPanel != null && _rootPanel.gameObject.activeInHierarchy;
+    public RectTransform RootPanel => _rootPanel;
+
     // -----------------------------------------------------------------------
     // UI references
     // -----------------------------------------------------------------------
@@ -497,9 +501,9 @@ public class ReconstructionScanMinigame : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(1.3f);
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
-        UIManager.Instance?.SetExplorationHUDVisible(true);
         if (success) _onSuccess?.Invoke();
         else         _onFail?.Invoke();
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     // -----------------------------------------------------------------------

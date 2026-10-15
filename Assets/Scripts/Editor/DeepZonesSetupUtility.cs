@@ -207,12 +207,14 @@ public static class DeepZonesSetupUtility
         rb.linearDamping = 2.0f;
         rb.angularDamping = 10.0f;
         rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         var col = EnsureComponent<CapsuleCollider>(playerGO);
-        col.radius = 0.5f;
-        col.height = 2.0f;
-        col.direction = 1; // Y-axis
-        col.center = Vector3.zero;
+        col.direction = 2; // Z-axis (forward/backward)
+        col.radius = 0.8f;
+        col.height = 3.0f;
+        col.center = new Vector3(0f, 0.15f, 0.2f);
 
         // Visuals (Capsule hull)
         var meshFilter = EnsureComponent<MeshFilter>(playerGO);

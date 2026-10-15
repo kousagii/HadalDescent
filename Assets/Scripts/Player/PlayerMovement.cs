@@ -53,7 +53,23 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
+        if (rb != null)
+        {
+            rb.freezeRotation = true;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
+
+        // Calibrate submarine collider to fit the horizontal vessel and enclose the cockpit camera,
+        // preventing terrain clipping when bumping into walls, seabed, or obstacles.
+        var col = GetComponent<CapsuleCollider>();
+        if (col != null)
+        {
+            col.direction = 2; // Z-axis (forward/backward)
+            col.radius = 0.8f;
+            col.height = 3.0f;
+            col.center = new Vector3(0f, 0.15f, 0.2f);
+        }
 
         if (hideSubmarineInFirstPerson)
         {

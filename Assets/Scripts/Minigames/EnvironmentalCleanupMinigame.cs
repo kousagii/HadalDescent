@@ -126,6 +126,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     private Action        _onFail;
     private int           _zoneIndex;
     private bool          _isActive;
+    public bool IsActive => _isActive && gameObject.activeInHierarchy;
 
     // -----------------------------------------------------------------------
     // Stage & 3D Objects
@@ -1473,6 +1474,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         while (sortTime > 0f && _sortingIndex < _collectedDebris.Count)
         {
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             sortTime -= Time.deltaTime;
             SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{Mathf.CeilToInt(sortTime):00}");
 
@@ -1674,8 +1681,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             _targetCluster = null;
         }
 
-        CancelMinigame();
         _onSuccess?.Invoke();
+        CancelMinigame();
     }
 
     public void CancelMinigame()

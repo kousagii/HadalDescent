@@ -123,6 +123,8 @@ public class CaptureAndFocusMinigame : MonoBehaviour
     }
 
     public bool IsFinished => _finished;
+    public bool IsActive => !_finished && _rootPanel != null && _rootPanel.gameObject.activeInHierarchy;
+    public RectTransform RootPanel => _rootPanel;
 
     public void SetHolding(bool isHolding)
     {
@@ -414,10 +416,9 @@ public class CaptureAndFocusMinigame : MonoBehaviour
         yield return new WaitForSecondsRealtime(1.2f);
         AudioManager.Instance?.StopBarRisingSFX();
         if (_rootPanel != null) _rootPanel.gameObject.SetActive(false);
-        UIManager.Instance?.SetExplorationHUDVisible(true);
-
         if (success) _onSuccess?.Invoke();
         else         _onFail?.Invoke();
+        UIManager.Instance?.SetExplorationHUDVisible(true);
     }
 
     public void CancelMinigame()

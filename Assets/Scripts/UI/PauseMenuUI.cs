@@ -315,8 +315,19 @@ public class PauseMenuUI : MonoBehaviour
         string curScene = SceneManager.GetActiveScene().name;
         if (!UIManager.IsMenuScene(curScene))
         {
-            UIManager.Instance?.SetExplorationHUDVisible(true);
-            if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+            if (UIManager.IsAnyMinigameActive())
+            {
+                // Minigame is still active and not finished!
+                // Keep the exploration HUD hidden so only the minigame UI and its pause button appear.
+                UIManager.Instance?.SetExplorationHUDVisible(false);
+                if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
+                UIManager.EnsureMinigamePauseButtonActive();
+            }
+            else
+            {
+                UIManager.Instance?.SetExplorationHUDVisible(true);
+                if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
+            }
         }
 
         AudioManager.Instance?.PlayButtonClick();
@@ -486,7 +497,10 @@ public class PauseMenuUI : MonoBehaviour
         string curScene = SceneManager.GetActiveScene().name;
         if (!UIManager.IsMenuScene(curScene))
         {
-            UIManager.Instance?.SetExplorationHUDVisible(true);
+            if (!UIManager.IsAnyMinigameActive())
+            {
+                UIManager.Instance?.SetExplorationHUDVisible(true);
+            }
         }
 
         LoadSettingsToUI();

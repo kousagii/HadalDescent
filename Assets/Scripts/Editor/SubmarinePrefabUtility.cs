@@ -131,6 +131,25 @@ public static class SubmarinePrefabUtility
         newVisual.transform.localRotation = Quaternion.identity;
         newVisual.transform.localScale = Vector3.one;
 
+        // Calibrate submarine collider and physics so the camera never clips through terrain
+        var col = playerGO.GetComponent<CapsuleCollider>();
+        if (col != null)
+        {
+            Undo.RecordObject(col, "Calibrate Submarine Collider");
+            col.direction = 2; // Z-axis (forward/backward)
+            col.radius = 0.8f;
+            col.height = 3.0f;
+            col.center = new Vector3(0f, 0.15f, 0.2f);
+        }
+
+        var rb = playerGO.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Undo.RecordObject(rb, "Calibrate Submarine Rigidbody");
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
+
         // Position first-person camera at cockpit window
         var camTransform = playerGO.transform.Find("Main Camera");
         if (camTransform != null)
@@ -141,7 +160,7 @@ public static class SubmarinePrefabUtility
             var cam = camTransform.GetComponent<Camera>();
             if (cam != null)
             {
-                cam.nearClipPlane = 0.15f; // Prevents interior hull clipping
+                cam.nearClipPlane = 0.03f; // Prevents terrain mesh & hull clipping
                 var lightCtrl = camTransform.GetComponent<SubmarineLightController>();
                 if (lightCtrl == null) lightCtrl = camTransform.gameObject.AddComponent<SubmarineLightController>();
                 lightCtrl.EnsureLightRigBuilt();

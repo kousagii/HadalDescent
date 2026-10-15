@@ -108,8 +108,7 @@ public class ObjectiveHUDUI : MonoBehaviour
 
     private static bool IsMinigameActive()
     {
-        return (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
-            || (MinigameInstructionOverlay.Instance != null && MinigameInstructionOverlay.Instance.IsOpen);
+        return UIManager.IsAnyMinigameActive();
     }
 
     private void Awake()

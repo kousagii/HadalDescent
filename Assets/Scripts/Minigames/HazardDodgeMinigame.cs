@@ -252,6 +252,7 @@ public class HazardDodgeMinigame : MonoBehaviour
     private Coroutine  _finishPunchCoroutine;
 
     private bool         _isActive       = false;
+    public bool IsActive => _isActive && gameObject.activeInHierarchy;
 
     private void Awake()
     {
@@ -857,10 +858,6 @@ public class HazardDodgeMinigame : MonoBehaviour
         yield return new WaitForSecondsRealtime(2.8f);
 
         RestoreSceneCamera();
-        SetExplorationHUDActive(true);
-
-        AudioManager.Instance?.RestoreZoneBGM();
-
         CleanupStage();
         if (_rootUI != null) _rootUI.gameObject.SetActive(false);
         if (customUIRoot != null) customUIRoot.SetActive(false);
@@ -869,6 +866,8 @@ public class HazardDodgeMinigame : MonoBehaviour
         _isActive = false;
         if (success) _onSuccess?.Invoke(totalReward);
         else         _onFail?.Invoke();
+
+        SetExplorationHUDActive(true);
     }
 
     // -----------------------------------------------------------------------
