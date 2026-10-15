@@ -13,26 +13,27 @@ MonoBehaviour:
   m_Name: DeepSeaJellyfish
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: deep_sea_jellyfish_001
-  commonName: "Deep-sea Jellyfish"
-  scientificName: "Atolla wyvillei"
+  commonName: Deep-sea Jellyfish
+  scientificName: Atolla wyvillei
   taxonomicClass: 8
   zoneIndex: 2
-  habitat: "Deep ocean, about 1,000–4,000 m"
-  depthRangeText: "1,000–4,000 m"
-  explorationHint: "Deep ocean, about 1,000–4,000 m. Red jellyfish with a round bell and long tentacles."
+  habitat: "Deep ocean, about 1,000\u20134,000 m"
+  depthRangeText: "1,000\u20134,000 m"
+  explorationHint: "Deep ocean, about 1,000\u20134,000 m. Red jellyfish with a round
+    bell and long tentacles."
   secondaryZoneIndices: 
-  characteristics: "Red jellyfish with a round bell and long tentacles."
-  ecologicalRole: "Catches tiny animals drifting through the water."
-  interestingFact: "It can produce flashing light when disturbed."
+  characteristics: Red jellyfish with a round bell and long tentacles.
+  ecologicalRole: Catches tiny animals drifting through the water.
+  interestingFact: It can produce flashing light when disturbed.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
-  maxDepthFraction: 1.0
+  minDepthFraction: 0
+  maxDepthFraction: 1
   instanceCount: 3
-  wanderRadius: 25.0
+  wanderRadius: 25
   moveSpeed: 1.5
   fleeSpeed: 2.7
   fleeRange: 10
@@ -46,14 +47,14 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 1872678300815884311, guid: 13eb9836b263b3f428a5f00a512f66e2, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.7, g: 0.15, b: 0.2, a: 1.0}
+  placeholderColor: {r: 0.7, g: 0.15, b: 0.2, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
   photo: {fileID: 0}
   fullImage: {fileID: 0}

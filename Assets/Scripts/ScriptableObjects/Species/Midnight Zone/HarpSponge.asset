@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: HarpSponge
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: harp_sponge_001
-  commonName: "Harp Sponge"
-  scientificName: "Chondrocladia lyra"
+  commonName: Harp Sponge
+  scientificName: Chondrocladia lyra
   taxonomicClass: 13
   zoneIndex: 2
-  habitat: "Deep seafloor, 3,316–3,399 m"
-  depthRangeText: "3,316–3,399 m"
-  explorationHint: "Deep seafloor, 3,316–3,399 m. Has long branches shaped somewhat like a harp."
+  habitat: "Deep seafloor, 3,316\u20133,399 m"
+  depthRangeText: "3,316\u20133,399 m"
+  explorationHint: "Deep seafloor, 3,316\u20133,399 m. Has long branches shaped somewhat
+    like a harp."
   secondaryZoneIndices: 
-  characteristics: "Has long branches shaped somewhat like a harp."
-  ecologicalRole: "Captures tiny animals instead of only filtering food from water."
-  interestingFact: "It looks like a harp growing from the seafloor."
+  characteristics: Has long branches shaped somewhat like a harp.
+  ecologicalRole: Captures tiny animals instead of only filtering food from water.
+  interestingFact: It looks like a harp growing from the seafloor.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 1
@@ -32,8 +33,8 @@ MonoBehaviour:
   minDepthFraction: 0.75
   maxDepthFraction: 0.85
   instanceCount: 3
-  wanderRadius: 0.0
-  moveSpeed: 0.0
+  wanderRadius: 0
+  moveSpeed: 0
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 25
@@ -46,14 +47,14 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 7409591117004155130, guid: 73f2c431fd483054cab0b8f58aabd41c, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 2
-  placeholderColor: {r: 0.85, g: 0.88, b: 0.92, a: 1.0}
+  placeholderColor: {r: 0.85, g: 0.88, b: 0.92, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
   photo: {fileID: 0}
   fullImage: {fileID: 0}

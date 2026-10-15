@@ -553,34 +553,93 @@ public class HabitatLandmarkSpawner : MonoBehaviour
 
     private void EnsureCollidersAndLayer(GameObject go)
     {
+        if (go == null) return;
+
         int terrainLayer = LayerMask.NameToLayer("Terrain");
         if (terrainLayer >= 0)
         {
             SetLayerRecursive(go, terrainLayer);
         }
 
-        var colliders = go.GetComponentsInChildren<Collider>();
-        if (colliders == null || colliders.Length == 0)
+        string landmarkName = go.name.ToLowerInvariant();
+        bool isLandmarkSeagrass = landmarkName.Contains("seagrass") || landmarkName.Contains("sea_grass") || landmarkName.Contains("kelp");
+
+        // Keep root collider as a trigger (it is the discovery/scan area for the landmark)
+        var rootCollider = go.GetComponent<Collider>();
+        if (rootCollider != null)
         {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers != null && renderers.Length > 0)
+            rootCollider.isTrigger = true;
+        }
+
+        // Process all child renderers to ensure solid (corals, rocks) or passable (seagrass) colliders
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers != null && renderers.Length > 0)
+        {
+            for (int i = 0; i < renderers.Length; i++)
             {
-                for (int i = 0; i < renderers.Length; i++)
+                var r = renderers[i];
+                if (r == null || r.gameObject == go) continue; // Skip root
+
+                string childName = r.gameObject.name.ToLowerInvariant();
+                bool isPassable = isLandmarkSeagrass && (childName.Contains("seagrass") || childName.Contains("sea_grass") || childName.Contains("kelp") || childName.Contains("grass"));
+
+                var childCols = r.GetComponents<Collider>();
+                if (childCols == null || childCols.Length == 0)
                 {
-                    var mf = renderers[i].GetComponent<MeshFilter>();
+                    var mf = r.GetComponent<MeshFilter>();
                     if (mf != null && mf.sharedMesh != null)
                     {
-                        var mc = renderers[i].gameObject.AddComponent<MeshCollider>();
+                        var mc = r.gameObject.AddComponent<MeshCollider>();
                         mc.sharedMesh = mf.sharedMesh;
-                        mc.convex = true;
-                        mc.isTrigger = true;
+                        mc.convex = isPassable;
+                        mc.isTrigger = isPassable;
+                    }
+                }
+                else
+                {
+                    for (int c = 0; c < childCols.Length; c++)
+                    {
+                        if (childCols[c] != null)
+                        {
+                            if (isPassable)
+                            {
+                                if (childCols[c] is MeshCollider mc)
+                                    mc.convex = true;
+                                childCols[c].isTrigger = true;
+                            }
+                            else
+                            {
+                                childCols[c].isTrigger = false;
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        // Sweep all colliders in landmark hierarchy to ensure correct trigger flags
+        var allColliders = go.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < allColliders.Length; i++)
+        {
+            var c = allColliders[i];
+            if (c == null) continue;
+            if (c.gameObject == go)
+            {
+                c.isTrigger = true; // Root landmark discovery trigger volume
+                continue;
+            }
+
+            string cName = c.gameObject.name.ToLowerInvariant();
+            bool isPassable = isLandmarkSeagrass && (cName.Contains("seagrass") || cName.Contains("sea_grass") || cName.Contains("kelp") || cName.Contains("grass"));
+
+            if (isPassable)
+            {
+                if (c is MeshCollider mc) mc.convex = true;
+                c.isTrigger = true;
+            }
             else
             {
-                var box = go.AddComponent<BoxCollider>();
-                box.isTrigger = true;
+                c.isTrigger = false;
             }
         }
 

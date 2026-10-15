@@ -649,34 +649,74 @@ public class EnvPropScatterer : MonoBehaviour
         }
     }
 
+    private bool IsPassableProp(GameObject go)
+    {
+        if (go == null) return false;
+        string n = go.name.ToLowerInvariant();
+        return n.Contains("seagrass") || n.Contains("sea_grass") || n.Contains("grass") ||
+               n.Contains("seaweed")  || n.Contains("kelp")      || n.Contains("ripple");
+    }
+
     private void EnsureCollider(GameObject go)
     {
+        bool isPassable = IsPassableProp(go);
         var colliders = go.GetComponentsInChildren<Collider>();
         if (colliders == null || colliders.Length == 0)
         {
-            var mf = go.GetComponentInChildren<MeshFilter>();
-            if (mf != null && mf.sharedMesh != null)
+            var renderers = go.GetComponentsInChildren<Renderer>();
+            bool addedAny = false;
+            if (renderers != null && renderers.Length > 0)
             {
-                var mc = mf.gameObject.AddComponent<MeshCollider>();
-                mc.sharedMesh = mf.sharedMesh;
-                mc.convex = true;  // Must be convex to support isTrigger
-                mc.isTrigger = true;
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    var mf = renderers[i].GetComponent<MeshFilter>();
+                    if (mf != null && mf.sharedMesh != null)
+                    {
+                        var mc = renderers[i].gameObject.AddComponent<MeshCollider>();
+                        mc.sharedMesh = mf.sharedMesh;
+                        mc.convex = isPassable;  // Must be convex if trigger (required by PhysX)
+                        mc.isTrigger = isPassable;
+                        addedAny = true;
+                    }
+                }
             }
-            else
+
+            if (!addedAny)
             {
-                var box = go.AddComponent<BoxCollider>();
-                box.isTrigger = true;
+                var mf = go.GetComponentInChildren<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    var mc = mf.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = mf.sharedMesh;
+                    mc.convex = isPassable;
+                    mc.isTrigger = isPassable;
+                }
+                else
+                {
+                    var box = go.AddComponent<BoxCollider>();
+                    box.isTrigger = isPassable;
+                }
             }
         }
         else
         {
-            // Existing colliders from prefab — make them triggers so props
-            // don't physically block the submarine. The ocean floor mesh
-            // already provides the solid terrain collision surface.
+            // Existing colliders from prefab:
+            // Seagrass is passable (trigger), while corals, rocks, and boulders are solid (non-trigger)
             for (int i = 0; i < colliders.Length; i++)
             {
                 if (colliders[i] != null)
-                    colliders[i].isTrigger = true;
+                {
+                    if (isPassable)
+                    {
+                        if (colliders[i] is MeshCollider mc)
+                            mc.convex = true;
+                        colliders[i].isTrigger = true;
+                    }
+                    else
+                    {
+                        colliders[i].isTrigger = false;
+                    }
+                }
             }
         }
     }

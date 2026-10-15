@@ -934,7 +934,7 @@ public class BestiaryManager : MonoBehaviour
             else if (data.photo != null)
             {
                 thumbImg.sprite = discovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
-                thumbImg.color  = discovered ? Color.white : new Color(0.12f, 0.15f, 0.20f, 1f);
+                thumbImg.color  = discovered ? Color.white : new Color(0.10f, 0.10f, 0.10f, 1f);
             }
         }
 
@@ -1023,7 +1023,7 @@ public class BestiaryManager : MonoBehaviour
         else if (data.photo != null)
         {
             thumbImg.sprite = discovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
-            thumbImg.color  = discovered ? Color.white : new Color(0.1f, 0.1f, 0.15f, 0.9f);
+            thumbImg.color  = discovered ? Color.white : new Color(0.10f, 0.10f, 0.10f, 1f);
         }
 
         // Make 3D thumbnail clickable on all cards to open interactive 3D inspection modal

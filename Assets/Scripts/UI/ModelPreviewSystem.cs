@@ -79,12 +79,49 @@ public class ModelPreviewSystem : MonoBehaviour
     // Unity lifecycle
     // -----------------------------------------------------------------------
 
+    private bool _savedFog;
+
     private void Awake()
     {
         if (_instance != null && _instance != this) { Destroy(this); return; }
         _instance = this;
 
+        ClearThumbnailCache();
         EnsureInitialized();
+    }
+
+    private void OnEnable()
+    {
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+        UnityEngine.Rendering.RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
+    }
+
+    private void OnDisable()
+    {
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+        UnityEngine.Rendering.RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+    }
+
+    private void OnBeginCameraRendering(UnityEngine.Rendering.ScriptableRenderContext context, Camera cam)
+    {
+        if (cam == previewCamera)
+        {
+            _savedFog = RenderSettings.fog;
+            RenderSettings.fog = false;
+        }
+    }
+
+    private void OnEndCameraRendering(UnityEngine.Rendering.ScriptableRenderContext context, Camera cam)
+    {
+        if (cam == previewCamera)
+        {
+            RenderSettings.fog = _savedFog;
+        }
+    }
+
+    public void ClearThumbnailCache()
+    {
+        _thumbnailCache.Clear();
     }
 
     private void Update()
@@ -152,14 +189,14 @@ public class ModelPreviewSystem : MonoBehaviour
             if (_previewLayerId >= 0)
                 _keyLight.cullingMask = 1 << _previewLayerId;
 
-            // Fill light from bottom-left for realistic rim & ambient lighting
+            // Fill light from bottom-left for realistic rim & ambient lighting (neutral white/gray, no blue tint)
             var fillGO = new GameObject("PreviewLight_Fill", typeof(Light));
             fillGO.transform.SetParent(transform, false);
             fillGO.transform.localRotation = Quaternion.Euler(-25f, -145f, 0f);
             _fillLight = fillGO.GetComponent<Light>();
             _fillLight.type = LightType.Directional;
             _fillLight.intensity = 0.6f;
-            _fillLight.color = new Color(0.65f, 0.85f, 1f);
+            _fillLight.color = new Color(0.92f, 0.92f, 0.95f);
             if (_previewLayerId >= 0)
                 _fillLight.cullingMask = 1 << _previewLayerId;
         }
@@ -224,15 +261,26 @@ public class ModelPreviewSystem : MonoBehaviour
         RenderTexture.active = previewRT;
         GL.Clear(true, true, Color.clear); // Explicitly clear color and depth buffers
 
-        var prevTarget = previewCamera.targetTexture;
-        previewCamera.targetTexture = previewRT;
-        previewCamera.Render();
-        previewCamera.targetTexture = prevTarget;
+        Texture2D snap;
+        bool prevFog = RenderSettings.fog;
+        try
+        {
+            RenderSettings.fog = false;
 
-        // 5. Read pixels into Texture2D
-        Texture2D snap = new Texture2D(previewRT.width, previewRT.height, TextureFormat.RGBA32, false);
-        snap.ReadPixels(new Rect(0, 0, previewRT.width, previewRT.height), 0, 0);
-        snap.Apply();
+            var prevTarget = previewCamera.targetTexture;
+            previewCamera.targetTexture = previewRT;
+            previewCamera.Render();
+            previewCamera.targetTexture = prevTarget;
+
+            // 5. Read pixels into Texture2D
+            snap = new Texture2D(previewRT.width, previewRT.height, TextureFormat.RGBA32, false);
+            snap.ReadPixels(new Rect(0, 0, previewRT.width, previewRT.height), 0, 0);
+            snap.Apply();
+        }
+        finally
+        {
+            RenderSettings.fog = prevFog;
+        }
 
         RenderTexture.active = prevActive;
 
@@ -394,9 +442,9 @@ public class ModelPreviewSystem : MonoBehaviour
 
     private void CreateSilhouetteMaterial()
     {
-        // Darkened 3D silhouette material: URP Lit renders the geometry contours with directional lighting
-        Color silColor = new Color(0.10f, 0.12f, 0.16f, 1.0f);
-        _silhouetteMat = MaterialUtils.CreateColoredMaterial(silColor, 0.35f, 0.05f);
+        // Darkened 3D silhouette material: neutral dark silhouette showing 3D geometry contours
+        Color silColor = new Color(0.10f, 0.10f, 0.10f, 1.0f);
+        _silhouetteMat = MaterialUtils.CreateColoredMaterial(silColor, 0.25f, 0.02f);
         if (_silhouetteMat != null)
         {
 
@@ -405,8 +453,8 @@ public class ModelPreviewSystem : MonoBehaviour
             if (_silhouetteMat.HasProperty("_MainTex"))  _silhouetteMat.SetTexture("_MainTex", Texture2D.whiteTexture);
 
             // Subtle metallic & smoothness to catch soft specular rims on 3D curves
-            if (_silhouetteMat.HasProperty("_Metallic"))    _silhouetteMat.SetFloat("_Metallic", 0.05f);
-            if (_silhouetteMat.HasProperty("_Smoothness"))  _silhouetteMat.SetFloat("_Smoothness", 0.35f);
+            if (_silhouetteMat.HasProperty("_Metallic"))    _silhouetteMat.SetFloat("_Metallic", 0.02f);
+            if (_silhouetteMat.HasProperty("_Smoothness"))  _silhouetteMat.SetFloat("_Smoothness", 0.25f);
             if (_silhouetteMat.HasProperty("_BumpMap"))     _silhouetteMat.SetTexture("_BumpMap", null);
             if (_silhouetteMat.HasProperty("_EmissionMap")) _silhouetteMat.SetTexture("_EmissionMap", null);
             if (_silhouetteMat.HasProperty("_EmissionColor")) _silhouetteMat.SetColor("_EmissionColor", Color.black);
@@ -430,6 +478,7 @@ public class ModelPreviewSystem : MonoBehaviour
         foreach (var r in renderers)
         {
             if (r == null) continue;
+            r.SetPropertyBlock(null);
             int matCount = r.sharedMaterials != null && r.sharedMaterials.Length > 0 ? r.sharedMaterials.Length : 1;
             var mats = new Material[matCount];
             for (int i = 0; i < mats.Length; i++)

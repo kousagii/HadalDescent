@@ -4,19 +4,43 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
+  - customUIRoot: {instanceID: 0}
+  - customTimerText: {instanceID: 0}
+  - customTimerTextLegacy: {instanceID: 0}
+  - customScoreText: {instanceID: 0}
+  - customScoreTextLegacy: {instanceID: 0}
+  - customStatusText: {instanceID: 0}
+  - customStatusTextLegacy: {instanceID: 0}
+  - customExtractionContainer: {instanceID: 0}
+  - customDropClawButton: {instanceID: 0}
+  - customJoystickHandle: {instanceID: 0}
+  - customJoystickBackground: {instanceID: 0}
+  - customSortingContainer: {instanceID: 0}
+  - customSortingItemText: {instanceID: 0}
+  - customSortingItemTextLegacy: {instanceID: 0}
+  - customBinPlastics: {instanceID: 0}
+  - customBinMetals: {instanceID: 0}
+  - customBinHazardous: {instanceID: 0}
+  - customResultsContainer: {instanceID: 0}
+  - customResultsSummaryText: {instanceID: 0}
+  - customResultsSummaryTextLegacy: {instanceID: 0}
+  - customReturnButton: {instanceID: 0}
   - customClawPrefab: {instanceID: 0}
   - customTrolleyPrefab: {instanceID: 0}
   - prefabWaterBottle: {instanceID: 0}
   - prefabPlasticBag: {instanceID: 0}
   - prefabSixPackRings: {instanceID: 0}
-  - prefabSodaCan: {instanceID: 0}
-  - prefabMetalPipe: {instanceID: 0}
-  - prefabMetalDrum: {instanceID: 0}
+  - prefabSodaCan: {fileID: 9203438958908529027, guid: 411d387d7036bea479c91073364c5797, type: 3}
+  - prefabMetalPipe: {fileID: 3815146655861710377, guid: dc2d15c5856573947be2078094e1a094, type: 3}
+  - prefabMetalDrum: {fileID: 8771091787928289351, guid: 1bd9c22ad93dd214a84a45436b3b78d3, type: 3}
   - prefabBatterySmall: {instanceID: 0}
   - prefabBatteryLarge: {instanceID: 0}
   - prefabElectronicWaste: {instanceID: 0}
-  - prefabCoralObstacle: {fileID: 592339605672025169, guid: b3ad47579ae7c5846aa83e61d2859240, type: 3}
+  - prefabCoralObstacle: {instanceID: 0}
   - prefabFishObstacle: {fileID: 7950250345750191443, guid: bfaf51a9ae3fa304ea99cf1d0b7c9a89, type: 3}
+  - customBGM: {instanceID: 0}
+  - customClawSFX: {instanceID: 0}
+  - customBumpSFX: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

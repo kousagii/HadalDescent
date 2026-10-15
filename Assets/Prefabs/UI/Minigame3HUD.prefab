@@ -118,14 +118,17 @@ MonoBehaviour:
   prefabWaterBottle: {fileID: 0}
   prefabPlasticBag: {fileID: 0}
   prefabSixPackRings: {fileID: 0}
-  prefabSodaCan: {fileID: 0}
-  prefabMetalPipe: {fileID: 0}
-  prefabMetalDrum: {fileID: 0}
+  prefabSodaCan: {fileID: 9203438958908529027, guid: 411d387d7036bea479c91073364c5797, type: 3}
+  prefabMetalPipe: {fileID: 8771091787928289351, guid: 3e098483334c6f842936aa4ee7362328, type: 3}
+  prefabMetalDrum: {fileID: 8610589388344194305, guid: c8cbe0e31197e7e478f6f111927eb10f, type: 3}
   prefabBatterySmall: {fileID: 0}
   prefabBatteryLarge: {fileID: 0}
   prefabElectronicWaste: {fileID: 0}
   prefabCoralObstacle: {fileID: 592339605672025169, guid: b3ad47579ae7c5846aa83e61d2859240, type: 3}
   prefabFishObstacle: {fileID: 7950250345750191443, guid: bfaf51a9ae3fa304ea99cf1d0b7c9a89, type: 3}
+  customBGM: {fileID: 0}
+  customClawSFX: {fileID: 0}
+  customBumpSFX: {fileID: 0}
 --- !u!1 &2058182063243482785
 GameObject:
   m_ObjectHideFlags: 0
@@ -715,7 +718,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: -114.734375, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

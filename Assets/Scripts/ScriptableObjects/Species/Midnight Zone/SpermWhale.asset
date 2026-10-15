@@ -13,30 +13,31 @@ MonoBehaviour:
   m_Name: SpermWhale
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: sperm_whale_001
-  commonName: "Sperm Whale"
-  scientificName: "Physeter macrocephalus"
+  commonName: Sperm Whale
+  scientificName: Physeter macrocephalus
   taxonomicClass: 2
   zoneIndex: 2
-  habitat: "Deep ocean; dives to about 2,000 m or more"
-  depthRangeText: "dives to about 2,000 m or more"
-  explorationHint: "Deep ocean; dives to about 2,000 m or more. Huge whale with a very large, square-shaped head."
+  habitat: Deep ocean; dives to about 2,000 m or more
+  depthRangeText: dives to about 2,000 m or more
+  explorationHint: Deep ocean; dives to about 2,000 m or more. Huge whale with a
+    very large, square-shaped head.
   secondaryZoneIndices: 
-  characteristics: "Huge whale with a very large, square-shaped head."
-  ecologicalRole: "Hunts large squid and other deep-sea animals."
-  interestingFact: "It is one of the deepest-diving whales."
+  characteristics: Huge whale with a very large, square-shaped head.
+  ecologicalRole: Hunts large squid and other deep-sea animals.
+  interestingFact: It is one of the deepest-diving whales.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.45
   instanceCount: 3
-  wanderRadius: 50.0
+  wanderRadius: 50
   moveSpeed: 4.5
   fleeSpeed: 8.1
   fleeRange: 10
-  returnThreshold: 75.0
+  returnThreshold: 75
   turnSpeed: 65
   locomotionArchetype: 0
   pulseFrequency: 0.8
@@ -46,14 +47,14 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 2276241760649792520, guid: ccde250590c4de947a4ffce97e2845e8, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.3, g: 0.35, b: 0.4, a: 1.0}
+  placeholderColor: {r: 0.3, g: 0.35, b: 0.4, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
   photo: {fileID: 0}
   fullImage: {fileID: 0}

@@ -65,6 +65,25 @@ public class SpeciesSpawner : MonoBehaviour
     // Entry point
     // -----------------------------------------------------------------------
 
+    private void Awake()
+    {
+        int creaturesLayer = LayerMask.NameToLayer("Creatures");
+        int terrainLayer = LayerMask.NameToLayer("Terrain");
+
+        if (creaturesLayer >= 0)
+        {
+            // Creatures do not collide with each other (avoids pod crowding/jittering)
+            Physics.IgnoreLayerCollision(creaturesLayer, creaturesLayer, true);
+
+            // Creatures do not collide physically with terrain/props (avoids getting snagged on mesh edges;
+            // creature AI steering and height clearance already keeps them off terrain smoothly)
+            if (terrainLayer >= 0)
+            {
+                Physics.IgnoreLayerCollision(creaturesLayer, terrainLayer, true);
+            }
+        }
+    }
+
     private void Start()
     {
         if (terrain == null) terrain = FindFirstObjectByType<TerrainGenerator>();
@@ -1091,19 +1110,19 @@ public class SpeciesSpawner : MonoBehaviour
             }
         }
 
-        // 2. Set all colliders on stationary species to triggers (for scanning / interaction, no physics push)
+        // 2. Set all colliders on stationary species to solid (player cannot pass through corals/sponges/clams)
         var allCols = go.GetComponentsInChildren<Collider>();
         for (int i = 0; i < allCols.Length; i++)
         {
             if (allCols[i] != null)
-                allCols[i].isTrigger = true;
+                allCols[i].isTrigger = false;
         }
 
         if (allCols.Length == 0)
         {
             var box = go.AddComponent<BoxCollider>();
             box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.5f : Vector3.one * 2f;
-            box.isTrigger = true;
+            box.isTrigger = false;
         }
 
         // 3. Align bottom of object to surface so it sits firmly on the seabed/rocks
@@ -1140,17 +1159,34 @@ public class SpeciesSpawner : MonoBehaviour
         rb.interpolation  = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
-        var col = go.GetComponent<Collider>();
-        if (col == null)
+        // Mass scaled by volume/size: larger creatures offer high physical inertia so player submarine cannot push them aside
+        float estVolume = (data != null && data.placeholderScale != Vector3.zero)
+            ? (data.placeholderScale.x * data.placeholderScale.y * data.placeholderScale.z)
+            : 1f;
+        rb.mass = Mathf.Clamp(estVolume * 1.5f, 0.5f, 50f);
+
+        // Ensure all MeshColliders are convex for dynamic Rigidbody
+        var meshCols = go.GetComponentsInChildren<MeshCollider>();
+        for (int i = 0; i < meshCols.Length; i++)
+        {
+            if (meshCols[i] != null)
+                meshCols[i].convex = true;
+        }
+
+        // Solid colliders: Player cannot pass through creatures
+        var allMobileCols = go.GetComponentsInChildren<Collider>();
+        if (allMobileCols.Length == 0)
         {
             var box = go.AddComponent<BoxCollider>();
             box.size = data.placeholderScale != Vector3.zero ? data.placeholderScale * 1.1f : Vector3.one * 1.2f;
-            col = box;
+            allMobileCols = new Collider[] { box };
         }
-        // Trigger collider — creatures should be scannable/interactive but NOT
-        // physically block the player submarine (their BoxColliders can be 20m+).
-        // ContextSteering still uses raycasts against Terrain layer for AI avoidance.
-        col.isTrigger = true;
+
+        for (int i = 0; i < allMobileCols.Length; i++)
+        {
+            if (allMobileCols[i] != null)
+                allMobileCols[i].isTrigger = false;
+        }
 
         try { go.tag = "Species"; } catch { }
 

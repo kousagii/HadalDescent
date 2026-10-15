@@ -13,28 +13,29 @@ MonoBehaviour:
   m_Name: DiamondbackSquid
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: diamondback_squid_001
-  commonName: "Diamondback Squid"
-  scientificName: "Thysanoteuthis rhombus"
+  commonName: Diamondback Squid
+  scientificName: Thysanoteuthis rhombus
   taxonomicClass: 4
   zoneIndex: 2
-  habitat: "Open ocean, surface–about 2,200 m"
-  depthRangeText: "surface–about 2,200 m"
-  explorationHint: "Open ocean, surface–about 2,200 m. Large squid with broad, diamond-shaped fins."
+  habitat: "Open ocean, surface\u2013about 2,200 m"
+  depthRangeText: "surface\u2013about 2,200 m"
+  explorationHint: "Open ocean, surface\u2013about 2,200 m. Large squid with broad,
+    diamond-shaped fins."
   secondaryZoneIndices: 
-  characteristics: "Large squid with broad, diamond-shaped fins."
-  ecologicalRole: "Hunts fish, squid, and shrimp."
-  interestingFact: "Adults are often seen swimming in pairs."
+  characteristics: Large squid with broad, diamond-shaped fins.
+  ecologicalRole: Hunts fish, squid, and shrimp.
+  interestingFact: Adults are often seen swimming in pairs.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.45
   instanceCount: 3
-  wanderRadius: 35.0
+  wanderRadius: 35
   moveSpeed: 3.2
-  fleeSpeed: 5.760000000000001
+  fleeSpeed: 5.76
   fleeRange: 10
   returnThreshold: 52.5
   turnSpeed: 65
@@ -46,14 +47,14 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 8124764102981027187, guid: 36b7924f16e10fc40a2ab6ad06a16f17, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.75, g: 0.4, b: 0.35, a: 1.0}
+  placeholderColor: {r: 0.75, g: 0.4, b: 0.35, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
   photo: {fileID: 0}
   fullImage: {fileID: 0}

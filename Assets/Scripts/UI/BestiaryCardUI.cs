@@ -157,7 +157,7 @@ public class BestiaryCardUI : MonoBehaviour
             else if (data.photo != null)
             {
                 thumbnailImage.sprite = isDiscovered ? data.photo : (data.silhouette != null ? data.silhouette : data.photo);
-                thumbnailImage.color = isDiscovered ? Color.white : new Color(0.12f, 0.15f, 0.20f, 1f);
+                thumbnailImage.color = isDiscovered ? Color.white : new Color(0.10f, 0.10f, 0.10f, 1f);
                 thumbnailImage.gameObject.SetActive(true);
             }
         }
