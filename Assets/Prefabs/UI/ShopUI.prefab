@@ -1665,7 +1665,7 @@ MonoBehaviour:
       perkDescription: "Hadal Zone (6,000 m depth rated) \nMaximum trench pressure
         rating"
   - category: 1
-    displayName: Active Sonar Array
+    displayName: Sonar
     icon: {fileID: 0}
     tiers:
     - tier: 1
@@ -1706,7 +1706,7 @@ MonoBehaviour:
       perkDescription: "50% Focus Bar (MG1) \n2x Direct Tile Swaps & +15s bonus time
         (MG2)"
   - category: 3
-    displayName: Propulsion Engine
+    displayName: Engine
     icon: {fileID: 0}
     tiers:
     - tier: 1
@@ -1725,7 +1725,7 @@ MonoBehaviour:
       costRDP: 1500
       perkDescription: "+100% speed \nBoost burst against strong underwater currents"
   - category: 4
-    displayName: Submersible Floodlights
+    displayName: Lights
     icon: {fileID: 0}
     tiers:
     - tier: 1
@@ -1747,7 +1747,7 @@ MonoBehaviour:
       costRDP: 1500
       perkDescription: "170 m illumination reach \nFull-field visibility"
   - category: 5
-    displayName: Utilities & Extraction Arm
+    displayName: Utilities
     icon: {fileID: 0}
     tiers:
     - tier: 1
@@ -3377,7 +3377,7 @@ RectTransform:
   m_Father: {fileID: 2104062926790001415}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
+  m_AnchorMax: {x: 0.585, y: 0}
   m_AnchoredPosition: {x: 0, y: -850}
   m_SizeDelta: {x: -20, y: 730}
   m_Pivot: {x: 0.5, y: 0}

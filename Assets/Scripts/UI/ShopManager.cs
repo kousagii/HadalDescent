@@ -63,6 +63,16 @@ public class ShopManager : MonoBehaviour
     [Tooltip("Header text displaying player's available RDP (e.g. 'Current RDP: 850').")]
     [SerializeField] private TMP_Text currentRdpText;
 
+    [Header("3D Submarine Viewport (Right Column ~40%)")]
+    [Tooltip("Studio manager for rendering the 3D submarine.")]
+    [SerializeField] private SubmarineShopPreview submarineShopPreview;
+
+    [Tooltip("The RawImage displaying the 3D submarine in the right column.")]
+    [SerializeField] private RawImage submarineViewport;
+
+    [Tooltip("Optional Submarine 3D visual prefab. If null, auto-loads Resources/Submarine_ShopVisual.")]
+    [SerializeField] private GameObject submarinePreviewPrefab;
+
     [Header("Dynamic ScrollView (Optional)")]
     [Tooltip("Scroll Rect Content Transform where upgrade cards are spawned.")]
     [SerializeField] private Transform entryContainer;
@@ -78,19 +88,19 @@ public class ShopManager : MonoBehaviour
     [Tooltip("Logo icon for Reinforced Hull")]
     [SerializeField] private Sprite hullLogo;
 
-    [Tooltip("Logo icon for Active Sonar Array")]
+    [Tooltip("Logo icon for Sonar")]
     [SerializeField] private Sprite sonarLogo;
 
     [Tooltip("Logo icon for Research Scanner")]
     [SerializeField] private Sprite scannerLogo;
 
-    [Tooltip("Logo icon for Propulsion Engine")]
+    [Tooltip("Logo icon for Engine")]
     [SerializeField] private Sprite engineLogo;
 
-    [Tooltip("Logo icon for Submersible Floodlights")]
+    [Tooltip("Logo icon for Lights")]
     [SerializeField] private Sprite lightsLogo;
 
-    [Tooltip("Logo icon for Utilities & Expansion")]
+    [Tooltip("Logo icon for Utilities")]
     [SerializeField] private Sprite utilitiesLogo;
 
     [Header("Audio (Optional — defaults to AudioManager)")]
@@ -105,7 +115,7 @@ public class ShopManager : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private bool _isOpen = false;
-    public bool IsOpen => _isOpen;
+    public bool IsOpen => _isOpen || (shopPanel != null && shopPanel.activeInHierarchy);
 
     public event Action<UpgradeCategory, int> OnUpgradePurchased;
 
@@ -159,6 +169,8 @@ public class ShopManager : MonoBehaviour
         Instance = this;
 
         InitializeDefaultConfigs();
+
+        EnsureSubmarinePreviewConfigured();
     }
 
     private void OnValidate()
@@ -185,6 +197,9 @@ public class ShopManager : MonoBehaviour
         if (!_isOpen && shopPanel != null)
             shopPanel.SetActive(false);
 
+        if (submarineShopPreview != null)
+            submarineShopPreview.SetVisible(_isOpen);
+
         if (closeButton != null)
             closeButton.onClick.AddListener(HideShop);
     }
@@ -197,6 +212,20 @@ public class ShopManager : MonoBehaviour
     {
         if (categoryConfigs != null && categoryConfigs.Count > 0)
         {
+            foreach (var cfg in categoryConfigs)
+            {
+                cfg.displayName = cfg.category switch
+                {
+                    UpgradeCategory.Hull      => "Reinforced Hull",
+                    UpgradeCategory.Sonar     => "Sonar",
+                    UpgradeCategory.Scanner   => "Research Scanner",
+                    UpgradeCategory.Engine    => "Engine",
+                    UpgradeCategory.Lights    => "Lights",
+                    UpgradeCategory.Utilities => "Utilities",
+                    _                         => cfg.displayName
+                };
+            }
+
             var utilCfg = categoryConfigs.Find(c => c.category == UpgradeCategory.Utilities);
             if (utilCfg != null && utilCfg.tiers != null && utilCfg.tiers.Length > 3)
             {
@@ -226,12 +255,12 @@ public class ShopManager : MonoBehaviour
             new UpgradeCategoryConfig
             {
                 category    = UpgradeCategory.Sonar,
-                displayName = "Active Sonar Array",
+                displayName = "Sonar",
                 tiers       = new UpgradeTierInfo[]
                 {
                     new UpgradeTierInfo(1, 0,    "50 m detection radius \nBasic dot blips"),
-                    new UpgradeTierInfo(2, 150,  "100 m detection radius \nCategory icons (fish, debris, hazard)"),
-                    new UpgradeTierInfo(3, 350,  "150 m detection radius \nElevation indicators (▲ / ▼)"),
+                    new UpgradeTierInfo(2, 150,  "100 m detection radius"),
+                    new UpgradeTierInfo(3, 350,  "150 m detection radius \nElevation indicators"),
                     new UpgradeTierInfo(4, 750,  "200 m detection radius \nFaster sweep & pulse glow"),
                     new UpgradeTierInfo(5, 1500, "250 m detection radius \nMaximum range coverage")
                 }
@@ -256,7 +285,7 @@ public class ShopManager : MonoBehaviour
             new UpgradeCategoryConfig
             {
                 category    = UpgradeCategory.Engine,
-                displayName = "Propulsion Engine",
+                displayName = "Engine",
                 tiers       = new UpgradeTierInfo[]
                 {
                     new UpgradeTierInfo(1, 0,    "Base exploration speed \nStandard turning response"),
@@ -271,7 +300,7 @@ public class ShopManager : MonoBehaviour
             new UpgradeCategoryConfig
             {
                 category    = UpgradeCategory.Lights,
-                displayName = "Submersible Floodlights",
+                displayName = "Lights",
                 tiers       = new UpgradeTierInfo[]
                 {
                     new UpgradeTierInfo(1, 0,    "25 m illumination reach \nNarrow halogen beam (Sunlight Zone)"),
@@ -286,7 +315,7 @@ public class ShopManager : MonoBehaviour
             new UpgradeCategoryConfig
             {
                 category    = UpgradeCategory.Utilities,
-                displayName = "Utilities & Extraction Arm",
+                displayName = "Utilities",
                 tiers       = new UpgradeTierInfo[]
                 {
                     new UpgradeTierInfo(1, 0,    "Mechanical claw \nSingle-slot debris collection"),
@@ -310,6 +339,8 @@ public class ShopManager : MonoBehaviour
         {
             BuildProceduralShopUI();
         }
+
+        EnsureSubmarinePreviewConfigured();
 
         _isOpen = true;
         if (shopPanel != null)
@@ -340,6 +371,11 @@ public class ShopManager : MonoBehaviour
             closeButton.onClick.AddListener(HideShop);
         }
 
+        if (submarineShopPreview != null)
+        {
+            submarineShopPreview.SetVisible(true);
+        }
+
         if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(false);
         if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(false);
 
@@ -350,6 +386,11 @@ public class ShopManager : MonoBehaviour
     {
         _isOpen = false;
         if (shopPanel != null) shopPanel.SetActive(false);
+
+        if (submarineShopPreview != null)
+        {
+            submarineShopPreview.SetVisible(false);
+        }
 
         if (ZoneSelectionUI.Instance != null && ZoneSelectionUI.Instance.IsOpen)
         {
@@ -542,6 +583,128 @@ public class ShopManager : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------
+    // Submarine 3D Viewport Setup for Prefab / Custom UI
+    // -----------------------------------------------------------------------
+
+    private void InitSubmarineShopPreview()
+    {
+        if (submarineShopPreview == null)
+        {
+            submarineShopPreview = GetComponent<SubmarineShopPreview>() ?? gameObject.AddComponent<SubmarineShopPreview>();
+        }
+        if (submarinePreviewPrefab != null)
+        {
+            submarineShopPreview.SubmarinePrefab = submarinePreviewPrefab;
+        }
+        submarineShopPreview.BindToRawImage(submarineViewport);
+        submarineShopPreview.EnsureStudioReady();
+    }
+
+    /// <summary>
+    /// Ensures that the 40% right-column 3D submarine preview is properly configured.
+    /// If using ShopUI prefab, it moves the Scroll View to the left (~58%) without altering
+    /// its style, and dynamically creates/binds the 3D submarine preview viewport on the right (~40%).
+    /// </summary>
+    public void EnsureSubmarinePreviewConfigured()
+    {
+        if (shopPanel == null) return;
+
+        // 1. If viewport is already assigned, ensure studio is running
+        if (submarineViewport != null)
+        {
+            InitSubmarineShopPreview();
+            return;
+        }
+
+        // 2. Search hierarchy for existing viewport
+        var existingVp = shopPanel.transform.Find("TopHeader/SubmarinePreviewColumn/SubmarineViewport")
+                      ?? shopPanel.transform.Find("SubmarinePreviewColumn/SubmarineViewport")
+                      ?? shopPanel.transform.Find("TopHeader/SubmarineViewport")
+                      ?? shopPanel.transform.Find("SubmarineViewport");
+        if (existingVp != null)
+        {
+            submarineViewport = existingVp.GetComponent<RawImage>();
+            if (submarineViewport != null)
+            {
+                InitSubmarineShopPreview();
+                return;
+            }
+        }
+
+        // 3. Locate ScrollRect in shopPanel
+        ScrollRect scrollRect = entryContainer != null 
+            ? entryContainer.GetComponentInParent<ScrollRect>() 
+            : shopPanel.GetComponentInChildren<ScrollRect>();
+
+        if (scrollRect == null) return;
+
+        var scrollTransform = scrollRect.GetComponent<RectTransform>();
+        Transform parentTransform = scrollTransform.parent;
+
+        // 4. Move Scroll View to the left column (~58% width) while keeping style identical
+        scrollTransform.anchorMin = new Vector2(0f, scrollTransform.anchorMin.y);
+        scrollTransform.anchorMax = new Vector2(0.585f, scrollTransform.anchorMax.y);
+        scrollTransform.pivot = new Vector2(0.5f, scrollTransform.pivot.y);
+        scrollTransform.anchoredPosition = new Vector2(0f, scrollTransform.anchoredPosition.y);
+        scrollTransform.sizeDelta = new Vector2(-20f, scrollTransform.sizeDelta.y);
+
+        // 5. Create Right Column (~40% width) matching the shop's style
+        var rightColGO = new GameObject("SubmarinePreviewColumn", typeof(RectTransform), typeof(Image));
+        rightColGO.transform.SetParent(parentTransform, false);
+        var rcr = rightColGO.GetComponent<RectTransform>();
+
+        // Align vertically with Scroll View
+        rcr.anchorMin = new Vector2(0.60f, scrollTransform.anchorMin.y);
+        rcr.anchorMax = new Vector2(1f, scrollTransform.anchorMax.y);
+        rcr.pivot     = scrollTransform.pivot;
+        rcr.anchoredPosition = new Vector2(0f, scrollTransform.anchoredPosition.y);
+        rcr.sizeDelta = new Vector2(-25f, scrollTransform.sizeDelta.y);
+
+        // Background styling matching ShopUI dark underwater theme
+        var rcrImg = rightColGO.GetComponent<Image>();
+        rcrImg.color = new Color(0.041f, 0.069f, 0.201f, 0.941f);
+
+        // Subtle glowing border
+        var rcBorderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
+        rcBorderGO.transform.SetParent(rcr, false);
+        var rcBr = rcBorderGO.GetComponent<RectTransform>();
+        rcBr.anchorMin = Vector2.zero; rcBr.anchorMax = Vector2.one; rcBr.sizeDelta = Vector2.zero;
+        var rcBImg = rcBorderGO.GetComponent<Image>();
+        rcBImg.sprite = WhiteSprite;
+        rcBImg.color = new Color(0.12f, 0.65f, 0.75f, 0.35f);
+        rcBImg.raycastTarget = false;
+
+        TMP_FontAsset font = (currentRdpText != null) ? currentRdpText.font : UIThemeManager.AlohaFont;
+
+        // Header Title
+        var pHeaderGO = new GameObject("Header", typeof(RectTransform));
+        pHeaderGO.transform.SetParent(rcr, false);
+        var phr = pHeaderGO.GetComponent<RectTransform>();
+        phr.anchorMin = new Vector2(0.04f, 0.91f); phr.anchorMax = new Vector2(0.96f, 0.985f); phr.sizeDelta = Vector2.zero;
+        var pHeaderTxt = pHeaderGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) pHeaderTxt.font = font;
+        pHeaderTxt.text = "<b>Submarine Preview</b>";
+        pHeaderTxt.fontSize = 28;
+        pHeaderTxt.color = new Color(0.25f, 0.92f, 0.80f);
+        pHeaderTxt.alignment = TextAlignmentOptions.Center;
+
+        // Viewport RawImage (expanded to full column height)
+        var vpGO = new GameObject("SubmarineViewport", typeof(RectTransform), typeof(RawImage));
+        vpGO.transform.SetParent(rcr, false);
+        var vpr = vpGO.GetComponent<RectTransform>();
+        vpr.anchorMin = new Vector2(0.02f, 0.02f); vpr.anchorMax = new Vector2(0.98f, 0.90f); vpr.sizeDelta = Vector2.zero;
+        submarineViewport = vpGO.GetComponent<RawImage>();
+        submarineViewport.color = Color.white;
+        submarineViewport.raycastTarget = true;
+
+        // Attach SubmarinePreviewRotator
+        vpGO.AddComponent<SubmarinePreviewRotator>();
+
+        // 6. Connect SubmarineShopPreview
+        InitSubmarineShopPreview();
+    }
+
+    // -----------------------------------------------------------------------
     // Procedural Fallback UI Construction
     // -----------------------------------------------------------------------
 
@@ -564,14 +727,14 @@ public class ShopManager : MonoBehaviour
         bg.raycastTarget = true;
         shopPanel = rootGO;
 
-        // Main Window Frame (Glassmorphism dark-slate)
+        // Main Window Frame (Glassmorphism dark-slate widescreen)
         var winGO = new GameObject("ShopWindow", typeof(RectTransform), typeof(Image));
         winGO.transform.SetParent(rootRect, false);
         var winRect = winGO.GetComponent<RectTransform>();
         winRect.anchorMin = new Vector2(0.5f, 0.5f);
         winRect.anchorMax = new Vector2(0.5f, 0.5f);
         winRect.pivot     = new Vector2(0.5f, 0.5f);
-        winRect.sizeDelta = new Vector2(880f, 540f);
+        winRect.sizeDelta = new Vector2(1080f, 560f);
         var winImg = winGO.GetComponent<Image>();
         winImg.color = new Color(0.04f, 0.08f, 0.14f, 0.96f);
 
@@ -590,21 +753,21 @@ public class ShopManager : MonoBehaviour
         var titleGO = new GameObject("TitleText", typeof(RectTransform));
         titleGO.transform.SetParent(winRect, false);
         var tr = titleGO.GetComponent<RectTransform>();
-        tr.anchorMin = new Vector2(0.04f, 0.86f); tr.anchorMax = new Vector2(0.55f, 0.98f); tr.sizeDelta = Vector2.zero;
+        tr.anchorMin = new Vector2(0.03f, 0.88f); tr.anchorMax = new Vector2(0.48f, 0.98f); tr.sizeDelta = Vector2.zero;
         var tt = titleGO.AddComponent<TextMeshProUGUI>();
         if (font != null) tt.font = font;
         tt.text = "<b>SUBMARINE UPGRADE BAY</b>";
-        tt.fontSize = 36; tt.color = new Color(0.20f, 0.92f, 0.82f, 1f);
+        tt.fontSize = 24; tt.color = new Color(0.20f, 0.92f, 0.82f, 1f);
         tt.alignment = TextAlignmentOptions.Left;
 
         // RDP Display Text
         var rdpGO = new GameObject("RdpText", typeof(RectTransform));
         rdpGO.transform.SetParent(winRect, false);
         var rr = rdpGO.GetComponent<RectTransform>();
-        rr.anchorMin = new Vector2(0.55f, 0.86f); rr.anchorMax = new Vector2(0.88f, 0.98f); rr.sizeDelta = Vector2.zero;
+        rr.anchorMin = new Vector2(0.49f, 0.88f); rr.anchorMax = new Vector2(0.91f, 0.98f); rr.sizeDelta = Vector2.zero;
         currentRdpText = rdpGO.AddComponent<TextMeshProUGUI>();
         if (font != null) currentRdpText.font = font;
-        currentRdpText.fontSize = 36; currentRdpText.color = Color.white;
+        currentRdpText.fontSize = 22; currentRdpText.color = Color.white;
         currentRdpText.fontStyle = FontStyles.Bold;
         currentRdpText.alignment = TextAlignmentOptions.Right;
 
@@ -612,7 +775,7 @@ public class ShopManager : MonoBehaviour
         var closeGO = new GameObject("CloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         closeGO.transform.SetParent(winRect, false);
         var cr = closeGO.GetComponent<RectTransform>();
-        cr.anchorMin = new Vector2(0.91f, 0.88f); cr.anchorMax = new Vector2(0.98f, 0.97f); cr.sizeDelta = Vector2.zero;
+        cr.anchorMin = new Vector2(0.93f, 0.89f); cr.anchorMax = new Vector2(0.98f, 0.97f); cr.sizeDelta = Vector2.zero;
         closeGO.GetComponent<Image>().color = new Color(0.85f, 0.20f, 0.20f, 0.85f);
         closeButton = closeGO.GetComponent<Button>();
         closeButton.onClick.AddListener(HideShop);
@@ -623,13 +786,15 @@ public class ShopManager : MonoBehaviour
         ctr.anchorMin = Vector2.zero; ctr.anchorMax = Vector2.one; ctr.sizeDelta = Vector2.zero;
         var ctxt = closeTxtGO.AddComponent<TextMeshProUGUI>();
         if (font != null) ctxt.font = font;
-        ctxt.text = "✕"; ctxt.fontSize = 36; ctxt.alignment = TextAlignmentOptions.Center; ctxt.color = Color.white;
+        ctxt.text = "✕"; ctxt.fontSize = 24; ctxt.alignment = TextAlignmentOptions.Center; ctxt.color = Color.white;
 
-        // Scroll Area for Upgrade Rows
+        // =======================================================================
+        // LEFT COLUMN: Upgrade Rows Scroll Area (~58-60% width)
+        // =======================================================================
         var scrollGO = new GameObject("ShopScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image), typeof(Mask));
         scrollGO.transform.SetParent(winRect, false);
         var sr = scrollGO.GetComponent<RectTransform>();
-        sr.anchorMin = new Vector2(0.03f, 0.04f); sr.anchorMax = new Vector2(0.97f, 0.86f); sr.sizeDelta = Vector2.zero;
+        sr.anchorMin = new Vector2(0.025f, 0.035f); sr.anchorMax = new Vector2(0.585f, 0.865f); sr.sizeDelta = Vector2.zero;
         scrollGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.25f);
         scrollGO.GetComponent<Mask>().showMaskGraphic = false;
 
@@ -651,8 +816,8 @@ public class ShopManager : MonoBehaviour
         scrollRect.content = contr;
 
         var vlg = contentGO.GetComponent<VerticalLayoutGroup>();
-        vlg.spacing = 14f;
-        vlg.padding = new RectOffset(10, 10, 10, 10);
+        vlg.spacing = 10f;
+        vlg.padding = new RectOffset(8, 8, 8, 8);
         vlg.childControlWidth = true;
         vlg.childControlHeight = false;
 
@@ -667,6 +832,55 @@ public class ShopManager : MonoBehaviour
             cardList.Add(card);
         }
         staticCards = cardList.ToArray();
+
+        // =======================================================================
+        // RIGHT COLUMN: 3D Submarine Viewport (~40% width)
+        // =======================================================================
+        var rightColGO = new GameObject("SubmarinePreviewColumn", typeof(RectTransform), typeof(Image));
+        rightColGO.transform.SetParent(winRect, false);
+        var rcr = rightColGO.GetComponent<RectTransform>();
+        rcr.anchorMin = new Vector2(0.595f, 0.035f);
+        rcr.anchorMax = new Vector2(0.975f, 0.865f);
+        rcr.sizeDelta = Vector2.zero;
+        var rcrImg = rightColGO.GetComponent<Image>();
+        rcrImg.color = new Color(0.03f, 0.06f, 0.10f, 0.92f);
+
+        // Right Column Border
+        var rcBorderGO = new GameObject("Border", typeof(RectTransform), typeof(Image));
+        rcBorderGO.transform.SetParent(rcr, false);
+        var rcBr = rcBorderGO.GetComponent<RectTransform>();
+        rcBr.anchorMin = Vector2.zero; rcBr.anchorMax = Vector2.one; rcBr.sizeDelta = Vector2.zero;
+        var rcBImg = rcBorderGO.GetComponent<Image>();
+        rcBImg.sprite = WhiteSprite;
+        rcBImg.color = new Color(0.12f, 0.65f, 0.75f, 0.35f);
+        rcBImg.raycastTarget = false;
+
+        // Preview Header
+        var pHeaderGO = new GameObject("Header", typeof(RectTransform));
+        pHeaderGO.transform.SetParent(rcr, false);
+        var phr = pHeaderGO.GetComponent<RectTransform>();
+        phr.anchorMin = new Vector2(0.04f, 0.91f); phr.anchorMax = new Vector2(0.96f, 0.985f); phr.sizeDelta = Vector2.zero;
+        var pHeaderTxt = pHeaderGO.AddComponent<TextMeshProUGUI>();
+        if (font != null) pHeaderTxt.font = font;
+        pHeaderTxt.text = "<b>Submarine Preview</b>";
+        pHeaderTxt.fontSize = 20;
+        pHeaderTxt.color = new Color(0.25f, 0.92f, 0.80f);
+        pHeaderTxt.alignment = TextAlignmentOptions.Center;
+
+        // Viewport RawImage (expanded to full column height)
+        var vpGO = new GameObject("SubmarineViewport", typeof(RectTransform), typeof(RawImage));
+        vpGO.transform.SetParent(rcr, false);
+        var vpr = vpGO.GetComponent<RectTransform>();
+        vpr.anchorMin = new Vector2(0.02f, 0.02f); vpr.anchorMax = new Vector2(0.98f, 0.90f); vpr.sizeDelta = Vector2.zero;
+        submarineViewport = vpGO.GetComponent<RawImage>();
+        submarineViewport.color = Color.white;
+        submarineViewport.raycastTarget = true; // Crucial for drag rotation
+
+        // Attach SubmarinePreviewRotator
+        vpGO.AddComponent<SubmarinePreviewRotator>();
+
+        // Instantiate / Initialize SubmarineShopPreview
+        InitSubmarineShopPreview();
     }
 
     private UpgradeCardUI CreateProceduralCard(Transform parent, UpgradeCategoryConfig cfg)
@@ -675,10 +889,10 @@ public class ShopManager : MonoBehaviour
         var rowGO = new GameObject($"Card_{cfg.category}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
         rowGO.transform.SetParent(parent, false);
         var rRect = rowGO.GetComponent<RectTransform>();
-        rRect.sizeDelta = new Vector2(0f, 110f);
+        rRect.sizeDelta = new Vector2(0f, 96f);
 
         var le = rowGO.GetComponent<LayoutElement>();
-        le.minHeight = 110f; le.preferredHeight = 110f;
+        le.minHeight = 96f; le.preferredHeight = 96f;
 
         var rImg = rowGO.GetComponent<Image>();
         rImg.color = new Color(0.08f, 0.14f, 0.22f, 0.85f);
@@ -690,7 +904,7 @@ public class ShopManager : MonoBehaviour
         var iconGO = new GameObject("CategoryIcon", typeof(RectTransform), typeof(Image));
         iconGO.transform.SetParent(rRect, false);
         var ir = iconGO.GetComponent<RectTransform>();
-        ir.anchorMin = new Vector2(0.015f, 0.10f); ir.anchorMax = new Vector2(0.095f, 0.90f); ir.sizeDelta = Vector2.zero;
+        ir.anchorMin = new Vector2(0.02f, 0.12f); ir.anchorMax = new Vector2(0.12f, 0.88f); ir.sizeDelta = Vector2.zero;
         var iconImg = iconGO.GetComponent<Image>();
         var logoSprite = GetCategoryIcon(cfg.category);
         if (logoSprite != null)
@@ -708,38 +922,38 @@ public class ShopManager : MonoBehaviour
         var leftGO = new GameObject("TitleArea", typeof(RectTransform));
         leftGO.transform.SetParent(rRect, false);
         var lr = leftGO.GetComponent<RectTransform>();
-        lr.anchorMin = new Vector2(0.105f, 0.50f); lr.anchorMax = new Vector2(0.68f, 0.95f); lr.sizeDelta = Vector2.zero;
+        lr.anchorMin = new Vector2(0.14f, 0.52f); lr.anchorMax = new Vector2(0.64f, 0.95f); lr.sizeDelta = Vector2.zero;
         var titleTxt = leftGO.AddComponent<TextMeshProUGUI>();
         if (font != null) titleTxt.font = font;
         titleTxt.text = cfg.displayName;
-        titleTxt.fontSize = 36; titleTxt.fontStyle = FontStyles.Bold;
+        titleTxt.fontSize = 19; titleTxt.fontStyle = FontStyles.Bold;
         titleTxt.color = new Color(0.25f, 0.92f, 0.80f);
 
         // Perk Description (under title)
         var descGO = new GameObject("DescArea", typeof(RectTransform));
         descGO.transform.SetParent(rRect, false);
         var dr = descGO.GetComponent<RectTransform>();
-        dr.anchorMin = new Vector2(0.105f, 0.05f); dr.anchorMax = new Vector2(0.68f, 0.50f); dr.sizeDelta = Vector2.zero;
+        dr.anchorMin = new Vector2(0.14f, 0.05f); dr.anchorMax = new Vector2(0.64f, 0.50f); dr.sizeDelta = Vector2.zero;
         var descTxt = descGO.AddComponent<TextMeshProUGUI>();
         if (font != null) descTxt.font = font;
-        descTxt.fontSize = 36; descTxt.color = new Color(0.80f, 0.88f, 0.92f, 0.90f);
+        descTxt.fontSize = 13; descTxt.color = new Color(0.80f, 0.88f, 0.92f, 0.90f);
         descTxt.overflowMode = TextOverflowModes.Ellipsis;
 
         // Cost Label
         var costGO = new GameObject("CostArea", typeof(RectTransform));
         costGO.transform.SetParent(rRect, false);
         var costr = costGO.GetComponent<RectTransform>();
-        costr.anchorMin = new Vector2(0.68f, 0.15f); costr.anchorMax = new Vector2(0.82f, 0.85f); costr.sizeDelta = Vector2.zero;
+        costr.anchorMin = new Vector2(0.65f, 0.12f); costr.anchorMax = new Vector2(0.80f, 0.88f); costr.sizeDelta = Vector2.zero;
         var costTxt = costGO.AddComponent<TextMeshProUGUI>();
         if (font != null) costTxt.font = font;
-        costTxt.fontSize = 36; costTxt.fontStyle = FontStyles.Bold;
+        costTxt.fontSize = 16; costTxt.fontStyle = FontStyles.Bold;
         costTxt.alignment = TextAlignmentOptions.Center;
 
         // Upgrade Button
         var btnGO = new GameObject("UpgradeBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         btnGO.transform.SetParent(rRect, false);
         var btnr = btnGO.GetComponent<RectTransform>();
-        btnr.anchorMin = new Vector2(0.83f, 0.12f); btnr.anchorMax = new Vector2(0.98f, 0.88f); btnr.sizeDelta = Vector2.zero;
+        btnr.anchorMin = new Vector2(0.81f, 0.14f); btnr.anchorMax = new Vector2(0.98f, 0.86f); btnr.sizeDelta = Vector2.zero;
         var btnImg = btnGO.GetComponent<Image>();
         btnImg.sprite = WhiteSprite;
         btnImg.color = new Color(0.08f, 0.75f, 0.68f, 1f);
@@ -751,7 +965,7 @@ public class ShopManager : MonoBehaviour
         blr.anchorMin = Vector2.zero; blr.anchorMax = Vector2.one; blr.sizeDelta = Vector2.zero;
         var btnLbl = btnLblGO.AddComponent<TextMeshProUGUI>();
         if (font != null) btnLbl.font = font;
-        btnLbl.text = "UPGRADE"; btnLbl.fontSize = 36; btnLbl.fontStyle = FontStyles.Bold;
+        btnLbl.text = "UPGRADE"; btnLbl.fontSize = 15; btnLbl.fontStyle = FontStyles.Bold;
         btnLbl.alignment = TextAlignmentOptions.Center; btnLbl.color = Color.white;
 
         // Wire serialized references on the card component

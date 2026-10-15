@@ -381,8 +381,8 @@ public class EnvPropScatterer : MonoBehaviour
                 return false;
         }
 
-        // Query height & surface normal from procedural mesh
-        float floorY = meshGen.SampleHeight(px, pz);
+        // Query height & surface normal from procedural mesh (clamped to floor plane baseline)
+        float floorY = Mathf.Max(meshGen.SampleHeight(px, pz), meshGen.BaseY);
         Vector3 normal = meshGen.SampleNormal(px, pz);
 
         string prefabName = entry.prefab.name.ToLower();

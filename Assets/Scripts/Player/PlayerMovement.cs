@@ -172,6 +172,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging)
+        {
+            moveInput = Vector2.zero;
+            AudioManager.Instance?.SetSubmarineMoving(false);
+            return;
+        }
+
         if (moveAction != null)
             moveInput = moveAction.ReadValue<Vector2>();
 
@@ -281,6 +288,7 @@ public class PlayerMovement : MonoBehaviour
     private void TurnBodyToCamera()
     {
         if (submarineCamera == null) return;
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging) return;
 
         Quaternion targetBodyRotation = Quaternion.Euler(0f, submarineCamera.CameraYaw, 0f);
 

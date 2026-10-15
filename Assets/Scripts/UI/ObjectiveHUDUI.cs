@@ -605,7 +605,7 @@ public class ObjectiveHUDUI : MonoBehaviour
             {
                 bool inTutorial = (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
                                   && !GameManager.IsTutorialCompleted();
-                headerText.text = (inTutorial && _isCustomTutorialObjective) ? "MISSION OBJECTIVE" : "TO GO DEEPER:";
+                headerText.text = (inTutorial && _isCustomTutorialObjective) ? "OBJECTIVE" : "TO GO DEEPER";
             }
         }
 
@@ -869,7 +869,7 @@ public class ObjectiveHUDUI : MonoBehaviour
 
         if (headerText != null)
         {
-            headerText.text = _isCollapsed ? "MISSION" : "MISSION OBJECTIVE";
+            headerText.text = _isCollapsed ? "OBJECTIVE" : "OBJECTIVE";
         }
 
         if (objectiveBodyText != null)

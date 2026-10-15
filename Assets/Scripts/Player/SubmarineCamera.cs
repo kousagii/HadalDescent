@@ -87,6 +87,14 @@ public class SubmarineCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        // Suppress gameplay camera rotation while Shop is open, modal is active, or dragging preview
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging)
+        {
+            if (dragZone != null) dragZone.ConsumeTouchDelta();
+            _hasLastTouch = false;
+            return;
+        }
+
         if (dragZone == null)
             dragZone = FindFirstObjectByType<TouchDragZone>(FindObjectsInactive.Include);
 
@@ -185,6 +193,9 @@ public class SubmarineCamera : MonoBehaviour
 
     private static bool IsOverClickableUI(Vector2 screenPos)
     {
+        if (SubmarinePreviewRotator.IsAnyDragging) return true;
+        if (ShopManager.Instance != null && ShopManager.Instance.IsOpen) return true;
+
         var es = UnityEngine.EventSystems.EventSystem.current;
         if (es == null) return false;
 
@@ -193,9 +204,14 @@ public class SubmarineCamera : MonoBehaviour
         es.RaycastAll(pointerData, results);
         foreach (var r in results)
         {
-            if (r.gameObject != null && r.gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null)
+            if (r.gameObject != null)
             {
-                return true;
+                if (r.gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null ||
+                    r.gameObject.GetComponentInParent<SubmarinePreviewRotator>() != null ||
+                    r.gameObject.GetComponentInParent<ShopManager>() != null)
+                {
+                    return true;
+                }
             }
         }
         return false;

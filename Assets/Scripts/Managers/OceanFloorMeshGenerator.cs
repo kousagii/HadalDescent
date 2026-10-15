@@ -47,6 +47,9 @@ public class OceanFloorMeshGenerator : MonoBehaviour
     // Public API
     // -----------------------------------------------------------------------
 
+    /// <summary>World Y of the ocean floor baseline.</summary>
+    public float BaseY => _baseY;
+
     /// <summary>
     /// Query the ocean floor height at any world (x, z) position.
     /// Uses bilinear interpolation between cached vertex heights.
@@ -300,16 +303,16 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         else
         {
             // Tier 4: Deep Basin Floor & Rolling Dunes
-            // In deep zones (e.g. Twilight Zone), allow deep trenches/basins to reach below the zone bottom (below 1000m)
-            // so the blue ocean floor plane at 1000m is exposed as the seabed floor beneath the terrain
+            // Allow deep trenches/basins to reach below the zone bottom (below 200m in Sunlight, below 1000m in Twilight)
+            // so the blue ocean floor plane at zone bottom is exposed as the seabed floor beneath the terrain
             float t = Mathf.InverseLerp(0f, 0.26f, contrast);
-            float minTier4 = isSunlight ? 0.052f : -0.08f;
+            float minTier4 = -0.08f;
             plateauShape = Mathf.Lerp(minTier4, 0.521f, Mathf.SmoothStep(0f, 1f, t));
         }
 
         // ── Layer 3: Organic Sediment Micro-Relief (Gentle Sand Dunes & Ripples) ─
         float ripple = (SmoothNoise(sampleX, sampleZ, _frequency * 6.5f, _seed, 1400f) - 0.5f) * 0.016f;
-        float minClamp = isSunlight ? 0f : -0.10f;
+        float minClamp = -0.10f;
         plateauShape = Mathf.Clamp(plateauShape + ripple, minClamp, 1f);
 
         // ── Edge Falloff: Smoothly blends perimeter to baseline ───────────────

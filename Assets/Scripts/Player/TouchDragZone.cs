@@ -31,12 +31,18 @@ public class TouchDragZone : MonoBehaviour, IDragHandler, IPointerDownHandler, I
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging) return;
         _isDragging = true;
         TouchDelta  = Vector2.zero;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging)
+        {
+            TouchDelta = Vector2.zero;
+            return;
+        }
         TouchDelta += eventData.delta;
     }
 
