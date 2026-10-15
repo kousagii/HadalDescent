@@ -46,7 +46,7 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.08
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 7392894692970106120, guid: e20308a44ae7df142b457162a9b53880, type: 3}
+  modelPrefab: {fileID: 1442601396034967702, guid: f7219c702dc23cd4cb75e455acf62dab, type: 3}
   modelYawOffset: 270
   previewScaleMultiplier: 1
   enableScaleVariation: 1
