@@ -56,6 +56,6 @@ MonoBehaviour:
   placeholderShape: 1
   placeholderColor: {r: 0.45, g: 0.4, b: 0.38, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 60f6e49cca5bbfb4eae6d40ecc563080, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

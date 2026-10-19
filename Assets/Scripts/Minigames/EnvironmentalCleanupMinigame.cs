@@ -30,7 +30,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         MetalDrum,
         BatterySmall,
         BatteryLarge,
-        ElectronicWaste
+        ElectronicWaste,
+        MetalTube // Append to preserve the existing serialized enum values.
     }
 
     [System.Serializable]
@@ -41,6 +42,10 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         public string displayName;
         public GameObject worldObject;
         public Color itemColor;
+        public Vector3 restPosition;
+        public float driftPhase;
+        public bool carefulRecovery;
+        public bool isFalling;
     }
 
     // -----------------------------------------------------------------------
@@ -98,7 +103,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     [Header("Metals 3D Prefabs")]
     public GameObject prefabSodaCan;
     public GameObject prefabMetalPipe;
+    public GameObject prefabMetalTube;
     public GameObject prefabMetalDrum;
+
+    [Header("Sorting Bin Prefabs (defaults from Resources/Minigames/CleanupModelLibrary)")]
+    public GameObject prefabPlasticBin;
+    public GameObject prefabMetalBin;
+    public GameObject prefabHazardBin;
 
     [Header("Hazardous Waste 3D Prefabs")]
     public GameObject prefabBatterySmall;
@@ -182,19 +193,27 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     // Sorting Phase UI
     private GameObject _sortingPanel;
-    private Button     _btnPlastics;
-    private Button     _btnMetals;
-    private Button     _btnHazardous;
-    private int        _sortingIndex = 0;
     private int        _correctSortCount = 0;
+    private CleanupRoundRules.SortingScore _sortingScore;
+    private CleanupRoundRules.Variation _variation;
+    private static int _previousVariation = -1;
+    private int _initialDebrisCount;
+    private int _objectiveTarget;
+    private int _objectiveProgress;
+    private int _carefulRecoveries;
+    private bool _sortingActive;
+    private bool _resultsShown;
+    private bool _roundSucceeded;
+    private int _pendingRdpReward;
+    private TMP_Text _roundObjectiveText;
+    private TMP_Text _sortingProgressText;
+    private TMP_Text _sortingFeedbackText;
+    private bool _isPlaytest;
+    public bool CanSort => _isActive && _sortingActive && !_resultsShown && _phaseTimeRemaining > 0f &&
+        (PauseMenuUI.Instance == null || !PauseMenuUI.Instance.IsPaused);
 
     // Results UI
     private GameObject _resultsPanel;
-
-    // Toast Status Banner
-    private GameObject  _statusBannerRoot;
-    private CanvasGroup _statusBannerCanvasGroup;
-    private Coroutine   _statusBannerFadeCoroutine;
 
     private float _phaseTimeRemaining;
     private float _totalPhaseTime = 25f;
@@ -233,6 +252,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _zoneIndex     = zoneIndex;
         _onSuccess     = onSuccess;
         _onFail        = onFail;
+        _isPlaytest = false;
     }
 
     public void Show()
@@ -281,22 +301,22 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _collectedDebris.Clear();
         _spawnedDebris.Clear();
         _spawnedObstacles.Clear();
+        _sortingActive = false;
+        _resultsShown = false;
+        _roundSucceeded = false;
+        _pendingRdpReward = 0;
+        _carefulRecoveries = 0;
+        _objectiveProgress = 0;
+        _correctSortCount = 0;
+        _sortingScore = new CleanupRoundRules.SortingScore();
         _clawState   = ClawState.Idle;
         _grabbedItem = null;
         _trolleyX    = 0f;
         _clawY       = _clawRestY;
         _joystickHorizontalInput = 0f;
 
-        if (_statusBannerFadeCoroutine != null)
-        {
-            StopCoroutine(_statusBannerFadeCoroutine);
-            _statusBannerFadeCoroutine = null;
-        }
-        if (_statusBannerRoot != null)
-        {
-            _statusBannerRoot.SetActive(false);
-            if (_statusBannerCanvasGroup != null) _statusBannerCanvasGroup.alpha = 0f;
-        }
+        if (customStatusText != null) customStatusText.gameObject.SetActive(false);
+        if (customStatusTextLegacy != null) customStatusTextLegacy.gameObject.SetActive(false);
 
         // Utilities Tier 2 Perk: +25% claw drop and retrieval speed
         int utilTier = GameManager.Instance != null ? GameManager.Instance.UtilitiesTier : 1;
@@ -307,6 +327,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         // Cleanly hide main exploration HUD
         UIManager.Instance?.SetExplorationHUDVisible(false);
 
+        ResolveModelDefaults();
         Build3DStage();
         SwitchToMinigameCamera();
         BuildUI();
@@ -315,6 +336,32 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         gameObject.SetActive(true);
         StartCoroutine(ExtractionPhaseRoutine());
     }
+
+#if UNITY_EDITOR
+    /// <summary>Disposable editor preview; never awards RDP or consumes a world cluster.</summary>
+    public void OpenForTesting(int zoneIndex, bool sortingOnly)
+    {
+        Initialize(null, zoneIndex, null, null);
+        _isPlaytest = true;
+        Show();
+        if (!sortingOnly) return;
+        StopAllCoroutines();
+        foreach (var item in _spawnedDebris)
+            if (item.worldObject != null) Destroy(item.worldObject);
+        _spawnedDebris.Clear();
+        foreach (DebrisItemType type in Enum.GetValues(typeof(DebrisItemType)))
+            SpawnSingleDebris(type, new Vector3(0f, -2.05f, 0f));
+        foreach (var item in _spawnedDebris)
+        {
+            item.worldObject.SetActive(false);
+            _collectedDebris.Add(item);
+        }
+        _initialDebrisCount = _collectedDebris.Count;
+        _objectiveProgress = _objectiveTarget;
+        _spawnedDebris.Clear();
+        StartCoroutine(SortingPhaseRoutine());
+    }
+#endif
 
     private void SwitchToMinigameCamera()
     {
@@ -492,31 +539,90 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void SpawnDebrisAndObstacles()
     {
-        var itemsToSpawn = new List<DebrisItemType>
-        {
-            DebrisItemType.WaterBottle,
-            DebrisItemType.PlasticBag,
-            DebrisItemType.SixPackRings,
-            DebrisItemType.SodaCan,
-            DebrisItemType.MetalPipe,
-            DebrisItemType.MetalDrum,
-            DebrisItemType.BatterySmall,
-            DebrisItemType.BatteryLarge,
-            DebrisItemType.ElectronicWaste
-        };
-
-        float minX = -5.8f;
-        float maxX = 5.8f;
-        float step = (maxX - minX) / (itemsToSpawn.Count - 1);
-
+        int plastics = _targetCluster != null ? _targetCluster.PlasticCount : 2;
+        int metals = _targetCluster != null ? _targetCluster.MetalCount : 2;
+        int hazards = _targetCluster != null ? _targetCluster.HazardCount : 1;
+        var variations = new List<CleanupRoundRules.Variation> { CleanupRoundRules.Variation.MixedCleanup };
+        if (plastics > 0) variations.Add(CleanupRoundRules.Variation.CurrentSweep);
+        if (metals > 0) variations.Add(CleanupRoundRules.Variation.HeavyRecovery);
+        if (hazards > 0) variations.Add(CleanupRoundRules.Variation.PriorityRecovery);
+        if (variations.Count > 1) variations.Remove((CleanupRoundRules.Variation)_previousVariation);
+        _variation = variations[UnityEngine.Random.Range(0, variations.Count)];
+        _previousVariation = (int)_variation;
+        var itemsToSpawn = CleanupRoundRules.BuildManifest(_zoneIndex, plastics, metals, hazards,
+            _variation, new System.Random(UnityEngine.Random.Range(0, int.MaxValue)));
+        _initialDebrisCount = itemsToSpawn.Count;
+        float step = 11f / Mathf.Max(1, itemsToSpawn.Count);
         for (int i = 0; i < itemsToSpawn.Count; i++)
         {
-            float posX = minX + i * step + UnityEngine.Random.Range(-0.15f, 0.15f);
-            float posY = -2.05f;
-            SpawnSingleDebris(itemsToSpawn[i], new Vector3(posX, posY, 0f));
+            float posX = -5.5f + (i + 0.5f) * step + UnityEngine.Random.Range(-step * 0.16f, step * 0.16f);
+            SpawnSingleDebris(itemsToSpawn[i], new Vector3(posX, -2.05f + UnityEngine.Random.Range(-0.12f, 0.12f), 0f));
         }
-
+        _objectiveTarget = _variation == CleanupRoundRules.Variation.MixedCleanup
+            ? Mathf.Max(1, Mathf.CeilToInt(_initialDebrisCount * 0.7f))
+            : _spawnedDebris.FindAll(item => item.category == ObjectiveCategory()).Count;
+        _totalPhaseTime = Mathf.Max(25f, _initialDebrisCount * 3.8f);
+        _roundObjectiveText = CreateUIText(_dedicatedCanvasGO.transform, "CleanupObjective", "", 19f,
+            new Vector2(0f, 1f), TextAlignmentOptions.TopLeft, new Color(0.2f, 1f, 0.9f), new Vector2(700f, 60f));
+        _roundObjectiveText.rectTransform.pivot = new Vector2(0f, 1f);
+        _roundObjectiveText.rectTransform.anchoredPosition = new Vector2(75f, -12f);
+        UpdateRoundObjective();
         SpawnObstacles();
+    }
+
+    private void ResolveModelDefaults()
+    {
+        var models = Resources.Load<CleanupModelLibrary>("Minigames/CleanupModelLibrary");
+        if (models == null) return;
+        if (prefabWaterBottle == null) prefabWaterBottle = models.waterBottle;
+        if (prefabPlasticBag == null) prefabPlasticBag = models.plasticBag;
+        if (prefabSixPackRings == null) prefabSixPackRings = models.sixPackRings;
+        if (prefabSodaCan == null) prefabSodaCan = models.sodaCan;
+        if (prefabMetalPipe == null) prefabMetalPipe = models.metalPipe;
+        if (prefabMetalTube == null) prefabMetalTube = models.metalTube;
+        if (prefabMetalDrum == null) prefabMetalDrum = models.metalDrum;
+        if (prefabBatterySmall == null) prefabBatterySmall = models.aaBattery;
+        if (prefabBatteryLarge == null) prefabBatteryLarge = models.submarineBatteryCell;
+        if (prefabElectronicWaste == null) prefabElectronicWaste = models.electronicBoard;
+        if (prefabPlasticBin == null) prefabPlasticBin = models.plasticBin;
+        if (prefabMetalBin == null) prefabMetalBin = models.metalBin;
+        if (prefabHazardBin == null) prefabHazardBin = models.hazardBin;
+    }
+
+    private DebrisCategory ObjectiveCategory() => _variation == CleanupRoundRules.Variation.CurrentSweep
+        ? DebrisCategory.Plastic : _variation == CleanupRoundRules.Variation.HeavyRecovery
+            ? DebrisCategory.Metal : DebrisCategory.Hazardous;
+
+    private string ObjectiveName() => _variation == CleanupRoundRules.Variation.CurrentSweep ? "CURRENT SWEEP" :
+        _variation == CleanupRoundRules.Variation.HeavyRecovery ? "HEAVY RECOVERY" :
+        _variation == CleanupRoundRules.Variation.PriorityRecovery ? "PRIORITY RECOVERY" : "MIXED CLEANUP";
+
+    private void UpdateRoundObjective()
+    {
+        if (_roundObjectiveText == null) return;
+        string target = _variation == CleanupRoundRules.Variation.MixedCleanup ? "items" :
+            _variation == CleanupRoundRules.Variation.CurrentSweep ? "plastics" :
+            _variation == CleanupRoundRules.Variation.HeavyRecovery ? "metals" : "hazardous items";
+        _roundObjectiveText.text = $"Bonus Mission: {ObjectiveName()}\nRecover {target}: {_objectiveProgress}/{_objectiveTarget} (+15 RDP)";
+        _roundObjectiveText.raycastTarget = false;
+    }
+
+    private void UpdateDebrisDrift()
+    {
+        bool currentSweep = _variation == CleanupRoundRules.Variation.CurrentSweep;
+        float amplitude = currentSweep ? 0.8f : 0.45f;
+        float rise = currentSweep ? 0.6f : 0.35f;
+        float speed = 0.9f + Mathf.Clamp(_zoneIndex, 0, 4) * 0.15f;
+        foreach (var item in _spawnedDebris)
+        {
+            if (item.category != DebrisCategory.Plastic || item.worldObject == null || item.isFalling) continue;
+            float phase = Time.time * speed + item.driftPhase;
+            // Buoyant motion stays above the resting height and within claw reach.
+            Vector3 position = item.restPosition + new Vector3(Mathf.Sin(phase) * amplitude,
+                (Mathf.Sin(phase * 0.75f) + 1f) * 0.5f * rise, 0f);
+            position.x = Mathf.Clamp(position.x, -5.8f, 5.8f);
+            item.worldObject.transform.localPosition = position;
+        }
     }
 
     private void SpawnSingleDebris(DebrisItemType type, Vector3 localPos)
@@ -569,11 +675,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 break;
 
             case DebrisItemType.MetalPipe:
+            case DebrisItemType.MetalTube:
                 deb.category = DebrisCategory.Metal;
-                deb.displayName = "Rusted Metal Pipe";
+                deb.displayName = type == DebrisItemType.MetalTube ? "Metal Tube" : "Rusted Metal Pipes";
                 deb.itemColor = new Color(0.60f, 0.48f, 0.36f);
-                isCustom = prefabMetalPipe != null;
-                go = isCustom ? Instantiate(prefabMetalPipe, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                var pipePrefab = type == DebrisItemType.MetalTube ? prefabMetalTube : prefabMetalPipe;
+                isCustom = pipePrefab != null;
+                go = isCustom ? Instantiate(pipePrefab, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 if (!isCustom)
                 {
                     go.transform.localScale = new Vector3(0.45f, 0.95f, 0.45f);
@@ -645,6 +753,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             }
 
             deb.worldObject = go;
+            deb.restPosition = go.transform.localPosition;
+            deb.driftPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
             _spawnedDebris.Add(deb);
         }
     }
@@ -700,23 +810,25 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void SpawnObstacles()
     {
-        for (int i = 0; i < 2; i++)
+        if (prefabCoralObstacle != null)
         {
-            float cx = i == 0 ? -2.4f : 2.4f;
-            GameObject coralGO = prefabCoralObstacle != null 
-                ? Instantiate(prefabCoralObstacle, _stageRoot.transform) 
-                : CreateProceduralCoral();
+            for (int i = 0; i < 2; i++)
+            {
+                float cx = i == 0 ? -2.4f : 2.4f;
+                GameObject coralGO = Instantiate(prefabCoralObstacle, _stageRoot.transform);
 
-            coralGO.name = "Obstacle_Coral";
-            coralGO.transform.localPosition = new Vector3(cx, -2.1f, 0f);
-            coralGO.transform.localScale    = Vector3.one * 1.6f;
+                coralGO.name = "Obstacle_Coral";
+                coralGO.transform.SetParent(_stageRoot.transform, false);
+                coralGO.transform.localPosition = new Vector3(cx, -2.1f, 0f);
+                coralGO.transform.localScale    = Vector3.one * 1.6f;
 
-            // Make sure colliders are triggers so they don't push physics bodies
-            foreach (var col in coralGO.GetComponentsInChildren<Collider>())
-                col.isTrigger = true;
+                // Make sure colliders are triggers so they don't push physics bodies
+                foreach (var col in coralGO.GetComponentsInChildren<Collider>())
+                    col.isTrigger = true;
 
-            // Note: Coral is decorative scenery, NOT an obstacle with eco disturbance penalty.
-            // Do not add to _spawnedObstacles so dropping onto empty seabed incurs 0 penalty.
+                // Note: Coral is decorative scenery, NOT an obstacle with eco disturbance penalty.
+                // Do not add to _spawnedObstacles so dropping onto empty seabed incurs 0 penalty.
+            }
         }
 
         for (int i = 0; i < 2; i++)
@@ -726,6 +838,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 : CreateProceduralFish();
 
             fishGO.name = $"Obstacle_Fish_{i}";
+            fishGO.transform.SetParent(_stageRoot.transform, false);
             float fy = i == 0 ? 0.6f : -0.7f;
             float fx = i == 0 ? -6.5f : 6.5f;
             fishGO.transform.localPosition = new Vector3(fx, fy, 0f);
@@ -910,27 +1023,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
             if (customStatusText == null) customStatusText = FindDeepChild<TMP_Text>(customUIRoot, "Status", "StatusText", "Banner");
             if (customStatusTextLegacy == null && customStatusText == null) customStatusTextLegacy = FindDeepChild<Text>(customUIRoot, "Status", "StatusText", "Banner");
-            if (customStatusText == null && customStatusTextLegacy == null)
-            {
-                // Disappearing bottom toast banner (no startup instructions, only shown for grabbed items and eco disturbance)
-                var autoBannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner_Auto", new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(560f, 50f), new Color(0.02f, 0.06f, 0.12f, 0.90f));
-                _statusBannerRoot = autoBannerGO;
-                _statusBannerCanvasGroup = autoBannerGO.AddComponent<CanvasGroup>();
-                _statusBannerCanvasGroup.alpha = 0f;
-                _statusBannerRoot.SetActive(false);
-
-                customStatusText = CreateUIText(autoBannerGO.transform, "StatusText", "", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(520f, 42f));
-                customStatusText.enableAutoSizing = true;
-                customStatusText.fontSizeMin = 14;
-                customStatusText.fontSizeMax = 22;
-            }
-            else
-            {
-                _statusBannerRoot = (customStatusText != null) ? customStatusText.gameObject : customStatusTextLegacy.gameObject;
-                _statusBannerCanvasGroup = _statusBannerRoot.GetComponent<CanvasGroup>() ?? _statusBannerRoot.AddComponent<CanvasGroup>();
-                _statusBannerCanvasGroup.alpha = 0f;
-                _statusBannerRoot.SetActive(false);
-            }
+            if (customStatusText != null) customStatusText.gameObject.SetActive(false);
+            if (customStatusTextLegacy != null) customStatusTextLegacy.gameObject.SetActive(false);
 
             // Auto-wire Phase 1 Controls
             if (customDropClawButton == null) customDropClawButton = FindDeepChild<Button>(customUIRoot, "DropButton", "DropClaw", "Drop", "BtnDrop");
@@ -1000,17 +1094,6 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         customScoreText = CreateUIText(topBar.transform, "CollectText", "COLLECT: 0", 26, new Vector2(0.20f, 0.5f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
         CreateUIText(topBar.transform, "PhaseTitle", "REMOVAL PHASE", 36, new Vector2(0.50f, 0.5f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
         customTimerText = CreateUIText(topBar.transform, "TimerText", "TIME: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
-
-        var bannerGO = CreateUIPanel(_dedicatedCanvasGO.transform, "StatusBanner", new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(560f, 50f), new Color(0.02f, 0.06f, 0.12f, 0.90f));
-        _statusBannerRoot = bannerGO;
-        _statusBannerCanvasGroup = bannerGO.AddComponent<CanvasGroup>();
-        _statusBannerCanvasGroup.alpha = 0f;
-        _statusBannerRoot.SetActive(false);
-
-        customStatusText = CreateUIText(bannerGO.transform, "StatusText", "", 20, new Vector2(0.5f, 0.5f), TextAlignmentOptions.Center, Color.white, new Vector2(520f, 42f));
-        customStatusText.enableAutoSizing = true;
-        customStatusText.fontSizeMin = 14;
-        customStatusText.fontSizeMax = 22;
 
         BuildVirtualJoystick();
 
@@ -1220,7 +1303,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     {
         _phaseTimeRemaining = _totalPhaseTime;
 
-        while (_phaseTimeRemaining > 0f && _spawnedDebris.Count > 0)
+        // Finish an in-flight drop/reel, including the last item, before changing phases.
+        while ((_phaseTimeRemaining > 0f && _spawnedDebris.Count > 0) || _clawState != ClawState.Idle)
         {
             if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
             {
@@ -1228,11 +1312,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 continue;
             }
 
-            _phaseTimeRemaining -= Time.deltaTime;
+            _phaseTimeRemaining = Mathf.Max(0f, _phaseTimeRemaining - Time.deltaTime);
             int seconds = Mathf.CeilToInt(_phaseTimeRemaining);
             SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{seconds:00}");
             SetText(customScoreText, customScoreTextLegacy, $"COLLECT: {_collectedDebris.Count}");
 
+            UpdateDebrisDrift();
             HandleInputAndMotion();
             yield return null;
         }
@@ -1297,7 +1382,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 _grabbedItem = hitItem;
                 _spawnedDebris.Remove(hitItem);
                 hitItem.worldObject.transform.SetParent(_clawHead, true);
-                ShowStatusBanner($"GRABBED: {hitItem.displayName}!", new Color(0f, 1f, 0.8f));
+                hitItem.carefulRecovery = hitItem.category == DebrisCategory.Hazardous &&
+                    Mathf.Abs(_clawHead.position.x - DebrisCenter(hitItem).x) <= 0.22f;
                 _clawState = ClawState.Reeling;
 
                 if (_leftJaw != null) _leftJaw.localRotation = Quaternion.Euler(0f, 0f, -10f);
@@ -1310,7 +1396,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         }
         else if (_clawState == ClawState.Reeling)
         {
-            _clawY += _clawReelSpeed * Time.deltaTime;
+            // Metals reel at half normal speed, so their return takes twice as long.
+            float reelMultiplier = _grabbedItem != null && _grabbedItem.category == DebrisCategory.Metal ? 0.5f : 1f;
+            _clawY += _clawReelSpeed * reelMultiplier * Time.deltaTime;
+            if (_clawHead != null) _clawHead.localPosition = new Vector3(_trolleyX, _clawY, 0f);
+            // Check both the claw and its cargo before registering a completed retrieval.
+            if (_grabbedItem != null && CheckObstacleCollision()) TriggerEcoDisturbance();
             if (_clawY >= _clawRestY)
             {
                 _clawY = _clawRestY;
@@ -1319,7 +1410,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 if (_grabbedItem != null)
                 {
                     _collectedDebris.Add(_grabbedItem);
-                    Destroy(_grabbedItem.worldObject);
+                    if (_grabbedItem.carefulRecovery) _carefulRecoveries++;
+                    if (_variation == CleanupRoundRules.Variation.MixedCleanup || _grabbedItem.category == ObjectiveCategory())
+                        _objectiveProgress = Mathf.Min(_objectiveTarget, _objectiveProgress + 1);
+                    UpdateRoundObjective();
+                    // Retain the exact model for the sorting thumbnail, including pipe variants.
+                    _grabbedItem.worldObject.transform.SetParent(_stageRoot.transform, true);
+                    _grabbedItem.worldObject.SetActive(false);
                     _grabbedItem = null;
                 }
 
@@ -1343,7 +1440,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void OnDropClawPressed()
     {
-        if (_clawState == ClawState.Idle)
+        if (_isActive && !_sortingActive && !_resultsShown && _phaseTimeRemaining > 0f && _clawState == ClawState.Idle)
         {
             _clawState = ClawState.Dropping;
             if (_dropButton != null) _dropButton.interactable = false;
@@ -1353,26 +1450,44 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     private DebrisInstance CheckDebrisCollision()
     {
         Vector3 clawPos = _clawHead != null ? _clawHead.position : Vector3.zero;
+        DebrisInstance nearest = null;
+        float nearestDistance = 1.15f;
         for (int i = 0; i < _spawnedDebris.Count; i++)
         {
             var deb = _spawnedDebris[i];
-            if (deb.worldObject == null) continue;
-            var rend = deb.worldObject.GetComponentInChildren<Renderer>();
-            Vector3 itemCenter = rend != null ? rend.bounds.center : deb.worldObject.transform.position;
+            if (deb.worldObject == null || deb.isFalling) continue;
+            Vector3 itemCenter = DebrisCenter(deb);
             float dx = clawPos.x - itemCenter.x;
             float dy = clawPos.y - itemCenter.y;
             float dist = Mathf.Sqrt(dx * dx + dy * dy);
-            if (dist < 1.15f)
+            if (dist < nearestDistance)
             {
-                return deb;
+                nearest = deb;
+                nearestDistance = dist;
             }
         }
-        return null;
+        return nearest;
+    }
+
+    private static Vector3 DebrisCenter(DebrisInstance item)
+    {
+        return GetDebrisBounds(item).center;
+    }
+
+    private static Bounds GetDebrisBounds(DebrisInstance item)
+    {
+        var renderers = item.worldObject.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return new Bounds(item.worldObject.transform.position, Vector3.zero);
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        return bounds;
     }
 
     private bool CheckObstacleCollision()
     {
         Vector3 clawPos = _clawHead != null ? _clawHead.localPosition : Vector3.zero;
+        Bounds? cargoBounds = _grabbedItem != null && _grabbedItem.worldObject != null
+            ? GetDebrisBounds(_grabbedItem) : (Bounds?)null;
         foreach (var obs in _spawnedObstacles)
         {
             if (obs == null) continue;
@@ -1380,13 +1495,19 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             if (!obs.name.StartsWith("Obstacle_Fish", StringComparison.OrdinalIgnoreCase)) continue;
 
             Vector3 obsPos = obs.transform.localPosition;
-            float dx = Mathf.Abs(clawPos.x - obsPos.x);
-            float dy = Mathf.Abs(clawPos.y - obsPos.y);
-
             // Tight, fair bounding box for swimming live species
-            if (dx < 0.55f && dy < 0.38f)
+            if (CleanupRoundRules.TouchesFish(clawPos.x, clawPos.y, 0f, 0f, obsPos.x, obsPos.y))
             {
                 return true;
+            }
+            if (cargoBounds.HasValue)
+            {
+                Bounds cargo = cargoBounds.Value;
+                Vector3 fishPos = _stageRoot.transform.TransformPoint(obsPos);
+                // This stage is 2.5D: compare X/Y while ignoring model depth offsets.
+                if (CleanupRoundRules.TouchesFish(cargo.center.x, cargo.center.y, cargo.extents.x,
+                    cargo.extents.y, fishPos.x, fishPos.y))
+                    return true;
             }
         }
         return false;
@@ -1394,6 +1515,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void TriggerEcoDisturbance()
     {
+        DropHeldDebris();
         _clawState = ClawState.Reeling;
         _phaseTimeRemaining = Mathf.Max(0f, _phaseTimeRemaining - 3f);
 
@@ -1402,52 +1524,48 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         else
             AudioManager.Instance?.PlayBumpSFX();
 
-        ShowStatusBanner("Eco disturbance (-3s)", new Color(1f, 0.35f, 0.35f));
     }
 
-    private void ShowStatusBanner(string msg, Color col, float duration = 1.8f)
+    private void DropHeldDebris()
     {
-        SetText(customStatusText, customStatusTextLegacy, msg, col);
-
-        if (_statusBannerRoot != null)
-        {
-            _statusBannerRoot.SetActive(true);
-            _statusBannerRoot.transform.SetAsLastSibling();
-            if (_statusBannerCanvasGroup != null)
-            {
-                _statusBannerCanvasGroup.alpha = 1f;
-            }
-
-            if (_statusBannerFadeCoroutine != null)
-            {
-                StopCoroutine(_statusBannerFadeCoroutine);
-            }
-            _statusBannerFadeCoroutine = StartCoroutine(FadeStatusBannerRoutine(duration));
-        }
+        if (_grabbedItem == null) return;
+        var item = _grabbedItem;
+        _grabbedItem = null;
+        item.carefulRecovery = false;
+        if (item.worldObject == null) return;
+        item.worldObject.transform.SetParent(_stageRoot.transform, true);
+        item.isFalling = true;
+        if (!_spawnedDebris.Contains(item)) _spawnedDebris.Add(item);
+        if (_leftJaw != null) _leftJaw.localRotation = Quaternion.Euler(0f, 0f, -35f);
+        if (_rightJaw != null) _rightJaw.localRotation = Quaternion.Euler(0f, 0f, 35f);
+        StartCoroutine(FallBackToSeabed(item));
     }
 
-    private IEnumerator FadeStatusBannerRoutine(float displayDuration)
+    private IEnumerator FallBackToSeabed(DebrisInstance item)
     {
-        yield return new WaitForSeconds(displayDuration);
-
-        if (_statusBannerCanvasGroup != null)
+        float velocity = 0f;
+        float landingY = item.restPosition.y;
+        while (item.worldObject != null && item.worldObject.transform.localPosition.y > landingY)
         {
-            float elapsed = 0f;
-            float fadeTime = 0.35f;
-            while (elapsed < fadeTime)
+            if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
             {
-                elapsed += Time.deltaTime;
-                _statusBannerCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeTime);
                 yield return null;
+                continue;
             }
-            _statusBannerCanvasGroup.alpha = 0f;
+            velocity += 9.81f * Time.deltaTime;
+            Vector3 position = item.worldObject.transform.localPosition;
+            position.y = Mathf.Max(landingY, position.y - velocity * Time.deltaTime);
+            item.worldObject.transform.localPosition = position;
+            yield return null;
         }
-
-        if (_statusBannerRoot != null)
+        if (item.worldObject != null)
         {
-            _statusBannerRoot.SetActive(false);
+            Vector3 position = item.worldObject.transform.localPosition;
+            position.y = landingY;
+            item.worldObject.transform.localPosition = position;
+            item.restPosition = position;
         }
-        _statusBannerFadeCoroutine = null;
+        item.isFalling = false;
     }
 
     // -----------------------------------------------------------------------
@@ -1456,146 +1574,225 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private IEnumerator SortingPhaseRoutine()
     {
-        // 1. Hide Extraction Controls
+        AudioManager.Instance?.StopClawSFX();
         if (customExtractionContainer != null) customExtractionContainer.SetActive(false);
         if (_dropButton != null) _dropButton.gameObject.SetActive(false);
         if (_joystickBackground != null) _joystickBackground.gameObject.SetActive(false);
-
+        if (_roundObjectiveText != null) _roundObjectiveText.gameObject.SetActive(false);
         if (_collectedDebris.Count == 0)
         {
-            _collectedDebris.Add(new DebrisInstance { displayName = "Plastic Water Bottle", category = DebrisCategory.Plastic });
+            ShowResultsPhase();
+            yield break;
         }
 
+        _phaseTimeRemaining = CleanupRoundRules.SortingSeconds(_collectedDebris.Count);
+        _sortingActive = true;
         BuildSortingUI();
-
-        _sortingIndex = 0;
-        _correctSortCount = 0;
-        float sortTime = 20f;
-
-        while (sortTime > 0f && _sortingIndex < _collectedDebris.Count)
+        while (_phaseTimeRemaining > 0f && _correctSortCount < _collectedDebris.Count)
         {
             if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused)
             {
                 yield return null;
                 continue;
             }
-
-            sortTime -= Time.deltaTime;
-            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{Mathf.CeilToInt(sortTime):00}");
-
-            var kb = Keyboard.current;
-            if (kb != null)
-            {
-                if (kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) OnBinSelected(DebrisCategory.Plastic);
-                if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) OnBinSelected(DebrisCategory.Metal);
-                if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) OnBinSelected(DebrisCategory.Hazardous);
-            }
-
+            _phaseTimeRemaining = Mathf.Max(0f, _phaseTimeRemaining - Time.deltaTime);
+            int seconds = Mathf.CeilToInt(_phaseTimeRemaining);
+            SetText(customTimerText, customTimerTextLegacy, $"TIME: {seconds / 60}:{seconds % 60:00}");
             yield return null;
         }
-
+        // Allow the final item and its bin to finish their feedback animation.
+        if (_correctSortCount == _collectedDebris.Count)
+        {
+            float elapsed = 0f;
+            while (elapsed < 0.35f)
+            {
+                if (PauseMenuUI.Instance == null || !PauseMenuUI.Instance.IsPaused) elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+        _sortingActive = false;
         ShowResultsPhase();
     }
 
     private void BuildSortingUI()
     {
-        // 1. If user provided sorting elements inside their HUD
-        if (customBinPlastics != null || customBinMetals != null || customBinHazardous != null || customSortingContainer != null)
+        // Replace the old sequential tap controls while retaining the surrounding HUD.
+        if (customSortingContainer != null) customSortingContainer.SetActive(false);
+        if (customBinPlastics != null) customBinPlastics.gameObject.SetActive(false);
+        if (customBinMetals != null) customBinMetals.gameObject.SetActive(false);
+        if (customBinHazardous != null) customBinHazardous.gameObject.SetActive(false);
+        if (customSortingItemText != null) customSortingItemText.gameObject.SetActive(false);
+        if (customSortingItemTextLegacy != null) customSortingItemTextLegacy.gameObject.SetActive(false);
+
+        _sortingPanel = CreateUIPanel(_dedicatedCanvasGO.transform, "SortingPanel_Auto", new Vector2(0.04f, 0.1f),
+            new Vector2(0.96f, 0.84f), Vector2.zero, Vector2.zero, new Color(0.02f, 0.07f, 0.14f, 0.98f));
+        var title = CreateUIText(_sortingPanel.transform, "Title", "SORT THE RECOVERED DEBRIS", 30,
+            new Vector2(0.5f, 0.95f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f), new Vector2(1200f, 45f));
+        title.raycastTarget = false;
+        _sortingProgressText = CreateUIText(_sortingPanel.transform, "Progress", "", 23,
+            new Vector2(0.5f, 0.89f), TextAlignmentOptions.Center, Color.white, new Vector2(1200f, 42f));
+        _sortingProgressText.raycastTarget = false;
+        _sortingFeedbackText = CreateUIText(_sortingPanel.transform, "Feedback", "Drag collected debris from the tray into a bin.", 23,
+            new Vector2(0.5f, 0.055f), TextAlignmentOptions.Center, new Color(0.85f, 0.95f, 1f), new Vector2(1400f, 48f));
+        _sortingFeedbackText.raycastTarget = false;
+        _sortingFeedbackText.enableAutoSizing = true;
+        _sortingFeedbackText.fontSizeMin = 16;
+        _sortingFeedbackText.fontSizeMax = 23;
+
+        var body = CreateUIPanel(_sortingPanel.transform, "SortingBody", new Vector2(0.025f, 0.13f),
+            new Vector2(0.975f, 0.82f), Vector2.zero, Vector2.zero, Color.clear);
+        body.GetComponent<Image>().raycastTarget = false;
+        // The working area follows the sketch: 70% bins, 30% collected tray.
+        var binArea = CreateUIPanel(body.transform, "Bins", Vector2.zero, new Vector2(0.7f, 1f),
+            Vector2.zero, Vector2.zero, new Color(0.025f, 0.09f, 0.15f));
+        binArea.GetComponent<Image>().raycastTarget = false;
+        BuildSortingBin(binArea.transform, DebrisCategory.Plastic, "PLASTICS", prefabPlasticBin, 0.02f);
+        BuildSortingBin(binArea.transform, DebrisCategory.Metal, "METALS", prefabMetalBin, 0.35f);
+        BuildSortingBin(binArea.transform, DebrisCategory.Hazardous, "HAZARDS", prefabHazardBin, 0.68f);
+        var divider = CreateUIPanel(body.transform, "Divider", new Vector2(0.7f, 0f), new Vector2(0.7f, 1f),
+            Vector2.zero, new Vector2(2f, 0f), new Color(0.15f, 0.6f, 0.63f));
+        divider.GetComponent<Image>().raycastTarget = false;
+        var tray = CreateUIPanel(body.transform, "CollectedTray", new Vector2(0.7f, 0f), Vector2.one,
+            Vector2.zero, Vector2.zero, new Color(0.035f, 0.12f, 0.18f));
+        var trayTitle = CreateUIText(tray.transform, "Title", "COLLECTED", 25,
+            new Vector2(0.5f, 0.94f), TextAlignmentOptions.Center, new Color(0.3f, 1f, 0.93f));
+        trayTitle.rectTransform.anchorMin = new Vector2(0.03f, 0.89f);
+        trayTitle.rectTransform.anchorMax = new Vector2(0.97f, 0.99f);
+        trayTitle.rectTransform.offsetMin = trayTitle.rectTransform.offsetMax = Vector2.zero;
+        trayTitle.raycastTarget = false;
+
+        var scroll = tray.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 35f;
+        var viewport = CreateUIPanel(tray.transform, "Viewport", new Vector2(0.025f, 0.025f), new Vector2(0.91f, 0.87f),
+            Vector2.zero, Vector2.zero, new Color(0.025f, 0.085f, 0.13f));
+        viewport.AddComponent<RectMask2D>();
+        scroll.viewport = (RectTransform)viewport.transform;
+        var contentGO = new GameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+        contentGO.transform.SetParent(viewport.transform, false);
+        var content = (RectTransform)contentGO.transform;
+        content.anchorMin = new Vector2(0f, 1f);
+        content.anchorMax = Vector2.one;
+        content.pivot = new Vector2(0.5f, 1f);
+        content.sizeDelta = Vector2.zero;
+        scroll.content = content;
+        var grid = contentGO.GetComponent<GridLayoutGroup>();
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = 2;
+        grid.padding = new RectOffset(8, 8, 8, 8);
+        grid.spacing = new Vector2(10f, 10f);
+        grid.childAlignment = TextAnchor.UpperLeft;
+        contentGO.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var scrollTrack = CreateUIPanel(tray.transform, "ScrollTrack", new Vector2(0.925f, 0.025f), new Vector2(0.99f, 0.87f),
+            Vector2.zero, Vector2.zero, new Color(0.03f, 0.18f, 0.23f));
+        var handle = CreateUIPanel(scrollTrack.transform, "Handle", Vector2.zero, Vector2.one,
+            Vector2.zero, Vector2.zero, new Color(0.15f, 0.62f, 0.65f));
+        var scrollbar = scrollTrack.AddComponent<Scrollbar>();
+        scrollbar.handleRect = (RectTransform)handle.transform;
+        scrollbar.targetGraphic = handle.GetComponent<Image>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        scroll.verticalScrollbar = scrollbar;
+        tray.AddComponent<CleanupSortingTrayUI>().Initialize(this, scroll, grid);
+
+        var dragLayerGO = new GameObject("DragLayer", typeof(RectTransform));
+        dragLayerGO.transform.SetParent(_sortingPanel.transform, false);
+        var dragLayer = (RectTransform)dragLayerGO.transform;
+        dragLayer.anchorMin = Vector2.zero;
+        dragLayer.anchorMax = Vector2.one;
+        dragLayer.sizeDelta = Vector2.zero;
+
+        for (int i = 0; i < _collectedDebris.Count; i++)
         {
-            if (customSortingContainer != null) customSortingContainer.SetActive(true);
-
-            if (customBinPlastics != null)
-            {
-                customBinPlastics.gameObject.SetActive(true);
-                customBinPlastics.onClick.RemoveAllListeners();
-                customBinPlastics.onClick.AddListener(() => OnBinSelected(DebrisCategory.Plastic));
-                _btnPlastics = customBinPlastics;
-            }
-            if (customBinMetals != null)
-            {
-                customBinMetals.gameObject.SetActive(true);
-                customBinMetals.onClick.RemoveAllListeners();
-                customBinMetals.onClick.AddListener(() => OnBinSelected(DebrisCategory.Metal));
-                _btnMetals = customBinMetals;
-            }
-            if (customBinHazardous != null)
-            {
-                customBinHazardous.gameObject.SetActive(true);
-                customBinHazardous.onClick.RemoveAllListeners();
-                customBinHazardous.onClick.AddListener(() => OnBinSelected(DebrisCategory.Hazardous));
-                _btnHazardous = customBinHazardous;
-            }
-
-            if (customSortingItemText != null) customSortingItemText.gameObject.SetActive(true);
-            if (customSortingItemTextLegacy != null) customSortingItemTextLegacy.gameObject.SetActive(true);
-
-            UpdateSortingItemDisplay();
-            return;
+            var slot = CreateUIPanel(content, "TraySlot_" + i, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, new Color(0.035f, 0.1f, 0.16f));
+            slot.GetComponent<Image>().raycastTarget = false;
+            var card = CreateUIPanel(slot.transform, "Debris_" + i, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, new Color(0.07f, 0.17f, 0.23f));
+            var item = _collectedDebris[i];
+            AddModelIcon(card.transform, item.worldObject, new Vector2(0.04f, 0.24f), new Vector2(0.96f, 0.98f));
+            var label = CreateUIText(card.transform, "Name", item.displayName, 20, new Vector2(0.5f, 0.12f),
+                TextAlignmentOptions.Center, Color.white);
+            var labelRect = label.rectTransform;
+            labelRect.anchorMin = new Vector2(0.03f, 0.01f);
+            labelRect.anchorMax = new Vector2(0.97f, 0.24f);
+            labelRect.offsetMin = labelRect.offsetMax = Vector2.zero;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14;
+            label.fontSizeMax = 20;
+            label.raycastTarget = false;
+            card.AddComponent<CleanupSortingItemUI>().Initialize(this, i, dragLayer);
         }
-
-        // 2. Safe Fallback: Auto-generate the 3 sorting buttons right on the active panel
-        Transform parentTransform = _dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : (customUIRoot != null ? customUIRoot.transform : transform);
-
-        if (_sortingPanel == null)
-        {
-            _sortingPanel = CreateUIPanel(parentTransform, "SortingPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1080f, 620f), new Color(0.02f, 0.07f, 0.14f, 0.96f));
-
-            CreateUIText(_sortingPanel.transform, "Title", "SORTING PHASE", 32, new Vector2(0.5f, 0.89f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f), new Vector2(960f, 45f));
-            CreateUIText(_sortingPanel.transform, "Subtitle", "Sort retrieved waste into the correct category (+RDP):", 20, new Vector2(0.5f, 0.77f), TextAlignmentOptions.Center, new Color(0.85f, 0.90f, 0.96f), new Vector2(960f, 35f));
-
-            customSortingItemText = CreateUIText(_sortingPanel.transform, "ItemName", "", 24, new Vector2(0.5f, 0.63f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f), new Vector2(960f, 65f));
-
-            _btnPlastics = CreateUIButton(_sortingPanel.transform, "BinPlastics", "[PLASTICS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Plastic), new Color(0f, 0.48f, 0.92f, 0.95f), new Vector2(-300f, 0f));
-            _btnMetals = CreateUIButton(_sortingPanel.transform, "BinMetals", "[METALS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Metal), new Color(0.92f, 0.65f, 0f, 0.95f), new Vector2(0f, 0f));
-            _btnHazardous = CreateUIButton(_sortingPanel.transform, "BinHazardous", "[HAZARDOUS]", new Vector2(0.5f, 0.28f), new Vector2(260f, 130f), () => OnBinSelected(DebrisCategory.Hazardous), new Color(0.85f, 0.16f, 0.16f, 0.95f), new Vector2(300f, 0f));
-        }
-        else
-        {
-            _sortingPanel.SetActive(true);
-        }
-
-        UpdateSortingItemDisplay();
+        // Keep held cards above all slots, with raycasts passing through to the bins.
+        dragLayer.SetAsLastSibling();
+        Canvas.ForceUpdateCanvases();
+        scroll.verticalNormalizedPosition = 1f;
+        UpdateSortingProgress();
     }
 
-    private void UpdateSortingItemDisplay()
+    private void BuildSortingBin(Transform parent, DebrisCategory category, string label, GameObject model, float left)
     {
-        if (_sortingIndex < _collectedDebris.Count)
-        {
-            var item = _collectedDebris[_sortingIndex];
-            string msg = $"ITEM {_sortingIndex + 1}/{_collectedDebris.Count}: <b><color=#FFD700>{item.displayName.ToUpper()}</color></b>\n<size=19><color=#00E0FF>[CHOOSE BIN]</color></size>";
-            if (customSortingItemText != null || customSortingItemTextLegacy != null)
-            {
-                SetText(customSortingItemText, customSortingItemTextLegacy, msg);
-            }
-        }
+        var bin = CreateUIPanel(parent, "SortingBin_" + category,
+            new Vector2(left, 0.06f), new Vector2(left + 0.3f, 0.94f), Vector2.zero, Vector2.zero,
+            new Color(0.06f, 0.22f, 0.28f));
+        AddModelIcon(bin.transform, model, new Vector2(0.05f, 0.22f), new Vector2(0.95f, 0.98f));
+        var text = CreateUIText(bin.transform, "Category", label, 26, new Vector2(0.5f, 0.11f),
+            TextAlignmentOptions.Center, new Color(0.3f, 1f, 0.93f));
+        text.rectTransform.anchorMin = new Vector2(0.03f, 0.04f);
+        text.rectTransform.anchorMax = new Vector2(0.97f, 0.18f);
+        text.rectTransform.offsetMin = text.rectTransform.offsetMax = Vector2.zero;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 16;
+        text.fontSizeMax = 26;
+        text.raycastTarget = false;
+        bin.AddComponent<CleanupSortingBinUI>().Initialize(this, category);
     }
 
-    private void OnBinSelected(DebrisCategory selectedCategory)
+    private static void AddModelIcon(Transform parent, GameObject model, Vector2 min, Vector2 max)
     {
-        if (_sortingIndex >= _collectedDebris.Count) return;
+        if (model == null) return;
+        var area = new GameObject("ModelArea", typeof(RectTransform));
+        area.transform.SetParent(parent, false);
+        var areaRect = (RectTransform)area.transform;
+        areaRect.anchorMin = min;
+        areaRect.anchorMax = max;
+        areaRect.sizeDelta = Vector2.zero;
+        var icon = new GameObject("Model", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter));
+        icon.transform.SetParent(area.transform, false);
+        icon.GetComponent<AspectRatioFitter>().aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        icon.GetComponent<AspectRatioFitter>().aspectRatio = 1f;
+        icon.AddComponent<CleanupModelIconUI>().SetModel(model);
+    }
 
-        var currentItem = _collectedDebris[_sortingIndex];
-        bool isCorrect = currentItem.category == selectedCategory;
+    private void UpdateSortingProgress()
+    {
+        if (_sortingProgressText != null)
+            _sortingProgressText.text = $"Sorted: {_correctSortCount}/{_collectedDebris.Count}    Streak: {_sortingScore.Streak}    Bonus: +{_sortingScore.Bonus} RDP";
+        SetText(customScoreText, customScoreTextLegacy, $"SORTED: {_correctSortCount}/{_collectedDebris.Count}");
+    }
 
-        if (isCorrect)
+    public bool TrySortItem(int index, DebrisCategory category)
+    {
+        if (!CanSort || index < 0 || index >= _collectedDebris.Count || _sortingScore.IsSorted(index)) return false;
+        var item = _collectedDebris[index];
+        int previousBonus = _sortingScore.Bonus;
+        bool correct = _sortingScore.Submit(index, item.category, category);
+        _correctSortCount = _sortingScore.SortedCount;
+        if (correct)
         {
-            _correctSortCount++;
-            ShowStatusBanner($"✓ Correct! +15 RDP ({selectedCategory.ToString().ToUpper()})", new Color(0.2f, 0.95f, 0.4f), 1.6f);
+            _sortingFeedbackText.color = new Color(0.3f, 1f, 0.75f);
+            _sortingFeedbackText.text = _sortingScore.Bonus > previousBonus
+                ? "Three in a row! +5 RDP" : $"{item.displayName} sorted. +15 RDP";
         }
         else
         {
-            ShowStatusBanner($"✗ Wrong bin! Item is {currentItem.category.ToString().ToUpper()}", new Color(1f, 0.45f, 0.25f), 1.8f);
+            string bin = item.category == DebrisCategory.Plastic ? "Plastics" : item.category == DebrisCategory.Metal ? "Metals" : "Hazards";
+            _sortingFeedbackText.color = new Color(1f, 0.75f, 0.4f);
+            _sortingFeedbackText.text = $"{item.displayName} belongs in {bin}. Try that item again.";
         }
-
-        _sortingIndex++;
-        if (_sortingIndex < _collectedDebris.Count)
-        {
-            UpdateSortingItemDisplay();
-        }
-        else
-        {
-            ShowResultsPhase();
-        }
+        UpdateSortingProgress();
+        return correct;
     }
 
     // -----------------------------------------------------------------------
@@ -1604,6 +1801,10 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void ShowResultsPhase()
     {
+        if (_resultsShown) return;
+        _resultsShown = true;
+        _sortingActive = false;
+        if (_roundObjectiveText != null) _roundObjectiveText.gameObject.SetActive(false);
         if (_sortingPanel != null) _sortingPanel.SetActive(false);
         if (customSortingContainer != null) customSortingContainer.SetActive(false);
         if (customBinPlastics != null) customBinPlastics.gameObject.SetActive(false);
@@ -1612,34 +1813,29 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         if (customSortingItemText != null) customSortingItemText.gameObject.SetActive(false);
         if (customSortingItemTextLegacy != null) customSortingItemTextLegacy.gameObject.SetActive(false);
 
-        if (_statusBannerFadeCoroutine != null)
-        {
-            StopCoroutine(_statusBannerFadeCoroutine);
-            _statusBannerFadeCoroutine = null;
-        }
-        if (_statusBannerRoot != null)
-        {
-            _statusBannerRoot.SetActive(false);
-            if (_statusBannerCanvasGroup != null) _statusBannerCanvasGroup.alpha = 0f;
-        }
+        if (customStatusText != null) customStatusText.gameObject.SetActive(false);
+        if (customStatusTextLegacy != null) customStatusTextLegacy.gameObject.SetActive(false);
 
         int totalCleaned = _collectedDebris.Count;
-        int accuracy = totalCleaned > 0 ? Mathf.RoundToInt(((float)_correctSortCount / totalCleaned) * 100f) : 100;
-        int rdpReward = 30 + totalCleaned * 10 + _correctSortCount * 15;
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.AddRDP(rdpReward);
-        }
+        int accuracy = totalCleaned > 0 ? Mathf.RoundToInt((float)_sortingScore.FirstTryCount / totalCleaned * 100f) : 0;
+        _roundSucceeded = totalCleaned > 0 && _correctSortCount == totalCleaned;
+        int objectiveBonus = _objectiveTarget > 0 && _objectiveProgress >= _objectiveTarget ? 15 : 0;
+        int cleanSweepBonus = _sortingScore.IsCleanSweep(totalCleaned) ? 10 : 0;
+        int bonus = objectiveBonus + cleanSweepBonus + _carefulRecoveries * 3 + _sortingScore.Bonus;
+        _pendingRdpReward = _roundSucceeded ? 30 + totalCleaned * 10 + _correctSortCount * 15 + bonus : 0;
+        string outcome = _roundSucceeded ? "Cleanup complete. The area is ready for marine life." :
+            totalCleaned == 0 ? "No debris recovered. Return to this cluster to try again." :
+            "Some debris still needs sorting. Return to this cluster to try again.";
 
         string summary =
-            $"Debris Retrieved: {totalCleaned}\n" +
-            $"Sorting Accuracy: {accuracy}%\n" +
-            $"RDP Earned: +{rdpReward}\n\n" +
-            $"Ecosystem Boost: +20% spawn rate (45s)";
+            $"Debris Retrieved: {totalCleaned}/{_initialDebrisCount}\n" +
+            $"Sorted: {_correctSortCount}/{totalCleaned} | First-try Accuracy: {accuracy}%\n" +
+            $"Recovery Objective: {_objectiveProgress}/{_objectiveTarget}\n" +
+            $"Bonuses: +{(_roundSucceeded ? bonus : 0)} RDP" + (cleanSweepBonus > 0 ? " (includes Clean Sweep)" : "") + "\n" +
+            $"RDP Earned: +{_pendingRdpReward}" + (_isPlaytest ? " (preview only)" : "") + $"\n\n{outcome}";
 
         // 1. If user provided results elements in custom UI
-        if (customResultsContainer != null || customReturnButton != null || customResultsSummaryText != null || customResultsSummaryTextLegacy != null)
+        if (customReturnButton != null && (customResultsSummaryText != null || customResultsSummaryTextLegacy != null))
         {
             if (customResultsContainer != null) customResultsContainer.SetActive(true);
             SetText(customResultsSummaryText, customResultsSummaryTextLegacy, summary);
@@ -1656,39 +1852,35 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         Transform parentTransform = _dedicatedCanvasGO != null ? _dedicatedCanvasGO.transform : transform;
         _resultsPanel = CreateUIPanel(parentTransform, "ResultsPanel_Auto", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1040f, 620f), new Color(0.02f, 0.07f, 0.14f, 0.98f));
 
-        CreateUIText(_resultsPanel.transform, "Title", "ECOSYSTEM RESTORED", 32, new Vector2(0.5f, 0.88f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.75f), new Vector2(900f, 45f));
-
-        string richSummary =
-            $"<b>Debris Retrieved:</b> {totalCleaned} items\n" +
-            $"<b>Sorting Accuracy:</b> {accuracy}%\n" +
-            $"<b>Research Points Earned:</b> <color=#ffdd00>+{rdpReward} RDP</color>\n\n" +
-            $"<color=#00e0ff><b>✦ OBJECTIVES COMPLETE</b></color>\n" +
-            $"Increased species spawn rate by 20% (45s)";
-
-        CreateUIText(_resultsPanel.transform, "Summary", richSummary, 22, new Vector2(0.5f, 0.52f), TextAlignmentOptions.Center, Color.white, new Vector2(860f, 220f));
+        CreateUIText(_resultsPanel.transform, "Title", _roundSucceeded ? "CLEANUP COMPLETE" : "CLEANUP REPORT", 32, new Vector2(0.5f, 0.88f), TextAlignmentOptions.Center, new Color(0f, 1f, 0.75f), new Vector2(900f, 45f));
+        CreateUIText(_resultsPanel.transform, "Summary", summary, 22, new Vector2(0.5f, 0.52f), TextAlignmentOptions.Center, Color.white, new Vector2(860f, 300f));
 
         CreateUIButton(_resultsPanel.transform, "BtnReturn", "RETURN TO EXPLORATION", new Vector2(0.5f, 0.15f), new Vector2(380f, 75f), OnFinishMinigame, new Color(0f, 0.75f, 0.65f), Vector2.zero);
     }
 
     private void OnFinishMinigame()
     {
+        if (!_isActive || !_resultsShown) return;
         _isActive = false;
         StopAllCoroutines();
 
-        if (_targetCluster != null)
+        if (_roundSucceeded && !_isPlaytest)
         {
-            _targetCluster.CleanUp();
-            _targetCluster = null;
+            GameManager.Instance?.AddRDP(_pendingRdpReward);
+            if (_targetCluster != null) _targetCluster.CleanUp();
         }
-
-        _onSuccess?.Invoke();
+        _pendingRdpReward = 0;
+        _targetCluster = null;
+        Action callback = _roundSucceeded ? _onSuccess : _onFail;
         CancelMinigame();
+        callback?.Invoke();
     }
 
     public void CancelMinigame()
     {
         StopAllCoroutines();
         _isActive = false;
+        _sortingActive = false;
 
         if (customUIRoot != null) 
         {
@@ -1857,14 +2049,6 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         tmp.raycastTarget = false;
 
         return btn;
-    }
-
-    private static GameObject CreateProceduralCoral()
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.transform.localScale = new Vector3(0.6f, 1.2f, 0.6f);
-        go.GetComponent<Renderer>().material = CreateMaterial(new Color(0.95f, 0.35f, 0.5f));
-        return go;
     }
 
     private static GameObject CreateProceduralFish()

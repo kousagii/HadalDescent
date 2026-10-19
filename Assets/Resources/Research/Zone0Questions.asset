@@ -1,0 +1,796 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974ce4595bf14ee69cf6a1d1c489f578, type: 3}
+  m_Name: Zone0Questions
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchQuestionBank
+  zoneIndex: 0
+  questions:
+  - questionId: sea_krait_001_habitat
+    species: {fileID: 11400000, guid: 073da2841ed283044ad78a530d3c8bb5, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Banded Sea Krait?"
+    choices:
+    - "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+    - "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+    - "Shallow coral reef flats and drop-offs (0\u201375 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Banded Sea Krait say: Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+  - questionId: sea_krait_001_characteristics
+    species: {fileID: 11400000, guid: 073da2841ed283044ad78a530d3c8bb5, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Banded Sea Krait. Which description matches our observations?"
+    choices:
+    - "Black stripes and a yellow snout, with a paddle-like tail for use in swimming."
+    - "Long oval body with wide fins along its sides."
+    - "Gray-brown body with black-tipped fins."
+    correctChoice: 0
+    explanation: "Our notes on the Banded Sea Krait say: Black stripes and a yellow snout, with a paddle-like tail for use in swimming."
+  - questionId: sea_krait_001_ecologicalRole
+    species: {fileID: 11400000, guid: 073da2841ed283044ad78a530d3c8bb5, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Banded Sea Krait play in its ecosystem, according to our notes?"
+    choices:
+    - "Predator that helps control fish and eel populations."
+    - "Hunts small fish, crustaceans, and other marine animals."
+    - "Helps control reef fish and cephalopod populations."
+    correctChoice: 0
+    explanation: "Our notes on the Banded Sea Krait say: Predator that helps control fish and eel populations."
+  - questionId: sea_krait_001_interestingFact
+    species: {fileID: 11400000, guid: 073da2841ed283044ad78a530d3c8bb5, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Banded Sea Krait during our research?"
+    choices:
+    - "It can hunt together with other fish."
+    - "It can rapidly change its body color."
+    - "It can keep swimming to move water over its gills."
+    correctChoice: 0
+    explanation: "Our notes on the Banded Sea Krait say: It can hunt together with other fish."
+  - questionId: sea_krait_001_camera
+    species: {fileID: 11400000, guid: 073da2841ed283044ad78a530d3c8bb5, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Black stripes and a yellow snout, with a paddle-like tail for use in swimming. The habitat notes say: Shallow coral reefs, mangroves, and rocky shores (0\u201310 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Banded Sea Krait. Black stripes and a yellow snout, with a paddle-like tail for use in swimming. Its recorded habitat is Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)."
+  - questionId: reef_squid_001_habitat
+    species: {fileID: 11400000, guid: 99e8b5af26e138d4d80b33f53d988964, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Bigfin Reef Squid?"
+    choices:
+    - "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+    - "Shallow coral reef flats and drop-offs (0\u201375 m)"
+    - "Ocean surface (0\u20133 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Bigfin Reef Squid say: Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+  - questionId: reef_squid_001_characteristics
+    species: {fileID: 11400000, guid: 99e8b5af26e138d4d80b33f53d988964, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Bigfin Reef Squid. Which description matches our observations?"
+    choices:
+    - "Long oval body with wide fins along its sides."
+    - "Gray-brown body with black-tipped fins."
+    - "Gas-filled float with long stinging structures."
+    correctChoice: 0
+    explanation: "Our notes on the Bigfin Reef Squid say: Long oval body with wide fins along its sides."
+  - questionId: reef_squid_001_ecologicalRole
+    species: {fileID: 11400000, guid: 99e8b5af26e138d4d80b33f53d988964, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Bigfin Reef Squid play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small fish, crustaceans, and other marine animals."
+    - "Helps control reef fish and cephalopod populations."
+    - "Catches small fish and plankton."
+    correctChoice: 0
+    explanation: "Our notes on the Bigfin Reef Squid say: Hunts small fish, crustaceans, and other marine animals."
+  - questionId: reef_squid_001_interestingFact
+    species: {fileID: 11400000, guid: 99e8b5af26e138d4d80b33f53d988964, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Bigfin Reef Squid during our research?"
+    choices:
+    - "It can rapidly change its body color."
+    - "It can keep swimming to move water over its gills."
+    - "It is a colony made of many specialized parts working together."
+    correctChoice: 0
+    explanation: "Our notes on the Bigfin Reef Squid say: It can rapidly change its body color."
+  - questionId: reef_squid_001_camera
+    species: {fileID: 11400000, guid: 99e8b5af26e138d4d80b33f53d988964, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long oval body with wide fins along its sides. The habitat notes say: Shallow coastal reefs and seagrass beds (0\u2013100 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Bigfin Reef Squid. Long oval body with wide fins along its sides. Its recorded habitat is Shallow coastal reefs and seagrass beds (0\u2013100 m)."
+  - questionId: blacktip_shark_001_habitat
+    species: {fileID: 11400000, guid: ccc1e0fa0e0d49c4280749798295f026, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Blacktip Reef Shark?"
+    choices:
+    - "Shallow coral reef flats and drop-offs (0\u201375 m)"
+    - "Ocean surface (0\u20133 m)"
+    - "Shallow reef sand flats and lagoons (0\u201320 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Blacktip Reef Shark say: Shallow coral reef flats and drop-offs (0\u201375 m)"
+  - questionId: blacktip_shark_001_characteristics
+    species: {fileID: 11400000, guid: ccc1e0fa0e0d49c4280749798295f026, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Blacktip Reef Shark. Which description matches our observations?"
+    choices:
+    - "Gray-brown body with black-tipped fins."
+    - "Gas-filled float with long stinging structures."
+    - "Flat oval body covered with bright blue spots."
+    correctChoice: 0
+    explanation: "Our notes on the Blacktip Reef Shark say: Gray-brown body with black-tipped fins."
+  - questionId: blacktip_shark_001_ecologicalRole
+    species: {fileID: 11400000, guid: ccc1e0fa0e0d49c4280749798295f026, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Blacktip Reef Shark play in its ecosystem, according to our notes?"
+    choices:
+    - "Helps control reef fish and cephalopod populations."
+    - "Catches small fish and plankton."
+    - "Hunts small fish and invertebrates on the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Blacktip Reef Shark say: Helps control reef fish and cephalopod populations."
+  - questionId: blacktip_shark_001_interestingFact
+    species: {fileID: 11400000, guid: ccc1e0fa0e0d49c4280749798295f026, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Blacktip Reef Shark during our research?"
+    choices:
+    - "It can keep swimming to move water over its gills."
+    - "It is a colony made of many specialized parts working together."
+    - "Its tail has venomous spines for defense."
+    correctChoice: 0
+    explanation: "Our notes on the Blacktip Reef Shark say: It can keep swimming to move water over its gills."
+  - questionId: blacktip_shark_001_camera
+    species: {fileID: 11400000, guid: ccc1e0fa0e0d49c4280749798295f026, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Gray-brown body with black-tipped fins. The habitat notes say: Shallow coral reef flats and drop-offs (0\u201375 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Blacktip Reef Shark. Gray-brown body with black-tipped fins. Its recorded habitat is Shallow coral reef flats and drop-offs (0\u201375 m)."
+  - questionId: bluebottle_001_habitat
+    species: {fileID: 11400000, guid: 610828c8e436bce43a435d939a7e28a7, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Bluebottle?"
+    choices:
+    - "Ocean surface (0\u20133 m)"
+    - "Shallow reef sand flats and lagoons (0\u201320 m)"
+    - "Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Bluebottle say: Ocean surface (0\u20133 m)"
+  - questionId: bluebottle_001_characteristics
+    species: {fileID: 11400000, guid: 610828c8e436bce43a435d939a7e28a7, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Bluebottle. Which description matches our observations?"
+    choices:
+    - "Gas-filled float with long stinging structures."
+    - "Flat oval body covered with bright blue spots."
+    - "Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults"
+    correctChoice: 0
+    explanation: "Our notes on the Bluebottle say: Gas-filled float with long stinging structures."
+  - questionId: bluebottle_001_ecologicalRole
+    species: {fileID: 11400000, guid: 610828c8e436bce43a435d939a7e28a7, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Bluebottle play in its ecosystem, according to our notes?"
+    choices:
+    - "Catches small fish and plankton."
+    - "Hunts small fish and invertebrates on the seafloor."
+    - "Coastal mesopredator keeping reef fish, cephalopod, and crustacean populations in check"
+    correctChoice: 0
+    explanation: "Our notes on the Bluebottle say: Catches small fish and plankton."
+  - questionId: bluebottle_001_interestingFact
+    species: {fileID: 11400000, guid: 610828c8e436bce43a435d939a7e28a7, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Bluebottle during our research?"
+    choices:
+    - "It is a colony made of many specialized parts working together."
+    - "Its tail has venomous spines for defense."
+    - "Forms resident pods in Philippine coastal areas and frequently leaps out of water while social foraging"
+    correctChoice: 0
+    explanation: "Our notes on the Bluebottle say: It is a colony made of many specialized parts working together."
+  - questionId: bluebottle_001_camera
+    species: {fileID: 11400000, guid: 610828c8e436bce43a435d939a7e28a7, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Gas-filled float with long stinging structures. The habitat notes say: Ocean surface (0\u20133 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Bluebottle. Gas-filled float with long stinging structures. Its recorded habitat is Ocean surface (0\u20133 m)."
+  - questionId: ribbontail_ray_001_habitat
+    species: {fileID: 11400000, guid: 8795b4383f28a074bbf78c2a77f26b71, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Blue-spotted Ribbontail Ray?"
+    choices:
+    - "Shallow reef sand flats and lagoons (0\u201320 m)"
+    - "Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m)"
+    - "Coral reefs and rocky substrates (0\u2013200 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Blue-spotted Ribbontail Ray say: Shallow reef sand flats and lagoons (0\u201320 m)"
+  - questionId: ribbontail_ray_001_characteristics
+    species: {fileID: 11400000, guid: 8795b4383f28a074bbf78c2a77f26b71, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Blue-spotted Ribbontail Ray. Which description matches our observations?"
+    choices:
+    - "Flat oval body covered with bright blue spots."
+    - "Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults"
+    - "Many tentacles with rounded, bubble-like tips."
+    correctChoice: 0
+    explanation: "Our notes on the Blue-spotted Ribbontail Ray say: Flat oval body covered with bright blue spots."
+  - questionId: ribbontail_ray_001_ecologicalRole
+    species: {fileID: 11400000, guid: 8795b4383f28a074bbf78c2a77f26b71, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Blue-spotted Ribbontail Ray play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small fish and invertebrates on the seafloor."
+    - "Coastal mesopredator keeping reef fish, cephalopod, and crustacean populations in check"
+    - "Provides shelter for clownfish and other small reef animals."
+    correctChoice: 0
+    explanation: "Our notes on the Blue-spotted Ribbontail Ray say: Hunts small fish and invertebrates on the seafloor."
+  - questionId: ribbontail_ray_001_interestingFact
+    species: {fileID: 11400000, guid: 8795b4383f28a074bbf78c2a77f26b71, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Blue-spotted Ribbontail Ray during our research?"
+    choices:
+    - "Its tail has venomous spines for defense."
+    - "Forms resident pods in Philippine coastal areas and frequently leaps out of water while social foraging"
+    - "Its tentacles can change from bubble-like to long and flowing."
+    correctChoice: 0
+    explanation: "Our notes on the Blue-spotted Ribbontail Ray say: Its tail has venomous spines for defense."
+  - questionId: ribbontail_ray_001_camera
+    species: {fileID: 11400000, guid: 8795b4383f28a074bbf78c2a77f26b71, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Flat oval body covered with bright blue spots. The habitat notes say: Shallow reef sand flats and lagoons (0\u201320 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Blue-spotted Ribbontail Ray. Flat oval body covered with bright blue spots. Its recorded habitat is Shallow reef sand flats and lagoons (0\u201320 m)."
+  - questionId: dolphin_001_habitat
+    species: {fileID: 11400000, guid: 2e034f8ddbbaa264d8279ae5cb1a6939, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Indo-Pacific Bottlenose Dolphin?"
+    choices:
+    - "Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m)"
+    - "Coral reefs and rocky substrates (0\u2013200 m)"
+    - "Coral reefs and anemones (1\u201315 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Bottlenose Dolphin say: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m)"
+  - questionId: dolphin_001_characteristics
+    species: {fileID: 11400000, guid: 2e034f8ddbbaa264d8279ae5cb1a6939, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Indo-Pacific Bottlenose Dolphin. Which description matches our observations?"
+    choices:
+    - "Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults"
+    - "Many tentacles with rounded, bubble-like tips."
+    - "Bright orange body with three white bands outlined in black."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Bottlenose Dolphin say: Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults"
+  - questionId: dolphin_001_ecologicalRole
+    species: {fileID: 11400000, guid: 2e034f8ddbbaa264d8279ae5cb1a6939, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Indo-Pacific Bottlenose Dolphin play in its ecosystem, according to our notes?"
+    choices:
+    - "Coastal mesopredator keeping reef fish, cephalopod, and crustacean populations in check"
+    - "Provides shelter for clownfish and other small reef animals."
+    - "Lives with sea anemones and helps protect them from threats."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Bottlenose Dolphin say: Coastal mesopredator keeping reef fish, cephalopod, and crustacean populations in check"
+  - questionId: dolphin_001_interestingFact
+    species: {fileID: 11400000, guid: 2e034f8ddbbaa264d8279ae5cb1a6939, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Indo-Pacific Bottlenose Dolphin during our research?"
+    choices:
+    - "Forms resident pods in Philippine coastal areas and frequently leaps out of water while social foraging"
+    - "Its tentacles can change from bubble-like to long and flowing."
+    - "The largest male can change into a female if the female dies."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Bottlenose Dolphin say: Forms resident pods in Philippine coastal areas and frequently leaps out of water while social foraging"
+  - questionId: dolphin_001_camera
+    species: {fileID: 11400000, guid: 2e034f8ddbbaa264d8279ae5cb1a6939, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults The habitat notes say: Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Indo-Pacific Bottlenose Dolphin. Slender body, long dark rostrum, and distinctive dark spots on the belly/underside as adults Its recorded habitat is Shallow coastal, estuarine, and reef-associated tropical waters (0 - 2000 m, usually 1 - 50 m)."
+  - questionId: anemone_001_habitat
+    species: {fileID: 11400000, guid: 65e88b0f78781ec448ebc3117a7e31e8, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Bubble-tip Sea Anemone?"
+    choices:
+    - "Coral reefs and rocky substrates (0\u2013200 m)"
+    - "Coral reefs and anemones (1\u201315 m)"
+    - "Shallow coral reefs and reef drop-offs (10\u201360 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Bubble-tip Sea Anemone say: Coral reefs and rocky substrates (0\u2013200 m)"
+  - questionId: anemone_001_characteristics
+    species: {fileID: 11400000, guid: 65e88b0f78781ec448ebc3117a7e31e8, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Bubble-tip Sea Anemone. Which description matches our observations?"
+    choices:
+    - "Many tentacles with rounded, bubble-like tips."
+    - "Bright orange body with three white bands outlined in black."
+    - "Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies."
+    correctChoice: 0
+    explanation: "Our notes on the Bubble-tip Sea Anemone say: Many tentacles with rounded, bubble-like tips."
+  - questionId: anemone_001_ecologicalRole
+    species: {fileID: 11400000, guid: 65e88b0f78781ec448ebc3117a7e31e8, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Bubble-tip Sea Anemone play in its ecosystem, according to our notes?"
+    choices:
+    - "Provides shelter for clownfish and other small reef animals."
+    - "Lives with sea anemones and helps protect them from threats."
+    - "Provides three-dimensional habitat and shelter for small reef organisms and contributes to coral-reef biodiversity."
+    correctChoice: 0
+    explanation: "Our notes on the Bubble-tip Sea Anemone say: Provides shelter for clownfish and other small reef animals."
+  - questionId: anemone_001_interestingFact
+    species: {fileID: 11400000, guid: 65e88b0f78781ec448ebc3117a7e31e8, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Bubble-tip Sea Anemone during our research?"
+    choices:
+    - "Its tentacles can change from bubble-like to long and flowing."
+    - "The largest male can change into a female if the female dies."
+    - "Fan-shaped colonies grow across water currents to maximize food capture; their branches also provide shelter and habitat for small reef organisms."
+    correctChoice: 0
+    explanation: "Our notes on the Bubble-tip Sea Anemone say: Its tentacles can change from bubble-like to long and flowing."
+  - questionId: anemone_001_camera
+    species: {fileID: 11400000, guid: 65e88b0f78781ec448ebc3117a7e31e8, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Many tentacles with rounded, bubble-like tips. The habitat notes say: Coral reefs and rocky substrates (0\u2013200 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Bubble-tip Sea Anemone. Many tentacles with rounded, bubble-like tips. Its recorded habitat is Coral reefs and rocky substrates (0\u2013200 m)."
+  - questionId: clownfish_001_habitat
+    species: {fileID: 11400000, guid: 1e1d9783a4a4f6a409ac7784700193ad, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Clownfish?"
+    choices:
+    - "Coral reefs and anemones (1\u201315 m)"
+    - "Shallow coral reefs and reef drop-offs (10\u201360 m)"
+    - "Indo-Pacific reefs, shallow waters (6 - 17 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Clownfish say: Coral reefs and anemones (1\u201315 m)"
+  - questionId: clownfish_001_characteristics
+    species: {fileID: 11400000, guid: 1e1d9783a4a4f6a409ac7784700193ad, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Clownfish. Which description matches our observations?"
+    choices:
+    - "Bright orange body with three white bands outlined in black."
+    - "Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies."
+    - "Cone-shaped patterned shell."
+    correctChoice: 0
+    explanation: "Our notes on the Clownfish say: Bright orange body with three white bands outlined in black."
+  - questionId: clownfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 1e1d9783a4a4f6a409ac7784700193ad, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Clownfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Lives with sea anemones and helps protect them from threats."
+    - "Provides three-dimensional habitat and shelter for small reef organisms and contributes to coral-reef biodiversity."
+    - "Predator of fish."
+    correctChoice: 0
+    explanation: "Our notes on the Clownfish say: Lives with sea anemones and helps protect them from threats."
+  - questionId: clownfish_001_interestingFact
+    species: {fileID: 11400000, guid: 1e1d9783a4a4f6a409ac7784700193ad, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Clownfish during our research?"
+    choices:
+    - "The largest male can change into a female if the female dies."
+    - "Fan-shaped colonies grow across water currents to maximize food capture; their branches also provide shelter and habitat for small reef organisms."
+    - "Uses potent venom to immobilize prey."
+    correctChoice: 0
+    explanation: "Our notes on the Clownfish say: The largest male can change into a female if the female dies."
+  - questionId: clownfish_001_camera
+    species: {fileID: 11400000, guid: 1e1d9783a4a4f6a409ac7784700193ad, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Bright orange body with three white bands outlined in black. The habitat notes say: Coral reefs and anemones (1\u201315 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Clownfish. Bright orange body with three white bands outlined in black. Its recorded habitat is Coral reefs and anemones (1\u201315 m)."
+  - questionId: fan_coral_001_habitat
+    species: {fileID: 11400000, guid: d4987401e7d5ae945a9edcc56f173e26, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Fan Coral?"
+    choices:
+    - "Shallow coral reefs and reef drop-offs (10\u201360 m)"
+    - "Indo-Pacific reefs, shallow waters (6 - 17 m)"
+    - "Shallow sunlit coral reef lagoons (0\u201335 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Fan Coral say: Shallow coral reefs and reef drop-offs (10\u201360 m)"
+  - questionId: fan_coral_001_characteristics
+    species: {fileID: 11400000, guid: d4987401e7d5ae945a9edcc56f173e26, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Fan Coral. Which description matches our observations?"
+    choices:
+    - "Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies."
+    - "Cone-shaped patterned shell."
+    - "Huge shell with colorful blue, green, or brown tissue."
+    correctChoice: 0
+    explanation: "Our notes on the Fan Coral say: Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies."
+  - questionId: fan_coral_001_ecologicalRole
+    species: {fileID: 11400000, guid: d4987401e7d5ae945a9edcc56f173e26, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Fan Coral play in its ecosystem, according to our notes?"
+    choices:
+    - "Provides three-dimensional habitat and shelter for small reef organisms and contributes to coral-reef biodiversity."
+    - "Predator of fish."
+    - "Supports coral reef ecosystems and filters seawater."
+    correctChoice: 0
+    explanation: "Our notes on the Fan Coral say: Provides three-dimensional habitat and shelter for small reef organisms and contributes to coral-reef biodiversity."
+  - questionId: fan_coral_001_interestingFact
+    species: {fileID: 11400000, guid: d4987401e7d5ae945a9edcc56f173e26, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Fan Coral during our research?"
+    choices:
+    - "Fan-shaped colonies grow across water currents to maximize food capture; their branches also provide shelter and habitat for small reef organisms."
+    - "Uses potent venom to immobilize prey."
+    - "It is the largest living bivalve."
+    correctChoice: 0
+    explanation: "Our notes on the Fan Coral say: Fan-shaped colonies grow across water currents to maximize food capture; their branches also provide shelter and habitat for small reef organisms."
+  - questionId: fan_coral_001_camera
+    species: {fileID: 11400000, guid: d4987401e7d5ae945a9edcc56f173e26, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies. The habitat notes say: Shallow coral reefs and reef drop-offs (10\u201360 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Fan Coral. Branching, fan-shaped octocoral with a semi-rigid skeleton; forms upright, branching colonies. Its recorded habitat is Shallow coral reefs and reef drop-offs (10\u201360 m)."
+  - questionId: cone_snail_001_habitat
+    species: {fileID: 11400000, guid: a986863d889520645808fd8322c2a456, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Geography Cone Snail?"
+    choices:
+    - "Indo-Pacific reefs, shallow waters (6 - 17 m)"
+    - "Shallow sunlit coral reef lagoons (0\u201335 m)"
+    - "Shallow coral reefs and shelf sediments (1\u201350 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Geography Cone Snail say: Indo-Pacific reefs, shallow waters (6 - 17 m)"
+  - questionId: cone_snail_001_characteristics
+    species: {fileID: 11400000, guid: a986863d889520645808fd8322c2a456, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Geography Cone Snail. Which description matches our observations?"
+    choices:
+    - "Cone-shaped patterned shell."
+    - "Huge shell with colorful blue, green, or brown tissue."
+    - "Colorful patterned body with long spiny antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Geography Cone Snail say: Cone-shaped patterned shell."
+  - questionId: cone_snail_001_ecologicalRole
+    species: {fileID: 11400000, guid: a986863d889520645808fd8322c2a456, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Geography Cone Snail play in its ecosystem, according to our notes?"
+    choices:
+    - "Predator of fish."
+    - "Supports coral reef ecosystems and filters seawater."
+    - "Predator and scavenger that feeds on marine animals."
+    correctChoice: 0
+    explanation: "Our notes on the Geography Cone Snail say: Predator of fish."
+  - questionId: cone_snail_001_interestingFact
+    species: {fileID: 11400000, guid: a986863d889520645808fd8322c2a456, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Geography Cone Snail during our research?"
+    choices:
+    - "Uses potent venom to immobilize prey."
+    - "It is the largest living bivalve."
+    - "Its young spend a long time drifting in the open ocean."
+    correctChoice: 0
+    explanation: "Our notes on the Geography Cone Snail say: Uses potent venom to immobilize prey."
+  - questionId: cone_snail_001_camera
+    species: {fileID: 11400000, guid: a986863d889520645808fd8322c2a456, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Cone-shaped patterned shell. The habitat notes say: Indo-Pacific reefs, shallow waters (6 - 17 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Geography Cone Snail. Cone-shaped patterned shell. Its recorded habitat is Indo-Pacific reefs, shallow waters (6 - 17 m)."
+  - questionId: giant_clam_001_habitat
+    species: {fileID: 11400000, guid: 9ff8ab4991feefc449010f563b9bcf34, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Giant Clam?"
+    choices:
+    - "Shallow sunlit coral reef lagoons (0\u201335 m)"
+    - "Shallow coral reefs and shelf sediments (1\u201350 m)"
+    - "Shallow reefs, rocks and rubble (0\u201360 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Giant Clam say: Shallow sunlit coral reef lagoons (0\u201335 m)"
+  - questionId: giant_clam_001_characteristics
+    species: {fileID: 11400000, guid: 9ff8ab4991feefc449010f563b9bcf34, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Giant Clam. Which description matches our observations?"
+    choices:
+    - "Huge shell with colorful blue, green, or brown tissue."
+    - "Colorful patterned body with long spiny antennae."
+    - "Bright blue body with five long, slender arms."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Clam say: Huge shell with colorful blue, green, or brown tissue."
+  - questionId: giant_clam_001_ecologicalRole
+    species: {fileID: 11400000, guid: 9ff8ab4991feefc449010f563b9bcf34, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Giant Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Supports coral reef ecosystems and filters seawater."
+    - "Predator and scavenger that feeds on marine animals."
+    - "Helps break down organic material on the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Clam say: Supports coral reef ecosystems and filters seawater."
+  - questionId: giant_clam_001_interestingFact
+    species: {fileID: 11400000, guid: 9ff8ab4991feefc449010f563b9bcf34, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Giant Clam during our research?"
+    choices:
+    - "It is the largest living bivalve."
+    - "Its young spend a long time drifting in the open ocean."
+    - "It can regrow an arm after losing one."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Clam say: It is the largest living bivalve."
+  - questionId: giant_clam_001_camera
+    species: {fileID: 11400000, guid: 9ff8ab4991feefc449010f563b9bcf34, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Huge shell with colorful blue, green, or brown tissue. The habitat notes say: Shallow sunlit coral reef lagoons (0\u201335 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Giant Clam. Huge shell with colorful blue, green, or brown tissue. Its recorded habitat is Shallow sunlit coral reef lagoons (0\u201335 m)."
+  - questionId: spiny_lobster_001_habitat
+    species: {fileID: 11400000, guid: ec7567bc246948b4f830335214c727ee, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Ornate Spiny Lobster?"
+    choices:
+    - "Shallow coral reefs and shelf sediments (1\u201350 m)"
+    - "Shallow reefs, rocks and rubble (0\u201360 m)"
+    - "Shallow sunlit lagoons and coves (1\u201320 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Ornate Spiny Lobster say: Shallow coral reefs and shelf sediments (1\u201350 m)"
+  - questionId: spiny_lobster_001_characteristics
+    species: {fileID: 11400000, guid: ec7567bc246948b4f830335214c727ee, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Ornate Spiny Lobster. Which description matches our observations?"
+    choices:
+    - "Colorful patterned body with long spiny antennae."
+    - "Bright blue body with five long, slender arms."
+    - "Golden-brown bell with white spots."
+    correctChoice: 0
+    explanation: "Our notes on the Ornate Spiny Lobster say: Colorful patterned body with long spiny antennae."
+  - questionId: spiny_lobster_001_ecologicalRole
+    species: {fileID: 11400000, guid: ec7567bc246948b4f830335214c727ee, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Ornate Spiny Lobster play in its ecosystem, according to our notes?"
+    choices:
+    - "Predator and scavenger that feeds on marine animals."
+    - "Helps break down organic material on the seafloor."
+    - "Feeds on small organisms and benefits from its photosynthetic partners."
+    correctChoice: 0
+    explanation: "Our notes on the Ornate Spiny Lobster say: Predator and scavenger that feeds on marine animals."
+  - questionId: spiny_lobster_001_interestingFact
+    species: {fileID: 11400000, guid: ec7567bc246948b4f830335214c727ee, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Ornate Spiny Lobster during our research?"
+    choices:
+    - "Its young spend a long time drifting in the open ocean."
+    - "It can regrow an arm after losing one."
+    - "It moves during the day to get more sunlight."
+    correctChoice: 0
+    explanation: "Our notes on the Ornate Spiny Lobster say: Its young spend a long time drifting in the open ocean."
+  - questionId: spiny_lobster_001_camera
+    species: {fileID: 11400000, guid: ec7567bc246948b4f830335214c727ee, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Colorful patterned body with long spiny antennae. The habitat notes say: Shallow coral reefs and shelf sediments (1\u201350 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Ornate Spiny Lobster. Colorful patterned body with long spiny antennae. Its recorded habitat is Shallow coral reefs and shelf sediments (1\u201350 m)."
+  - questionId: blue_seastar_001_habitat
+    species: {fileID: 11400000, guid: 404cff36c08a7ff44bdaf8ee8b648d93, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Pacific Blue Sea Star?"
+    choices:
+    - "Shallow reefs, rocks and rubble (0\u201360 m)"
+    - "Shallow sunlit lagoons and coves (1\u201320 m)"
+    - "Western Pacific reef habitats (20\u201330 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Pacific Blue Sea Star say: Shallow reefs, rocks and rubble (0\u201360 m)"
+  - questionId: blue_seastar_001_characteristics
+    species: {fileID: 11400000, guid: 404cff36c08a7ff44bdaf8ee8b648d93, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Pacific Blue Sea Star. Which description matches our observations?"
+    choices:
+    - "Bright blue body with five long, slender arms."
+    - "Golden-brown bell with white spots."
+    - "Blue sponge with tubular projections and pores."
+    correctChoice: 0
+    explanation: "Our notes on the Pacific Blue Sea Star say: Bright blue body with five long, slender arms."
+  - questionId: blue_seastar_001_ecologicalRole
+    species: {fileID: 11400000, guid: 404cff36c08a7ff44bdaf8ee8b648d93, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Pacific Blue Sea Star play in its ecosystem, according to our notes?"
+    choices:
+    - "Helps break down organic material on the seafloor."
+    - "Feeds on small organisms and benefits from its photosynthetic partners."
+    - "Filters water and provides microhabitat."
+    correctChoice: 0
+    explanation: "Our notes on the Pacific Blue Sea Star say: Helps break down organic material on the seafloor."
+  - questionId: blue_seastar_001_interestingFact
+    species: {fileID: 11400000, guid: 404cff36c08a7ff44bdaf8ee8b648d93, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Pacific Blue Sea Star during our research?"
+    choices:
+    - "It can regrow an arm after losing one."
+    - "It moves during the day to get more sunlight."
+    - "Continuously pumps seawater through its body."
+    correctChoice: 0
+    explanation: "Our notes on the Pacific Blue Sea Star say: It can regrow an arm after losing one."
+  - questionId: blue_seastar_001_camera
+    species: {fileID: 11400000, guid: 404cff36c08a7ff44bdaf8ee8b648d93, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Bright blue body with five long, slender arms. The habitat notes say: Shallow reefs, rocks and rubble (0\u201360 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Pacific Blue Sea Star. Bright blue body with five long, slender arms. Its recorded habitat is Shallow reefs, rocks and rubble (0\u201360 m)."
+  - questionId: spotted_jellyfish_001_habitat
+    species: {fileID: 11400000, guid: 71c8456b239e4844bb30d92abd75f687, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Spotted Jellyfish?"
+    choices:
+    - "Shallow sunlit lagoons and coves (1\u201320 m)"
+    - "Western Pacific reef habitats (20\u201330 m)"
+    - "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Spotted Jellyfish say: Shallow sunlit lagoons and coves (1\u201320 m)"
+  - questionId: spotted_jellyfish_001_characteristics
+    species: {fileID: 11400000, guid: 71c8456b239e4844bb30d92abd75f687, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Spotted Jellyfish. Which description matches our observations?"
+    choices:
+    - "Golden-brown bell with white spots."
+    - "Blue sponge with tubular projections and pores."
+    - "Black stripes and a yellow snout, with a paddle-like tail for use in swimming."
+    correctChoice: 0
+    explanation: "Our notes on the Spotted Jellyfish say: Golden-brown bell with white spots."
+  - questionId: spotted_jellyfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 71c8456b239e4844bb30d92abd75f687, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Spotted Jellyfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small organisms and benefits from its photosynthetic partners."
+    - "Filters water and provides microhabitat."
+    - "Predator that helps control fish and eel populations."
+    correctChoice: 0
+    explanation: "Our notes on the Spotted Jellyfish say: Feeds on small organisms and benefits from its photosynthetic partners."
+  - questionId: spotted_jellyfish_001_interestingFact
+    species: {fileID: 11400000, guid: 71c8456b239e4844bb30d92abd75f687, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Spotted Jellyfish during our research?"
+    choices:
+    - "It moves during the day to get more sunlight."
+    - "Continuously pumps seawater through its body."
+    - "It can hunt together with other fish."
+    correctChoice: 0
+    explanation: "Our notes on the Spotted Jellyfish say: It moves during the day to get more sunlight."
+  - questionId: spotted_jellyfish_001_camera
+    species: {fileID: 11400000, guid: 71c8456b239e4844bb30d92abd75f687, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Golden-brown bell with white spots. The habitat notes say: Shallow sunlit lagoons and coves (1\u201320 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Spotted Jellyfish. Golden-brown bell with white spots. Its recorded habitat is Shallow sunlit lagoons and coves (1\u201320 m)."
+  - questionId: blue_sponge_001_habitat
+    species: {fileID: 11400000, guid: ceff8d0f7b0ea7b408ae9d9269a701e2, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Tubular Blue Sponge?"
+    choices:
+    - "Western Pacific reef habitats (20\u201330 m)"
+    - "Shallow coral reefs, mangroves, and rocky shores (0\u201310 m)"
+    - "Shallow coastal reefs and seagrass beds (0\u2013100 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Tubular Blue Sponge say: Western Pacific reef habitats (20\u201330 m)"
+  - questionId: blue_sponge_001_characteristics
+    species: {fileID: 11400000, guid: ceff8d0f7b0ea7b408ae9d9269a701e2, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Tubular Blue Sponge. Which description matches our observations?"
+    choices:
+    - "Blue sponge with tubular projections and pores."
+    - "Black stripes and a yellow snout, with a paddle-like tail for use in swimming."
+    - "Long oval body with wide fins along its sides."
+    correctChoice: 0
+    explanation: "Our notes on the Tubular Blue Sponge say: Blue sponge with tubular projections and pores."
+  - questionId: blue_sponge_001_ecologicalRole
+    species: {fileID: 11400000, guid: ceff8d0f7b0ea7b408ae9d9269a701e2, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Tubular Blue Sponge play in its ecosystem, according to our notes?"
+    choices:
+    - "Filters water and provides microhabitat."
+    - "Predator that helps control fish and eel populations."
+    - "Hunts small fish, crustaceans, and other marine animals."
+    correctChoice: 0
+    explanation: "Our notes on the Tubular Blue Sponge say: Filters water and provides microhabitat."
+  - questionId: blue_sponge_001_interestingFact
+    species: {fileID: 11400000, guid: ceff8d0f7b0ea7b408ae9d9269a701e2, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Tubular Blue Sponge during our research?"
+    choices:
+    - "Continuously pumps seawater through its body."
+    - "It can hunt together with other fish."
+    - "It can rapidly change its body color."
+    correctChoice: 0
+    explanation: "Our notes on the Tubular Blue Sponge say: Continuously pumps seawater through its body."
+  - questionId: blue_sponge_001_camera
+    species: {fileID: 11400000, guid: ceff8d0f7b0ea7b408ae9d9269a701e2, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Blue sponge with tubular projections and pores. The habitat notes say: Western Pacific reef habitats (20\u201330 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Tubular Blue Sponge. Blue sponge with tubular projections and pores. Its recorded habitat is Western Pacific reef habitats (20\u201330 m)."

@@ -13,26 +13,27 @@ MonoBehaviour:
   m_Name: DiaphanousHatchetfish
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: diaphanous_hatchetfish_001
-  commonName: "Diaphanous Hatchetfish"
-  scientificName: "Sternoptyx diaphana"
+  commonName: Diaphanous Hatchetfish
+  scientificName: Sternoptyx diaphana
   taxonomicClass: 0
   zoneIndex: 2
-  habitat: "Deep ocean, 400–3,676 m"
-  depthRangeText: "400–3,676 m"
-  explorationHint: "Deep ocean, 400–3,676 m. Small, thin fish with a shiny, hatchet-shaped body."
+  habitat: "Deep ocean, 400\u20133,676 m"
+  depthRangeText: "400\u20133,676 m"
+  explorationHint: "Deep ocean, 400\u20133,676 m. Small, thin fish with a shiny,
+    hatchet-shaped body."
   secondaryZoneIndices: 
-  characteristics: "Small, thin fish with a shiny, hatchet-shaped body."
-  ecologicalRole: "Eats tiny drifting animals."
-  interestingFact: "Its thin body helps it blend into the dark water."
+  characteristics: Small, thin fish with a shiny, hatchet-shaped body.
+  ecologicalRole: Eats tiny drifting animals.
+  interestingFact: Its thin body helps it blend into the dark water.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.9
   instanceCount: 3
-  wanderRadius: 15.0
+  wanderRadius: 15
   moveSpeed: 1.2
   fleeSpeed: 2.16
   fleeRange: 10
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 2
-  placeholderColor: {r: 0.8, g: 0.85, b: 0.9, a: 1.0}
+  placeholderColor: {r: 0.8, g: 0.85, b: 0.9, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 6fcd57b19fbdd664c94aff6e2f4cb385, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

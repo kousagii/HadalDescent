@@ -13,26 +13,28 @@ MonoBehaviour:
   m_Name: GiantSiphonophore
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: giant_siphonophore_001
-  commonName: "Giant Siphonophore"
-  scientificName: "Marrus orthocanna"
+  commonName: Giant Siphonophore
+  scientificName: Marrus orthocanna
   taxonomicClass: 9
   zoneIndex: 2
-  habitat: "Deep ocean, 200–2,000 m"
-  depthRangeText: "200–2,000 m"
-  explorationHint: "Deep ocean, 200–2,000 m. Long, transparent body made of many connected parts."
+  habitat: "Deep ocean, 200\u20132,000 m"
+  depthRangeText: "200\u20132,000 m"
+  explorationHint: "Deep ocean, 200\u20132,000 m. Long, transparent body made of
+    many connected parts."
   secondaryZoneIndices: 
-  characteristics: "Long, transparent body made of many connected parts."
-  ecologicalRole: "Uses stinging tentacles to catch small animals."
-  interestingFact: "It looks like one animal but is actually a colony of many specialized parts."
+  characteristics: Long, transparent body made of many connected parts.
+  ecologicalRole: Uses stinging tentacles to catch small animals.
+  interestingFact: It looks like one animal but is actually a colony of many specialized
+    parts.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.4
   instanceCount: 3
-  wanderRadius: 25.0
+  wanderRadius: 25
   moveSpeed: 1.2
   fleeSpeed: 2.16
   fleeRange: 10
@@ -53,8 +55,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 3
-  placeholderColor: {r: 0.8, g: 0.3, b: 0.35, a: 1.0}
+  placeholderColor: {r: 0.8, g: 0.3, b: 0.35, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 78fbd1098fcf0fc47870ee84b3ace91b, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

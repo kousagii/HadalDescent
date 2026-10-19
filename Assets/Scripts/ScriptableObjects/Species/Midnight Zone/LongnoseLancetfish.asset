@@ -13,27 +13,28 @@ MonoBehaviour:
   m_Name: LongnoseLancetfish
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: longnose_lancetfish_001
-  commonName: "Longnose Lancetfish"
-  scientificName: "Alepisaurus ferox"
+  commonName: Longnose Lancetfish
+  scientificName: Alepisaurus ferox
   taxonomicClass: 0
   zoneIndex: 2
-  habitat: "Open ocean, 0–1,830 m"
-  depthRangeText: "0–1,830 m"
-  explorationHint: "Open ocean, 0–1,830 m. Long, silver body with a very large mouth and tall fin."
+  habitat: "Open ocean, 0\u20131,830 m"
+  depthRangeText: "0\u20131,830 m"
+  explorationHint: "Open ocean, 0\u20131,830 m. Long, silver body with a very large
+    mouth and tall fin."
   secondaryZoneIndices: 
-  characteristics: "Long, silver body with a very large mouth and tall fin."
-  ecologicalRole: "Hunts fish, squid, and shrimp."
-  interestingFact: "It sometimes eats other lancetfish."
+  characteristics: Long, silver body with a very large mouth and tall fin.
+  ecologicalRole: Hunts fish, squid, and shrimp.
+  interestingFact: It sometimes eats other lancetfish.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.4
   instanceCount: 3
-  wanderRadius: 35.0
-  moveSpeed: 3.0
+  wanderRadius: 35
+  moveSpeed: 3
   fleeSpeed: 5.4
   fleeRange: 10
   returnThreshold: 52.5
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.7, g: 0.75, b: 0.85, a: 1.0}
+  placeholderColor: {r: 0.7, g: 0.75, b: 0.85, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 123f64a14879c974f92a386975b6a622, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

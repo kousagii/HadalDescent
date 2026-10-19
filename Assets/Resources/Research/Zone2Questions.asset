@@ -1,0 +1,1004 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974ce4595bf14ee69cf6a1d1c489f578, type: 3}
+  m_Name: Zone2Questions
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchQuestionBank
+  zoneIndex: 2
+  questions:
+  - questionId: blackbelly_lanternshark_001_habitat
+    species: {fileID: 11400000, guid: 5a48047fed0e451887a846054c4499d0, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Blackbelly Lanternshark?"
+    choices:
+    - "Deep slopes, 150\u20131,357 m"
+    - "Deep ocean, about 1,000\u20134,000 m"
+    - "Deep hydrothermal vents, 1,136\u20132,000 m"
+    correctChoice: 0
+    explanation: "Our notes on the Blackbelly Lanternshark say: Deep slopes, 150\u20131,357 m"
+  - questionId: blackbelly_lanternshark_001_characteristics
+    species: {fileID: 11400000, guid: 5a48047fed0e451887a846054c4499d0, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Blackbelly Lanternshark. Which description matches our observations?"
+    choices:
+    - "Small dark shark with glowing areas underneath its body."
+    - "Red jellyfish with a round bell and long tentacles."
+    - "Small lobster-like animal with long legs."
+    correctChoice: 0
+    explanation: "Our notes on the Blackbelly Lanternshark say: Small dark shark with glowing areas underneath its body."
+  - questionId: blackbelly_lanternshark_001_ecologicalRole
+    species: {fileID: 11400000, guid: 5a48047fed0e451887a846054c4499d0, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Blackbelly Lanternshark play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts shrimp, squid, and small fish."
+    - "Catches tiny animals drifting through the water."
+    - "Feeds on food around deep-sea vents."
+    correctChoice: 0
+    explanation: "Our notes on the Blackbelly Lanternshark say: Hunts shrimp, squid, and small fish."
+  - questionId: blackbelly_lanternshark_001_interestingFact
+    species: {fileID: 11400000, guid: 5a48047fed0e451887a846054c4499d0, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Blackbelly Lanternshark during our research?"
+    choices:
+    - "Its belly can glow in the dark."
+    - "It can produce flashing light when disturbed."
+    - "It lives in some of the most extreme environments in the ocean."
+    correctChoice: 0
+    explanation: "Our notes on the Blackbelly Lanternshark say: Its belly can glow in the dark."
+  - questionId: blackbelly_lanternshark_001_camera
+    species: {fileID: 11400000, guid: 5a48047fed0e451887a846054c4499d0, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small dark shark with glowing areas underneath its body. The habitat notes say: Deep slopes, 150\u20131,357 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Blackbelly Lanternshark. Small dark shark with glowing areas underneath its body. Its recorded habitat is Deep slopes, 150\u20131,357 m."
+  - questionId: deep_sea_jellyfish_001_habitat
+    species: {fileID: 11400000, guid: e8dc5149170a485ea2141a2c11913c08, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-sea Jellyfish?"
+    choices:
+    - "Deep ocean, about 1,000\u20134,000 m"
+    - "Deep hydrothermal vents, 1,136\u20132,000 m"
+    - "Deep seafloor, up to 2,570 m"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Jellyfish say: Deep ocean, about 1,000\u20134,000 m"
+  - questionId: deep_sea_jellyfish_001_characteristics
+    species: {fileID: 11400000, guid: e8dc5149170a485ea2141a2c11913c08, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-sea Jellyfish. Which description matches our observations?"
+    choices:
+    - "Red jellyfish with a round bell and long tentacles."
+    - "Small lobster-like animal with long legs."
+    - "Small clam that lives in deep seafloor sediments."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Jellyfish say: Red jellyfish with a round bell and long tentacles."
+  - questionId: deep_sea_jellyfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: e8dc5149170a485ea2141a2c11913c08, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-sea Jellyfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Catches tiny animals drifting through the water."
+    - "Feeds on food around deep-sea vents."
+    - "Gets nutrients with help from bacteria living inside it."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Jellyfish say: Catches tiny animals drifting through the water."
+  - questionId: deep_sea_jellyfish_001_interestingFact
+    species: {fileID: 11400000, guid: e8dc5149170a485ea2141a2c11913c08, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-sea Jellyfish during our research?"
+    choices:
+    - "It can produce flashing light when disturbed."
+    - "It lives in some of the most extreme environments in the ocean."
+    - "It was recorded at 2,570 m near the Philippines."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Jellyfish say: It can produce flashing light when disturbed."
+  - questionId: deep_sea_jellyfish_001_camera
+    species: {fileID: 11400000, guid: e8dc5149170a485ea2141a2c11913c08, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Red jellyfish with a round bell and long tentacles. The habitat notes say: Deep ocean, about 1,000\u20134,000 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-sea Jellyfish. Red jellyfish with a round bell and long tentacles. Its recorded habitat is Deep ocean, about 1,000\u20134,000 m."
+  - questionId: deep_sea_squat_lobster_001_habitat
+    species: {fileID: 11400000, guid: dcfe02f44b484ab88a940582fd224393, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-sea Squat Lobster?"
+    choices:
+    - "Deep hydrothermal vents, 1,136\u20132,000 m"
+    - "Deep seafloor, up to 2,570 m"
+    - "Open ocean, surface\u2013about 2,200 m"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Squat Lobster say: Deep hydrothermal vents, 1,136\u20132,000 m"
+  - questionId: deep_sea_squat_lobster_001_characteristics
+    species: {fileID: 11400000, guid: dcfe02f44b484ab88a940582fd224393, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-sea Squat Lobster. Which description matches our observations?"
+    choices:
+    - "Small lobster-like animal with long legs."
+    - "Small clam that lives in deep seafloor sediments."
+    - "Large squid with broad, diamond-shaped fins."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Squat Lobster say: Small lobster-like animal with long legs."
+  - questionId: deep_sea_squat_lobster_001_ecologicalRole
+    species: {fileID: 11400000, guid: dcfe02f44b484ab88a940582fd224393, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-sea Squat Lobster play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on food around deep-sea vents."
+    - "Gets nutrients with help from bacteria living inside it."
+    - "Hunts fish, squid, and shrimp."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Squat Lobster say: Feeds on food around deep-sea vents."
+  - questionId: deep_sea_squat_lobster_001_interestingFact
+    species: {fileID: 11400000, guid: dcfe02f44b484ab88a940582fd224393, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-sea Squat Lobster during our research?"
+    choices:
+    - "It lives in some of the most extreme environments in the ocean."
+    - "It was recorded at 2,570 m near the Philippines."
+    - "Adults are often seen swimming in pairs."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Squat Lobster say: It lives in some of the most extreme environments in the ocean."
+  - questionId: deep_sea_squat_lobster_001_camera
+    species: {fileID: 11400000, guid: dcfe02f44b484ab88a940582fd224393, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small lobster-like animal with long legs. The habitat notes say: Deep hydrothermal vents, 1,136\u20132,000 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-sea Squat Lobster. Small lobster-like animal with long legs. Its recorded habitat is Deep hydrothermal vents, 1,136\u20132,000 m."
+  - questionId: deep_water_clam_001_habitat
+    species: {fileID: 11400000, guid: 59e62133de15455d8bc7c030bab0dc31, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-water Clam?"
+    choices:
+    - "Deep seafloor, up to 2,570 m"
+    - "Open ocean, surface\u2013about 2,200 m"
+    - "Deep ocean, 400\u20133,676 m"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Clam say: Deep seafloor, up to 2,570 m"
+  - questionId: deep_water_clam_001_characteristics
+    species: {fileID: 11400000, guid: 59e62133de15455d8bc7c030bab0dc31, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-water Clam. Which description matches our observations?"
+    choices:
+    - "Small clam that lives in deep seafloor sediments."
+    - "Large squid with broad, diamond-shaped fins."
+    - "Small, thin fish with a shiny, hatchet-shaped body."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Clam say: Small clam that lives in deep seafloor sediments."
+  - questionId: deep_water_clam_001_ecologicalRole
+    species: {fileID: 11400000, guid: 59e62133de15455d8bc7c030bab0dc31, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-water Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Gets nutrients with help from bacteria living inside it."
+    - "Hunts fish, squid, and shrimp."
+    - "Eats tiny drifting animals."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Clam say: Gets nutrients with help from bacteria living inside it."
+  - questionId: deep_water_clam_001_interestingFact
+    species: {fileID: 11400000, guid: 59e62133de15455d8bc7c030bab0dc31, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-water Clam during our research?"
+    choices:
+    - "It was recorded at 2,570 m near the Philippines."
+    - "Adults are often seen swimming in pairs."
+    - "Its thin body helps it blend into the dark water."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Clam say: It was recorded at 2,570 m near the Philippines."
+  - questionId: deep_water_clam_001_camera
+    species: {fileID: 11400000, guid: 59e62133de15455d8bc7c030bab0dc31, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small clam that lives in deep seafloor sediments. The habitat notes say: Deep seafloor, up to 2,570 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-water Clam. Small clam that lives in deep seafloor sediments. Its recorded habitat is Deep seafloor, up to 2,570 m."
+  - questionId: diamondback_squid_001_habitat
+    species: {fileID: 11400000, guid: 8381be409f824fdb97f67891aa79049d, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Diamondback Squid?"
+    choices:
+    - "Open ocean, surface\u2013about 2,200 m"
+    - "Deep ocean, 400\u20133,676 m"
+    - "Deep ocean, 533\u20132,306 m"
+    correctChoice: 0
+    explanation: "Our notes on the Diamondback Squid say: Open ocean, surface\u2013about 2,200 m"
+  - questionId: diamondback_squid_001_characteristics
+    species: {fileID: 11400000, guid: 8381be409f824fdb97f67891aa79049d, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Diamondback Squid. Which description matches our observations?"
+    choices:
+    - "Large squid with broad, diamond-shaped fins."
+    - "Small, thin fish with a shiny, hatchet-shaped body."
+    - "Small, dark anglerfish with a glowing lure."
+    correctChoice: 0
+    explanation: "Our notes on the Diamondback Squid say: Large squid with broad, diamond-shaped fins."
+  - questionId: diamondback_squid_001_ecologicalRole
+    species: {fileID: 11400000, guid: 8381be409f824fdb97f67891aa79049d, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Diamondback Squid play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts fish, squid, and shrimp."
+    - "Eats tiny drifting animals."
+    - "Uses its lure to attract and catch prey."
+    correctChoice: 0
+    explanation: "Our notes on the Diamondback Squid say: Hunts fish, squid, and shrimp."
+  - questionId: diamondback_squid_001_interestingFact
+    species: {fileID: 11400000, guid: 8381be409f824fdb97f67891aa79049d, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Diamondback Squid during our research?"
+    choices:
+    - "Adults are often seen swimming in pairs."
+    - "Its thin body helps it blend into the dark water."
+    - "It has been recorded in Philippine and Indo-Pacific waters."
+    correctChoice: 0
+    explanation: "Our notes on the Diamondback Squid say: Adults are often seen swimming in pairs."
+  - questionId: diamondback_squid_001_camera
+    species: {fileID: 11400000, guid: 8381be409f824fdb97f67891aa79049d, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Large squid with broad, diamond-shaped fins. The habitat notes say: Open ocean, surface\u2013about 2,200 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Diamondback Squid. Large squid with broad, diamond-shaped fins. Its recorded habitat is Open ocean, surface\u2013about 2,200 m."
+  - questionId: diaphanous_hatchetfish_001_habitat
+    species: {fileID: 11400000, guid: 65bd563fa13848afba3fa2c14b95b305, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Diaphanous Hatchetfish?"
+    choices:
+    - "Deep ocean, 400\u20133,676 m"
+    - "Deep ocean, 533\u20132,306 m"
+    - "Deep ocean, 200\u20132,000 m"
+    correctChoice: 0
+    explanation: "Our notes on the Diaphanous Hatchetfish say: Deep ocean, 400\u20133,676 m"
+  - questionId: diaphanous_hatchetfish_001_characteristics
+    species: {fileID: 11400000, guid: 65bd563fa13848afba3fa2c14b95b305, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Diaphanous Hatchetfish. Which description matches our observations?"
+    choices:
+    - "Small, thin fish with a shiny, hatchet-shaped body."
+    - "Small, dark anglerfish with a glowing lure."
+    - "Long, transparent body made of many connected parts."
+    correctChoice: 0
+    explanation: "Our notes on the Diaphanous Hatchetfish say: Small, thin fish with a shiny, hatchet-shaped body."
+  - questionId: diaphanous_hatchetfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 65bd563fa13848afba3fa2c14b95b305, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Diaphanous Hatchetfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny drifting animals."
+    - "Uses its lure to attract and catch prey."
+    - "Uses stinging tentacles to catch small animals."
+    correctChoice: 0
+    explanation: "Our notes on the Diaphanous Hatchetfish say: Eats tiny drifting animals."
+  - questionId: diaphanous_hatchetfish_001_interestingFact
+    species: {fileID: 11400000, guid: 65bd563fa13848afba3fa2c14b95b305, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Diaphanous Hatchetfish during our research?"
+    choices:
+    - "Its thin body helps it blend into the dark water."
+    - "It has been recorded in Philippine and Indo-Pacific waters."
+    - "It looks like one animal but is actually a colony of many specialized parts."
+    correctChoice: 0
+    explanation: "Our notes on the Diaphanous Hatchetfish say: Its thin body helps it blend into the dark water."
+  - questionId: diaphanous_hatchetfish_001_camera
+    species: {fileID: 11400000, guid: 65bd563fa13848afba3fa2c14b95b305, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, thin fish with a shiny, hatchet-shaped body. The habitat notes say: Deep ocean, 400\u20133,676 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Diaphanous Hatchetfish. Small, thin fish with a shiny, hatchet-shaped body. Its recorded habitat is Deep ocean, 400\u20133,676 m."
+  - questionId: doublespine_seadevil_001_habitat
+    species: {fileID: 11400000, guid: 87ee7c962d964b69a8f3777fe4921f5c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Doublespine Seadevil?"
+    choices:
+    - "Deep ocean, 533\u20132,306 m"
+    - "Deep ocean, 200\u20132,000 m"
+    - "Deep seafloor, 3,316\u20133,399 m"
+    correctChoice: 0
+    explanation: "Our notes on the Doublespine Seadevil say: Deep ocean, 533\u20132,306 m"
+  - questionId: doublespine_seadevil_001_characteristics
+    species: {fileID: 11400000, guid: 87ee7c962d964b69a8f3777fe4921f5c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Doublespine Seadevil. Which description matches our observations?"
+    choices:
+    - "Small, dark anglerfish with a glowing lure."
+    - "Long, transparent body made of many connected parts."
+    - "Has long branches shaped somewhat like a harp."
+    correctChoice: 0
+    explanation: "Our notes on the Doublespine Seadevil say: Small, dark anglerfish with a glowing lure."
+  - questionId: doublespine_seadevil_001_ecologicalRole
+    species: {fileID: 11400000, guid: 87ee7c962d964b69a8f3777fe4921f5c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Doublespine Seadevil play in its ecosystem, according to our notes?"
+    choices:
+    - "Uses its lure to attract and catch prey."
+    - "Uses stinging tentacles to catch small animals."
+    - "Captures tiny animals instead of only filtering food from water."
+    correctChoice: 0
+    explanation: "Our notes on the Doublespine Seadevil say: Uses its lure to attract and catch prey."
+  - questionId: doublespine_seadevil_001_interestingFact
+    species: {fileID: 11400000, guid: 87ee7c962d964b69a8f3777fe4921f5c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Doublespine Seadevil during our research?"
+    choices:
+    - "It has been recorded in Philippine and Indo-Pacific waters."
+    - "It looks like one animal but is actually a colony of many specialized parts."
+    - "It looks like a harp growing from the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Doublespine Seadevil say: It has been recorded in Philippine and Indo-Pacific waters."
+  - questionId: doublespine_seadevil_001_camera
+    species: {fileID: 11400000, guid: 87ee7c962d964b69a8f3777fe4921f5c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, dark anglerfish with a glowing lure. The habitat notes say: Deep ocean, 533\u20132,306 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Doublespine Seadevil. Small, dark anglerfish with a glowing lure. Its recorded habitat is Deep ocean, 533\u20132,306 m."
+  - questionId: giant_siphonophore_001_habitat
+    species: {fileID: 11400000, guid: e7947bf62edb428c938cf54b859d2fa6, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Giant Siphonophore?"
+    choices:
+    - "Deep ocean, 200\u20132,000 m"
+    - "Deep seafloor, 3,316\u20133,399 m"
+    - "Deep ocean, 100\u20133,178 m"
+    correctChoice: 0
+    explanation: "Our notes on the Giant Siphonophore say: Deep ocean, 200\u20132,000 m"
+  - questionId: giant_siphonophore_001_characteristics
+    species: {fileID: 11400000, guid: e7947bf62edb428c938cf54b859d2fa6, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Giant Siphonophore. Which description matches our observations?"
+    choices:
+    - "Long, transparent body made of many connected parts."
+    - "Has long branches shaped somewhat like a harp."
+    - "Small, dark fish with large teeth and glowing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Siphonophore say: Long, transparent body made of many connected parts."
+  - questionId: giant_siphonophore_001_ecologicalRole
+    species: {fileID: 11400000, guid: e7947bf62edb428c938cf54b859d2fa6, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Giant Siphonophore play in its ecosystem, according to our notes?"
+    choices:
+    - "Uses stinging tentacles to catch small animals."
+    - "Captures tiny animals instead of only filtering food from water."
+    - "Hunts small fish and shrimp."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Siphonophore say: Uses stinging tentacles to catch small animals."
+  - questionId: giant_siphonophore_001_interestingFact
+    species: {fileID: 11400000, guid: e7947bf62edb428c938cf54b859d2fa6, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Giant Siphonophore during our research?"
+    choices:
+    - "It looks like one animal but is actually a colony of many specialized parts."
+    - "It looks like a harp growing from the seafloor."
+    - "It can produce light from its body in the darkness."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Siphonophore say: It looks like one animal but is actually a colony of many specialized parts."
+  - questionId: giant_siphonophore_001_camera
+    species: {fileID: 11400000, guid: e7947bf62edb428c938cf54b859d2fa6, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long, transparent body made of many connected parts. The habitat notes say: Deep ocean, 200\u20132,000 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Giant Siphonophore. Long, transparent body made of many connected parts. Its recorded habitat is Deep ocean, 200\u20132,000 m."
+  - questionId: harp_sponge_001_habitat
+    species: {fileID: 11400000, guid: 662a46311f07437c9fd4056e47b52635, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Harp Sponge?"
+    choices:
+    - "Deep seafloor, 3,316\u20133,399 m"
+    - "Deep ocean, 100\u20133,178 m"
+    - "Open ocean; dives to about 1,280 m"
+    correctChoice: 0
+    explanation: "Our notes on the Harp Sponge say: Deep seafloor, 3,316\u20133,399 m"
+  - questionId: harp_sponge_001_characteristics
+    species: {fileID: 11400000, guid: 662a46311f07437c9fd4056e47b52635, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Harp Sponge. Which description matches our observations?"
+    choices:
+    - "Has long branches shaped somewhat like a harp."
+    - "Small, dark fish with large teeth and glowing organs."
+    - "Largest sea turtle with a soft, leathery shell."
+    correctChoice: 0
+    explanation: "Our notes on the Harp Sponge say: Has long branches shaped somewhat like a harp."
+  - questionId: harp_sponge_001_ecologicalRole
+    species: {fileID: 11400000, guid: 662a46311f07437c9fd4056e47b52635, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Harp Sponge play in its ecosystem, according to our notes?"
+    choices:
+    - "Captures tiny animals instead of only filtering food from water."
+    - "Hunts small fish and shrimp."
+    - "Eats jellyfish and helps control their numbers."
+    correctChoice: 0
+    explanation: "Our notes on the Harp Sponge say: Captures tiny animals instead of only filtering food from water."
+  - questionId: harp_sponge_001_interestingFact
+    species: {fileID: 11400000, guid: 662a46311f07437c9fd4056e47b52635, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Harp Sponge during our research?"
+    choices:
+    - "It looks like a harp growing from the seafloor."
+    - "It can produce light from its body in the darkness."
+    - "It is the largest living sea turtle."
+    correctChoice: 0
+    explanation: "Our notes on the Harp Sponge say: It looks like a harp growing from the seafloor."
+  - questionId: harp_sponge_001_camera
+    species: {fileID: 11400000, guid: 662a46311f07437c9fd4056e47b52635, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Has long branches shaped somewhat like a harp. The habitat notes say: Deep seafloor, 3,316\u20133,399 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Harp Sponge. Has long branches shaped somewhat like a harp. Its recorded habitat is Deep seafloor, 3,316\u20133,399 m."
+  - questionId: indo_pacific_snaggletooth_001_habitat
+    species: {fileID: 11400000, guid: e3bba5c9c77b4eb18fc6ce43ce5d9ce9, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Indo-Pacific Snaggletooth?"
+    choices:
+    - "Deep ocean, 100\u20133,178 m"
+    - "Open ocean; dives to about 1,280 m"
+    - "Open ocean, 0\u20131,830 m"
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Snaggletooth say: Deep ocean, 100\u20133,178 m"
+  - questionId: indo_pacific_snaggletooth_001_characteristics
+    species: {fileID: 11400000, guid: e3bba5c9c77b4eb18fc6ce43ce5d9ce9, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Indo-Pacific Snaggletooth. Which description matches our observations?"
+    choices:
+    - "Small, dark fish with large teeth and glowing organs."
+    - "Largest sea turtle with a soft, leathery shell."
+    - "Long, silver body with a very large mouth and tall fin."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Snaggletooth say: Small, dark fish with large teeth and glowing organs."
+  - questionId: indo_pacific_snaggletooth_001_ecologicalRole
+    species: {fileID: 11400000, guid: e3bba5c9c77b4eb18fc6ce43ce5d9ce9, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Indo-Pacific Snaggletooth play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small fish and shrimp."
+    - "Eats jellyfish and helps control their numbers."
+    - "Hunts fish, squid, and shrimp."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Snaggletooth say: Hunts small fish and shrimp."
+  - questionId: indo_pacific_snaggletooth_001_interestingFact
+    species: {fileID: 11400000, guid: e3bba5c9c77b4eb18fc6ce43ce5d9ce9, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Indo-Pacific Snaggletooth during our research?"
+    choices:
+    - "It can produce light from its body in the darkness."
+    - "It is the largest living sea turtle."
+    - "It sometimes eats other lancetfish."
+    correctChoice: 0
+    explanation: "Our notes on the Indo-Pacific Snaggletooth say: It can produce light from its body in the darkness."
+  - questionId: indo_pacific_snaggletooth_001_camera
+    species: {fileID: 11400000, guid: e3bba5c9c77b4eb18fc6ce43ce5d9ce9, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, dark fish with large teeth and glowing organs. The habitat notes say: Deep ocean, 100\u20133,178 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Indo-Pacific Snaggletooth. Small, dark fish with large teeth and glowing organs. Its recorded habitat is Deep ocean, 100\u20133,178 m."
+  - questionId: leatherback_sea_turtle_001_habitat
+    species: {fileID: 11400000, guid: 6218a0b745c94ccfb8702e6ade57d4f1, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Leatherback Sea Turtle?"
+    choices:
+    - "Open ocean; dives to about 1,280 m"
+    - "Open ocean, 0\u20131,830 m"
+    - "Deep underwater slopes, 154\u20131,370 m"
+    correctChoice: 0
+    explanation: "Our notes on the Leatherback Sea Turtle say: Open ocean; dives to about 1,280 m"
+  - questionId: leatherback_sea_turtle_001_characteristics
+    species: {fileID: 11400000, guid: 6218a0b745c94ccfb8702e6ade57d4f1, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Leatherback Sea Turtle. Which description matches our observations?"
+    choices:
+    - "Largest sea turtle with a soft, leathery shell."
+    - "Long, silver body with a very large mouth and tall fin."
+    - "Gray-brown shark with a long body."
+    correctChoice: 0
+    explanation: "Our notes on the Leatherback Sea Turtle say: Largest sea turtle with a soft, leathery shell."
+  - questionId: leatherback_sea_turtle_001_ecologicalRole
+    species: {fileID: 11400000, guid: 6218a0b745c94ccfb8702e6ade57d4f1, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Leatherback Sea Turtle play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats jellyfish and helps control their numbers."
+    - "Hunts fish, squid, and shrimp."
+    - "Eats small fish, squid, and shrimp."
+    correctChoice: 0
+    explanation: "Our notes on the Leatherback Sea Turtle say: Eats jellyfish and helps control their numbers."
+  - questionId: leatherback_sea_turtle_001_interestingFact
+    species: {fileID: 11400000, guid: 6218a0b745c94ccfb8702e6ade57d4f1, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Leatherback Sea Turtle during our research?"
+    choices:
+    - "It is the largest living sea turtle."
+    - "It sometimes eats other lancetfish."
+    - "Its original scientific description was based on a specimen from the Philippines."
+    correctChoice: 0
+    explanation: "Our notes on the Leatherback Sea Turtle say: It is the largest living sea turtle."
+  - questionId: leatherback_sea_turtle_001_camera
+    species: {fileID: 11400000, guid: 6218a0b745c94ccfb8702e6ade57d4f1, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Largest sea turtle with a soft, leathery shell. The habitat notes say: Open ocean; dives to about 1,280 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Leatherback Sea Turtle. Largest sea turtle with a soft, leathery shell. Its recorded habitat is Open ocean; dives to about 1,280 m."
+  - questionId: longnose_lancetfish_001_habitat
+    species: {fileID: 11400000, guid: f852f4ec61154063b626395676d51023, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Longnose Lancetfish?"
+    choices:
+    - "Open ocean, 0\u20131,830 m"
+    - "Deep underwater slopes, 154\u20131,370 m"
+    - "Deep underwater slopes, 128\u20133,675 m"
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Lancetfish say: Open ocean, 0\u20131,830 m"
+  - questionId: longnose_lancetfish_001_characteristics
+    species: {fileID: 11400000, guid: f852f4ec61154063b626395676d51023, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Longnose Lancetfish. Which description matches our observations?"
+    choices:
+    - "Long, silver body with a very large mouth and tall fin."
+    - "Gray-brown shark with a long body."
+    - "Small, dark shark with large eyes."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Lancetfish say: Long, silver body with a very large mouth and tall fin."
+  - questionId: longnose_lancetfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: f852f4ec61154063b626395676d51023, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Longnose Lancetfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts fish, squid, and shrimp."
+    - "Eats small fish, squid, and shrimp."
+    - "Hunts and scavenges for deep-sea animals."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Lancetfish say: Hunts fish, squid, and shrimp."
+  - questionId: longnose_lancetfish_001_interestingFact
+    species: {fileID: 11400000, guid: f852f4ec61154063b626395676d51023, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Longnose Lancetfish during our research?"
+    choices:
+    - "It sometimes eats other lancetfish."
+    - "Its original scientific description was based on a specimen from the Philippines."
+    - "It is one of the deepest-living sharks known."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Lancetfish say: It sometimes eats other lancetfish."
+  - questionId: longnose_lancetfish_001_camera
+    species: {fileID: 11400000, guid: f852f4ec61154063b626395676d51023, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long, silver body with a very large mouth and tall fin. The habitat notes say: Open ocean, 0\u20131,830 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Longnose Lancetfish. Long, silver body with a very large mouth and tall fin. Its recorded habitat is Open ocean, 0\u20131,830 m."
+  - questionId: philippine_spurdog_001_habitat
+    species: {fileID: 11400000, guid: a521dc236b0d44c499dce5586c8872dc, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Philippine Spurdog?"
+    choices:
+    - "Deep underwater slopes, 154\u20131,370 m"
+    - "Deep underwater slopes, 128\u20133,675 m"
+    - "Deep ocean and seafloor, 600\u20132,380 m"
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Spurdog say: Deep underwater slopes, 154\u20131,370 m"
+  - questionId: philippine_spurdog_001_characteristics
+    species: {fileID: 11400000, guid: a521dc236b0d44c499dce5586c8872dc, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Philippine Spurdog. Which description matches our observations?"
+    choices:
+    - "Gray-brown shark with a long body."
+    - "Small, dark shark with large eyes."
+    - "Has a large head and a long, thin tail."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Spurdog say: Gray-brown shark with a long body."
+  - questionId: philippine_spurdog_001_ecologicalRole
+    species: {fileID: 11400000, guid: a521dc236b0d44c499dce5586c8872dc, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Philippine Spurdog play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small fish, squid, and shrimp."
+    - "Hunts and scavenges for deep-sea animals."
+    - "Eats small animals and food that falls to the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Spurdog say: Eats small fish, squid, and shrimp."
+  - questionId: philippine_spurdog_001_interestingFact
+    species: {fileID: 11400000, guid: a521dc236b0d44c499dce5586c8872dc, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Philippine Spurdog during our research?"
+    choices:
+    - "Its original scientific description was based on a specimen from the Philippines."
+    - "It is one of the deepest-living sharks known."
+    - "It has been recorded from deep waters near the Philippines."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Spurdog say: Its original scientific description was based on a specimen from the Philippines."
+  - questionId: philippine_spurdog_001_camera
+    species: {fileID: 11400000, guid: a521dc236b0d44c499dce5586c8872dc, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Gray-brown shark with a long body. The habitat notes say: Deep underwater slopes, 154\u20131,370 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Philippine Spurdog. Gray-brown shark with a long body. Its recorded habitat is Deep underwater slopes, 154\u20131,370 m."
+  - questionId: portuguese_dogfish_001_habitat
+    species: {fileID: 11400000, guid: 39a513bd6e5e4d348d8208d2529d4553, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Portuguese Dogfish?"
+    choices:
+    - "Deep underwater slopes, 128\u20133,675 m"
+    - "Deep ocean and seafloor, 600\u20132,380 m"
+    - "Hydrothermal vents, 2,400\u20132,900 m"
+    correctChoice: 0
+    explanation: "Our notes on the Portuguese Dogfish say: Deep underwater slopes, 128\u20133,675 m"
+  - questionId: portuguese_dogfish_001_characteristics
+    species: {fileID: 11400000, guid: 39a513bd6e5e4d348d8208d2529d4553, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Portuguese Dogfish. Which description matches our observations?"
+    choices:
+    - "Small, dark shark with large eyes."
+    - "Has a large head and a long, thin tail."
+    - "Has a shell and armor-like scales on its foot."
+    correctChoice: 0
+    explanation: "Our notes on the Portuguese Dogfish say: Small, dark shark with large eyes."
+  - questionId: portuguese_dogfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 39a513bd6e5e4d348d8208d2529d4553, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Portuguese Dogfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts and scavenges for deep-sea animals."
+    - "Eats small animals and food that falls to the seafloor."
+    - "Lives near hot seafloor vents with helpful bacteria."
+    correctChoice: 0
+    explanation: "Our notes on the Portuguese Dogfish say: Hunts and scavenges for deep-sea animals."
+  - questionId: portuguese_dogfish_001_interestingFact
+    species: {fileID: 11400000, guid: 39a513bd6e5e4d348d8208d2529d4553, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Portuguese Dogfish during our research?"
+    choices:
+    - "It is one of the deepest-living sharks known."
+    - "It has been recorded from deep waters near the Philippines."
+    - "Its scales can contain iron minerals."
+    correctChoice: 0
+    explanation: "Our notes on the Portuguese Dogfish say: It is one of the deepest-living sharks known."
+  - questionId: portuguese_dogfish_001_camera
+    species: {fileID: 11400000, guid: 39a513bd6e5e4d348d8208d2529d4553, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, dark shark with large eyes. The habitat notes say: Deep underwater slopes, 128\u20133,675 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Portuguese Dogfish. Small, dark shark with large eyes. Its recorded habitat is Deep underwater slopes, 128\u20133,675 m."
+  - questionId: rudis_rattail_001_habitat
+    species: {fileID: 11400000, guid: 36b0ad041b4d48b29e753f4daa05c29c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Rudis Rattail?"
+    choices:
+    - "Deep ocean and seafloor, 600\u20132,380 m"
+    - "Hydrothermal vents, 2,400\u20132,900 m"
+    - "Deep ocean; dives to about 2,000 m or more"
+    correctChoice: 0
+    explanation: "Our notes on the Rudis Rattail say: Deep ocean and seafloor, 600\u20132,380 m"
+  - questionId: rudis_rattail_001_characteristics
+    species: {fileID: 11400000, guid: 36b0ad041b4d48b29e753f4daa05c29c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Rudis Rattail. Which description matches our observations?"
+    choices:
+    - "Has a large head and a long, thin tail."
+    - "Has a shell and armor-like scales on its foot."
+    - "Huge whale with a very large, square-shaped head."
+    correctChoice: 0
+    explanation: "Our notes on the Rudis Rattail say: Has a large head and a long, thin tail."
+  - questionId: rudis_rattail_001_ecologicalRole
+    species: {fileID: 11400000, guid: 36b0ad041b4d48b29e753f4daa05c29c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Rudis Rattail play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small animals and food that falls to the seafloor."
+    - "Lives near hot seafloor vents with helpful bacteria."
+    - "Hunts large squid and other deep-sea animals."
+    correctChoice: 0
+    explanation: "Our notes on the Rudis Rattail say: Eats small animals and food that falls to the seafloor."
+  - questionId: rudis_rattail_001_interestingFact
+    species: {fileID: 11400000, guid: 36b0ad041b4d48b29e753f4daa05c29c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Rudis Rattail during our research?"
+    choices:
+    - "It has been recorded from deep waters near the Philippines."
+    - "Its scales can contain iron minerals."
+    - "It is one of the deepest-diving whales."
+    correctChoice: 0
+    explanation: "Our notes on the Rudis Rattail say: It has been recorded from deep waters near the Philippines."
+  - questionId: rudis_rattail_001_camera
+    species: {fileID: 11400000, guid: 36b0ad041b4d48b29e753f4daa05c29c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Has a large head and a long, thin tail. The habitat notes say: Deep ocean and seafloor, 600\u20132,380 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Rudis Rattail. Has a large head and a long, thin tail. Its recorded habitat is Deep ocean and seafloor, 600\u20132,380 m."
+  - questionId: scaly_foot_snail_001_habitat
+    species: {fileID: 11400000, guid: 0236f0b08141410e888194bfb428a775, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Scaly-foot Snail?"
+    choices:
+    - "Hydrothermal vents, 2,400\u20132,900 m"
+    - "Deep ocean; dives to about 2,000 m or more"
+    - "Deep seafloor, 800\u20131,500 m"
+    correctChoice: 0
+    explanation: "Our notes on the Scaly-foot Snail say: Hydrothermal vents, 2,400\u20132,900 m"
+  - questionId: scaly_foot_snail_001_characteristics
+    species: {fileID: 11400000, guid: 0236f0b08141410e888194bfb428a775, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Scaly-foot Snail. Which description matches our observations?"
+    choices:
+    - "Has a shell and armor-like scales on its foot."
+    - "Huge whale with a very large, square-shaped head."
+    - "Has very long fins that support its body above the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Scaly-foot Snail say: Has a shell and armor-like scales on its foot."
+  - questionId: scaly_foot_snail_001_ecologicalRole
+    species: {fileID: 11400000, guid: 0236f0b08141410e888194bfb428a775, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Scaly-foot Snail play in its ecosystem, according to our notes?"
+    choices:
+    - "Lives near hot seafloor vents with helpful bacteria."
+    - "Hunts large squid and other deep-sea animals."
+    - "Waits for small animals drifting past."
+    correctChoice: 0
+    explanation: "Our notes on the Scaly-foot Snail say: Lives near hot seafloor vents with helpful bacteria."
+  - questionId: scaly_foot_snail_001_interestingFact
+    species: {fileID: 11400000, guid: 0236f0b08141410e888194bfb428a775, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Scaly-foot Snail during our research?"
+    choices:
+    - "Its scales can contain iron minerals."
+    - "It is one of the deepest-diving whales."
+    - "Its fins make it look like it is standing on stilts."
+    correctChoice: 0
+    explanation: "Our notes on the Scaly-foot Snail say: Its scales can contain iron minerals."
+  - questionId: scaly_foot_snail_001_camera
+    species: {fileID: 11400000, guid: 0236f0b08141410e888194bfb428a775, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Has a shell and armor-like scales on its foot. The habitat notes say: Hydrothermal vents, 2,400\u20132,900 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Scaly-foot Snail. Has a shell and armor-like scales on its foot. Its recorded habitat is Hydrothermal vents, 2,400\u20132,900 m."
+  - questionId: sperm_whale_001_habitat
+    species: {fileID: 11400000, guid: 7905338df8a9444fb1eb027339a4f3c2, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Sperm Whale?"
+    choices:
+    - "Deep ocean; dives to about 2,000 m or more"
+    - "Deep seafloor, 800\u20131,500 m"
+    - "Deep ocean, 300\u20133,000 m"
+    correctChoice: 0
+    explanation: "Our notes on the Sperm Whale say: Deep ocean; dives to about 2,000 m or more"
+  - questionId: sperm_whale_001_characteristics
+    species: {fileID: 11400000, guid: 7905338df8a9444fb1eb027339a4f3c2, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Sperm Whale. Which description matches our observations?"
+    choices:
+    - "Huge whale with a very large, square-shaped head."
+    - "Has very long fins that support its body above the seafloor."
+    - "Dark animal with webbed arms and glowing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Sperm Whale say: Huge whale with a very large, square-shaped head."
+  - questionId: sperm_whale_001_ecologicalRole
+    species: {fileID: 11400000, guid: 7905338df8a9444fb1eb027339a4f3c2, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Sperm Whale play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts large squid and other deep-sea animals."
+    - "Waits for small animals drifting past."
+    - "Eats drifting organic material and tiny animals."
+    correctChoice: 0
+    explanation: "Our notes on the Sperm Whale say: Hunts large squid and other deep-sea animals."
+  - questionId: sperm_whale_001_interestingFact
+    species: {fileID: 11400000, guid: 7905338df8a9444fb1eb027339a4f3c2, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Sperm Whale during our research?"
+    choices:
+    - "It is one of the deepest-diving whales."
+    - "Its fins make it look like it is standing on stilts."
+    - "It can release glowing particles when threatened."
+    correctChoice: 0
+    explanation: "Our notes on the Sperm Whale say: It is one of the deepest-diving whales."
+  - questionId: sperm_whale_001_camera
+    species: {fileID: 11400000, guid: 7905338df8a9444fb1eb027339a4f3c2, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Huge whale with a very large, square-shaped head. The habitat notes say: Deep ocean; dives to about 2,000 m or more. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Sperm Whale. Huge whale with a very large, square-shaped head. Its recorded habitat is Deep ocean; dives to about 2,000 m or more."
+  - questionId: tribute_spiderfish_001_habitat
+    species: {fileID: 11400000, guid: 32a6b20a80794f3c9b8881acfc655083, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Tribute Spiderfish?"
+    choices:
+    - "Deep seafloor, 800\u20131,500 m"
+    - "Deep ocean, 300\u20133,000 m"
+    - "Deep slopes, 150\u20131,357 m"
+    correctChoice: 0
+    explanation: "Our notes on the Tribute Spiderfish say: Deep seafloor, 800\u20131,500 m"
+  - questionId: tribute_spiderfish_001_characteristics
+    species: {fileID: 11400000, guid: 32a6b20a80794f3c9b8881acfc655083, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Tribute Spiderfish. Which description matches our observations?"
+    choices:
+    - "Has very long fins that support its body above the seafloor."
+    - "Dark animal with webbed arms and glowing organs."
+    - "Small dark shark with glowing areas underneath its body."
+    correctChoice: 0
+    explanation: "Our notes on the Tribute Spiderfish say: Has very long fins that support its body above the seafloor."
+  - questionId: tribute_spiderfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 32a6b20a80794f3c9b8881acfc655083, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Tribute Spiderfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Waits for small animals drifting past."
+    - "Eats drifting organic material and tiny animals."
+    - "Hunts shrimp, squid, and small fish."
+    correctChoice: 0
+    explanation: "Our notes on the Tribute Spiderfish say: Waits for small animals drifting past."
+  - questionId: tribute_spiderfish_001_interestingFact
+    species: {fileID: 11400000, guid: 32a6b20a80794f3c9b8881acfc655083, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Tribute Spiderfish during our research?"
+    choices:
+    - "Its fins make it look like it is standing on stilts."
+    - "It can release glowing particles when threatened."
+    - "Its belly can glow in the dark."
+    correctChoice: 0
+    explanation: "Our notes on the Tribute Spiderfish say: Its fins make it look like it is standing on stilts."
+  - questionId: tribute_spiderfish_001_camera
+    species: {fileID: 11400000, guid: 32a6b20a80794f3c9b8881acfc655083, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Has very long fins that support its body above the seafloor. The habitat notes say: Deep seafloor, 800\u20131,500 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Tribute Spiderfish. Has very long fins that support its body above the seafloor. Its recorded habitat is Deep seafloor, 800\u20131,500 m."
+  - questionId: vampire_squid_001_habitat
+    species: {fileID: 11400000, guid: f03df3253f70455cb40bafb07940e6e9, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Vampire Squid?"
+    choices:
+    - "Deep ocean, 300\u20133,000 m"
+    - "Deep slopes, 150\u20131,357 m"
+    - "Deep ocean, about 1,000\u20134,000 m"
+    correctChoice: 0
+    explanation: "Our notes on the Vampire Squid say: Deep ocean, 300\u20133,000 m"
+  - questionId: vampire_squid_001_characteristics
+    species: {fileID: 11400000, guid: f03df3253f70455cb40bafb07940e6e9, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Vampire Squid. Which description matches our observations?"
+    choices:
+    - "Dark animal with webbed arms and glowing organs."
+    - "Small dark shark with glowing areas underneath its body."
+    - "Red jellyfish with a round bell and long tentacles."
+    correctChoice: 0
+    explanation: "Our notes on the Vampire Squid say: Dark animal with webbed arms and glowing organs."
+  - questionId: vampire_squid_001_ecologicalRole
+    species: {fileID: 11400000, guid: f03df3253f70455cb40bafb07940e6e9, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Vampire Squid play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats drifting organic material and tiny animals."
+    - "Hunts shrimp, squid, and small fish."
+    - "Catches tiny animals drifting through the water."
+    correctChoice: 0
+    explanation: "Our notes on the Vampire Squid say: Eats drifting organic material and tiny animals."
+  - questionId: vampire_squid_001_interestingFact
+    species: {fileID: 11400000, guid: f03df3253f70455cb40bafb07940e6e9, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Vampire Squid during our research?"
+    choices:
+    - "It can release glowing particles when threatened."
+    - "Its belly can glow in the dark."
+    - "It can produce flashing light when disturbed."
+    correctChoice: 0
+    explanation: "Our notes on the Vampire Squid say: It can release glowing particles when threatened."
+  - questionId: vampire_squid_001_camera
+    species: {fileID: 11400000, guid: f03df3253f70455cb40bafb07940e6e9, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Dark animal with webbed arms and glowing organs. The habitat notes say: Deep ocean, 300\u20133,000 m. Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Vampire Squid. Dark animal with webbed arms and glowing organs. Its recorded habitat is Deep ocean, 300\u20133,000 m."

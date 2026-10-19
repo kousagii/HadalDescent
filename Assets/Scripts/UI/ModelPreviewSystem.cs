@@ -54,6 +54,8 @@ public class ModelPreviewSystem : MonoBehaviour
     [Tooltip("Degrees per second the model rotates automatically when idle.")]
     [SerializeField] private float autoRotationSpeed = 35f;
 
+    public float IdleRotationSpeed => autoRotationSpeed;
+
     [Tooltip("Mouse/Touch drag rotation sensitivity.")]
     [SerializeField] private float dragSensitivity = 0.4f;
 
@@ -215,18 +217,19 @@ public class ModelPreviewSystem : MonoBehaviour
     /// Generates or retrieves a transparent, centered, max-size 2D Sprite snapshot of the species' 3D model.
     /// Used by Bestiary list cards.
     /// </summary>
-    public Sprite GetOrRenderThumbnail(SpeciesData data, bool isSilhouette = false)
+    public Sprite GetOrRenderThumbnail(SpeciesData data, bool isSilhouette = false, bool requireModel = false)
     {
         if (data == null) return null;
+        if (requireModel && data.modelPrefab == null) return null;
 
-        string cacheKey = $"{data.speciesId}_{(isSilhouette ? "sil" : "color")}";
+        string cacheKey = $"{data.speciesId}_{(isSilhouette ? "sil" : "color")}{(requireModel ? "_model" : "")}";
         if (_thumbnailCache.TryGetValue(cacheKey, out Sprite cached) && cached != null)
             return cached;
 
         EnsureInitialized();
         if (previewCamera == null || previewRT == null)
         {
-            return isSilhouette && data.silhouette != null ? data.silhouette : data.photo;
+            return requireModel ? null : (isSilhouette && data.silhouette != null ? data.silhouette : data.photo);
         }
 
         // Hide any active live preview instance while rendering the snapshot
@@ -243,7 +246,7 @@ public class ModelPreviewSystem : MonoBehaviour
         {
             DestroyImmediate(tempPivot);
             if (_previewInstance != null) _previewInstance.SetActive(true);
-            return isSilhouette && data.silhouette != null ? data.silhouette : data.photo;
+            return requireModel ? null : (isSilhouette && data.silhouette != null ? data.silhouette : data.photo);
         }
 
         tempModel.transform.SetParent(tempPivot.transform, false);
@@ -291,11 +294,32 @@ public class ModelPreviewSystem : MonoBehaviour
         if (_previewInstance != null) _previewInstance.SetActive(true);
 
         // 7. Create and cache Sprite
-        Sprite sprite = Sprite.Create(snap, new Rect(0, 0, snap.width, snap.height), new Vector2(0.5f, 0.5f), 100f);
+        Rect spriteRect = requireModel ? GetVisibleModelRect(snap) : new Rect(0, 0, snap.width, snap.height);
+        Sprite sprite = Sprite.Create(snap, spriteRect, new Vector2(0.5f, 0.5f), 100f);
         sprite.name = $"Thumb_{cacheKey}";
         _thumbnailCache[cacheKey] = sprite;
 
         return sprite;
+    }
+
+    /// <summary>Trim unused transparent space for research previews without clipping visible model pixels.</summary>
+    private static Rect GetVisibleModelRect(Texture2D snapshot)
+    {
+        Color32[] pixels = snapshot.GetPixels32();
+        int minX = snapshot.width, minY = snapshot.height, maxX = -1, maxY = -1;
+        for (int y = 0; y < snapshot.height; y++)
+        for (int x = 0; x < snapshot.width; x++)
+        {
+            if (pixels[y * snapshot.width + x].a == 0) continue;
+            minX = Mathf.Min(minX, x); minY = Mathf.Min(minY, y);
+            maxX = Mathf.Max(maxX, x); maxY = Mathf.Max(maxY, y);
+        }
+        if (maxX < minX) return new Rect(0, 0, snapshot.width, snapshot.height);
+        int padding = Mathf.Max(1, Mathf.CeilToInt(Mathf.Max(maxX - minX + 1, maxY - minY + 1) * 0.04f));
+        int left = Mathf.Max(0, minX - padding), bottom = Mathf.Max(0, minY - padding);
+        int right = Mathf.Min(snapshot.width, maxX + padding + 1);
+        int top = Mathf.Min(snapshot.height, maxY + padding + 1);
+        return new Rect(left, bottom, right - left, top - bottom);
     }
 
     // -----------------------------------------------------------------------

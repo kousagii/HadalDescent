@@ -94,6 +94,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void CancelActiveMinigame()
     {
+        ResearchVerificationMinigame.Instance?.CancelMinigame();
         _minigameActive = false;
         Time.timeScale = 1f;
 
@@ -166,7 +167,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerScanMinigame(SpeciesData data, Action onSuccess, Action onFail)
     {
-        if (_minigameActive)
+        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring request.");
             return;
@@ -256,7 +257,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerDebrisCleanupMinigame(DebrisCluster cluster, Action onSuccess = null, Action onFail = null)
     {
-        if (_minigameActive)
+        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring cleanup request.");
             return;
@@ -305,7 +306,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerHazardDodgeMinigame(int zoneIndex, Action<int> onSuccess = null, Action onFail = null)
     {
-        if (_minigameActive)
+        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring hazard request.");
             return;
@@ -374,6 +375,29 @@ public class MinigameManager : MonoBehaviour
     public void AbortCurrentMinigame()
     {
         CancelActiveMinigame();
+    }
+
+    /// <summary>Reserve controls during Santos's introduction, then mark the quiz active.</summary>
+    public void SetResearchReviewState(bool open, bool questionsActive)
+    {
+        _minigameActive = open && questionsActive;
+        if (open)
+        {
+            DisableControls();
+            Time.timeScale = 0f;
+            UIManager.Instance?.SetExplorationHUDVisible(false);
+            TutorialArrowUI.Instance?.Hide();
+            ScanReticleUI.Instance?.SetVisible(false);
+        }
+        else
+        {
+            EnableControls();
+            Time.timeScale = 1f;
+            string scene = SceneManager.GetActiveScene().name;
+            bool gameplay = !UIManager.IsMenuScene(scene);
+            UIManager.Instance?.SetExplorationHUDVisible(gameplay);
+            ScanReticleUI.Instance?.SetVisible(gameplay);
+        }
     }
 
     // -----------------------------------------------------------------------

@@ -1,0 +1,900 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974ce4595bf14ee69cf6a1d1c489f578, type: 3}
+  m_Name: Zone1Questions
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchQuestionBank
+  zoneIndex: 1
+  questions:
+  - questionId: albatross_coffinfish_001_habitat
+    species: {fileID: 11400000, guid: 19e537a024630c841b75e09db58b5649, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Albatross Coffinfish?"
+    choices:
+    - "Deep seafloor (195\u2013702 m)"
+    - "Open ocean (500\u20131,000 m)"
+    - "Open water (up to 1,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Albatross Coffinfish say: Deep seafloor (195\u2013702 m)"
+  - questionId: albatross_coffinfish_001_characteristics
+    species: {fileID: 11400000, guid: 19e537a024630c841b75e09db58b5649, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Albatross Coffinfish. Which description matches our observations?"
+    choices:
+    - "Round body, large mouth, and fins that help it move along the bottom."
+    - "Small squid with a soft body and long arms."
+    - "Small jellyfish with a rounded, ridged body."
+    correctChoice: 0
+    explanation: "Our notes on the Albatross Coffinfish say: Round body, large mouth, and fins that help it move along the bottom."
+  - questionId: albatross_coffinfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 19e537a024630c841b75e09db58b5649, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Albatross Coffinfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small fish and other sea animals."
+    - "Eats tiny sea animals and becomes food for larger predators."
+    - "Eats tiny animals drifting in the water."
+    correctChoice: 0
+    explanation: "Our notes on the Albatross Coffinfish say: Eats small fish and other sea animals."
+  - questionId: albatross_coffinfish_001_interestingFact
+    species: {fileID: 11400000, guid: 19e537a024630c841b75e09db58b5649, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Albatross Coffinfish during our research?"
+    choices:
+    - "It can use its fins almost like legs to walk along the seafloor."
+    - "Like other squid, it can shoot water from its body to move quickly."
+    - "Some members of its group have a crown-like shape around the bell."
+    correctChoice: 0
+    explanation: "Our notes on the Albatross Coffinfish say: It can use its fins almost like legs to walk along the seafloor."
+  - questionId: albatross_coffinfish_001_camera
+    species: {fileID: 11400000, guid: 19e537a024630c841b75e09db58b5649, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Round body, large mouth, and fins that help it move along the bottom. The habitat notes say: Deep seafloor (195\u2013702 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Albatross Coffinfish. Round body, large mouth, and fins that help it move along the bottom. Its recorded habitat is Deep seafloor (195\u2013702 m)."
+  - questionId: arm_squid_001_habitat
+    species: {fileID: 11400000, guid: 82ecdbf4b7c299d46bdb944e0cf2c4b8, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Arm Squid?"
+    choices:
+    - "Open ocean (500\u20131,000 m)"
+    - "Open water (up to 1,000 m)"
+    - "Rocky areas (30\u2013259 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Arm Squid say: Open ocean (500\u20131,000 m)"
+  - questionId: arm_squid_001_characteristics
+    species: {fileID: 11400000, guid: 82ecdbf4b7c299d46bdb944e0cf2c4b8, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Arm Squid. Which description matches our observations?"
+    choices:
+    - "Small squid with a soft body and long arms."
+    - "Small jellyfish with a rounded, ridged body."
+    - "Branching coral with a hard skeleton."
+    correctChoice: 0
+    explanation: "Our notes on the Arm Squid say: Small squid with a soft body and long arms."
+  - questionId: arm_squid_001_ecologicalRole
+    species: {fileID: 11400000, guid: 82ecdbf4b7c299d46bdb944e0cf2c4b8, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Arm Squid play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny sea animals and becomes food for larger predators."
+    - "Eats tiny animals drifting in the water."
+    - "Gives small sea animals places to live and hide."
+    correctChoice: 0
+    explanation: "Our notes on the Arm Squid say: Eats tiny sea animals and becomes food for larger predators."
+  - questionId: arm_squid_001_interestingFact
+    species: {fileID: 11400000, guid: 82ecdbf4b7c299d46bdb944e0cf2c4b8, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Arm Squid during our research?"
+    choices:
+    - "Like other squid, it can shoot water from its body to move quickly."
+    - "Some members of its group have a crown-like shape around the bell."
+    - "Unlike many shallow corals, it can live where very little sunlight reaches."
+    correctChoice: 0
+    explanation: "Our notes on the Arm Squid say: Like other squid, it can shoot water from its body to move quickly."
+  - questionId: arm_squid_001_camera
+    species: {fileID: 11400000, guid: 82ecdbf4b7c299d46bdb944e0cf2c4b8, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small squid with a soft body and long arms. The habitat notes say: Open ocean (500\u20131,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Arm Squid. Small squid with a soft body and long arms. Its recorded habitat is Open ocean (500\u20131,000 m)."
+  - questionId: coronate_jellyfish_001_habitat
+    species: {fileID: 11400000, guid: 9cab1f609d49de647952384c9922801f, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Coronate Jellyfish?"
+    choices:
+    - "Open water (up to 1,000 m)"
+    - "Rocky areas (30\u2013259 m)"
+    - "Rocky seafloor (200\u20131,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Coronate Jellyfish say: Open water (up to 1,000 m)"
+  - questionId: coronate_jellyfish_001_characteristics
+    species: {fileID: 11400000, guid: 9cab1f609d49de647952384c9922801f, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Coronate Jellyfish. Which description matches our observations?"
+    choices:
+    - "Small jellyfish with a rounded, ridged body."
+    - "Branching coral with a hard skeleton."
+    - "Hard, cup-shaped body with a strong skeleton."
+    correctChoice: 0
+    explanation: "Our notes on the Coronate Jellyfish say: Small jellyfish with a rounded, ridged body."
+  - questionId: coronate_jellyfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 9cab1f609d49de647952384c9922801f, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Coronate Jellyfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny animals drifting in the water."
+    - "Gives small sea animals places to live and hide."
+    - "Filters food from the water and provides shelter."
+    correctChoice: 0
+    explanation: "Our notes on the Coronate Jellyfish say: Eats tiny animals drifting in the water."
+  - questionId: coronate_jellyfish_001_interestingFact
+    species: {fileID: 11400000, guid: 9cab1f609d49de647952384c9922801f, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Coronate Jellyfish during our research?"
+    choices:
+    - "Some members of its group have a crown-like shape around the bell."
+    - "Unlike many shallow corals, it can live where very little sunlight reaches."
+    - "Its skeleton contains tiny structures made of silica."
+    correctChoice: 0
+    explanation: "Our notes on the Coronate Jellyfish say: Some members of its group have a crown-like shape around the bell."
+  - questionId: coronate_jellyfish_001_camera
+    species: {fileID: 11400000, guid: 9cab1f609d49de647952384c9922801f, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small jellyfish with a rounded, ridged body. The habitat notes say: Open water (up to 1,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Coronate Jellyfish. Small jellyfish with a rounded, ridged body. Its recorded habitat is Open water (up to 1,000 m)."
+  - questionId: deepwater_coral_001_habitat
+    species: {fileID: 11400000, guid: 7f8070956c8df2245ac0c15d3a5f06a5, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-water Coral?"
+    choices:
+    - "Rocky areas (30\u2013259 m)"
+    - "Rocky seafloor (200\u20131,000 m)"
+    - "Deep slopes (44\u2013780 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Coral say: Rocky areas (30\u2013259 m)"
+  - questionId: deepwater_coral_001_characteristics
+    species: {fileID: 11400000, guid: 7f8070956c8df2245ac0c15d3a5f06a5, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-water Coral. Which description matches our observations?"
+    choices:
+    - "Branching coral with a hard skeleton."
+    - "Hard, cup-shaped body with a strong skeleton."
+    - "Wide, rounded body with a pointed nose and long tail."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Coral say: Branching coral with a hard skeleton."
+  - questionId: deepwater_coral_001_ecologicalRole
+    species: {fileID: 11400000, guid: 7f8070956c8df2245ac0c15d3a5f06a5, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-water Coral play in its ecosystem, according to our notes?"
+    choices:
+    - "Gives small sea animals places to live and hide."
+    - "Filters food from the water and provides shelter."
+    - "Eats fish, squid, shrimp, and other bottom animals."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Coral say: Gives small sea animals places to live and hide."
+  - questionId: deepwater_coral_001_interestingFact
+    species: {fileID: 11400000, guid: 7f8070956c8df2245ac0c15d3a5f06a5, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-water Coral during our research?"
+    choices:
+    - "Unlike many shallow corals, it can live where very little sunlight reaches."
+    - "Its skeleton contains tiny structures made of silica."
+    - "It can grow to around 2.7 m long."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Coral say: Unlike many shallow corals, it can live where very little sunlight reaches."
+  - questionId: deepwater_coral_001_camera
+    species: {fileID: 11400000, guid: 7f8070956c8df2245ac0c15d3a5f06a5, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Branching coral with a hard skeleton. The habitat notes say: Rocky areas (30\u2013259 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-water Coral. Branching coral with a hard skeleton. Its recorded habitat is Rocky areas (30\u2013259 m)."
+  - questionId: deepwater_sponge_001_habitat
+    species: {fileID: 11400000, guid: 9c91907ad19faac4aba34727efec024c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-water Sponge?"
+    choices:
+    - "Rocky seafloor (200\u20131,000 m)"
+    - "Deep slopes (44\u2013780 m)"
+    - "Sandy or muddy seafloor (0\u2013230 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Sponge say: Rocky seafloor (200\u20131,000 m)"
+  - questionId: deepwater_sponge_001_characteristics
+    species: {fileID: 11400000, guid: 9c91907ad19faac4aba34727efec024c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-water Sponge. Which description matches our observations?"
+    choices:
+    - "Hard, cup-shaped body with a strong skeleton."
+    - "Wide, rounded body with a pointed nose and long tail."
+    - "Heart-shaped body covered with tiny spines."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Sponge say: Hard, cup-shaped body with a strong skeleton."
+  - questionId: deepwater_sponge_001_ecologicalRole
+    species: {fileID: 11400000, guid: 9c91907ad19faac4aba34727efec024c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-water Sponge play in its ecosystem, according to our notes?"
+    choices:
+    - "Filters food from the water and provides shelter."
+    - "Eats fish, squid, shrimp, and other bottom animals."
+    - "Mixes the sand and mud while searching for food."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Sponge say: Filters food from the water and provides shelter."
+  - questionId: deepwater_sponge_001_interestingFact
+    species: {fileID: 11400000, guid: 9c91907ad19faac4aba34727efec024c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-water Sponge during our research?"
+    choices:
+    - "Its skeleton contains tiny structures made of silica."
+    - "It can grow to around 2.7 m long."
+    - "Its heart shape is why it is commonly called a heart urchin."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Sponge say: Its skeleton contains tiny structures made of silica."
+  - questionId: deepwater_sponge_001_camera
+    species: {fileID: 11400000, guid: 9c91907ad19faac4aba34727efec024c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Hard, cup-shaped body with a strong skeleton. The habitat notes say: Rocky seafloor (200\u20131,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-water Sponge. Hard, cup-shaped body with a strong skeleton. Its recorded habitat is Rocky seafloor (200\u20131,000 m)."
+  - questionId: deepwater_stingray_001_habitat
+    species: {fileID: 11400000, guid: 94e677b55e03265499e06d6e253699bd, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-water Stingray?"
+    choices:
+    - "Deep slopes (44\u2013780 m)"
+    - "Sandy or muddy seafloor (0\u2013230 m)"
+    - "Deep seafloor (190\u2013950 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Stingray say: Deep slopes (44\u2013780 m)"
+  - questionId: deepwater_stingray_001_characteristics
+    species: {fileID: 11400000, guid: 94e677b55e03265499e06d6e253699bd, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-water Stingray. Which description matches our observations?"
+    choices:
+    - "Wide, rounded body with a pointed nose and long tail."
+    - "Heart-shaped body covered with tiny spines."
+    - "Small, slender shrimp with a reddish body."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Stingray say: Wide, rounded body with a pointed nose and long tail."
+  - questionId: deepwater_stingray_001_ecologicalRole
+    species: {fileID: 11400000, guid: 94e677b55e03265499e06d6e253699bd, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-water Stingray play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats fish, squid, shrimp, and other bottom animals."
+    - "Mixes the sand and mud while searching for food."
+    - "Eats small animals and organic material."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Stingray say: Eats fish, squid, shrimp, and other bottom animals."
+  - questionId: deepwater_stingray_001_interestingFact
+    species: {fileID: 11400000, guid: 94e677b55e03265499e06d6e253699bd, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-water Stingray during our research?"
+    choices:
+    - "It can grow to around 2.7 m long."
+    - "Its heart shape is why it is commonly called a heart urchin."
+    - "Its long antennae help it find food in dark water."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Stingray say: It can grow to around 2.7 m long."
+  - questionId: deepwater_stingray_001_camera
+    species: {fileID: 11400000, guid: 94e677b55e03265499e06d6e253699bd, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Wide, rounded body with a pointed nose and long tail. The habitat notes say: Deep slopes (44\u2013780 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-water Stingray. Wide, rounded body with a pointed nose and long tail. Its recorded habitat is Deep slopes (44\u2013780 m)."
+  - questionId: heart_urchin_001_habitat
+    species: {fileID: 11400000, guid: 86617db8fdcee874d81d506d013e7188, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Heart Urchin?"
+    choices:
+    - "Sandy or muddy seafloor (0\u2013230 m)"
+    - "Deep seafloor (190\u2013950 m)"
+    - "Deep slopes (300\u2013700 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Heart Urchin say: Sandy or muddy seafloor (0\u2013230 m)"
+  - questionId: heart_urchin_001_characteristics
+    species: {fileID: 11400000, guid: 86617db8fdcee874d81d506d013e7188, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Heart Urchin. Which description matches our observations?"
+    choices:
+    - "Heart-shaped body covered with tiny spines."
+    - "Small, slender shrimp with a reddish body."
+    - "Thin shell with fine lines on its surface."
+    correctChoice: 0
+    explanation: "Our notes on the Heart Urchin say: Heart-shaped body covered with tiny spines."
+  - questionId: heart_urchin_001_ecologicalRole
+    species: {fileID: 11400000, guid: 86617db8fdcee874d81d506d013e7188, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Heart Urchin play in its ecosystem, according to our notes?"
+    choices:
+    - "Mixes the sand and mud while searching for food."
+    - "Eats small animals and organic material."
+    - "Filters tiny food particles from the water."
+    correctChoice: 0
+    explanation: "Our notes on the Heart Urchin say: Mixes the sand and mud while searching for food."
+  - questionId: heart_urchin_001_interestingFact
+    species: {fileID: 11400000, guid: 86617db8fdcee874d81d506d013e7188, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Heart Urchin during our research?"
+    choices:
+    - "Its heart shape is why it is commonly called a heart urchin."
+    - "Its long antennae help it find food in dark water."
+    - "Its species name \u201cphilippinensis\u201d is connected to the Philippines."
+    correctChoice: 0
+    explanation: "Our notes on the Heart Urchin say: Its heart shape is why it is commonly called a heart urchin."
+  - questionId: heart_urchin_001_camera
+    species: {fileID: 11400000, guid: 86617db8fdcee874d81d506d013e7188, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Heart-shaped body covered with tiny spines. The habitat notes say: Sandy or muddy seafloor (0\u2013230 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Heart Urchin. Heart-shaped body covered with tiny spines. Its recorded habitat is Sandy or muddy seafloor (0\u2013230 m)."
+  - questionId: mino_nylon_shrimp_001_habitat
+    species: {fileID: 11400000, guid: 20ea3a5633cbbf0498b6f4c9a18b506e, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Mino Nylon Shrimp?"
+    choices:
+    - "Deep seafloor (190\u2013950 m)"
+    - "Deep slopes (300\u2013700 m)"
+    - "Open ocean (up to 1,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Mino Nylon Shrimp say: Deep seafloor (190\u2013950 m)"
+  - questionId: mino_nylon_shrimp_001_characteristics
+    species: {fileID: 11400000, guid: 20ea3a5633cbbf0498b6f4c9a18b506e, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Mino Nylon Shrimp. Which description matches our observations?"
+    choices:
+    - "Small, slender shrimp with a reddish body."
+    - "Thin shell with fine lines on its surface."
+    - "Large squid with wide fins and a dark purple back."
+    correctChoice: 0
+    explanation: "Our notes on the Mino Nylon Shrimp say: Small, slender shrimp with a reddish body."
+  - questionId: mino_nylon_shrimp_001_ecologicalRole
+    species: {fileID: 11400000, guid: 20ea3a5633cbbf0498b6f4c9a18b506e, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Mino Nylon Shrimp play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small animals and organic material."
+    - "Filters tiny food particles from the water."
+    - "Eats fish, shrimp, and other squid."
+    correctChoice: 0
+    explanation: "Our notes on the Mino Nylon Shrimp say: Eats small animals and organic material."
+  - questionId: mino_nylon_shrimp_001_interestingFact
+    species: {fileID: 11400000, guid: 20ea3a5633cbbf0498b6f4c9a18b506e, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Mino Nylon Shrimp during our research?"
+    choices:
+    - "Its long antennae help it find food in dark water."
+    - "Its species name \u201cphilippinensis\u201d is connected to the Philippines."
+    - "Despite its name, it does not fly in the air\u2014it can move rapidly through the water using jet propulsion."
+    correctChoice: 0
+    explanation: "Our notes on the Mino Nylon Shrimp say: Its long antennae help it find food in dark water."
+  - questionId: mino_nylon_shrimp_001_camera
+    species: {fileID: 11400000, guid: 20ea3a5633cbbf0498b6f4c9a18b506e, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, slender shrimp with a reddish body. The habitat notes say: Deep seafloor (190\u2013950 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Mino Nylon Shrimp. Small, slender shrimp with a reddish body. Its recorded habitat is Deep seafloor (190\u2013950 m)."
+  - questionId: philippine_deepclam_001_habitat
+    species: {fileID: 11400000, guid: 44e576ce7fb85c240954d72ed5d4dd90, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Philippine Deep-water Clam?"
+    choices:
+    - "Deep slopes (300\u2013700 m)"
+    - "Open ocean (up to 1,000 m)"
+    - "Deep seafloor (90\u2013590 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Deep-water Clam say: Deep slopes (300\u2013700 m)"
+  - questionId: philippine_deepclam_001_characteristics
+    species: {fileID: 11400000, guid: 44e576ce7fb85c240954d72ed5d4dd90, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Philippine Deep-water Clam. Which description matches our observations?"
+    choices:
+    - "Thin shell with fine lines on its surface."
+    - "Large squid with wide fins and a dark purple back."
+    - "Wide, flattened body with a large head."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Deep-water Clam say: Thin shell with fine lines on its surface."
+  - questionId: philippine_deepclam_001_ecologicalRole
+    species: {fileID: 11400000, guid: 44e576ce7fb85c240954d72ed5d4dd90, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Philippine Deep-water Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Filters tiny food particles from the water."
+    - "Eats fish, shrimp, and other squid."
+    - "Finds and eats small animals on the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Deep-water Clam say: Filters tiny food particles from the water."
+  - questionId: philippine_deepclam_001_interestingFact
+    species: {fileID: 11400000, guid: 44e576ce7fb85c240954d72ed5d4dd90, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Philippine Deep-water Clam during our research?"
+    choices:
+    - "Its species name \u201cphilippinensis\u201d is connected to the Philippines."
+    - "Despite its name, it does not fly in the air\u2014it can move rapidly through the water using jet propulsion."
+    - "Its unusual shape can make it look like a tiny alien creature."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Deep-water Clam say: Its species name \u201cphilippinensis\u201d is connected to the Philippines."
+  - questionId: philippine_deepclam_001_camera
+    species: {fileID: 11400000, guid: 44e576ce7fb85c240954d72ed5d4dd90, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Thin shell with fine lines on its surface. The habitat notes say: Deep slopes (300\u2013700 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Philippine Deep-water Clam. Thin shell with fine lines on its surface. Its recorded habitat is Deep slopes (300\u2013700 m)."
+  - questionId: purpleback_squid_001_habitat
+    species: {fileID: 11400000, guid: 801771a7233bcae43bc8278ddd801e68, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Purpleback Flying Squid?"
+    choices:
+    - "Open ocean (up to 1,000 m)"
+    - "Deep seafloor (90\u2013590 m)"
+    - "Deep water (100\u2013696 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Purpleback Flying Squid say: Open ocean (up to 1,000 m)"
+  - questionId: purpleback_squid_001_characteristics
+    species: {fileID: 11400000, guid: 801771a7233bcae43bc8278ddd801e68, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Purpleback Flying Squid. Which description matches our observations?"
+    choices:
+    - "Large squid with wide fins and a dark purple back."
+    - "Wide, flattened body with a large head."
+    - "Small dark shark with tiny light-producing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Purpleback Flying Squid say: Large squid with wide fins and a dark purple back."
+  - questionId: purpleback_squid_001_ecologicalRole
+    species: {fileID: 11400000, guid: 801771a7233bcae43bc8278ddd801e68, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Purpleback Flying Squid play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats fish, shrimp, and other squid."
+    - "Finds and eats small animals on the seafloor."
+    - "Hunts small fish and shrimp."
+    correctChoice: 0
+    explanation: "Our notes on the Purpleback Flying Squid say: Eats fish, shrimp, and other squid."
+  - questionId: purpleback_squid_001_interestingFact
+    species: {fileID: 11400000, guid: 801771a7233bcae43bc8278ddd801e68, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Purpleback Flying Squid during our research?"
+    choices:
+    - "Despite its name, it does not fly in the air\u2014it can move rapidly through the water using jet propulsion."
+    - "Its unusual shape can make it look like a tiny alien creature."
+    - "It can glow in the dark using special organs on its body."
+    correctChoice: 0
+    explanation: "Our notes on the Purpleback Flying Squid say: Despite its name, it does not fly in the air\u2014it can move rapidly through the water using jet propulsion."
+  - questionId: purpleback_squid_001_camera
+    species: {fileID: 11400000, guid: 801771a7233bcae43bc8278ddd801e68, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Large squid with wide fins and a dark purple back. The habitat notes say: Open ocean (up to 1,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Purpleback Flying Squid. Large squid with wide fins and a dark purple back. Its recorded habitat is Open ocean (up to 1,000 m)."
+  - questionId: ring_batfish_001_habitat
+    species: {fileID: 11400000, guid: 1ddca174ef99e494aa7a17c7d65e4ffa, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Ring Triangular Batfish?"
+    choices:
+    - "Deep seafloor (90\u2013590 m)"
+    - "Deep water (100\u2013696 m)"
+    - "Deep seafloor (90\u2013540 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Ring Triangular Batfish say: Deep seafloor (90\u2013590 m)"
+  - questionId: ring_batfish_001_characteristics
+    species: {fileID: 11400000, guid: 1ddca174ef99e494aa7a17c7d65e4ffa, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Ring Triangular Batfish. Which description matches our observations?"
+    choices:
+    - "Wide, flattened body with a large head."
+    - "Small dark shark with tiny light-producing organs."
+    - "Silvery body, large eyes, and a long tail."
+    correctChoice: 0
+    explanation: "Our notes on the Ring Triangular Batfish say: Wide, flattened body with a large head."
+  - questionId: ring_batfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 1ddca174ef99e494aa7a17c7d65e4ffa, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Ring Triangular Batfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Finds and eats small animals on the seafloor."
+    - "Hunts small fish and shrimp."
+    - "Eats worms, shrimp, and other bottom animals."
+    correctChoice: 0
+    explanation: "Our notes on the Ring Triangular Batfish say: Finds and eats small animals on the seafloor."
+  - questionId: ring_batfish_001_interestingFact
+    species: {fileID: 11400000, guid: 1ddca174ef99e494aa7a17c7d65e4ffa, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Ring Triangular Batfish during our research?"
+    choices:
+    - "Its unusual shape can make it look like a tiny alien creature."
+    - "It can glow in the dark using special organs on its body."
+    - "Chimaeras are sometimes called \u201cghost sharks,\u201d although they are not true sharks."
+    correctChoice: 0
+    explanation: "Our notes on the Ring Triangular Batfish say: Its unusual shape can make it look like a tiny alien creature."
+  - questionId: ring_batfish_001_camera
+    species: {fileID: 11400000, guid: 1ddca174ef99e494aa7a17c7d65e4ffa, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Wide, flattened body with a large head. The habitat notes say: Deep seafloor (90\u2013590 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Ring Triangular Batfish. Wide, flattened body with a large head. Its recorded habitat is Deep seafloor (90\u2013590 m)."
+  - questionId: shorttail_lanternshark_001_habitat
+    species: {fileID: 11400000, guid: 25c6dffc67886624498493a37f5abed3, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Shorttail Lanternshark?"
+    choices:
+    - "Deep water (100\u2013696 m)"
+    - "Deep seafloor (90\u2013540 m)"
+    - "Deep water (200\u2013500 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Shorttail Lanternshark say: Deep water (100\u2013696 m)"
+  - questionId: shorttail_lanternshark_001_characteristics
+    species: {fileID: 11400000, guid: 25c6dffc67886624498493a37f5abed3, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Shorttail Lanternshark. Which description matches our observations?"
+    choices:
+    - "Small dark shark with tiny light-producing organs."
+    - "Silvery body, large eyes, and a long tail."
+    - "Very long, thin, silver-colored body."
+    correctChoice: 0
+    explanation: "Our notes on the Shorttail Lanternshark say: Small dark shark with tiny light-producing organs."
+  - questionId: shorttail_lanternshark_001_ecologicalRole
+    species: {fileID: 11400000, guid: 25c6dffc67886624498493a37f5abed3, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Shorttail Lanternshark play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small fish and shrimp."
+    - "Eats worms, shrimp, and other bottom animals."
+    - "Hunts small fish and other small animals."
+    correctChoice: 0
+    explanation: "Our notes on the Shorttail Lanternshark say: Hunts small fish and shrimp."
+  - questionId: shorttail_lanternshark_001_interestingFact
+    species: {fileID: 11400000, guid: 25c6dffc67886624498493a37f5abed3, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Shorttail Lanternshark during our research?"
+    choices:
+    - "It can glow in the dark using special organs on its body."
+    - "Chimaeras are sometimes called \u201cghost sharks,\u201d although they are not true sharks."
+    - "Its ribbon-like body makes it look more like a swimming ribbon than a normal fish."
+    correctChoice: 0
+    explanation: "Our notes on the Shorttail Lanternshark say: It can glow in the dark using special organs on its body."
+  - questionId: shorttail_lanternshark_001_camera
+    species: {fileID: 11400000, guid: 25c6dffc67886624498493a37f5abed3, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small dark shark with tiny light-producing organs. The habitat notes say: Deep water (100\u2013696 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Shorttail Lanternshark. Small dark shark with tiny light-producing organs. Its recorded habitat is Deep water (100\u2013696 m)."
+  - questionId: silver_chimaera_001_habitat
+    species: {fileID: 11400000, guid: 257a028ec99ccb448955433dbd672975, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Silver Chimaera?"
+    choices:
+    - "Deep seafloor (90\u2013540 m)"
+    - "Deep water (200\u2013500 m)"
+    - "Open water (322\u2013966 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Silver Chimaera say: Deep seafloor (90\u2013540 m)"
+  - questionId: silver_chimaera_001_characteristics
+    species: {fileID: 11400000, guid: 257a028ec99ccb448955433dbd672975, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Silver Chimaera. Which description matches our observations?"
+    choices:
+    - "Silvery body, large eyes, and a long tail."
+    - "Very long, thin, silver-colored body."
+    - "Small, shiny fish with light-producing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Silver Chimaera say: Silvery body, large eyes, and a long tail."
+  - questionId: silver_chimaera_001_ecologicalRole
+    species: {fileID: 11400000, guid: 257a028ec99ccb448955433dbd672975, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Silver Chimaera play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats worms, shrimp, and other bottom animals."
+    - "Hunts small fish and other small animals."
+    - "Eats tiny sea animals and is food for larger fish."
+    correctChoice: 0
+    explanation: "Our notes on the Silver Chimaera say: Eats worms, shrimp, and other bottom animals."
+  - questionId: silver_chimaera_001_interestingFact
+    species: {fileID: 11400000, guid: 257a028ec99ccb448955433dbd672975, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Silver Chimaera during our research?"
+    choices:
+    - "Chimaeras are sometimes called \u201cghost sharks,\u201d although they are not true sharks."
+    - "Its ribbon-like body makes it look more like a swimming ribbon than a normal fish."
+    - "It can produce its own light in the darkness."
+    correctChoice: 0
+    explanation: "Our notes on the Silver Chimaera say: Chimaeras are sometimes called \u201cghost sharks,\u201d although they are not true sharks."
+  - questionId: silver_chimaera_001_camera
+    species: {fileID: 11400000, guid: 257a028ec99ccb448955433dbd672975, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Silvery body, large eyes, and a long tail. The habitat notes say: Deep seafloor (90\u2013540 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Silver Chimaera. Silvery body, large eyes, and a long tail. Its recorded habitat is Deep seafloor (90\u2013540 m)."
+  - questionId: sulu_ribbonfish_001_habitat
+    species: {fileID: 11400000, guid: 822f16f9af4d82a43a1502337011d9da, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Sulu Sea Ribbonfish?"
+    choices:
+    - "Deep water (200\u2013500 m)"
+    - "Open water (322\u2013966 m)"
+    - "Open ocean (up to about 500 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Sulu Sea Ribbonfish say: Deep water (200\u2013500 m)"
+  - questionId: sulu_ribbonfish_001_characteristics
+    species: {fileID: 11400000, guid: 822f16f9af4d82a43a1502337011d9da, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Sulu Sea Ribbonfish. Which description matches our observations?"
+    choices:
+    - "Very long, thin, silver-colored body."
+    - "Small, shiny fish with light-producing organs."
+    - "Mostly transparent body with a small shell."
+    correctChoice: 0
+    explanation: "Our notes on the Sulu Sea Ribbonfish say: Very long, thin, silver-colored body."
+  - questionId: sulu_ribbonfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 822f16f9af4d82a43a1502337011d9da, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Sulu Sea Ribbonfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small fish and other small animals."
+    - "Eats tiny sea animals and is food for larger fish."
+    - "Hunts tiny animals floating in the water."
+    correctChoice: 0
+    explanation: "Our notes on the Sulu Sea Ribbonfish say: Hunts small fish and other small animals."
+  - questionId: sulu_ribbonfish_001_interestingFact
+    species: {fileID: 11400000, guid: 822f16f9af4d82a43a1502337011d9da, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Sulu Sea Ribbonfish during our research?"
+    choices:
+    - "Its ribbon-like body makes it look more like a swimming ribbon than a normal fish."
+    - "It can produce its own light in the darkness."
+    - "Its clear body makes it difficult for predators to see."
+    correctChoice: 0
+    explanation: "Our notes on the Sulu Sea Ribbonfish say: Its ribbon-like body makes it look more like a swimming ribbon than a normal fish."
+  - questionId: sulu_ribbonfish_001_camera
+    species: {fileID: 11400000, guid: 822f16f9af4d82a43a1502337011d9da, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Very long, thin, silver-colored body. The habitat notes say: Deep water (200\u2013500 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Sulu Sea Ribbonfish. Very long, thin, silver-colored body. Its recorded habitat is Deep water (200\u2013500 m)."
+  - questionId: threelight_hatchetfish_001_habitat
+    species: {fileID: 11400000, guid: 3f6fcc6e4f4780b4e9dd3e3d911d0b5b, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Threelight Hatchetfish?"
+    choices:
+    - "Open water (322\u2013966 m)"
+    - "Open ocean (up to about 500 m)"
+    - "Deep seafloor (82\u2013630 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Threelight Hatchetfish say: Open water (322\u2013966 m)"
+  - questionId: threelight_hatchetfish_001_characteristics
+    species: {fileID: 11400000, guid: 3f6fcc6e4f4780b4e9dd3e3d911d0b5b, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Threelight Hatchetfish. Which description matches our observations?"
+    choices:
+    - "Small, shiny fish with light-producing organs."
+    - "Mostly transparent body with a small shell."
+    - "Star-shaped body with many arms and spines."
+    correctChoice: 0
+    explanation: "Our notes on the Threelight Hatchetfish say: Small, shiny fish with light-producing organs."
+  - questionId: threelight_hatchetfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 3f6fcc6e4f4780b4e9dd3e3d911d0b5b, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Threelight Hatchetfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny sea animals and is food for larger fish."
+    - "Hunts tiny animals floating in the water."
+    - "Eats small animals and leftover organic material."
+    correctChoice: 0
+    explanation: "Our notes on the Threelight Hatchetfish say: Eats tiny sea animals and is food for larger fish."
+  - questionId: threelight_hatchetfish_001_interestingFact
+    species: {fileID: 11400000, guid: 3f6fcc6e4f4780b4e9dd3e3d911d0b5b, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Threelight Hatchetfish during our research?"
+    choices:
+    - "It can produce its own light in the darkness."
+    - "Its clear body makes it difficult for predators to see."
+    - "It can regrow an arm after losing one."
+    correctChoice: 0
+    explanation: "Our notes on the Threelight Hatchetfish say: It can produce its own light in the darkness."
+  - questionId: threelight_hatchetfish_001_camera
+    species: {fileID: 11400000, guid: 3f6fcc6e4f4780b4e9dd3e3d911d0b5b, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, shiny fish with light-producing organs. The habitat notes say: Open water (322\u2013966 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Threelight Hatchetfish. Small, shiny fish with light-producing organs. Its recorded habitat is Open water (322\u2013966 m)."
+  - questionId: transparent_snail_001_habitat
+    species: {fileID: 11400000, guid: 4389f003966119e43b4b656810b1a8d5, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Transparent Sea Snail?"
+    choices:
+    - "Open ocean (up to about 500 m)"
+    - "Deep seafloor (82\u2013630 m)"
+    - "Deep seafloor (195\u2013702 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Transparent Sea Snail say: Open ocean (up to about 500 m)"
+  - questionId: transparent_snail_001_characteristics
+    species: {fileID: 11400000, guid: 4389f003966119e43b4b656810b1a8d5, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Transparent Sea Snail. Which description matches our observations?"
+    choices:
+    - "Mostly transparent body with a small shell."
+    - "Star-shaped body with many arms and spines."
+    - "Round body, large mouth, and fins that help it move along the bottom."
+    correctChoice: 0
+    explanation: "Our notes on the Transparent Sea Snail say: Mostly transparent body with a small shell."
+  - questionId: transparent_snail_001_ecologicalRole
+    species: {fileID: 11400000, guid: 4389f003966119e43b4b656810b1a8d5, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Transparent Sea Snail play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts tiny animals floating in the water."
+    - "Eats small animals and leftover organic material."
+    - "Eats small fish and other sea animals."
+    correctChoice: 0
+    explanation: "Our notes on the Transparent Sea Snail say: Hunts tiny animals floating in the water."
+  - questionId: transparent_snail_001_interestingFact
+    species: {fileID: 11400000, guid: 4389f003966119e43b4b656810b1a8d5, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Transparent Sea Snail during our research?"
+    choices:
+    - "Its clear body makes it difficult for predators to see."
+    - "It can regrow an arm after losing one."
+    - "It can use its fins almost like legs to walk along the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Transparent Sea Snail say: Its clear body makes it difficult for predators to see."
+  - questionId: transparent_snail_001_camera
+    species: {fileID: 11400000, guid: 4389f003966119e43b4b656810b1a8d5, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Mostly transparent body with a small shell. The habitat notes say: Open ocean (up to about 500 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Transparent Sea Snail. Mostly transparent body with a small shell. Its recorded habitat is Open ocean (up to about 500 m)."
+  - questionId: crown_star_001_habitat
+    species: {fileID: 11400000, guid: 6a01af19085a0c547ac1874239a0647d, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Volsellate Crown Star?"
+    choices:
+    - "Deep seafloor (82\u2013630 m)"
+    - "Deep seafloor (195\u2013702 m)"
+    - "Open ocean (500\u20131,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Volsellate Crown Star say: Deep seafloor (82\u2013630 m)"
+  - questionId: crown_star_001_characteristics
+    species: {fileID: 11400000, guid: 6a01af19085a0c547ac1874239a0647d, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Volsellate Crown Star. Which description matches our observations?"
+    choices:
+    - "Star-shaped body with many arms and spines."
+    - "Round body, large mouth, and fins that help it move along the bottom."
+    - "Small squid with a soft body and long arms."
+    correctChoice: 0
+    explanation: "Our notes on the Volsellate Crown Star say: Star-shaped body with many arms and spines."
+  - questionId: crown_star_001_ecologicalRole
+    species: {fileID: 11400000, guid: 6a01af19085a0c547ac1874239a0647d, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Volsellate Crown Star play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small animals and leftover organic material."
+    - "Eats small fish and other sea animals."
+    - "Eats tiny sea animals and becomes food for larger predators."
+    correctChoice: 0
+    explanation: "Our notes on the Volsellate Crown Star say: Eats small animals and leftover organic material."
+  - questionId: crown_star_001_interestingFact
+    species: {fileID: 11400000, guid: 6a01af19085a0c547ac1874239a0647d, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Volsellate Crown Star during our research?"
+    choices:
+    - "It can regrow an arm after losing one."
+    - "It can use its fins almost like legs to walk along the seafloor."
+    - "Like other squid, it can shoot water from its body to move quickly."
+    correctChoice: 0
+    explanation: "Our notes on the Volsellate Crown Star say: It can regrow an arm after losing one."
+  - questionId: crown_star_001_camera
+    species: {fileID: 11400000, guid: 6a01af19085a0c547ac1874239a0647d, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Star-shaped body with many arms and spines. The habitat notes say: Deep seafloor (82\u2013630 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Volsellate Crown Star. Star-shaped body with many arms and spines. Its recorded habitat is Deep seafloor (82\u2013630 m)."

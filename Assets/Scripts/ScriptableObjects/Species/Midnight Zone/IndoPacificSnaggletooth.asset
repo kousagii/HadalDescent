@@ -13,30 +13,31 @@ MonoBehaviour:
   m_Name: IndoPacificSnaggletooth
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: indo_pacific_snaggletooth_001
-  commonName: "Indo-Pacific Snaggletooth"
-  scientificName: "Astronesthes indopacificus"
+  commonName: Indo-Pacific Snaggletooth
+  scientificName: Astronesthes indopacificus
   taxonomicClass: 0
   zoneIndex: 2
-  habitat: "Deep ocean, 100–3,178 m"
-  depthRangeText: "100–3,178 m"
-  explorationHint: "Deep ocean, 100–3,178 m. Small, dark fish with large teeth and glowing organs."
+  habitat: "Deep ocean, 100\u20133,178 m"
+  depthRangeText: "100\u20133,178 m"
+  explorationHint: "Deep ocean, 100\u20133,178 m. Small, dark fish with large teeth
+    and glowing organs."
   secondaryZoneIndices: 
-  characteristics: "Small, dark fish with large teeth and glowing organs."
-  ecologicalRole: "Hunts small fish and shrimp."
-  interestingFact: "It can produce light from its body in the darkness."
+  characteristics: Small, dark fish with large teeth and glowing organs.
+  ecologicalRole: Hunts small fish and shrimp.
+  interestingFact: It can produce light from its body in the darkness.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.72
   instanceCount: 3
-  wanderRadius: 30.0
+  wanderRadius: 30
   moveSpeed: 2.5
   fleeSpeed: 4.5
   fleeRange: 10
-  returnThreshold: 45.0
+  returnThreshold: 45
   turnSpeed: 65
   locomotionArchetype: 0
   pulseFrequency: 0.8
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.15, g: 0.2, b: 0.35, a: 1.0}
+  placeholderColor: {r: 0.15, g: 0.2, b: 0.35, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 17bac859398c3024bb8f9c988e013283, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

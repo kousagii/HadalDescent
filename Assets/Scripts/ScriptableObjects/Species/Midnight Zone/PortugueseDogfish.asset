@@ -13,27 +13,28 @@ MonoBehaviour:
   m_Name: PortugueseDogfish
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: portuguese_dogfish_001
-  commonName: "Portuguese Dogfish"
-  scientificName: "Centroscymnus coelolepis"
+  commonName: Portuguese Dogfish
+  scientificName: Centroscymnus coelolepis
   taxonomicClass: 1
   zoneIndex: 2
-  habitat: "Deep underwater slopes, 128–3,675 m"
-  depthRangeText: "128–3,675 m"
-  explorationHint: "Deep underwater slopes, 128–3,675 m. Small, dark shark with large eyes."
+  habitat: "Deep underwater slopes, 128\u20133,675 m"
+  depthRangeText: "128\u20133,675 m"
+  explorationHint: "Deep underwater slopes, 128\u20133,675 m. Small, dark shark with
+    large eyes."
   secondaryZoneIndices: 
-  characteristics: "Small, dark shark with large eyes."
-  ecologicalRole: "Hunts and scavenges for deep-sea animals."
-  interestingFact: "It is one of the deepest-living sharks known."
+  characteristics: Small, dark shark with large eyes.
+  ecologicalRole: Hunts and scavenges for deep-sea animals.
+  interestingFact: It is one of the deepest-living sharks known.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 3
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.9
   instanceCount: 3
-  wanderRadius: 45.0
-  moveSpeed: 3.0
+  wanderRadius: 45
+  moveSpeed: 3
   fleeSpeed: 5.4
   fleeRange: 10
   returnThreshold: 67.5
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.25, g: 0.24, b: 0.22, a: 1.0}
+  placeholderColor: {r: 0.25, g: 0.24, b: 0.22, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 15acd793ef253934892b981c9c8d40b9, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

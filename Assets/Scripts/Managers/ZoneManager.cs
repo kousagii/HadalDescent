@@ -170,12 +170,41 @@ public class ZoneManager : MonoBehaviour
             return;
         }
 
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return;
+        if (enteredFromAbove && targetZoneIndex > CurrentZoneIndex &&
+            GameManager.Instance.NeedsResearchReviewForEntry(targetZoneIndex))
+        {
+            if (!GameManager.Instance.IsZoneUnlocked(targetZoneIndex)) return;
+            BeginResearchReview(targetZoneIndex - 1, () => LoadZone(targetZoneIndex, enteredFromAbove));
+            return;
+        }
+
         CurrentZoneIndex  = targetZoneIndex;
         EnteredFromAbove  = enteredFromAbove;
         PlayerPrefs.SetInt("Save_HasPosition", 0);
 
         string sceneName = ZoneConfig.Zones[targetZoneIndex].sceneName;
         LoadingScreenUI.LoadScene(sceneName);
+    }
+
+    /// <summary>Every first-time zone entry, including zone selection, shares this checkpoint.</summary>
+    private void BeginResearchReview(int sourceZone, System.Action onVerified)
+    {
+        if (MinigameManager.Instance.IsMinigameActive ||
+            (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)) return;
+        var review = ResearchVerificationMinigame.Instance
+            ?? gameObject.AddComponent<ResearchVerificationMinigame>();
+        review.Open(sourceZone, onVerified);
+    }
+
+    /// <summary>The fifth zone ends with an expedition review rather than a nonexistent descent.</summary>
+    public void BeginFinalResearchReview()
+    {
+        int finalZone = ZoneConfig.ZoneCount - 1;
+        if (CurrentZoneIndex != finalZone) return;
+        if (GameManager.Instance.GetZoneDiscoveryProgress(finalZone) < ZoneConfig.Zones[finalZone].unlockThreshold) return;
+        if (GameManager.Instance.IsResearchVerified(finalZone)) { ReturnToZoneSelect(); return; }
+        BeginResearchReview(finalZone, ReturnToZoneSelect);
     }
 
     /// <summary>Returns to the zone selection menu.</summary>
@@ -214,6 +243,7 @@ public class ZoneManager : MonoBehaviour
         yield return null;
 
         ZoneDefinition zone = ZoneConfig.Zones[CurrentZoneIndex];
+        GameManager.Instance.MarkZoneVisited(CurrentZoneIndex);
 
         // 1. Apply atmosphere
         ApplyAtmosphere(zone);

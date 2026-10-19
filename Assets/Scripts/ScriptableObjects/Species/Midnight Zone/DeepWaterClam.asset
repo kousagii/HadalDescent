@@ -13,27 +13,28 @@ MonoBehaviour:
   m_Name: DeepWaterClam
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: deep_water_clam_001
-  commonName: "Deep-water Clam"
-  scientificName: "Elliptiolucina labeyriei"
+  commonName: Deep-water Clam
+  scientificName: Elliptiolucina labeyriei
   taxonomicClass: 11
   zoneIndex: 2
-  habitat: "Deep seafloor, up to 2,570 m"
-  depthRangeText: "up to 2,570 m"
-  explorationHint: "Deep seafloor, up to 2,570 m. Small clam that lives in deep seafloor sediments."
+  habitat: Deep seafloor, up to 2,570 m
+  depthRangeText: up to 2,570 m
+  explorationHint: Deep seafloor, up to 2,570 m. Small clam that lives in deep seafloor
+    sediments.
   secondaryZoneIndices: 
-  characteristics: "Small clam that lives in deep seafloor sediments."
-  ecologicalRole: "Gets nutrients with help from bacteria living inside it."
-  interestingFact: "It was recorded at 2,570 m near the Philippines."
+  characteristics: Small clam that lives in deep seafloor sediments.
+  ecologicalRole: Gets nutrients with help from bacteria living inside it.
+  interestingFact: It was recorded at 2,570 m near the Philippines.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 1
   isShy: 0
   preferredBiome: 1
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.6
   instanceCount: 3
-  wanderRadius: 0.0
-  moveSpeed: 0.0
+  wanderRadius: 0
+  moveSpeed: 0
   fleeSpeed: 0
   fleeRange: 10
   returnThreshold: 25
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.85, g: 0.82, b: 0.75, a: 1.0}
+  placeholderColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 5cda91fb164a6e74ca1fb768d2620eaa, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

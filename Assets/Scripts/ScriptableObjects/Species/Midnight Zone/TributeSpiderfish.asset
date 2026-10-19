@@ -13,28 +13,29 @@ MonoBehaviour:
   m_Name: TributeSpiderfish
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: tribute_spiderfish_001
-  commonName: "Tribute Spiderfish"
-  scientificName: "Bathypterois guentheri"
+  commonName: Tribute Spiderfish
+  scientificName: Bathypterois guentheri
   taxonomicClass: 0
   zoneIndex: 2
-  habitat: "Deep seafloor, 800–1,500 m"
-  depthRangeText: "800–1,500 m"
-  explorationHint: "Deep seafloor, 800–1,500 m. Has very long fins that support its body above the seafloor."
+  habitat: "Deep seafloor, 800\u20131,500 m"
+  depthRangeText: "800\u20131,500 m"
+  explorationHint: "Deep seafloor, 800\u20131,500 m. Has very long fins that support
+    its body above the seafloor."
   secondaryZoneIndices: 
-  characteristics: "Has very long fins that support its body above the seafloor."
-  ecologicalRole: "Waits for small animals drifting past."
-  interestingFact: "Its fins make it look like it is standing on stilts."
+  characteristics: Has very long fins that support its body above the seafloor.
+  ecologicalRole: Waits for small animals drifting past.
+  interestingFact: Its fins make it look like it is standing on stilts.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 1
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.35
   instanceCount: 3
-  wanderRadius: 12.0
+  wanderRadius: 12
   moveSpeed: 0.8
-  fleeSpeed: 1.4400000000000002
+  fleeSpeed: 1.44
   fleeRange: 10
   returnThreshold: 25
   turnSpeed: 65
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.6, g: 0.55, b: 0.5, a: 1.0}
+  placeholderColor: {r: 0.6, g: 0.55, b: 0.5, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 7ca0a300aaccdfe49b60bd51a2e7a483, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

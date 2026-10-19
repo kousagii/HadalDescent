@@ -1,0 +1,1108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974ce4595bf14ee69cf6a1d1c489f578, type: 3}
+  m_Name: Zone3Questions
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchQuestionBank
+  zoneIndex: 3
+  questions:
+  - questionId: abyssal_grenadier_001_habitat
+    species: {fileID: 11400000, guid: 4323983a648043a3ac9e57caa072c3a3, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Abyssal Grenadier?"
+    choices:
+    - "Deep seafloor (282-5,180 m)"
+    - "Deep ocean floor (2,615\u20135,610 m)"
+    - "Deep open ocean (reaches about 5,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Grenadier say: Deep seafloor (282-5,180 m)"
+  - questionId: abyssal_grenadier_001_characteristics
+    species: {fileID: 11400000, guid: 4323983a648043a3ac9e57caa072c3a3, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Abyssal Grenadier. Which description matches our observations?"
+    choices:
+    - "Long body, large head, tapering tail"
+    - "Small body with extremely long fins extending downward like legs."
+    - "Long dark body, large teeth, and a glowing barbel."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Grenadier say: Long body, large head, tapering tail"
+  - questionId: abyssal_grenadier_001_ecologicalRole
+    species: {fileID: 11400000, guid: 4323983a648043a3ac9e57caa072c3a3, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Abyssal Grenadier play in its ecosystem, according to our notes?"
+    choices:
+    - "Scavenges food on the seafloor"
+    - "Waits for small animals carried by currents."
+    - "Hunts smaller deep-sea animals."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Grenadier say: Scavenges food on the seafloor"
+  - questionId: abyssal_grenadier_001_interestingFact
+    species: {fileID: 11400000, guid: 4323983a648043a3ac9e57caa072c3a3, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Abyssal Grenadier during our research?"
+    choices:
+    - "Uses sensitive sensory structures to locate food in darkness"
+    - "The long fins make the fish look like it is standing."
+    - "The light-producing barbel can help attract prey."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Grenadier say: Uses sensitive sensory structures to locate food in darkness"
+  - questionId: abyssal_grenadier_001_camera
+    species: {fileID: 11400000, guid: 4323983a648043a3ac9e57caa072c3a3, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long body, large head, tapering tail The habitat notes say: Deep seafloor (282-5,180 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Abyssal Grenadier. Long body, large head, tapering tail Its recorded habitat is Deep seafloor (282-5,180 m)."
+  - questionId: abyssal_spiderfish_001_habitat
+    species: {fileID: 11400000, guid: c5096c48f13c45e48d87df6d7a4ba887, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Abyssal Spiderfish?"
+    choices:
+    - "Deep ocean floor (2,615\u20135,610 m)"
+    - "Deep open ocean (reaches about 5,000 m)"
+    - "Below the ocean\u2019s surface (1,500 - 4,500 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Spiderfish say: Deep ocean floor (2,615\u20135,610 m)"
+  - questionId: abyssal_spiderfish_001_characteristics
+    species: {fileID: 11400000, guid: c5096c48f13c45e48d87df6d7a4ba887, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Abyssal Spiderfish. Which description matches our observations?"
+    choices:
+    - "Small body with extremely long fins extending downward like legs."
+    - "Long dark body, large teeth, and a glowing barbel."
+    - "Gelatinous body, large ear-like fins, webbed arms, and reduced eyes."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Spiderfish say: Small body with extremely long fins extending downward like legs."
+  - questionId: abyssal_spiderfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: c5096c48f13c45e48d87df6d7a4ba887, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Abyssal Spiderfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Waits for small animals carried by currents."
+    - "Hunts smaller deep-sea animals."
+    - "Deep-sea predator that likely feeds on small crustaceans and other invertebrates."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Spiderfish say: Waits for small animals carried by currents."
+  - questionId: abyssal_spiderfish_001_interestingFact
+    species: {fileID: 11400000, guid: c5096c48f13c45e48d87df6d7a4ba887, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Abyssal Spiderfish during our research?"
+    choices:
+    - "The long fins make the fish look like it is standing."
+    - "The light-producing barbel can help attract prey."
+    - "Its eyes lack lenses and cannot form images, but they can still detect light."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Spiderfish say: The long fins make the fish look like it is standing."
+  - questionId: abyssal_spiderfish_001_camera
+    species: {fileID: 11400000, guid: c5096c48f13c45e48d87df6d7a4ba887, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small body with extremely long fins extending downward like legs. The habitat notes say: Deep ocean floor (2,615\u20135,610 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Abyssal Spiderfish. Small body with extremely long fins extending downward like legs. Its recorded habitat is Deep ocean floor (2,615\u20135,610 m)."
+  - questionId: barbeled_dragonfish_001_habitat
+    species: {fileID: 11400000, guid: a31545bc6e674ef29c8608375a63f838, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Barbeled Dragonfish?"
+    choices:
+    - "Deep open ocean (reaches about 5,000 m)"
+    - "Below the ocean\u2019s surface (1,500 - 4,500 m)"
+    - "Deep-water (1171 - 4415 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Barbeled Dragonfish say: Deep open ocean (reaches about 5,000 m)"
+  - questionId: barbeled_dragonfish_001_characteristics
+    species: {fileID: 11400000, guid: a31545bc6e674ef29c8608375a63f838, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Barbeled Dragonfish. Which description matches our observations?"
+    choices:
+    - "Long dark body, large teeth, and a glowing barbel."
+    - "Gelatinous body, large ear-like fins, webbed arms, and reduced eyes."
+    - "Large head, tapering body, small eyes, and prominent head spines."
+    correctChoice: 0
+    explanation: "Our notes on the Barbeled Dragonfish say: Long dark body, large teeth, and a glowing barbel."
+  - questionId: barbeled_dragonfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: a31545bc6e674ef29c8608375a63f838, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Barbeled Dragonfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts smaller deep-sea animals."
+    - "Deep-sea predator that likely feeds on small crustaceans and other invertebrates."
+    - "Deep-sea consumer that contributes to the marine food web."
+    correctChoice: 0
+    explanation: "Our notes on the Barbeled Dragonfish say: Hunts smaller deep-sea animals."
+  - questionId: barbeled_dragonfish_001_interestingFact
+    species: {fileID: 11400000, guid: a31545bc6e674ef29c8608375a63f838, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Barbeled Dragonfish during our research?"
+    choices:
+    - "The light-producing barbel can help attract prey."
+    - "Its eyes lack lenses and cannot form images, but they can still detect light."
+    - "Has one of the smallest brain-to-body size ratios among bony fishes."
+    correctChoice: 0
+    explanation: "Our notes on the Barbeled Dragonfish say: The light-producing barbel can help attract prey."
+  - questionId: barbeled_dragonfish_001_camera
+    species: {fileID: 11400000, guid: a31545bc6e674ef29c8608375a63f838, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long dark body, large teeth, and a glowing barbel. The habitat notes say: Deep open ocean (reaches about 5,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Barbeled Dragonfish. Long dark body, large teeth, and a glowing barbel. Its recorded habitat is Deep open ocean (reaches about 5,000 m)."
+  - questionId: blind_cirrate_octopus_001_habitat
+    species: {fileID: 11400000, guid: 08cea73e9a5d404ba9519f23c4d5ac16, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Blind Cirrate Octopus?"
+    choices:
+    - "Below the ocean\u2019s surface (1,500 - 4,500 m)"
+    - "Deep-water (1171 - 4415 m)"
+    - "Deep seafloor (reaches about 4,275 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Blind Cirrate Octopus say: Below the ocean\u2019s surface (1,500 - 4,500 m)"
+  - questionId: blind_cirrate_octopus_001_characteristics
+    species: {fileID: 11400000, guid: 08cea73e9a5d404ba9519f23c4d5ac16, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Blind Cirrate Octopus. Which description matches our observations?"
+    choices:
+    - "Gelatinous body, large ear-like fins, webbed arms, and reduced eyes."
+    - "Large head, tapering body, small eyes, and prominent head spines."
+    - "Long, pale body with smooth-looking skin."
+    correctChoice: 0
+    explanation: "Our notes on the Blind Cirrate Octopus say: Gelatinous body, large ear-like fins, webbed arms, and reduced eyes."
+  - questionId: blind_cirrate_octopus_001_ecologicalRole
+    species: {fileID: 11400000, guid: 08cea73e9a5d404ba9519f23c4d5ac16, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Blind Cirrate Octopus play in its ecosystem, according to our notes?"
+    choices:
+    - "Deep-sea predator that likely feeds on small crustaceans and other invertebrates."
+    - "Deep-sea consumer that contributes to the marine food web."
+    - "Feeds on small animals near the bottom."
+    correctChoice: 0
+    explanation: "Our notes on the Blind Cirrate Octopus say: Deep-sea predator that likely feeds on small crustaceans and other invertebrates."
+  - questionId: blind_cirrate_octopus_001_interestingFact
+    species: {fileID: 11400000, guid: 08cea73e9a5d404ba9519f23c4d5ac16, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Blind Cirrate Octopus during our research?"
+    choices:
+    - "Its eyes lack lenses and cannot form images, but they can still detect light."
+    - "Has one of the smallest brain-to-body size ratios among bony fishes."
+    - "The species was named after deep-sea researcher Imants Priede."
+    correctChoice: 0
+    explanation: "Our notes on the Blind Cirrate Octopus say: Its eyes lack lenses and cannot form images, but they can still detect light."
+  - questionId: blind_cirrate_octopus_001_camera
+    species: {fileID: 11400000, guid: 08cea73e9a5d404ba9519f23c4d5ac16, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Gelatinous body, large ear-like fins, webbed arms, and reduced eyes. The habitat notes say: Below the ocean\u2019s surface (1,500 - 4,500 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Blind Cirrate Octopus. Gelatinous body, large ear-like fins, webbed arms, and reduced eyes. Its recorded habitat is Below the ocean\u2019s surface (1,500 - 4,500 m)."
+  - questionId: bony_eared_assfish_001_habitat
+    species: {fileID: 11400000, guid: 5da9492b5fc54403ae4e736801214cae, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Bony-eared Assfish?"
+    choices:
+    - "Deep-water (1171 - 4415 m)"
+    - "Deep seafloor (reaches about 4,275 m)"
+    - "Deep seafloor (1,100\u20135,173 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Bony-eared Assfish say: Deep-water (1171 - 4415 m)"
+  - questionId: bony_eared_assfish_001_characteristics
+    species: {fileID: 11400000, guid: 5da9492b5fc54403ae4e736801214cae, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Bony-eared Assfish. Which description matches our observations?"
+    choices:
+    - "Large head, tapering body, small eyes, and prominent head spines."
+    - "Long, pale body with smooth-looking skin."
+    - "Soft body with a long tail-like extension."
+    correctChoice: 0
+    explanation: "Our notes on the Bony-eared Assfish say: Large head, tapering body, small eyes, and prominent head spines."
+  - questionId: bony_eared_assfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 5da9492b5fc54403ae4e736801214cae, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Bony-eared Assfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Deep-sea consumer that contributes to the marine food web."
+    - "Feeds on small animals near the bottom."
+    - "Eats food particles that settle on the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Bony-eared Assfish say: Deep-sea consumer that contributes to the marine food web."
+  - questionId: bony_eared_assfish_001_interestingFact
+    species: {fileID: 11400000, guid: 5da9492b5fc54403ae4e736801214cae, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Bony-eared Assfish during our research?"
+    choices:
+    - "Has one of the smallest brain-to-body size ratios among bony fishes."
+    - "The species was named after deep-sea researcher Imants Priede."
+    - "The unusual shape gives it an almost alien appearance."
+    correctChoice: 0
+    explanation: "Our notes on the Bony-eared Assfish say: Has one of the smallest brain-to-body size ratios among bony fishes."
+  - questionId: bony_eared_assfish_001_camera
+    species: {fileID: 11400000, guid: 5da9492b5fc54403ae4e736801214cae, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Large head, tapering body, small eyes, and prominent head spines. The habitat notes say: Deep-water (1171 - 4415 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Bony-eared Assfish. Large head, tapering body, small eyes, and prominent head spines. Its recorded habitat is Deep-water (1171 - 4415 m)."
+  - questionId: deep_sea_eelpout_001_habitat
+    species: {fileID: 11400000, guid: 9d450aa523104bc7aa209adbb12695ed, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-sea Eelpout?"
+    choices:
+    - "Deep seafloor (reaches about 4,275 m)"
+    - "Deep seafloor (1,100\u20135,173 m)"
+    - "Deep seafloor (3\u20135,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Eelpout say: Deep seafloor (reaches about 4,275 m)"
+  - questionId: deep_sea_eelpout_001_characteristics
+    species: {fileID: 11400000, guid: 9d450aa523104bc7aa209adbb12695ed, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-sea Eelpout. Which description matches our observations?"
+    choices:
+    - "Long, pale body with smooth-looking skin."
+    - "Soft body with a long tail-like extension."
+    - "Tiny body with very long legs and a long feeding tube."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Eelpout say: Long, pale body with smooth-looking skin."
+  - questionId: deep_sea_eelpout_001_ecologicalRole
+    species: {fileID: 11400000, guid: 9d450aa523104bc7aa209adbb12695ed, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-sea Eelpout play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small animals near the bottom."
+    - "Eats food particles that settle on the seafloor."
+    - "Feeds on hydroids and other small animals."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Eelpout say: Feeds on small animals near the bottom."
+  - questionId: deep_sea_eelpout_001_interestingFact
+    species: {fileID: 11400000, guid: 9d450aa523104bc7aa209adbb12695ed, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-sea Eelpout during our research?"
+    choices:
+    - "The species was named after deep-sea researcher Imants Priede."
+    - "The unusual shape gives it an almost alien appearance."
+    - "The legs can be many times longer than the body."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Eelpout say: The species was named after deep-sea researcher Imants Priede."
+  - questionId: deep_sea_eelpout_001_camera
+    species: {fileID: 11400000, guid: 9d450aa523104bc7aa209adbb12695ed, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long, pale body with smooth-looking skin. The habitat notes say: Deep seafloor (reaches about 4,275 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-sea Eelpout. Long, pale body with smooth-looking skin. Its recorded habitat is Deep seafloor (reaches about 4,275 m)."
+  - questionId: deep_sea_sea_cucumber_001_habitat
+    species: {fileID: 11400000, guid: 6ba3c0ff86a94bc6b7912d3b9a57124d, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-sea Sea Cucumber?"
+    choices:
+    - "Deep seafloor (1,100\u20135,173 m)"
+    - "Deep seafloor (3\u20135,000 m)"
+    - "Deep slopes and abyssal plains (295\u20135,440 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Cucumber say: Deep seafloor (1,100\u20135,173 m)"
+  - questionId: deep_sea_sea_cucumber_001_characteristics
+    species: {fileID: 11400000, guid: 6ba3c0ff86a94bc6b7912d3b9a57124d, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-sea Sea Cucumber. Which description matches our observations?"
+    choices:
+    - "Soft body with a long tail-like extension."
+    - "Tiny body with very long legs and a long feeding tube."
+    - "Long dark body with a narrow head and small fins."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Cucumber say: Soft body with a long tail-like extension."
+  - questionId: deep_sea_sea_cucumber_001_ecologicalRole
+    species: {fileID: 11400000, guid: 6ba3c0ff86a94bc6b7912d3b9a57124d, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-sea Sea Cucumber play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats food particles that settle on the seafloor."
+    - "Feeds on hydroids and other small animals."
+    - "Hunts fish, shrimp, and squid."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Cucumber say: Eats food particles that settle on the seafloor."
+  - questionId: deep_sea_sea_cucumber_001_interestingFact
+    species: {fileID: 11400000, guid: 6ba3c0ff86a94bc6b7912d3b9a57124d, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-sea Sea Cucumber during our research?"
+    choices:
+    - "The unusual shape gives it an almost alien appearance."
+    - "The legs can be many times longer than the body."
+    - "The same species occurs in both the Pacific and Indo-Pacific."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Cucumber say: The unusual shape gives it an almost alien appearance."
+  - questionId: deep_sea_sea_cucumber_001_camera
+    species: {fileID: 11400000, guid: 6ba3c0ff86a94bc6b7912d3b9a57124d, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Soft body with a long tail-like extension. The habitat notes say: Deep seafloor (1,100\u20135,173 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-sea Sea Cucumber. Soft body with a long tail-like extension. Its recorded habitat is Deep seafloor (1,100\u20135,173 m)."
+  - questionId: deep_sea_sea_spider_001_habitat
+    species: {fileID: 11400000, guid: 5a6c41ea9d8f40db87fba67bc16ff6d9, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-sea Sea Spider?"
+    choices:
+    - "Deep seafloor (3\u20135,000 m)"
+    - "Deep slopes and abyssal plains (295\u20135,440 m)"
+    - "Deep-water (3900\u20134400m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Spider say: Deep seafloor (3\u20135,000 m)"
+  - questionId: deep_sea_sea_spider_001_characteristics
+    species: {fileID: 11400000, guid: 5a6c41ea9d8f40db87fba67bc16ff6d9, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-sea Sea Spider. Which description matches our observations?"
+    choices:
+    - "Tiny body with very long legs and a long feeding tube."
+    - "Long dark body with a narrow head and small fins."
+    - "Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Spider say: Tiny body with very long legs and a long feeding tube."
+  - questionId: deep_sea_sea_spider_001_ecologicalRole
+    species: {fileID: 11400000, guid: 5a6c41ea9d8f40db87fba67bc16ff6d9, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-sea Sea Spider play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on hydroids and other small animals."
+    - "Hunts fish, shrimp, and squid."
+    - "Predator that likely feeds on small deep-sea invertebrates."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Spider say: Feeds on hydroids and other small animals."
+  - questionId: deep_sea_sea_spider_001_interestingFact
+    species: {fileID: 11400000, guid: 5a6c41ea9d8f40db87fba67bc16ff6d9, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-sea Sea Spider during our research?"
+    choices:
+    - "The legs can be many times longer than the body."
+    - "The same species occurs in both the Pacific and Indo-Pacific."
+    - "Scientists described the species in 2021 using MRI and CT scanning to preserve its rare specimen."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-sea Sea Spider say: The legs can be many times longer than the body."
+  - questionId: deep_sea_sea_spider_001_camera
+    species: {fileID: 11400000, guid: 5a6c41ea9d8f40db87fba67bc16ff6d9, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Tiny body with very long legs and a long feeding tube. The habitat notes say: Deep seafloor (3\u20135,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-sea Sea Spider. Tiny body with very long legs and a long feeding tube. Its recorded habitat is Deep seafloor (3\u20135,000 m)."
+  - questionId: deep_water_arrowtooth_eel_001_habitat
+    species: {fileID: 11400000, guid: 513c347d845a428e9f8124e22d069e22, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep-water Arrowtooth Eel?"
+    choices:
+    - "Deep slopes and abyssal plains (295\u20135,440 m)"
+    - "Deep-water (3900\u20134400m)"
+    - "Deep open ocean (0\u20135,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Arrowtooth Eel say: Deep slopes and abyssal plains (295\u20135,440 m)"
+  - questionId: deep_water_arrowtooth_eel_001_characteristics
+    species: {fileID: 11400000, guid: 513c347d845a428e9f8124e22d069e22, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep-water Arrowtooth Eel. Which description matches our observations?"
+    choices:
+    - "Long dark body with a narrow head and small fins."
+    - "Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers."
+    - "Elongated body with a soft-looking shape and small fins."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Arrowtooth Eel say: Long dark body with a narrow head and small fins."
+  - questionId: deep_water_arrowtooth_eel_001_ecologicalRole
+    species: {fileID: 11400000, guid: 513c347d845a428e9f8124e22d069e22, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep-water Arrowtooth Eel play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts fish, shrimp, and squid."
+    - "Predator that likely feeds on small deep-sea invertebrates."
+    - "Eats tiny animals in deep water. "
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Arrowtooth Eel say: Hunts fish, shrimp, and squid."
+  - questionId: deep_water_arrowtooth_eel_001_interestingFact
+    species: {fileID: 11400000, guid: 513c347d845a428e9f8124e22d069e22, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep-water Arrowtooth Eel during our research?"
+    choices:
+    - "The same species occurs in both the Pacific and Indo-Pacific."
+    - "Scientists described the species in 2021 using MRI and CT scanning to preserve its rare specimen."
+    - "FishBase describes it as apparently the deepest-living whalefish."
+    correctChoice: 0
+    explanation: "Our notes on the Deep-water Arrowtooth Eel say: The same species occurs in both the Pacific and Indo-Pacific."
+  - questionId: deep_water_arrowtooth_eel_001_camera
+    species: {fileID: 11400000, guid: 513c347d845a428e9f8124e22d069e22, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long dark body with a narrow head and small fins. The habitat notes say: Deep slopes and abyssal plains (295\u20135,440 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep-water Arrowtooth Eel. Long dark body with a narrow head and small fins. Its recorded habitat is Deep slopes and abyssal plains (295\u20135,440 m)."
+  - questionId: emperor_dumbo_octopus_001_habitat
+    species: {fileID: 11400000, guid: 62644480f60e40298f0f4a7d6cf41912, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Emperor Dumbo Octopus?"
+    choices:
+    - "Deep-water (3900\u20134400m)"
+    - "Deep open ocean (0\u20135,000 m)"
+    - "Deep open ocean (up to 6,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Emperor Dumbo Octopus say: Deep-water (3900\u20134400m)"
+  - questionId: emperor_dumbo_octopus_001_characteristics
+    species: {fileID: 11400000, guid: 62644480f60e40298f0f4a7d6cf41912, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Emperor Dumbo Octopus. Which description matches our observations?"
+    choices:
+    - "Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers."
+    - "Elongated body with a soft-looking shape and small fins."
+    - "Small body with several light-producing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Emperor Dumbo Octopus say: Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers."
+  - questionId: emperor_dumbo_octopus_001_ecologicalRole
+    species: {fileID: 11400000, guid: 62644480f60e40298f0f4a7d6cf41912, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Emperor Dumbo Octopus play in its ecosystem, according to our notes?"
+    choices:
+    - "Predator that likely feeds on small deep-sea invertebrates."
+    - "Eats tiny animals in deep water. "
+    - "Eats tiny drifting animals and supports the deep-ocean food web."
+    correctChoice: 0
+    explanation: "Our notes on the Emperor Dumbo Octopus say: Predator that likely feeds on small deep-sea invertebrates."
+  - questionId: emperor_dumbo_octopus_001_interestingFact
+    species: {fileID: 11400000, guid: 62644480f60e40298f0f4a7d6cf41912, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Emperor Dumbo Octopus during our research?"
+    choices:
+    - "Scientists described the species in 2021 using MRI and CT scanning to preserve its rare specimen."
+    - "FishBase describes it as apparently the deepest-living whalefish."
+    - "Different light organs can produce different patterns of light."
+    correctChoice: 0
+    explanation: "Our notes on the Emperor Dumbo Octopus say: Scientists described the species in 2021 using MRI and CT scanning to preserve its rare specimen."
+  - questionId: emperor_dumbo_octopus_001_camera
+    species: {fileID: 11400000, guid: 62644480f60e40298f0f4a7d6cf41912, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers. The habitat notes say: Deep-water (3900\u20134400m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Emperor Dumbo Octopus. Soft, gelatinous body, ear-like fins, and eight webbed arms with small suckers. Its recorded habitat is Deep-water (3900\u20134400m)."
+  - questionId: flabby_whalefish_001_habitat
+    species: {fileID: 11400000, guid: 42beab692e824a69a0e140eb4e83a499, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Flabby Whalefish?"
+    choices:
+    - "Deep open ocean (0\u20135,000 m)"
+    - "Deep open ocean (up to 6,000 m)"
+    - "Deep ocean floor (1,550\u20134,903 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Flabby Whalefish say: Deep open ocean (0\u20135,000 m)"
+  - questionId: flabby_whalefish_001_characteristics
+    species: {fileID: 11400000, guid: 42beab692e824a69a0e140eb4e83a499, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Flabby Whalefish. Which description matches our observations?"
+    choices:
+    - "Elongated body with a soft-looking shape and small fins."
+    - "Small body with several light-producing organs."
+    - "Long body, large mouth, and sharp teeth."
+    correctChoice: 0
+    explanation: "Our notes on the Flabby Whalefish say: Elongated body with a soft-looking shape and small fins."
+  - questionId: flabby_whalefish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 42beab692e824a69a0e140eb4e83a499, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Flabby Whalefish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny animals in deep water. "
+    - "Eats tiny drifting animals and supports the deep-ocean food web."
+    - "Hunts fish and other animals near the bottom."
+    correctChoice: 0
+    explanation: "Our notes on the Flabby Whalefish say: Eats tiny animals in deep water. "
+  - questionId: flabby_whalefish_001_interestingFact
+    species: {fileID: 11400000, guid: 42beab692e824a69a0e140eb4e83a499, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Flabby Whalefish during our research?"
+    choices:
+    - "FishBase describes it as apparently the deepest-living whalefish."
+    - "Different light organs can produce different patterns of light."
+    - "One animal can produce both eggs and sperm."
+    correctChoice: 0
+    explanation: "Our notes on the Flabby Whalefish say: FishBase describes it as apparently the deepest-living whalefish."
+  - questionId: flabby_whalefish_001_camera
+    species: {fileID: 11400000, guid: 42beab692e824a69a0e140eb4e83a499, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Elongated body with a soft-looking shape and small fins. The habitat notes say: Deep open ocean (0\u20135,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Flabby Whalefish. Elongated body with a soft-looking shape and small fins. Its recorded habitat is Deep open ocean (0\u20135,000 m)."
+  - questionId: headlight_fish_001_habitat
+    species: {fileID: 11400000, guid: eaf1c45c5c514f4d956026b760da867a, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Headlight Fish?"
+    choices:
+    - "Deep open ocean (up to 6,000 m)"
+    - "Deep ocean floor (1,550\u20134,903 m)"
+    - "Deep-water (120 - 4800 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Headlight Fish say: Deep open ocean (up to 6,000 m)"
+  - questionId: headlight_fish_001_characteristics
+    species: {fileID: 11400000, guid: eaf1c45c5c514f4d956026b760da867a, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Headlight Fish. Which description matches our observations?"
+    choices:
+    - "Small body with several light-producing organs."
+    - "Long body, large mouth, and sharp teeth."
+    - "Long, eel-like body with dark purplish-gray coloration."
+    correctChoice: 0
+    explanation: "Our notes on the Headlight Fish say: Small body with several light-producing organs."
+  - questionId: headlight_fish_001_ecologicalRole
+    species: {fileID: 11400000, guid: eaf1c45c5c514f4d956026b760da867a, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Headlight Fish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny drifting animals and supports the deep-ocean food web."
+    - "Hunts fish and other animals near the bottom."
+    - "Predator of crustaceans, fishes, and cephalopods."
+    correctChoice: 0
+    explanation: "Our notes on the Headlight Fish say: Eats tiny drifting animals and supports the deep-ocean food web."
+  - questionId: headlight_fish_001_interestingFact
+    species: {fileID: 11400000, guid: eaf1c45c5c514f4d956026b760da867a, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Headlight Fish during our research?"
+    choices:
+    - "Different light organs can produce different patterns of light."
+    - "One animal can produce both eggs and sperm."
+    - "Larger individuals primarily eat fish, while smaller ones prefer crustaceans."
+    correctChoice: 0
+    explanation: "Our notes on the Headlight Fish say: Different light organs can produce different patterns of light."
+  - questionId: headlight_fish_001_camera
+    species: {fileID: 11400000, guid: eaf1c45c5c514f4d956026b760da867a, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small body with several light-producing organs. The habitat notes say: Deep open ocean (up to 6,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Headlight Fish. Small body with several light-producing organs. Its recorded habitat is Deep open ocean (up to 6,000 m)."
+  - questionId: highfin_lizardfish_001_habitat
+    species: {fileID: 11400000, guid: 1e856cea6c984752ba51d2c8a1330956, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Highfin Lizardfish?"
+    choices:
+    - "Deep ocean floor (1,550\u20134,903 m)"
+    - "Deep-water (120 - 4800 m)"
+    - "Deep ocean floor (2,085\u20134,500 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Highfin Lizardfish say: Deep ocean floor (1,550\u20134,903 m)"
+  - questionId: highfin_lizardfish_001_characteristics
+    species: {fileID: 11400000, guid: 1e856cea6c984752ba51d2c8a1330956, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Highfin Lizardfish. Which description matches our observations?"
+    choices:
+    - "Long body, large mouth, and sharp teeth."
+    - "Long, eel-like body with dark purplish-gray coloration."
+    - "Slender body with a very long, thin tail."
+    correctChoice: 0
+    explanation: "Our notes on the Highfin Lizardfish say: Long body, large mouth, and sharp teeth."
+  - questionId: highfin_lizardfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 1e856cea6c984752ba51d2c8a1330956, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Highfin Lizardfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts fish and other animals near the bottom."
+    - "Predator of crustaceans, fishes, and cephalopods."
+    - "Searches the bottom for small prey."
+    correctChoice: 0
+    explanation: "Our notes on the Highfin Lizardfish say: Hunts fish and other animals near the bottom."
+  - questionId: highfin_lizardfish_001_interestingFact
+    species: {fileID: 11400000, guid: 1e856cea6c984752ba51d2c8a1330956, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Highfin Lizardfish during our research?"
+    choices:
+    - "One animal can produce both eggs and sperm."
+    - "Larger individuals primarily eat fish, while smaller ones prefer crustaceans."
+    - "The tail gives the fish a distinctive flag-like shape."
+    correctChoice: 0
+    explanation: "Our notes on the Highfin Lizardfish say: One animal can produce both eggs and sperm."
+  - questionId: highfin_lizardfish_001_camera
+    species: {fileID: 11400000, guid: 1e856cea6c984752ba51d2c8a1330956, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long body, large mouth, and sharp teeth. The habitat notes say: Deep ocean floor (1,550\u20134,903 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Highfin Lizardfish. Long body, large mouth, and sharp teeth. Its recorded habitat is Deep ocean floor (1,550\u20134,903 m)."
+  - questionId: kaups_arrowtooth_eel_001_habitat
+    species: {fileID: 11400000, guid: 0cba4706eba5401aa59bc894f9aadb8c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Kaup's Arrowtooth Eel?"
+    choices:
+    - "Deep-water (120 - 4800 m)"
+    - "Deep ocean floor (2,085\u20134,500 m)"
+    - "Open ocean (20\u20135,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Kaup's Arrowtooth Eel say: Deep-water (120 - 4800 m)"
+  - questionId: kaups_arrowtooth_eel_001_characteristics
+    species: {fileID: 11400000, guid: 0cba4706eba5401aa59bc894f9aadb8c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Kaup's Arrowtooth Eel. Which description matches our observations?"
+    choices:
+    - "Long, eel-like body with dark purplish-gray coloration."
+    - "Slender body with a very long, thin tail."
+    - "Small silver-sided body with several glowing organs."
+    correctChoice: 0
+    explanation: "Our notes on the Kaup's Arrowtooth Eel say: Long, eel-like body with dark purplish-gray coloration."
+  - questionId: kaups_arrowtooth_eel_001_ecologicalRole
+    species: {fileID: 11400000, guid: 0cba4706eba5401aa59bc894f9aadb8c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Kaup's Arrowtooth Eel play in its ecosystem, according to our notes?"
+    choices:
+    - "Predator of crustaceans, fishes, and cephalopods."
+    - "Searches the bottom for small prey."
+    - "Eats tiny drifting animals."
+    correctChoice: 0
+    explanation: "Our notes on the Kaup's Arrowtooth Eel say: Predator of crustaceans, fishes, and cephalopods."
+  - questionId: kaups_arrowtooth_eel_001_interestingFact
+    species: {fileID: 11400000, guid: 0cba4706eba5401aa59bc894f9aadb8c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Kaup's Arrowtooth Eel during our research?"
+    choices:
+    - "Larger individuals primarily eat fish, while smaller ones prefer crustaceans."
+    - "The tail gives the fish a distinctive flag-like shape."
+    - "Light organs appear at several points on the body."
+    correctChoice: 0
+    explanation: "Our notes on the Kaup's Arrowtooth Eel say: Larger individuals primarily eat fish, while smaller ones prefer crustaceans."
+  - questionId: kaups_arrowtooth_eel_001_camera
+    species: {fileID: 11400000, guid: 0cba4706eba5401aa59bc894f9aadb8c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long, eel-like body with dark purplish-gray coloration. The habitat notes say: Deep-water (120 - 4800 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Kaup's Arrowtooth Eel. Long, eel-like body with dark purplish-gray coloration. Its recorded habitat is Deep-water (120 - 4800 m)."
+  - questionId: longnose_grenadier_001_habitat
+    species: {fileID: 11400000, guid: 696de7d276fa426e8a951f4ccb28e173, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Longnose Grenadier?"
+    choices:
+    - "Deep ocean floor (2,085\u20134,500 m)"
+    - "Open ocean (20\u20135,000 m)"
+    - "Deep water off the Philippines (up to 4,800 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Grenadier say: Deep ocean floor (2,085\u20134,500 m)"
+  - questionId: longnose_grenadier_001_characteristics
+    species: {fileID: 11400000, guid: 696de7d276fa426e8a951f4ccb28e173, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Longnose Grenadier. Which description matches our observations?"
+    choices:
+    - "Slender body with a very long, thin tail."
+    - "Small silver-sided body with several glowing organs."
+    - "Long, narrow eel-like body with a small head."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Grenadier say: Slender body with a very long, thin tail."
+  - questionId: longnose_grenadier_001_ecologicalRole
+    species: {fileID: 11400000, guid: 696de7d276fa426e8a951f4ccb28e173, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Longnose Grenadier play in its ecosystem, according to our notes?"
+    choices:
+    - "Searches the bottom for small prey."
+    - "Eats tiny drifting animals."
+    - "Feeds on small deep-water animals."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Grenadier say: Searches the bottom for small prey."
+  - questionId: longnose_grenadier_001_interestingFact
+    species: {fileID: 11400000, guid: 696de7d276fa426e8a951f4ccb28e173, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Longnose Grenadier during our research?"
+    choices:
+    - "The tail gives the fish a distinctive flag-like shape."
+    - "Light organs appear at several points on the body."
+    - "FishBase specifically records the species off the Philippines."
+    correctChoice: 0
+    explanation: "Our notes on the Longnose Grenadier say: The tail gives the fish a distinctive flag-like shape."
+  - questionId: longnose_grenadier_001_camera
+    species: {fileID: 11400000, guid: 696de7d276fa426e8a951f4ccb28e173, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Slender body with a very long, thin tail. The habitat notes say: Deep ocean floor (2,085\u20134,500 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Longnose Grenadier. Slender body with a very long, thin tail. Its recorded habitat is Deep ocean floor (2,085\u20134,500 m)."
+  - questionId: oceanic_lightfish_001_habitat
+    species: {fileID: 11400000, guid: 53e30207e7f043b6af302609f45de918, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Oceanic Lightfish?"
+    choices:
+    - "Open ocean (20\u20135,000 m)"
+    - "Deep water off the Philippines (up to 4,800 m)"
+    - "Deep ocean floor (800\u20134,300 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Oceanic Lightfish say: Open ocean (20\u20135,000 m)"
+  - questionId: oceanic_lightfish_001_characteristics
+    species: {fileID: 11400000, guid: 53e30207e7f043b6af302609f45de918, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Oceanic Lightfish. Which description matches our observations?"
+    choices:
+    - "Small silver-sided body with several glowing organs."
+    - "Long, narrow eel-like body with a small head."
+    - "Long body, large head, and wide mouth."
+    correctChoice: 0
+    explanation: "Our notes on the Oceanic Lightfish say: Small silver-sided body with several glowing organs."
+  - questionId: oceanic_lightfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 53e30207e7f043b6af302609f45de918, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Oceanic Lightfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats tiny drifting animals."
+    - "Feeds on small deep-water animals."
+    - "Eats worms, snails, shrimp, and other small animals."
+    correctChoice: 0
+    explanation: "Our notes on the Oceanic Lightfish say: Eats tiny drifting animals."
+  - questionId: oceanic_lightfish_001_interestingFact
+    species: {fileID: 11400000, guid: 53e30207e7f043b6af302609f45de918, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Oceanic Lightfish during our research?"
+    choices:
+    - "Light organs appear at several points on the body."
+    - "FishBase specifically records the species off the Philippines."
+    - "The body can grow to about 1.3 m long."
+    correctChoice: 0
+    explanation: "Our notes on the Oceanic Lightfish say: Light organs appear at several points on the body."
+  - questionId: oceanic_lightfish_001_camera
+    species: {fileID: 11400000, guid: 53e30207e7f043b6af302609f45de918, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small silver-sided body with several glowing organs. The habitat notes say: Open ocean (20\u20135,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Oceanic Lightfish. Small silver-sided body with several glowing organs. Its recorded habitat is Open ocean (20\u20135,000 m)."
+  - questionId: philippine_cutthroat_eel_001_habitat
+    species: {fileID: 11400000, guid: e3e48a0b71cd4427aaa79db68a8d5d7f, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Philippine Cutthroat Eel?"
+    choices:
+    - "Deep water off the Philippines (up to 4,800 m)"
+    - "Deep ocean floor (800\u20134,300 m)"
+    - "Deep seafloor (3,400\u20135,800 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Cutthroat Eel say: Deep water off the Philippines (up to 4,800 m)"
+  - questionId: philippine_cutthroat_eel_001_characteristics
+    species: {fileID: 11400000, guid: e3e48a0b71cd4427aaa79db68a8d5d7f, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Philippine Cutthroat Eel. Which description matches our observations?"
+    choices:
+    - "Long, narrow eel-like body with a small head."
+    - "Long body, large head, and wide mouth."
+    - "Long body, large head, and narrow pointed tail."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Cutthroat Eel say: Long, narrow eel-like body with a small head."
+  - questionId: philippine_cutthroat_eel_001_ecologicalRole
+    species: {fileID: 11400000, guid: e3e48a0b71cd4427aaa79db68a8d5d7f, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Philippine Cutthroat Eel play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small deep-water animals."
+    - "Eats worms, snails, shrimp, and other small animals."
+    - "Searches the seafloor for small prey."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Cutthroat Eel say: Feeds on small deep-water animals."
+  - questionId: philippine_cutthroat_eel_001_interestingFact
+    species: {fileID: 11400000, guid: e3e48a0b71cd4427aaa79db68a8d5d7f, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Philippine Cutthroat Eel during our research?"
+    choices:
+    - "FishBase specifically records the species off the Philippines."
+    - "The body can grow to about 1.3 m long."
+    - "The name honors the research vessel Yaquina."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Cutthroat Eel say: FishBase specifically records the species off the Philippines."
+  - questionId: philippine_cutthroat_eel_001_camera
+    species: {fileID: 11400000, guid: e3e48a0b71cd4427aaa79db68a8d5d7f, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long, narrow eel-like body with a small head. The habitat notes say: Deep water off the Philippines (up to 4,800 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Philippine Cutthroat Eel. Long, narrow eel-like body with a small head. Its recorded habitat is Deep water off the Philippines (up to 4,800 m)."
+  - questionId: pudgy_cusk_eel_001_habitat
+    species: {fileID: 11400000, guid: 94e27822311549eca905b6dd41e50818, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Pudgy Cusk-eel?"
+    choices:
+    - "Deep ocean floor (800\u20134,300 m)"
+    - "Deep seafloor (3,400\u20135,800 m)"
+    - "Deep water (2,500\u20135,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Pudgy Cusk-eel say: Deep ocean floor (800\u20134,300 m)"
+  - questionId: pudgy_cusk_eel_001_characteristics
+    species: {fileID: 11400000, guid: 94e27822311549eca905b6dd41e50818, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Pudgy Cusk-eel. Which description matches our observations?"
+    choices:
+    - "Long body, large head, and wide mouth."
+    - "Long body, large head, and narrow pointed tail."
+    - "Elongated body, pointed snout, and long, tapering tail."
+    correctChoice: 0
+    explanation: "Our notes on the Pudgy Cusk-eel say: Long body, large head, and wide mouth."
+  - questionId: pudgy_cusk_eel_001_ecologicalRole
+    species: {fileID: 11400000, guid: 94e27822311549eca905b6dd41e50818, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Pudgy Cusk-eel play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats worms, snails, shrimp, and other small animals."
+    - "Searches the seafloor for small prey."
+    - "Deep-sea predator that helps maintain the food web."
+    correctChoice: 0
+    explanation: "Our notes on the Pudgy Cusk-eel say: Eats worms, snails, shrimp, and other small animals."
+  - questionId: pudgy_cusk_eel_001_interestingFact
+    species: {fileID: 11400000, guid: 94e27822311549eca905b6dd41e50818, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Pudgy Cusk-eel during our research?"
+    choices:
+    - "The body can grow to about 1.3 m long."
+    - "The name honors the research vessel Yaquina."
+    - "Can grow up to 40 cm long and lives at abyssal depths."
+    correctChoice: 0
+    explanation: "Our notes on the Pudgy Cusk-eel say: The body can grow to about 1.3 m long."
+  - questionId: pudgy_cusk_eel_001_camera
+    species: {fileID: 11400000, guid: 94e27822311549eca905b6dd41e50818, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long body, large head, and wide mouth. The habitat notes say: Deep ocean floor (800\u20134,300 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Pudgy Cusk-eel. Long body, large head, and wide mouth. Its recorded habitat is Deep ocean floor (800\u20134,300 m)."
+  - questionId: rough_abyssal_grenadier_001_habitat
+    species: {fileID: 11400000, guid: b7c757baa63648e6a899c1b89fe67b22, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Rough Abyssal Grenadier?"
+    choices:
+    - "Deep seafloor (3,400\u20135,800 m)"
+    - "Deep water (2,500\u20135,000 m)"
+    - "Deep- water (878 - 4720 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Rough Abyssal Grenadier say: Deep seafloor (3,400\u20135,800 m)"
+  - questionId: rough_abyssal_grenadier_001_characteristics
+    species: {fileID: 11400000, guid: b7c757baa63648e6a899c1b89fe67b22, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Rough Abyssal Grenadier. Which description matches our observations?"
+    choices:
+    - "Long body, large head, and narrow pointed tail."
+    - "Elongated body, pointed snout, and long, tapering tail."
+    - "Slender body with extremely long pelvic and tail fin rays."
+    correctChoice: 0
+    explanation: "Our notes on the Rough Abyssal Grenadier say: Long body, large head, and narrow pointed tail."
+  - questionId: rough_abyssal_grenadier_001_ecologicalRole
+    species: {fileID: 11400000, guid: b7c757baa63648e6a899c1b89fe67b22, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Rough Abyssal Grenadier play in its ecosystem, according to our notes?"
+    choices:
+    - "Searches the seafloor for small prey."
+    - "Deep-sea predator that helps maintain the food web."
+    - "Feeds on copepods and other small planktonic crustaceans."
+    correctChoice: 0
+    explanation: "Our notes on the Rough Abyssal Grenadier say: Searches the seafloor for small prey."
+  - questionId: rough_abyssal_grenadier_001_interestingFact
+    species: {fileID: 11400000, guid: b7c757baa63648e6a899c1b89fe67b22, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Rough Abyssal Grenadier during our research?"
+    choices:
+    - "The name honors the research vessel Yaquina."
+    - "Can grow up to 40 cm long and lives at abyssal depths."
+    - "Uses its elongated fins to stand above the seafloor while facing the current."
+    correctChoice: 0
+    explanation: "Our notes on the Rough Abyssal Grenadier say: The name honors the research vessel Yaquina."
+  - questionId: rough_abyssal_grenadier_001_camera
+    species: {fileID: 11400000, guid: b7c757baa63648e6a899c1b89fe67b22, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long body, large head, and narrow pointed tail. The habitat notes say: Deep seafloor (3,400\u20135,800 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Rough Abyssal Grenadier. Long body, large head, and narrow pointed tail. Its recorded habitat is Deep seafloor (3,400\u20135,800 m)."
+  - questionId: threadfin_grenadier_001_habitat
+    species: {fileID: 11400000, guid: 9a90851e9a33448ea51d6ea384d0d82b, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Threadfin Grenadier?"
+    choices:
+    - "Deep water (2,500\u20135,000 m)"
+    - "Deep- water (878 - 4720 m)"
+    - "Deep seafloor (282-5,180 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Threadfin Grenadier say: Deep water (2,500\u20135,000 m)"
+  - questionId: threadfin_grenadier_001_characteristics
+    species: {fileID: 11400000, guid: 9a90851e9a33448ea51d6ea384d0d82b, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Threadfin Grenadier. Which description matches our observations?"
+    choices:
+    - "Elongated body, pointed snout, and long, tapering tail."
+    - "Slender body with extremely long pelvic and tail fin rays."
+    - "Long body, large head, tapering tail"
+    correctChoice: 0
+    explanation: "Our notes on the Threadfin Grenadier say: Elongated body, pointed snout, and long, tapering tail."
+  - questionId: threadfin_grenadier_001_ecologicalRole
+    species: {fileID: 11400000, guid: 9a90851e9a33448ea51d6ea384d0d82b, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Threadfin Grenadier play in its ecosystem, according to our notes?"
+    choices:
+    - "Deep-sea predator that helps maintain the food web."
+    - "Feeds on copepods and other small planktonic crustaceans."
+    - "Scavenges food on the seafloor"
+    correctChoice: 0
+    explanation: "Our notes on the Threadfin Grenadier say: Deep-sea predator that helps maintain the food web."
+  - questionId: threadfin_grenadier_001_interestingFact
+    species: {fileID: 11400000, guid: 9a90851e9a33448ea51d6ea384d0d82b, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Threadfin Grenadier during our research?"
+    choices:
+    - "Can grow up to 40 cm long and lives at abyssal depths."
+    - "Uses its elongated fins to stand above the seafloor while facing the current."
+    - "Uses sensitive sensory structures to locate food in darkness"
+    correctChoice: 0
+    explanation: "Our notes on the Threadfin Grenadier say: Can grow up to 40 cm long and lives at abyssal depths."
+  - questionId: threadfin_grenadier_001_camera
+    species: {fileID: 11400000, guid: 9a90851e9a33448ea51d6ea384d0d82b, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Elongated body, pointed snout, and long, tapering tail. The habitat notes say: Deep water (2,500\u20135,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Threadfin Grenadier. Elongated body, pointed snout, and long, tapering tail. Its recorded habitat is Deep water (2,500\u20135,000 m)."
+  - questionId: tripodfish_001_habitat
+    species: {fileID: 11400000, guid: c7d77b5233784574bd3930c3aac79a7e, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Tripodfish?"
+    choices:
+    - "Deep- water (878 - 4720 m)"
+    - "Deep seafloor (282-5,180 m)"
+    - "Deep ocean floor (2,615\u20135,610 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Tripodfish say: Deep- water (878 - 4720 m)"
+  - questionId: tripodfish_001_characteristics
+    species: {fileID: 11400000, guid: c7d77b5233784574bd3930c3aac79a7e, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Tripodfish. Which description matches our observations?"
+    choices:
+    - "Slender body with extremely long pelvic and tail fin rays."
+    - "Long body, large head, tapering tail"
+    - "Small body with extremely long fins extending downward like legs."
+    correctChoice: 0
+    explanation: "Our notes on the Tripodfish say: Slender body with extremely long pelvic and tail fin rays."
+  - questionId: tripodfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: c7d77b5233784574bd3930c3aac79a7e, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Tripodfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on copepods and other small planktonic crustaceans."
+    - "Scavenges food on the seafloor"
+    - "Waits for small animals carried by currents."
+    correctChoice: 0
+    explanation: "Our notes on the Tripodfish say: Feeds on copepods and other small planktonic crustaceans."
+  - questionId: tripodfish_001_interestingFact
+    species: {fileID: 11400000, guid: c7d77b5233784574bd3930c3aac79a7e, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Tripodfish during our research?"
+    choices:
+    - "Uses its elongated fins to stand above the seafloor while facing the current."
+    - "Uses sensitive sensory structures to locate food in darkness"
+    - "The long fins make the fish look like it is standing."
+    correctChoice: 0
+    explanation: "Our notes on the Tripodfish say: Uses its elongated fins to stand above the seafloor while facing the current."
+  - questionId: tripodfish_001_camera
+    species: {fileID: 11400000, guid: c7d77b5233784574bd3930c3aac79a7e, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Slender body with extremely long pelvic and tail fin rays. The habitat notes say: Deep- water (878 - 4720 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Tripodfish. Slender body with extremely long pelvic and tail fin rays. Its recorded habitat is Deep- water (878 - 4720 m)."

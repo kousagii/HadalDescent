@@ -13,28 +13,29 @@ MonoBehaviour:
   m_Name: VampireSquid
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: vampire_squid_001
-  commonName: "Vampire Squid"
-  scientificName: "Vampyroteuthis infernalis"
+  commonName: Vampire Squid
+  scientificName: Vampyroteuthis infernalis
   taxonomicClass: 4
   zoneIndex: 2
-  habitat: "Deep ocean, 300–3,000 m"
-  depthRangeText: "300–3,000 m"
-  explorationHint: "Deep ocean, 300–3,000 m. Dark animal with webbed arms and glowing organs."
+  habitat: "Deep ocean, 300\u20133,000 m"
+  depthRangeText: "300\u20133,000 m"
+  explorationHint: "Deep ocean, 300\u20133,000 m. Dark animal with webbed arms and
+    glowing organs."
   secondaryZoneIndices: 
-  characteristics: "Dark animal with webbed arms and glowing organs."
-  ecologicalRole: "Eats drifting organic material and tiny animals."
-  interestingFact: "It can release glowing particles when threatened."
+  characteristics: Dark animal with webbed arms and glowing organs.
+  ecologicalRole: Eats drifting organic material and tiny animals.
+  interestingFact: It can release glowing particles when threatened.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.75
   instanceCount: 3
-  wanderRadius: 25.0
+  wanderRadius: 25
   moveSpeed: 2.2
-  fleeSpeed: 3.9600000000000004
+  fleeSpeed: 3.96
   fleeRange: 10
   returnThreshold: 37.5
   turnSpeed: 65
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.45, g: 0.1, b: 0.15, a: 1.0}
+  placeholderColor: {r: 0.45, g: 0.1, b: 0.15, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 5c6dcc2930dea22479bef1944c5f187a, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

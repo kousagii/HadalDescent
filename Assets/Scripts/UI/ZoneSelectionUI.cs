@@ -360,7 +360,7 @@ public class ZoneSelectionUI : MonoBehaviour
         }
         else
         {
-            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED";
+            btnText = isUnlocked ? (GameManager.Instance.NeedsResearchReviewForEntry(zoneIndex) ? "VERIFY RESEARCH" : "ENTER ZONE") : "LOCKED";
             btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
         }
 
@@ -571,11 +571,6 @@ public class ZoneSelectionUI : MonoBehaviour
             PauseMenuUI.Instance.ResumeGame();
         }
 
-        ZoneManager.SetCurrentZone(zoneIndex);
-        ZoneManager.SetEnteredFromAbove(true);
-        PlayerPrefs.SetInt("Save_HasPosition", 0);
-        PlayerPrefs.Save();
-
         Debug.Log($"[ZoneSelectionUI] Entering Zone {zoneIndex} ('{sceneName}')...");
 
         AudioManager.Instance?.PlayZoneTransition();
@@ -583,7 +578,7 @@ public class ZoneSelectionUI : MonoBehaviour
         CloseZoneSelection();
         ZoneBoundaryTrigger.PushPlayerFromActiveBoundary();
 
-        LoadingScreenUI.LoadScene(sceneName);
+        ZoneManager.Instance.LoadZone(zoneIndex, enteredFromAbove: true);
     }
 
     private void ShowPressureWarningModal(int zoneIndex)
@@ -1148,7 +1143,7 @@ public class ZoneSelectionUI : MonoBehaviour
         }
         else
         {
-            btnText = isUnlocked ? "ENTER ZONE" : "LOCKED";
+            btnText = isUnlocked ? (GameManager.Instance.NeedsResearchReviewForEntry(zoneIndex) ? "VERIFY RESEARCH" : "ENTER ZONE") : "LOCKED";
             btnColor = isUnlocked ? new Color(0.08f, 0.65f, 0.55f) : new Color(0.25f, 0.28f, 0.32f);
         }
 

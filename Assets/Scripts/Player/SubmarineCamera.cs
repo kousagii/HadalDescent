@@ -98,7 +98,8 @@ public class SubmarineCamera : MonoBehaviour
     private void LateUpdate()
     {
         // Suppress gameplay camera rotation while Shop is open, modal is active, or dragging preview
-        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging)
+        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging ||
+            (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             if (dragZone != null) dragZone.ConsumeTouchDelta();
             _hasLastTouch = false;

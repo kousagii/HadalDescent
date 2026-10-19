@@ -258,13 +258,18 @@ public class BestiaryManager : MonoBehaviour
 
     public void HideBestiary()
     {
+        bool wasOpen = IsOpen;
         _isOpen = false;
         if (bestiaryPanel != null) bestiaryPanel.SetActive(false);
         if (UIManager.Instance != null) UIManager.Instance.SetExplorationHUDVisible(true);
         if (ScanReticleUI.Instance != null) ScanReticleUI.Instance.SetVisible(true);
         CloseDetailModal();
         CloseModelInspectionModal();
+        if (wasOpen) OnBestiaryClosed?.Invoke();
     }
+
+    /// <summary>Allows a pending research review to regain control after bestiary study.</summary>
+    public event System.Action OnBestiaryClosed;
 
     public void ToggleBestiary()
     {

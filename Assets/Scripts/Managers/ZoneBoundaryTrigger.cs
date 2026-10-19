@@ -306,6 +306,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     private void HandleDescentBoundary()
     {
         if (_popupActive || _globalCooldownTimer > 0f) return;
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return;
 
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
         {
@@ -337,7 +338,12 @@ public class ZoneBoundaryTrigger : MonoBehaviour
 
         if (!ZoneConfig.IsValidZone(nextZone))
         {
-            // Already at the deepest zone — no popup needed
+            if (!GameManager.Instance.IsResearchVerified(currentZone) &&
+                GameManager.Instance.GetZoneDiscoveryProgress(currentZone) >= curZone.unlockThreshold)
+            {
+                ShowBoundaryPopup("Complete the expedition research review?",
+                    () => ZoneManager.Instance.BeginFinalResearchReview());
+            }
             return;
         }
 
@@ -386,6 +392,7 @@ public class ZoneBoundaryTrigger : MonoBehaviour
     private void HandleAscentBoundary()
     {
         if (_popupActive || _globalCooldownTimer > 0f) return;
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return;
 
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
         {

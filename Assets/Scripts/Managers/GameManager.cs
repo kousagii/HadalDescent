@@ -65,6 +65,53 @@ public class GameManager : MonoBehaviour
 
     private readonly Dictionary<int, int> _zonePcgSeeds = new Dictionary<int, int>();
 
+    // Research state uses the existing PlayerPrefs save namespace. Drafts are checkpointed
+    // independently so cancelling a review or restarting the application keeps its progress.
+    public bool IsResearchVerified(int zoneIndex) => ZoneConfig.IsValidZone(zoneIndex) &&
+        PlayerPrefs.GetInt($"Save_ResearchVerified_{zoneIndex}", 0) == 1;
+
+    public bool HasVisitedZone(int zoneIndex) => zoneIndex == 0 ||
+        (ZoneConfig.IsValidZone(zoneIndex) && PlayerPrefs.GetInt($"Save_ZoneVisited_{zoneIndex}", 0) == 1);
+
+    public bool NeedsResearchReviewForEntry(int zoneIndex) => ZoneConfig.IsValidZone(zoneIndex) &&
+        zoneIndex > 0 && !HasVisitedZone(zoneIndex) && !IsResearchVerified(zoneIndex - 1);
+
+    public void MarkZoneVisited(int zoneIndex)
+    {
+        if (!ZoneConfig.IsValidZone(zoneIndex)) return;
+        PlayerPrefs.SetInt($"Save_ZoneVisited_{zoneIndex}", 1);
+        PlayerPrefs.Save();
+    }
+
+    public string GetResearchReviewDraft(int zoneIndex) =>
+        PlayerPrefs.GetString($"Save_ResearchDraft_{zoneIndex}", "");
+
+    public void SetResearchReviewDraft(int zoneIndex, string json)
+    {
+        if (!ZoneConfig.IsValidZone(zoneIndex)) return;
+        PlayerPrefs.SetString($"Save_ResearchDraft_{zoneIndex}", json);
+        PlayerPrefs.Save();
+    }
+
+    public void MarkResearchVerified(int zoneIndex)
+    {
+        if (!ZoneConfig.IsValidZone(zoneIndex)) return;
+        PlayerPrefs.SetInt($"Save_ResearchVerified_{zoneIndex}", 1);
+        PlayerPrefs.DeleteKey($"Save_ResearchDraft_{zoneIndex}");
+        SaveGame();
+    }
+
+    private static void DeleteResearchSaveData()
+    {
+        PlayerPrefs.DeleteKey("Save_ResearchVersion");
+        for (int i = 0; i < ZoneConfig.ZoneCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"Save_ResearchVerified_{i}");
+            PlayerPrefs.DeleteKey($"Save_ResearchDraft_{i}");
+            PlayerPrefs.DeleteKey($"Save_ZoneVisited_{i}");
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Unity lifecycle
     // -----------------------------------------------------------------------
@@ -299,6 +346,7 @@ public class GameManager : MonoBehaviour
 
     public void SaveGame()
     {
+        PlayerPrefs.SetInt("Save_ResearchVersion", 1);
         PlayerPrefs.SetInt("Save_RDP", RDP);
         PlayerPrefs.SetInt("Save_HullTier", HullTier);
         PlayerPrefs.SetInt("Save_EngineTier", EngineTier);
@@ -357,6 +405,16 @@ public class GameManager : MonoBehaviour
     public bool LoadGame()
     {
         if (!HasSaveData()) return false;
+
+        // Preserve access to zones already reached in saves made before research reviews.
+        // Do not silently count their research as passed.
+        if (!PlayerPrefs.HasKey("Save_ResearchVersion"))
+        {
+            int lastZone = Mathf.Clamp(PlayerPrefs.GetInt("Save_CurrentZone", 0), 0, ZoneConfig.ZoneCount - 1);
+            for (int i = 0; i <= lastZone; i++) PlayerPrefs.SetInt($"Save_ZoneVisited_{i}", 1);
+            PlayerPrefs.SetInt("Save_ResearchVersion", 1);
+            PlayerPrefs.Save();
+        }
 
         RDP           = PlayerPrefs.GetInt("Save_RDP", 0);
         HullTier      = PlayerPrefs.GetInt("Save_HullTier", 1);
@@ -465,6 +523,7 @@ public class GameManager : MonoBehaviour
 
     public static void DeleteSaveData()
     {
+        DeleteResearchSaveData();
         PlayerPrefs.DeleteKey("Save_RDP");
         PlayerPrefs.DeleteKey("Save_HullTier");
         PlayerPrefs.DeleteKey("Save_EngineTier");
@@ -495,6 +554,7 @@ public class GameManager : MonoBehaviour
 
     public void ResetState()
     {
+        DeleteResearchSaveData();
         RDP           = 0;
         HullTier      = 1;
         EngineTier    = 1;

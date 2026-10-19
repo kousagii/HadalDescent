@@ -43,6 +43,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public static bool IsAnyPanelOrModalOpen(bool includeMinigames = true)
     {
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return true;
         if (ShopManager.Instance != null && ShopManager.Instance.IsOpen) return true;
         if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen) return true;
         if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return true;
@@ -61,6 +62,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public static bool IsAnyMinigameActive()
     {
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return true;
         if (MinigameManager.Instance != null && MinigameManager.Instance.IsMinigameActive)
             return true;
 

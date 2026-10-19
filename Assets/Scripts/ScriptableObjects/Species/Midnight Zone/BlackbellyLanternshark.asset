@@ -13,30 +13,31 @@ MonoBehaviour:
   m_Name: BlackbellyLanternshark
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: blackbelly_lanternshark_001
-  commonName: "Blackbelly Lanternshark"
-  scientificName: "Etmopterus lucifer"
+  commonName: Blackbelly Lanternshark
+  scientificName: Etmopterus lucifer
   taxonomicClass: 1
   zoneIndex: 2
-  habitat: "Deep slopes, 150–1,357 m"
-  depthRangeText: "150–1,357 m"
-  explorationHint: "Deep slopes, 150–1,357 m. Small dark shark with glowing areas underneath its body."
+  habitat: "Deep slopes, 150\u20131,357 m"
+  depthRangeText: "150\u20131,357 m"
+  explorationHint: "Deep slopes, 150\u20131,357 m. Small dark shark with glowing
+    areas underneath its body."
   secondaryZoneIndices: 
-  characteristics: "Small dark shark with glowing areas underneath its body."
-  ecologicalRole: "Hunts shrimp, squid, and small fish."
-  interestingFact: "Its belly can glow in the dark."
+  characteristics: Small dark shark with glowing areas underneath its body.
+  ecologicalRole: Hunts shrimp, squid, and small fish.
+  interestingFact: Its belly can glow in the dark.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 3
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.3
   instanceCount: 3
-  wanderRadius: 40.0
+  wanderRadius: 40
   moveSpeed: 3.2
-  fleeSpeed: 5.760000000000001
+  fleeSpeed: 5.76
   fleeRange: 10
-  returnThreshold: 60.0
+  returnThreshold: 60
   turnSpeed: 65
   locomotionArchetype: 0
   pulseFrequency: 0.8
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.2, g: 0.22, b: 0.25, a: 1.0}
+  placeholderColor: {r: 0.2, g: 0.22, b: 0.25, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: c330075b818d8cc47b9e0b423b8beaa3, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

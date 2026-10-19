@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 310f33a964594c5d834fe73a1bdd4d03, type: 3}
+  m_Name: CleanupModelLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::CleanupModelLibrary
+  waterBottle: {fileID: 0}
+  plasticBag: {fileID: 0}
+  sixPackRings: {fileID: 0}
+  sodaCan: {fileID: 8771091787928289351, guid: 38f5462d45dca8b4fa76ca0ad5642c3f, type: 3}
+  metalPipe: {fileID: 8771091787928289351, guid: 3e098483334c6f842936aa4ee7362328, type: 3}
+  metalTube: {fileID: 8771091787928289351, guid: 73a8a38511c24224da33eba32e256231, type: 3}
+  metalDrum: {fileID: 8771091787928289351, guid: 1bd9c22ad93dd214a84a45436b3b78d3, type: 3}
+  aaBattery: {fileID: 0}
+  electronicBoard: {fileID: 0}
+  submarineBatteryCell: {fileID: 0}
+  plasticBin: {fileID: 4813554651711788705, guid: f75f4055b9f204345bcf9b9671df7874, type: 3}
+  metalBin: {fileID: 1806839863054228788, guid: 9e29bd7f5476ada48adf35354b9955f9, type: 3}
+  hazardBin: {fileID: 1194016556819778539, guid: e0b10d555b693c947aac887e3f14e76f, type: 3}

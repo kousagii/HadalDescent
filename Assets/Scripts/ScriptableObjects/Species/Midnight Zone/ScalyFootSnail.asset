@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: ScalyFootSnail
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: scaly_foot_snail_001
-  commonName: "Scaly-foot Snail"
-  scientificName: "Chrysomallon squamiferum"
+  commonName: Scaly-foot Snail
+  scientificName: Chrysomallon squamiferum
   taxonomicClass: 10
   zoneIndex: 2
-  habitat: "Hydrothermal vents, 2,400–2,900 m"
-  depthRangeText: "2,400–2,900 m"
-  explorationHint: "Hydrothermal vents, 2,400–2,900 m. Has a shell and armor-like scales on its foot."
+  habitat: "Hydrothermal vents, 2,400\u20132,900 m"
+  depthRangeText: "2,400\u20132,900 m"
+  explorationHint: "Hydrothermal vents, 2,400\u20132,900 m. Has a shell and armor-like
+    scales on its foot."
   secondaryZoneIndices: 
-  characteristics: "Has a shell and armor-like scales on its foot."
-  ecologicalRole: "Lives near hot seafloor vents with helpful bacteria."
-  interestingFact: "Its scales can contain iron minerals."
+  characteristics: Has a shell and armor-like scales on its foot.
+  ecologicalRole: Lives near hot seafloor vents with helpful bacteria.
+  interestingFact: Its scales can contain iron minerals.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
@@ -32,7 +33,7 @@ MonoBehaviour:
   minDepthFraction: 0.45
   maxDepthFraction: 0.7
   instanceCount: 3
-  wanderRadius: 8.0
+  wanderRadius: 8
   moveSpeed: 0.5
   fleeSpeed: 0.9
   fleeRange: 10
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.3, g: 0.28, b: 0.25, a: 1.0}
+  placeholderColor: {r: 0.3, g: 0.28, b: 0.25, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: fec405f63dfed1441b16986b83f462d2, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

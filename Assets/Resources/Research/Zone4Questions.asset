@@ -1,0 +1,1212 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974ce4595bf14ee69cf6a1d1c489f578, type: 3}
+  m_Name: Zone4Questions
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchQuestionBank
+  zoneIndex: 4
+  questions:
+  - questionId: abyssal_trench_amphipod_001_habitat
+    species: {fileID: 11400000, guid: e20b20467ade4ce383aa3d5e7325995c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Abyssal Trench Amphipod?"
+    choices:
+    - "Deep Western Pacific trenches (6,380\u20139,530 m)"
+    - "Deep ocean trench (6,380\u20138,336 m)"
+    - "Deep ocean trench (7,000 to 9,900 meters)"
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Trench Amphipod say: Deep Western Pacific trenches (6,380\u20139,530 m)"
+  - questionId: abyssal_trench_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: e20b20467ade4ce383aa3d5e7325995c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Abyssal Trench Amphipod. Which description matches our observations?"
+    choices:
+    - "Slender shrimp-like body with many legs and antennae."
+    - "Small, soft body with broad fins and a rounded head."
+    - "Small shrimp-like body with many legs."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Trench Amphipod say: Slender shrimp-like body with many legs and antennae."
+  - questionId: abyssal_trench_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: e20b20467ade4ce383aa3d5e7325995c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Abyssal Trench Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small crustaceans and scavenges food."
+    - "Eats small animals near the trench floor."
+    - "Scavenges organic material on the trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Trench Amphipod say: Hunts small crustaceans and scavenges food."
+  - questionId: abyssal_trench_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: e20b20467ade4ce383aa3d5e7325995c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Abyssal Trench Amphipod during our research?"
+    choices:
+    - "Long antennae help detect nearby food in complete darkness."
+    - "The body stays flexible instead of being heavily protected by hard bones."
+    - "The body looks delicate despite living under enormous pressure."
+    correctChoice: 0
+    explanation: "Our notes on the Abyssal Trench Amphipod say: Long antennae help detect nearby food in complete darkness."
+  - questionId: abyssal_trench_amphipod_001_camera
+    species: {fileID: 11400000, guid: e20b20467ade4ce383aa3d5e7325995c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Slender shrimp-like body with many legs and antennae. The habitat notes say: Deep Western Pacific trenches (6,380\u20139,530 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Abyssal Trench Amphipod. Slender shrimp-like body with many legs and antennae. Its recorded habitat is Deep Western Pacific trenches (6,380\u20139,530 m)."
+  - questionId: belyaev_s_snailfish_001_habitat
+    species: {fileID: 11400000, guid: 588a9b9645a74dfa9785130b5d1e118b, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Belyaev's Snailfish?"
+    choices:
+    - "Deep ocean trench (6,380\u20138,336 m)"
+    - "Deep ocean trench (7,000 to 9,900 meters)"
+    - "Deep ocean trench (7,600\u20139,530 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Belyaev's Snailfish say: Deep ocean trench (6,380\u20138,336 m)"
+  - questionId: belyaev_s_snailfish_001_characteristics
+    species: {fileID: 11400000, guid: 588a9b9645a74dfa9785130b5d1e118b, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Belyaev's Snailfish. Which description matches our observations?"
+    choices:
+    - "Small, soft body with broad fins and a rounded head."
+    - "Small shrimp-like body with many legs."
+    - "Small shell with two rounded halves."
+    correctChoice: 0
+    explanation: "Our notes on the Belyaev's Snailfish say: Small, soft body with broad fins and a rounded head."
+  - questionId: belyaev_s_snailfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 588a9b9645a74dfa9785130b5d1e118b, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Belyaev's Snailfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small animals near the trench floor."
+    - "Scavenges organic material on the trench floor."
+    - "Gets nutrients with help from bacteria living in its tissues."
+    correctChoice: 0
+    explanation: "Our notes on the Belyaev's Snailfish say: Eats small animals near the trench floor."
+  - questionId: belyaev_s_snailfish_001_interestingFact
+    species: {fileID: 11400000, guid: 588a9b9645a74dfa9785130b5d1e118b, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Belyaev's Snailfish during our research?"
+    choices:
+    - "The body stays flexible instead of being heavily protected by hard bones."
+    - "The body looks delicate despite living under enormous pressure."
+    - "Helpful bacteria provide nutrients when ordinary food is scarce."
+    correctChoice: 0
+    explanation: "Our notes on the Belyaev's Snailfish say: The body stays flexible instead of being heavily protected by hard bones."
+  - questionId: belyaev_s_snailfish_001_camera
+    species: {fileID: 11400000, guid: 588a9b9645a74dfa9785130b5d1e118b, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, soft body with broad fins and a rounded head. The habitat notes say: Deep ocean trench (6,380\u20138,336 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Belyaev's Snailfish. Small, soft body with broad fins and a rounded head. Its recorded habitat is Deep ocean trench (6,380\u20138,336 m)."
+  - questionId: deep_sea_amphipod_001_habitat
+    species: {fileID: 11400000, guid: 4ae4b5c784654d2aa48964c25b47d09f, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep Sea Amphipod?"
+    choices:
+    - "Deep ocean trench (7,000 to 9,900 meters)"
+    - "Deep ocean trench (7,600\u20139,530 m)"
+    - "Deep-sea floor (3,935\u20135,100 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep Sea Amphipod say: Deep ocean trench (7,000 to 9,900 meters)"
+  - questionId: deep_sea_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: 4ae4b5c784654d2aa48964c25b47d09f, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep Sea Amphipod. Which description matches our observations?"
+    choices:
+    - "Small shrimp-like body with many legs."
+    - "Small shell with two rounded halves."
+    - "Soft body, rounded head, tiny hidden eyes."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Sea Amphipod say: Small shrimp-like body with many legs."
+  - questionId: deep_sea_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: 4ae4b5c784654d2aa48964c25b47d09f, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep Sea Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Scavenges organic material on the trench floor."
+    - "Gets nutrients with help from bacteria living in its tissues."
+    - "Helps regulate small deep-sea animals."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Sea Amphipod say: Scavenges organic material on the trench floor."
+  - questionId: deep_sea_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: 4ae4b5c784654d2aa48964c25b47d09f, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep Sea Amphipod during our research?"
+    choices:
+    - "The body looks delicate despite living under enormous pressure."
+    - "Helpful bacteria provide nutrients when ordinary food is scarce."
+    - "Its face is difficult to see, but it is not truly faceless."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Sea Amphipod say: The body looks delicate despite living under enormous pressure."
+  - questionId: deep_sea_amphipod_001_camera
+    species: {fileID: 11400000, guid: 4ae4b5c784654d2aa48964c25b47d09f, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small shrimp-like body with many legs. The habitat notes say: Deep ocean trench (7,000 to 9,900 meters). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep Sea Amphipod. Small shrimp-like body with many legs. Its recorded habitat is Deep ocean trench (7,000 to 9,900 meters)."
+  - questionId: deep_trench_clam_001_habitat
+    species: {fileID: 11400000, guid: b9b94f63069d46b5b70cf22e6dc834a6, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Deep Trench Clam?"
+    choices:
+    - "Deep ocean trench (7,600\u20139,530 m)"
+    - "Deep-sea floor (3,935\u20135,100 m)"
+    - "Deep ocean (3,110\u20137,965 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Deep Trench Clam say: Deep ocean trench (7,600\u20139,530 m)"
+  - questionId: deep_trench_clam_001_characteristics
+    species: {fileID: 11400000, guid: b9b94f63069d46b5b70cf22e6dc834a6, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Deep Trench Clam. Which description matches our observations?"
+    choices:
+    - "Small shell with two rounded halves."
+    - "Soft body, rounded head, tiny hidden eyes."
+    - "Small body, short head, swollen snout, and tiny eyes."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Trench Clam say: Small shell with two rounded halves."
+  - questionId: deep_trench_clam_001_ecologicalRole
+    species: {fileID: 11400000, guid: b9b94f63069d46b5b70cf22e6dc834a6, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Deep Trench Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Gets nutrients with help from bacteria living in its tissues."
+    - "Helps regulate small deep-sea animals."
+    - "Hunts small animals in deep water."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Trench Clam say: Gets nutrients with help from bacteria living in its tissues."
+  - questionId: deep_trench_clam_001_interestingFact
+    species: {fileID: 11400000, guid: b9b94f63069d46b5b70cf22e6dc834a6, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Deep Trench Clam during our research?"
+    choices:
+    - "Helpful bacteria provide nutrients when ordinary food is scarce."
+    - "Its face is difficult to see, but it is not truly faceless."
+    - "The tiny eyes reflect how little useful light reaches the deep water."
+    correctChoice: 0
+    explanation: "Our notes on the Deep Trench Clam say: Helpful bacteria provide nutrients when ordinary food is scarce."
+  - questionId: deep_trench_clam_001_camera
+    species: {fileID: 11400000, guid: b9b94f63069d46b5b70cf22e6dc834a6, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small shell with two rounded halves. The habitat notes say: Deep ocean trench (7,600\u20139,530 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Deep Trench Clam. Small shell with two rounded halves. Its recorded habitat is Deep ocean trench (7,600\u20139,530 m)."
+  - questionId: faceless_cusk_001_habitat
+    species: {fileID: 11400000, guid: 0e5087d29f100c44aaeda23d39f39ca3, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Faceless Cusk?"
+    choices:
+    - "Deep-sea floor (3,935\u20135,100 m)"
+    - "Deep ocean (3,110\u20137,965 m)"
+    - "Deep ocean trench (10,897\u201310,929 m records)"
+    correctChoice: 0
+    explanation: "Our notes on the Faceless Cusk say: Deep-sea floor (3,935\u20135,100 m)"
+  - questionId: faceless_cusk_001_characteristics
+    species: {fileID: 11400000, guid: 0e5087d29f100c44aaeda23d39f39ca3, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Faceless Cusk. Which description matches our observations?"
+    choices:
+    - "Soft body, rounded head, tiny hidden eyes."
+    - "Small body, short head, swollen snout, and tiny eyes."
+    - "Shrimp-like body with many legs and a hard outer covering."
+    correctChoice: 0
+    explanation: "Our notes on the Faceless Cusk say: Soft body, rounded head, tiny hidden eyes."
+  - questionId: faceless_cusk_001_ecologicalRole
+    species: {fileID: 11400000, guid: 0e5087d29f100c44aaeda23d39f39ca3, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Faceless Cusk play in its ecosystem, according to our notes?"
+    choices:
+    - "Helps regulate small deep-sea animals."
+    - "Hunts small animals in deep water."
+    - "Scavenges dead animals and plant material."
+    correctChoice: 0
+    explanation: "Our notes on the Faceless Cusk say: Helps regulate small deep-sea animals."
+  - questionId: faceless_cusk_001_interestingFact
+    species: {fileID: 11400000, guid: 0e5087d29f100c44aaeda23d39f39ca3, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Faceless Cusk during our research?"
+    choices:
+    - "Its face is difficult to see, but it is not truly faceless."
+    - "The tiny eyes reflect how little useful light reaches the deep water."
+    - "Special digestive enzymes help break down tough plant material such as wood."
+    correctChoice: 0
+    explanation: "Our notes on the Faceless Cusk say: Its face is difficult to see, but it is not truly faceless."
+  - questionId: faceless_cusk_001_camera
+    species: {fileID: 11400000, guid: 0e5087d29f100c44aaeda23d39f39ca3, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Soft body, rounded head, tiny hidden eyes. The habitat notes say: Deep-sea floor (3,935\u20135,100 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Faceless Cusk. Soft body, rounded head, tiny hidden eyes. Its recorded habitat is Deep-sea floor (3,935\u20135,100 m)."
+  - questionId: galathea_cusk_eel_001_habitat
+    species: {fileID: 11400000, guid: 45daa8ab8755498a8995a3b2ede7df13, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Galathea Cusk-eel?"
+    choices:
+    - "Deep ocean (3,110\u20137,965 m)"
+    - "Deep ocean trench (10,897\u201310,929 m records)"
+    - "Deep ocean trench (7,190\u20137,250 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Galathea Cusk-eel say: Deep ocean (3,110\u20137,965 m)"
+  - questionId: galathea_cusk_eel_001_characteristics
+    species: {fileID: 11400000, guid: 45daa8ab8755498a8995a3b2ede7df13, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Galathea Cusk-eel. Which description matches our observations?"
+    choices:
+    - "Small body, short head, swollen snout, and tiny eyes."
+    - "Shrimp-like body with many legs and a hard outer covering."
+    - "Small, delicate body with many legs and long antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Galathea Cusk-eel say: Small body, short head, swollen snout, and tiny eyes."
+  - questionId: galathea_cusk_eel_001_ecologicalRole
+    species: {fileID: 11400000, guid: 45daa8ab8755498a8995a3b2ede7df13, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Galathea Cusk-eel play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small animals in deep water."
+    - "Scavenges dead animals and plant material."
+    - "Scavenges small food particles."
+    correctChoice: 0
+    explanation: "Our notes on the Galathea Cusk-eel say: Hunts small animals in deep water."
+  - questionId: galathea_cusk_eel_001_interestingFact
+    species: {fileID: 11400000, guid: 45daa8ab8755498a8995a3b2ede7df13, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Galathea Cusk-eel during our research?"
+    choices:
+    - "The tiny eyes reflect how little useful light reaches the deep water."
+    - "Special digestive enzymes help break down tough plant material such as wood."
+    - "The delicate-looking body can still survive extreme water pressure."
+    correctChoice: 0
+    explanation: "Our notes on the Galathea Cusk-eel say: The tiny eyes reflect how little useful light reaches the deep water."
+  - questionId: galathea_cusk_eel_001_camera
+    species: {fileID: 11400000, guid: 45daa8ab8755498a8995a3b2ede7df13, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small body, short head, swollen snout, and tiny eyes. The habitat notes say: Deep ocean (3,110\u20137,965 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Galathea Cusk-eel. Small body, short head, swollen snout, and tiny eyes. Its recorded habitat is Deep ocean (3,110\u20137,965 m)."
+  - questionId: giant_hadal_amphipod_001_habitat
+    species: {fileID: 11400000, guid: 18603ace3b0b4f2bac7dcea31930412a, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Giant Hadal Amphipod?"
+    choices:
+    - "Deep ocean trench (10,897\u201310,929 m records)"
+    - "Deep ocean trench (7,190\u20137,250 m)"
+    - "Deep ocean trench (7,335\u20137,340 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Giant Hadal Amphipod say: Deep ocean trench (10,897\u201310,929 m records)"
+  - questionId: giant_hadal_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: 18603ace3b0b4f2bac7dcea31930412a, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Giant Hadal Amphipod. Which description matches our observations?"
+    choices:
+    - "Shrimp-like body with many legs and a hard outer covering."
+    - "Small, delicate body with many legs and long antennae."
+    - "Small, narrow body covered with fine spines."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Hadal Amphipod say: Shrimp-like body with many legs and a hard outer covering."
+  - questionId: giant_hadal_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: 18603ace3b0b4f2bac7dcea31930412a, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Giant Hadal Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Scavenges dead animals and plant material."
+    - "Scavenges small food particles."
+    - "Feeds on organic material in deep sediment."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Hadal Amphipod say: Scavenges dead animals and plant material."
+  - questionId: giant_hadal_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: 18603ace3b0b4f2bac7dcea31930412a, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Giant Hadal Amphipod during our research?"
+    choices:
+    - "Special digestive enzymes help break down tough plant material such as wood."
+    - "The delicate-looking body can still survive extreme water pressure."
+    - "The unusual narrow shape makes it look very different from common round sea urchins."
+    correctChoice: 0
+    explanation: "Our notes on the Giant Hadal Amphipod say: Special digestive enzymes help break down tough plant material such as wood."
+  - questionId: giant_hadal_amphipod_001_camera
+    species: {fileID: 11400000, guid: 18603ace3b0b4f2bac7dcea31930412a, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Shrimp-like body with many legs and a hard outer covering. The habitat notes say: Deep ocean trench (10,897\u201310,929 m records). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Giant Hadal Amphipod. Shrimp-like body with many legs and a hard outer covering. Its recorded habitat is Deep ocean trench (10,897\u201310,929 m records)."
+  - questionId: glass_like_lepechinella_001_habitat
+    species: {fileID: 11400000, guid: 36c4157870674d51901ca4ea558075cb, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Glass-like Lepechinella?"
+    choices:
+    - "Deep ocean trench (7,190\u20137,250 m)"
+    - "Deep ocean trench (7,335\u20137,340 m)"
+    - "Deep ocean trenches (7,703\u20139,316 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Glass-like Lepechinella say: Deep ocean trench (7,190\u20137,250 m)"
+  - questionId: glass_like_lepechinella_001_characteristics
+    species: {fileID: 11400000, guid: 36c4157870674d51901ca4ea558075cb, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Glass-like Lepechinella. Which description matches our observations?"
+    choices:
+    - "Small, delicate body with many legs and long antennae."
+    - "Small, narrow body covered with fine spines."
+    - "Small body with long legs and antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Glass-like Lepechinella say: Small, delicate body with many legs and long antennae."
+  - questionId: glass_like_lepechinella_001_ecologicalRole
+    species: {fileID: 11400000, guid: 36c4157870674d51901ca4ea558075cb, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Glass-like Lepechinella play in its ecosystem, according to our notes?"
+    choices:
+    - "Scavenges small food particles."
+    - "Feeds on organic material in deep sediment."
+    - "Hunts small crustaceans and other prey."
+    correctChoice: 0
+    explanation: "Our notes on the Glass-like Lepechinella say: Scavenges small food particles."
+  - questionId: glass_like_lepechinella_001_interestingFact
+    species: {fileID: 11400000, guid: 36c4157870674d51901ca4ea558075cb, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Glass-like Lepechinella during our research?"
+    choices:
+    - "The delicate-looking body can still survive extreme water pressure."
+    - "The unusual narrow shape makes it look very different from common round sea urchins."
+    - "Strong legs help it move quickly while searching for food."
+    correctChoice: 0
+    explanation: "Our notes on the Glass-like Lepechinella say: The delicate-looking body can still survive extreme water pressure."
+  - questionId: glass_like_lepechinella_001_camera
+    species: {fileID: 11400000, guid: 36c4157870674d51901ca4ea558075cb, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, delicate body with many legs and long antennae. The habitat notes say: Deep ocean trench (7,190\u20137,250 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Glass-like Lepechinella. Small, delicate body with many legs and long antennae. Its recorded habitat is Deep ocean trench (7,190\u20137,250 m)."
+  - questionId: hadal_heart_urchin_001_habitat
+    species: {fileID: 11400000, guid: 35bb742046824253b263fdef243b13d5, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Hadal Heart Urchin?"
+    choices:
+    - "Deep ocean trench (7,335\u20137,340 m)"
+    - "Deep ocean trenches (7,703\u20139,316 m)"
+    - "Deep ocean trenches (7,190\u20138,942 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Hadal Heart Urchin say: Deep ocean trench (7,335\u20137,340 m)"
+  - questionId: hadal_heart_urchin_001_characteristics
+    species: {fileID: 11400000, guid: 35bb742046824253b263fdef243b13d5, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Hadal Heart Urchin. Which description matches our observations?"
+    choices:
+    - "Small, narrow body covered with fine spines."
+    - "Small body with long legs and antennae."
+    - "Compact body with many legs and long antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Hadal Heart Urchin say: Small, narrow body covered with fine spines."
+  - questionId: hadal_heart_urchin_001_ecologicalRole
+    species: {fileID: 11400000, guid: 35bb742046824253b263fdef243b13d5, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Hadal Heart Urchin play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on organic material in deep sediment."
+    - "Hunts small crustaceans and other prey."
+    - "Feeds on small animals and dead material."
+    correctChoice: 0
+    explanation: "Our notes on the Hadal Heart Urchin say: Feeds on organic material in deep sediment."
+  - questionId: hadal_heart_urchin_001_interestingFact
+    species: {fileID: 11400000, guid: 35bb742046824253b263fdef243b13d5, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Hadal Heart Urchin during our research?"
+    choices:
+    - "The unusual narrow shape makes it look very different from common round sea urchins."
+    - "Strong legs help it move quickly while searching for food."
+    - "A larger body gives more room for strong muscles and feeding parts."
+    correctChoice: 0
+    explanation: "Our notes on the Hadal Heart Urchin say: The unusual narrow shape makes it look very different from common round sea urchins."
+  - questionId: hadal_heart_urchin_001_camera
+    species: {fileID: 11400000, guid: 35bb742046824253b263fdef243b13d5, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, narrow body covered with fine spines. The habitat notes say: Deep ocean trench (7,335\u20137,340 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Hadal Heart Urchin. Small, narrow body covered with fine spines. Its recorded habitat is Deep ocean trench (7,335\u20137,340 m)."
+  - questionId: jamieson_s_amphipod_001_habitat
+    species: {fileID: 11400000, guid: 8183743d335d4a3e8425cc1000363ad2, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Jamieson's Amphipod?"
+    choices:
+    - "Deep ocean trenches (7,703\u20139,316 m)"
+    - "Deep ocean trenches (7,190\u20138,942 m)"
+    - "Deep ocean trench (6,475\u20137,370 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Jamieson's Amphipod say: Deep ocean trenches (7,703\u20139,316 m)"
+  - questionId: jamieson_s_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: 8183743d335d4a3e8425cc1000363ad2, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Jamieson's Amphipod. Which description matches our observations?"
+    choices:
+    - "Small body with long legs and antennae."
+    - "Compact body with many legs and long antennae."
+    - "Very long, narrow body with small tube feet."
+    correctChoice: 0
+    explanation: "Our notes on the Jamieson's Amphipod say: Small body with long legs and antennae."
+  - questionId: jamieson_s_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: 8183743d335d4a3e8425cc1000363ad2, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Jamieson's Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Hunts small crustaceans and other prey."
+    - "Feeds on small animals and dead material."
+    - "Feeds on organic material in deep sediment."
+    correctChoice: 0
+    explanation: "Our notes on the Jamieson's Amphipod say: Hunts small crustaceans and other prey."
+  - questionId: jamieson_s_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: 8183743d335d4a3e8425cc1000363ad2, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Jamieson's Amphipod during our research?"
+    choices:
+    - "Strong legs help it move quickly while searching for food."
+    - "A larger body gives more room for strong muscles and feeding parts."
+    - "The long body can bend easily while moving through soft sediment."
+    correctChoice: 0
+    explanation: "Our notes on the Jamieson's Amphipod say: Strong legs help it move quickly while searching for food."
+  - questionId: jamieson_s_amphipod_001_camera
+    species: {fileID: 11400000, guid: 8183743d335d4a3e8425cc1000363ad2, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small body with long legs and antennae. The habitat notes say: Deep ocean trenches (7,703\u20139,316 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Jamieson's Amphipod. Small body with long legs and antennae. Its recorded habitat is Deep ocean trenches (7,703\u20139,316 m)."
+  - questionId: large_princaxelia_001_habitat
+    species: {fileID: 11400000, guid: 743a1b977e63452d874c34d9b52ba03b, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Large Princaxelia?"
+    choices:
+    - "Deep ocean trenches (7,190\u20138,942 m)"
+    - "Deep ocean trench (6,475\u20137,370 m)"
+    - "Deep ocean trench (6,445\u20137,170 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Large Princaxelia say: Deep ocean trenches (7,190\u20138,942 m)"
+  - questionId: large_princaxelia_001_characteristics
+    species: {fileID: 11400000, guid: 743a1b977e63452d874c34d9b52ba03b, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Large Princaxelia. Which description matches our observations?"
+    choices:
+    - "Compact body with many legs and long antennae."
+    - "Very long, narrow body with small tube feet."
+    - "Long stalk and feathery feeding arms."
+    correctChoice: 0
+    explanation: "Our notes on the Large Princaxelia say: Compact body with many legs and long antennae."
+  - questionId: large_princaxelia_001_ecologicalRole
+    species: {fileID: 11400000, guid: 743a1b977e63452d874c34d9b52ba03b, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Large Princaxelia play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small animals and dead material."
+    - "Feeds on organic material in deep sediment."
+    - "Filters tiny particles from the surrounding water."
+    correctChoice: 0
+    explanation: "Our notes on the Large Princaxelia say: Feeds on small animals and dead material."
+  - questionId: large_princaxelia_001_interestingFact
+    species: {fileID: 11400000, guid: 743a1b977e63452d874c34d9b52ba03b, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Large Princaxelia during our research?"
+    choices:
+    - "A larger body gives more room for strong muscles and feeding parts."
+    - "The long body can bend easily while moving through soft sediment."
+    - "The stalk is made of many small sections that work together like a long underwater stem."
+    correctChoice: 0
+    explanation: "Our notes on the Large Princaxelia say: A larger body gives more room for strong muscles and feeding parts."
+  - questionId: large_princaxelia_001_camera
+    species: {fileID: 11400000, guid: 743a1b977e63452d874c34d9b52ba03b, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Compact body with many legs and long antennae. The habitat notes say: Deep ocean trenches (7,190\u20138,942 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Large Princaxelia. Compact body with many legs and long antennae. Its recorded habitat is Deep ocean trenches (7,190\u20138,942 m)."
+  - questionId: long_bodied_trench_sea_cucumber_001_habitat
+    species: {fileID: 11400000, guid: e9500dbecf134791be33573d3db8236c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Long-bodied Trench Sea Cucumber?"
+    choices:
+    - "Deep ocean trench (6,475\u20137,370 m)"
+    - "Deep ocean trench (6,445\u20137,170 m)"
+    - "Deep ocean trench (6,198\u20138,178 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Long-bodied Trench Sea Cucumber say: Deep ocean trench (6,475\u20137,370 m)"
+  - questionId: long_bodied_trench_sea_cucumber_001_characteristics
+    species: {fileID: 11400000, guid: e9500dbecf134791be33573d3db8236c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Long-bodied Trench Sea Cucumber. Which description matches our observations?"
+    choices:
+    - "Very long, narrow body with small tube feet."
+    - "Long stalk and feathery feeding arms."
+    - "Small, soft body, rounded head, and broad fins."
+    correctChoice: 0
+    explanation: "Our notes on the Long-bodied Trench Sea Cucumber say: Very long, narrow body with small tube feet."
+  - questionId: long_bodied_trench_sea_cucumber_001_ecologicalRole
+    species: {fileID: 11400000, guid: e9500dbecf134791be33573d3db8236c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Long-bodied Trench Sea Cucumber play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on organic material in deep sediment."
+    - "Filters tiny particles from the surrounding water."
+    - "Eats small crustaceans and other tiny animals."
+    correctChoice: 0
+    explanation: "Our notes on the Long-bodied Trench Sea Cucumber say: Feeds on organic material in deep sediment."
+  - questionId: long_bodied_trench_sea_cucumber_001_interestingFact
+    species: {fileID: 11400000, guid: e9500dbecf134791be33573d3db8236c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Long-bodied Trench Sea Cucumber during our research?"
+    choices:
+    - "The long body can bend easily while moving through soft sediment."
+    - "The stalk is made of many small sections that work together like a long underwater stem."
+    - "Females produce unusually large eggs for such a small fish."
+    correctChoice: 0
+    explanation: "Our notes on the Long-bodied Trench Sea Cucumber say: The long body can bend easily while moving through soft sediment."
+  - questionId: long_bodied_trench_sea_cucumber_001_camera
+    species: {fileID: 11400000, guid: e9500dbecf134791be33573d3db8236c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Very long, narrow body with small tube feet. The habitat notes say: Deep ocean trench (6,475\u20137,370 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Long-bodied Trench Sea Cucumber. Very long, narrow body with small tube feet. Its recorded habitat is Deep ocean trench (6,475\u20137,370 m)."
+  - questionId: long_stemmed_sea_lily_001_habitat
+    species: {fileID: 11400000, guid: bde8fe5b34004ed8886747756098d442, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Long-stemmed Sea Lily?"
+    choices:
+    - "Deep ocean trench (6,445\u20137,170 m)"
+    - "Deep ocean trench (6,198\u20138,178 m)"
+    - "Deep ocean trench (up to about 8,740 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Long-stemmed Sea Lily say: Deep ocean trench (6,445\u20137,170 m)"
+  - questionId: long_stemmed_sea_lily_001_characteristics
+    species: {fileID: 11400000, guid: bde8fe5b34004ed8886747756098d442, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Long-stemmed Sea Lily. Which description matches our observations?"
+    choices:
+    - "Long stalk and feathery feeding arms."
+    - "Small, soft body, rounded head, and broad fins."
+    - "Small, smooth shell with two hinged halves."
+    correctChoice: 0
+    explanation: "Our notes on the Long-stemmed Sea Lily say: Long stalk and feathery feeding arms."
+  - questionId: long_stemmed_sea_lily_001_ecologicalRole
+    species: {fileID: 11400000, guid: bde8fe5b34004ed8886747756098d442, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Long-stemmed Sea Lily play in its ecosystem, according to our notes?"
+    choices:
+    - "Filters tiny particles from the surrounding water."
+    - "Eats small crustaceans and other tiny animals."
+    - "Feeds on tiny particles and organic material."
+    correctChoice: 0
+    explanation: "Our notes on the Long-stemmed Sea Lily say: Filters tiny particles from the surrounding water."
+  - questionId: long_stemmed_sea_lily_001_interestingFact
+    species: {fileID: 11400000, guid: bde8fe5b34004ed8886747756098d442, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Long-stemmed Sea Lily during our research?"
+    choices:
+    - "The stalk is made of many small sections that work together like a long underwater stem."
+    - "Females produce unusually large eggs for such a small fish."
+    - "The two shell halves can close tightly around the soft body."
+    correctChoice: 0
+    explanation: "Our notes on the Long-stemmed Sea Lily say: The stalk is made of many small sections that work together like a long underwater stem."
+  - questionId: long_stemmed_sea_lily_001_camera
+    species: {fileID: 11400000, guid: bde8fe5b34004ed8886747756098d442, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long stalk and feathery feeding arms. The habitat notes say: Deep ocean trench (6,445\u20137,170 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Long-stemmed Sea Lily. Long stalk and feathery feeding arms. Its recorded habitat is Deep ocean trench (6,445\u20137,170 m)."
+  - questionId: mariana_snailfish_001_habitat
+    species: {fileID: 11400000, guid: 76fd382906a34e5f99abc6a13991e47b, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Mariana Snailfish?"
+    choices:
+    - "Deep ocean trench (6,198\u20138,178 m)"
+    - "Deep ocean trench (up to about 8,740 m)"
+    - "Deep ocean trench (6,156\u20137,587 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Mariana Snailfish say: Deep ocean trench (6,198\u20138,178 m)"
+  - questionId: mariana_snailfish_001_characteristics
+    species: {fileID: 11400000, guid: 76fd382906a34e5f99abc6a13991e47b, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Mariana Snailfish. Which description matches our observations?"
+    choices:
+    - "Small, soft body, rounded head, and broad fins."
+    - "Small, smooth shell with two hinged halves."
+    - "Soft body, rounded head, and broad pectoral fins."
+    correctChoice: 0
+    explanation: "Our notes on the Mariana Snailfish say: Small, soft body, rounded head, and broad fins."
+  - questionId: mariana_snailfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 76fd382906a34e5f99abc6a13991e47b, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Mariana Snailfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats small crustaceans and other tiny animals."
+    - "Feeds on tiny particles and organic material."
+    - "Feeds on small animals near the trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Mariana Snailfish say: Eats small crustaceans and other tiny animals."
+  - questionId: mariana_snailfish_001_interestingFact
+    species: {fileID: 11400000, guid: 76fd382906a34e5f99abc6a13991e47b, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Mariana Snailfish during our research?"
+    choices:
+    - "Females produce unusually large eggs for such a small fish."
+    - "The two shell halves can close tightly around the soft body."
+    - "A soft, flexible body helps the fish survive extreme water pressure."
+    correctChoice: 0
+    explanation: "Our notes on the Mariana Snailfish say: Females produce unusually large eggs for such a small fish."
+  - questionId: mariana_snailfish_001_camera
+    species: {fileID: 11400000, guid: 76fd382906a34e5f99abc6a13991e47b, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, soft body, rounded head, and broad fins. The habitat notes say: Deep ocean trench (6,198\u20138,178 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Mariana Snailfish. Small, soft body, rounded head, and broad fins. Its recorded habitat is Deep ocean trench (6,198\u20138,178 m)."
+  - questionId: median_hadal_clam_001_habitat
+    species: {fileID: 11400000, guid: b27c0b07a2924372bfc1416caab8ac9c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Median Hadal Clam?"
+    choices:
+    - "Deep ocean trench (up to about 8,740 m)"
+    - "Deep ocean trench (6,156\u20137,587 m)"
+    - "Deep ocean trench (7,970\u20139,735 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Median Hadal Clam say: Deep ocean trench (up to about 8,740 m)"
+  - questionId: median_hadal_clam_001_characteristics
+    species: {fileID: 11400000, guid: b27c0b07a2924372bfc1416caab8ac9c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Median Hadal Clam. Which description matches our observations?"
+    choices:
+    - "Small, smooth shell with two hinged halves."
+    - "Soft body, rounded head, and broad pectoral fins."
+    - "Long stalk with feathery arms for collecting food."
+    correctChoice: 0
+    explanation: "Our notes on the Median Hadal Clam say: Small, smooth shell with two hinged halves."
+  - questionId: median_hadal_clam_001_ecologicalRole
+    species: {fileID: 11400000, guid: b27c0b07a2924372bfc1416caab8ac9c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Median Hadal Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on tiny particles and organic material."
+    - "Feeds on small animals near the trench floor."
+    - "Filters tiny food particles from the water."
+    correctChoice: 0
+    explanation: "Our notes on the Median Hadal Clam say: Feeds on tiny particles and organic material."
+  - questionId: median_hadal_clam_001_interestingFact
+    species: {fileID: 11400000, guid: b27c0b07a2924372bfc1416caab8ac9c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Median Hadal Clam during our research?"
+    choices:
+    - "The two shell halves can close tightly around the soft body."
+    - "A soft, flexible body helps the fish survive extreme water pressure."
+    - "The long stalk raises the feeding arms above the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Median Hadal Clam say: The two shell halves can close tightly around the soft body."
+  - questionId: median_hadal_clam_001_camera
+    species: {fileID: 11400000, guid: b27c0b07a2924372bfc1416caab8ac9c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, smooth shell with two hinged halves. The habitat notes say: Deep ocean trench (up to about 8,740 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Median Hadal Clam. Small, smooth shell with two hinged halves. Its recorded habitat is Deep ocean trench (up to about 8,740 m)."
+  - questionId: northwest_pacific_snailfish_001_habitat
+    species: {fileID: 11400000, guid: 1061b72083e245e38383ab9ab49032f1, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Northwest Pacific Snailfish?"
+    choices:
+    - "Deep ocean trench (6,156\u20137,587 m)"
+    - "Deep ocean trench (7,970\u20139,735 m)"
+    - "Deep ocean trench (7,000\u20138,720 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Northwest Pacific Snailfish say: Deep ocean trench (6,156\u20137,587 m)"
+  - questionId: northwest_pacific_snailfish_001_characteristics
+    species: {fileID: 11400000, guid: 1061b72083e245e38383ab9ab49032f1, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Northwest Pacific Snailfish. Which description matches our observations?"
+    choices:
+    - "Soft body, rounded head, and broad pectoral fins."
+    - "Long stalk with feathery arms for collecting food."
+    - "Flat body with short arms around the center."
+    correctChoice: 0
+    explanation: "Our notes on the Northwest Pacific Snailfish say: Soft body, rounded head, and broad pectoral fins."
+  - questionId: northwest_pacific_snailfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: 1061b72083e245e38383ab9ab49032f1, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Northwest Pacific Snailfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small animals near the trench floor."
+    - "Filters tiny food particles from the water."
+    - "Processes organic material in deep sediment."
+    correctChoice: 0
+    explanation: "Our notes on the Northwest Pacific Snailfish say: Feeds on small animals near the trench floor."
+  - questionId: northwest_pacific_snailfish_001_interestingFact
+    species: {fileID: 11400000, guid: 1061b72083e245e38383ab9ab49032f1, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Northwest Pacific Snailfish during our research?"
+    choices:
+    - "A soft, flexible body helps the fish survive extreme water pressure."
+    - "The long stalk raises the feeding arms above the seafloor."
+    - "The flat body helps it move across soft mud without sinking deeply."
+    correctChoice: 0
+    explanation: "Our notes on the Northwest Pacific Snailfish say: A soft, flexible body helps the fish survive extreme water pressure."
+  - questionId: northwest_pacific_snailfish_001_camera
+    species: {fileID: 11400000, guid: 1061b72083e245e38383ab9ab49032f1, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Soft body, rounded head, and broad pectoral fins. The habitat notes say: Deep ocean trench (6,156\u20137,587 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Northwest Pacific Snailfish. Soft body, rounded head, and broad pectoral fins. Its recorded habitat is Deep ocean trench (6,156\u20137,587 m)."
+  - questionId: palau_trench_sea_lily_001_habitat
+    species: {fileID: 11400000, guid: 04f39586044b4dc3a8e961a6b1f56fec, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Palau Trench Sea Lily?"
+    choices:
+    - "Deep ocean trench (7,970\u20139,735 m)"
+    - "Deep ocean trench (7,000\u20138,720 m)"
+    - "Deep ocean trench (9,790 m record)"
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Sea Lily say: Deep ocean trench (7,970\u20139,735 m)"
+  - questionId: palau_trench_sea_lily_001_characteristics
+    species: {fileID: 11400000, guid: 04f39586044b4dc3a8e961a6b1f56fec, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Palau Trench Sea Lily. Which description matches our observations?"
+    choices:
+    - "Long stalk with feathery arms for collecting food."
+    - "Flat body with short arms around the center."
+    - "Soft gray body with tube feet and feeding tentacles."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Sea Lily say: Long stalk with feathery arms for collecting food."
+  - questionId: palau_trench_sea_lily_001_ecologicalRole
+    species: {fileID: 11400000, guid: 04f39586044b4dc3a8e961a6b1f56fec, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Palau Trench Sea Lily play in its ecosystem, according to our notes?"
+    choices:
+    - "Filters tiny food particles from the water."
+    - "Processes organic material in deep sediment."
+    - "Collects food particles from the trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Sea Lily say: Filters tiny food particles from the water."
+  - questionId: palau_trench_sea_lily_001_interestingFact
+    species: {fileID: 11400000, guid: 04f39586044b4dc3a8e961a6b1f56fec, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Palau Trench Sea Lily during our research?"
+    choices:
+    - "The long stalk raises the feeding arms above the seafloor."
+    - "The flat body helps it move across soft mud without sinking deeply."
+    - "Tube feet help it crawl across the soft trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Sea Lily say: The long stalk raises the feeding arms above the seafloor."
+  - questionId: palau_trench_sea_lily_001_camera
+    species: {fileID: 11400000, guid: 04f39586044b4dc3a8e961a6b1f56fec, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Long stalk with feathery arms for collecting food. The habitat notes say: Deep ocean trench (7,970\u20139,735 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Palau Trench Sea Lily. Long stalk with feathery arms for collecting food. Its recorded habitat is Deep ocean trench (7,970\u20139,735 m)."
+  - questionId: palau_trench_starfish_001_habitat
+    species: {fileID: 11400000, guid: b139b45827be41ad9b4f198e5fbb8d88, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Palau Trench Starfish?"
+    choices:
+    - "Deep ocean trench (7,000\u20138,720 m)"
+    - "Deep ocean trench (9,790 m record)"
+    - "Deep ocean trenches (6,580\u20138,480 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Starfish say: Deep ocean trench (7,000\u20138,720 m)"
+  - questionId: palau_trench_starfish_001_characteristics
+    species: {fileID: 11400000, guid: b139b45827be41ad9b4f198e5fbb8d88, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Palau Trench Starfish. Which description matches our observations?"
+    choices:
+    - "Flat body with short arms around the center."
+    - "Soft gray body with tube feet and feeding tentacles."
+    - "Small, flattened body with many legs and long antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Starfish say: Flat body with short arms around the center."
+  - questionId: palau_trench_starfish_001_ecologicalRole
+    species: {fileID: 11400000, guid: b139b45827be41ad9b4f198e5fbb8d88, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Palau Trench Starfish play in its ecosystem, according to our notes?"
+    choices:
+    - "Processes organic material in deep sediment."
+    - "Collects food particles from the trench floor."
+    - "Scavenges food that reaches the trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Starfish say: Processes organic material in deep sediment."
+  - questionId: palau_trench_starfish_001_interestingFact
+    species: {fileID: 11400000, guid: b139b45827be41ad9b4f198e5fbb8d88, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Palau Trench Starfish during our research?"
+    choices:
+    - "The flat body helps it move across soft mud without sinking deeply."
+    - "Tube feet help it crawl across the soft trench floor."
+    - "Very small eyes are enough because almost no sunlight reaches these depths."
+    correctChoice: 0
+    explanation: "Our notes on the Palau Trench Starfish say: The flat body helps it move across soft mud without sinking deeply."
+  - questionId: palau_trench_starfish_001_camera
+    species: {fileID: 11400000, guid: b139b45827be41ad9b4f198e5fbb8d88, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Flat body with short arms around the center. The habitat notes say: Deep ocean trench (7,000\u20138,720 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Palau Trench Starfish. Flat body with short arms around the center. Its recorded habitat is Deep ocean trench (7,000\u20138,720 m)."
+  - questionId: philippine_trench_sea_cucumber_001_habitat
+    species: {fileID: 11400000, guid: 6532645741ec4fc3a954d37c066817e9, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Philippine Trench Sea Cucumber?"
+    choices:
+    - "Deep ocean trench (9,790 m record)"
+    - "Deep ocean trenches (6,580\u20138,480 m)"
+    - "Deep Sea Floor(4,850\u20137,000 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Trench Sea Cucumber say: Deep ocean trench (9,790 m record)"
+  - questionId: philippine_trench_sea_cucumber_001_characteristics
+    species: {fileID: 11400000, guid: 6532645741ec4fc3a954d37c066817e9, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Philippine Trench Sea Cucumber. Which description matches our observations?"
+    choices:
+    - "Soft gray body with tube feet and feeding tentacles."
+    - "Small, flattened body with many legs and long antennae."
+    - "Pure white, large, and shrimp-like body with many legs."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Trench Sea Cucumber say: Soft gray body with tube feet and feeding tentacles."
+  - questionId: philippine_trench_sea_cucumber_001_ecologicalRole
+    species: {fileID: 11400000, guid: 6532645741ec4fc3a954d37c066817e9, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Philippine Trench Sea Cucumber play in its ecosystem, according to our notes?"
+    choices:
+    - "Collects food particles from the trench floor."
+    - "Scavenges food that reaches the trench floor."
+    - "Eats dead animals and helps clean the ocean floor."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Trench Sea Cucumber say: Collects food particles from the trench floor."
+  - questionId: philippine_trench_sea_cucumber_001_interestingFact
+    species: {fileID: 11400000, guid: 6532645741ec4fc3a954d37c066817e9, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Philippine Trench Sea Cucumber during our research?"
+    choices:
+    - "Tube feet help it crawl across the soft trench floor."
+    - "Very small eyes are enough because almost no sunlight reaches these depths."
+    - "One of the largest known amphipods, growing up to about 34 cm long."
+    correctChoice: 0
+    explanation: "Our notes on the Philippine Trench Sea Cucumber say: Tube feet help it crawl across the soft trench floor."
+  - questionId: philippine_trench_sea_cucumber_001_camera
+    species: {fileID: 11400000, guid: 6532645741ec4fc3a954d37c066817e9, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Soft gray body with tube feet and feeding tentacles. The habitat notes say: Deep ocean trench (9,790 m record). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Philippine Trench Sea Cucumber. Soft gray body with tube feet and feeding tentacles. Its recorded habitat is Deep ocean trench (9,790 m record)."
+  - questionId: small_eyed_hadal_amphipod_001_habitat
+    species: {fileID: 11400000, guid: e063f707303144f893a3191a6a084965, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Small-eyed Hadal Amphipod?"
+    choices:
+    - "Deep ocean trenches (6,580\u20138,480 m)"
+    - "Deep Sea Floor(4,850\u20137,000 m)"
+    - "Deep ocean trench (about 8,000\u20139,583 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Small-eyed Hadal Amphipod say: Deep ocean trenches (6,580\u20138,480 m)"
+  - questionId: small_eyed_hadal_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: e063f707303144f893a3191a6a084965, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Small-eyed Hadal Amphipod. Which description matches our observations?"
+    choices:
+    - "Small, flattened body with many legs and long antennae."
+    - "Pure white, large, and shrimp-like body with many legs."
+    - "Very small, thin shell with two matching halves."
+    correctChoice: 0
+    explanation: "Our notes on the Small-eyed Hadal Amphipod say: Small, flattened body with many legs and long antennae."
+  - questionId: small_eyed_hadal_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: e063f707303144f893a3191a6a084965, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Small-eyed Hadal Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Scavenges food that reaches the trench floor."
+    - "Eats dead animals and helps clean the ocean floor."
+    - "Processes tiny food particles in deep sediment."
+    correctChoice: 0
+    explanation: "Our notes on the Small-eyed Hadal Amphipod say: Scavenges food that reaches the trench floor."
+  - questionId: small_eyed_hadal_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: e063f707303144f893a3191a6a084965, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Small-eyed Hadal Amphipod during our research?"
+    choices:
+    - "Very small eyes are enough because almost no sunlight reaches these depths."
+    - "One of the largest known amphipods, growing up to about 34 cm long."
+    - "The small shell fits well in the fine mud found deep inside trenches."
+    correctChoice: 0
+    explanation: "Our notes on the Small-eyed Hadal Amphipod say: Very small eyes are enough because almost no sunlight reaches these depths."
+  - questionId: small_eyed_hadal_amphipod_001_camera
+    species: {fileID: 11400000, guid: e063f707303144f893a3191a6a084965, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, flattened body with many legs and long antennae. The habitat notes say: Deep ocean trenches (6,580\u20138,480 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Small-eyed Hadal Amphipod. Small, flattened body with many legs and long antennae. Its recorded habitat is Deep ocean trenches (6,580\u20138,480 m)."
+  - questionId: supergiant_amphipod_001_habitat
+    species: {fileID: 11400000, guid: bc416479a5284d42a58a76393436f563, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Supergiant Amphipod?"
+    choices:
+    - "Deep Sea Floor(4,850\u20137,000 m)"
+    - "Deep ocean trench (about 8,000\u20139,583 m)"
+    - "Deep ocean trench (6,475\u20138,015 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Supergiant Amphipod say: Deep Sea Floor(4,850\u20137,000 m)"
+  - questionId: supergiant_amphipod_001_characteristics
+    species: {fileID: 11400000, guid: bc416479a5284d42a58a76393436f563, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Supergiant Amphipod. Which description matches our observations?"
+    choices:
+    - "Pure white, large, and shrimp-like body with many legs."
+    - "Very small, thin shell with two matching halves."
+    - "Small, flattened body with protective plates."
+    correctChoice: 0
+    explanation: "Our notes on the Supergiant Amphipod say: Pure white, large, and shrimp-like body with many legs."
+  - questionId: supergiant_amphipod_001_ecologicalRole
+    species: {fileID: 11400000, guid: bc416479a5284d42a58a76393436f563, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Supergiant Amphipod play in its ecosystem, according to our notes?"
+    choices:
+    - "Eats dead animals and helps clean the ocean floor."
+    - "Processes tiny food particles in deep sediment."
+    - "Feeds on small animals and organic material."
+    correctChoice: 0
+    explanation: "Our notes on the Supergiant Amphipod say: Eats dead animals and helps clean the ocean floor."
+  - questionId: supergiant_amphipod_001_interestingFact
+    species: {fileID: 11400000, guid: bc416479a5284d42a58a76393436f563, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Supergiant Amphipod during our research?"
+    choices:
+    - "One of the largest known amphipods, growing up to about 34 cm long."
+    - "The small shell fits well in the fine mud found deep inside trenches."
+    - "Hard body plates provide extra protection while moving over the seafloor."
+    correctChoice: 0
+    explanation: "Our notes on the Supergiant Amphipod say: One of the largest known amphipods, growing up to about 34 cm long."
+  - questionId: supergiant_amphipod_001_camera
+    species: {fileID: 11400000, guid: bc416479a5284d42a58a76393436f563, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Pure white, large, and shrimp-like body with many legs. The habitat notes say: Deep Sea Floor(4,850\u20137,000 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Supergiant Amphipod. Pure white, large, and shrimp-like body with many legs. Its recorded habitat is Deep Sea Floor(4,850\u20137,000 m)."
+  - questionId: ultraabyssal_clam_001_habitat
+    species: {fileID: 11400000, guid: 53b8e67504174f39b8bada7379f8457a, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Ultraabyssal Clam?"
+    choices:
+    - "Deep ocean trench (about 8,000\u20139,583 m)"
+    - "Deep ocean trench (6,475\u20138,015 m)"
+    - "Deep Western Pacific trenches (6,380\u20139,530 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Ultraabyssal Clam say: Deep ocean trench (about 8,000\u20139,583 m)"
+  - questionId: ultraabyssal_clam_001_characteristics
+    species: {fileID: 11400000, guid: 53b8e67504174f39b8bada7379f8457a, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Ultraabyssal Clam. Which description matches our observations?"
+    choices:
+    - "Very small, thin shell with two matching halves."
+    - "Small, flattened body with protective plates."
+    - "Slender shrimp-like body with many legs and antennae."
+    correctChoice: 0
+    explanation: "Our notes on the Ultraabyssal Clam say: Very small, thin shell with two matching halves."
+  - questionId: ultraabyssal_clam_001_ecologicalRole
+    species: {fileID: 11400000, guid: 53b8e67504174f39b8bada7379f8457a, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Ultraabyssal Clam play in its ecosystem, according to our notes?"
+    choices:
+    - "Processes tiny food particles in deep sediment."
+    - "Feeds on small animals and organic material."
+    - "Hunts small crustaceans and scavenges food."
+    correctChoice: 0
+    explanation: "Our notes on the Ultraabyssal Clam say: Processes tiny food particles in deep sediment."
+  - questionId: ultraabyssal_clam_001_interestingFact
+    species: {fileID: 11400000, guid: 53b8e67504174f39b8bada7379f8457a, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Ultraabyssal Clam during our research?"
+    choices:
+    - "The small shell fits well in the fine mud found deep inside trenches."
+    - "Hard body plates provide extra protection while moving over the seafloor."
+    - "Long antennae help detect nearby food in complete darkness."
+    correctChoice: 0
+    explanation: "Our notes on the Ultraabyssal Clam say: The small shell fits well in the fine mud found deep inside trenches."
+  - questionId: ultraabyssal_clam_001_camera
+    species: {fileID: 11400000, guid: 53b8e67504174f39b8bada7379f8457a, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Very small, thin shell with two matching halves. The habitat notes say: Deep ocean trench (about 8,000\u20139,583 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Ultraabyssal Clam. Very small, thin shell with two matching halves. Its recorded habitat is Deep ocean trench (about 8,000\u20139,583 m)."
+  - questionId: ultra_abyssal_lepechinella_001_habitat
+    species: {fileID: 11400000, guid: 8282a72c34744d3c89162d425dbec67c, type: 2}
+    format: 0
+    sourceField: 0
+    prompt: "Which habitat did we record for the Ultra-abyssal Lepechinella?"
+    choices:
+    - "Deep ocean trench (6,475\u20138,015 m)"
+    - "Deep Western Pacific trenches (6,380\u20139,530 m)"
+    - "Deep ocean trench (6,380\u20138,336 m)"
+    correctChoice: 0
+    explanation: "Our notes on the Ultra-abyssal Lepechinella say: Deep ocean trench (6,475\u20138,015 m)"
+  - questionId: ultra_abyssal_lepechinella_001_characteristics
+    species: {fileID: 11400000, guid: 8282a72c34744d3c89162d425dbec67c, type: 2}
+    format: 0
+    sourceField: 1
+    prompt: "Look closely at the Ultra-abyssal Lepechinella. Which description matches our observations?"
+    choices:
+    - "Small, flattened body with protective plates."
+    - "Slender shrimp-like body with many legs and antennae."
+    - "Small, soft body with broad fins and a rounded head."
+    correctChoice: 0
+    explanation: "Our notes on the Ultra-abyssal Lepechinella say: Small, flattened body with protective plates."
+  - questionId: ultra_abyssal_lepechinella_001_ecologicalRole
+    species: {fileID: 11400000, guid: 8282a72c34744d3c89162d425dbec67c, type: 2}
+    format: 0
+    sourceField: 2
+    prompt: "What role does the Ultra-abyssal Lepechinella play in its ecosystem, according to our notes?"
+    choices:
+    - "Feeds on small animals and organic material."
+    - "Hunts small crustaceans and scavenges food."
+    - "Eats small animals near the trench floor."
+    correctChoice: 0
+    explanation: "Our notes on the Ultra-abyssal Lepechinella say: Feeds on small animals and organic material."
+  - questionId: ultra_abyssal_lepechinella_001_interestingFact
+    species: {fileID: 11400000, guid: 8282a72c34744d3c89162d425dbec67c, type: 2}
+    format: 0
+    sourceField: 3
+    prompt: "What did we learn about the Ultra-abyssal Lepechinella during our research?"
+    choices:
+    - "Hard body plates provide extra protection while moving over the seafloor."
+    - "Long antennae help detect nearby food in complete darkness."
+    - "The body stays flexible instead of being heavily protected by hard bones."
+    correctChoice: 0
+    explanation: "Our notes on the Ultra-abyssal Lepechinella say: Hard body plates provide extra protection while moving over the seafloor."
+  - questionId: ultra_abyssal_lepechinella_001_camera
+    species: {fileID: 11400000, guid: 8282a72c34744d3c89162d425dbec67c, type: 2}
+    format: 1
+    sourceField: 1
+    prompt: "Our camera recorded this appearance: Small, flattened body with protective plates. The habitat notes say: Deep ocean trench (6,475\u20138,015 m). Which of your captured species matches these observations?"
+    choices: []
+    correctChoice: 0
+    explanation: "This is the Ultra-abyssal Lepechinella. Small, flattened body with protective plates. Its recorded habitat is Deep ocean trench (6,475\u20138,015 m)."

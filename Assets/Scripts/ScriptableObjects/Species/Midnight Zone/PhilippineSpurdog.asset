@@ -13,30 +13,32 @@ MonoBehaviour:
   m_Name: PhilippineSpurdog
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: philippine_spurdog_001
-  commonName: "Philippine Spurdog"
-  scientificName: "Squalus montalbani"
+  commonName: Philippine Spurdog
+  scientificName: Squalus montalbani
   taxonomicClass: 1
   zoneIndex: 2
-  habitat: "Deep underwater slopes, 154–1,370 m"
-  depthRangeText: "154–1,370 m"
-  explorationHint: "Deep underwater slopes, 154–1,370 m. Gray-brown shark with a long body."
+  habitat: "Deep underwater slopes, 154\u20131,370 m"
+  depthRangeText: "154\u20131,370 m"
+  explorationHint: "Deep underwater slopes, 154\u20131,370 m. Gray-brown shark with
+    a long body."
   secondaryZoneIndices: 
-  characteristics: "Gray-brown shark with a long body."
-  ecologicalRole: "Eats small fish, squid, and shrimp."
-  interestingFact: "Its original scientific description was based on a specimen from the Philippines."
+  characteristics: Gray-brown shark with a long body.
+  ecologicalRole: Eats small fish, squid, and shrimp.
+  interestingFact: Its original scientific description was based on a specimen from
+    the Philippines.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 3
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.3
   instanceCount: 3
-  wanderRadius: 40.0
-  moveSpeed: 3.0
+  wanderRadius: 40
+  moveSpeed: 3
   fleeSpeed: 5.4
   fleeRange: 10
-  returnThreshold: 60.0
+  returnThreshold: 60
   turnSpeed: 65
   locomotionArchetype: 0
   pulseFrequency: 0.8
@@ -53,8 +55,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 1
-  placeholderColor: {r: 0.45, g: 0.45, b: 0.48, a: 1.0}
+  placeholderColor: {r: 0.45, g: 0.45, b: 0.48, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 5800ca6c77d79f246bf9f1c51cf992c6, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

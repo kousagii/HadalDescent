@@ -417,7 +417,8 @@ public class RadioTextboxUI : MonoBehaviour
         (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) ||
         (ShopManager.Instance != null && ShopManager.Instance.IsOpen) ||
         (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen && (TutorialManager.Instance == null || TutorialManager.Instance.CurrentPhase != TutorialManager.TutorialPhase.Step5_BestiaryReview)) ||
-        Time.timeScale <= 0f;
+        (Time.timeScale <= 0f && !(ResearchVerificationMinigame.Instance != null &&
+            ResearchVerificationMinigame.Instance.IsIntroducing));
 
     private IEnumerator WaitWhileUnpaused(float duration)
     {

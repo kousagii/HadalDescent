@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: DeepSeaSquatLobster
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: deep_sea_squat_lobster_001
-  commonName: "Deep-sea Squat Lobster"
-  scientificName: "Munidopsis lauensis"
+  commonName: Deep-sea Squat Lobster
+  scientificName: Munidopsis lauensis
   taxonomicClass: 5
   zoneIndex: 2
-  habitat: "Deep hydrothermal vents, 1,136–2,000 m"
-  depthRangeText: "1,136–2,000 m"
-  explorationHint: "Deep hydrothermal vents, 1,136–2,000 m. Small lobster-like animal with long legs."
+  habitat: "Deep hydrothermal vents, 1,136\u20132,000 m"
+  depthRangeText: "1,136\u20132,000 m"
+  explorationHint: "Deep hydrothermal vents, 1,136\u20132,000 m. Small lobster-like
+    animal with long legs."
   secondaryZoneIndices: 
-  characteristics: "Small lobster-like animal with long legs."
-  ecologicalRole: "Feeds on food around deep-sea vents."
-  interestingFact: "It lives in some of the most extreme environments in the ocean."
+  characteristics: Small lobster-like animal with long legs.
+  ecologicalRole: Feeds on food around deep-sea vents.
+  interestingFact: It lives in some of the most extreme environments in the ocean.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
@@ -32,8 +33,8 @@ MonoBehaviour:
   minDepthFraction: 0.05
   maxDepthFraction: 0.4
   instanceCount: 3
-  wanderRadius: 12.0
-  moveSpeed: 1.0
+  wanderRadius: 12
+  moveSpeed: 1
   fleeSpeed: 1.8
   fleeRange: 10
   returnThreshold: 25
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 2
-  placeholderColor: {r: 0.85, g: 0.8, b: 0.75, a: 1.0}
+  placeholderColor: {r: 0.85, g: 0.8, b: 0.75, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 0a4c093d194d90348a6aa21ceba1d50b, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}

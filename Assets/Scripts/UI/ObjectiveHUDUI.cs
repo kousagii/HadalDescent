@@ -739,7 +739,7 @@ public class ObjectiveHUDUI : MonoBehaviour
         // If in deepest zone (Zone 4 / Hadal), there is no deeper zone to unlock
         if (!ZoneConfig.IsValidZone(nextZone))
         {
-            if (panelRect != null) panelRect.gameObject.SetActive(false);
+            RefreshFinalResearchObjective(currentZone);
             return;
         }
 
@@ -811,6 +811,31 @@ public class ObjectiveHUDUI : MonoBehaviour
                 ? new Vector2(CollapsedWidth, CollapsedHeight)
                 : new Vector2(ExpandedWidth, ExpandedHeight);
         }
+    }
+
+    private void RefreshFinalResearchObjective(int zoneIndex)
+    {
+        var gm = GameManager.Instance;
+        if (gm.IsResearchVerified(zoneIndex))
+        {
+            if (panelRect != null) panelRect.gameObject.SetActive(false);
+            return;
+        }
+        var zone = ZoneConfig.Zones[zoneIndex];
+        int found = gm.GetDiscoveredCountInZone(zoneIndex);
+        int required = Mathf.CeilToInt(zone.totalSpeciesCount * zone.unlockThreshold);
+        if (panelRect != null) panelRect.gameObject.SetActive(true);
+        if (canvasGroup != null) canvasGroup.alpha = 1f;
+        if (headerText != null) headerText.text = "FINAL EXPEDITION REVIEW";
+        if (objectiveBodyText != null) objectiveBodyText.text = found < required
+            ? $"Discover at least half of the Hadal species ({found}/{zone.totalSpeciesCount})"
+            : "Proceed to the trench floor for your final research review.";
+        if (found < required || _startupGraceTimer > 0f || ObjectivesClearedPopupUI.HasBeenShown(zoneIndex) ||
+            UIManager.IsAnyPanelOrModalOpen() || IsCinematicActive()) return;
+        ObjectivesClearedPopupUI.Instance.ShowCustom("HADAL OBJECTIVES CLEARED",
+            "Complete your final research review, or stay to continue exploring the Hadal Zone.",
+            onStay: () => { }, onGo: () => ZoneManager.Instance.BeginFinalResearchReview());
+        ObjectivesClearedPopupUI.MarkAsShown(zoneIndex);
     }
 
     private void CheckAndTriggerObjectivesCleared(int currentZone, int nextZone, ZoneDefinition curZoneDef, int discoveredSpecies, int totalSpecies)

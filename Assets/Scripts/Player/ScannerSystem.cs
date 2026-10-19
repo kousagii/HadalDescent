@@ -107,6 +107,7 @@ public class ScannerSystem : MonoBehaviour
 
     public bool IsAnyPopupOpen()
     {
+        if (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen) return true;
         if (BestiaryDiscoveryPopup.Instance != null && BestiaryDiscoveryPopup.Instance.IsOpen) return true;
         if (FactCardUI.Instance != null && FactCardUI.Instance.IsOpen) return true;
         if (BestiaryManager.Instance != null && BestiaryManager.Instance.IsOpen) return true;

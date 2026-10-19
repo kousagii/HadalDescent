@@ -13,30 +13,31 @@ MonoBehaviour:
   m_Name: LeatherbackSeaTurtle
   m_EditorClassIdentifier: Assembly-CSharp::SpeciesData
   speciesId: leatherback_sea_turtle_001
-  commonName: "Leatherback Sea Turtle"
-  scientificName: "Dermochelys coriacea"
+  commonName: Leatherback Sea Turtle
+  scientificName: Dermochelys coriacea
   taxonomicClass: 3
   zoneIndex: 2
-  habitat: "Open ocean; dives to about 1,280 m"
-  depthRangeText: "dives to about 1,280 m"
-  explorationHint: "Open ocean; dives to about 1,280 m. Largest sea turtle with a soft, leathery shell."
+  habitat: Open ocean; dives to about 1,280 m
+  depthRangeText: dives to about 1,280 m
+  explorationHint: Open ocean; dives to about 1,280 m. Largest sea turtle with a
+    soft, leathery shell.
   secondaryZoneIndices: 
-  characteristics: "Largest sea turtle with a soft, leathery shell."
-  ecologicalRole: "Eats jellyfish and helps control their numbers."
-  interestingFact: "It is the largest living sea turtle."
+  characteristics: Largest sea turtle with a soft, leathery shell.
+  ecologicalRole: Eats jellyfish and helps control their numbers.
+  interestingFact: It is the largest living sea turtle.
   rdpReward: 110
   scanDifficulty: 3
   isStationary: 0
   isShy: 0
   preferredBiome: 0
-  minDepthFraction: 0.0
+  minDepthFraction: 0
   maxDepthFraction: 0.25
   instanceCount: 3
-  wanderRadius: 40.0
-  moveSpeed: 3.0
+  wanderRadius: 40
+  moveSpeed: 3
   fleeSpeed: 5.4
   fleeRange: 10
-  returnThreshold: 60.0
+  returnThreshold: 60
   turnSpeed: 65
   locomotionArchetype: 0
   pulseFrequency: 0.8
@@ -53,8 +54,8 @@ MonoBehaviour:
   uniformScaleRange: {x: 0.75, y: 1.25}
   maxAxisVariance: 0.035
   placeholderShape: 0
-  placeholderColor: {r: 0.25, g: 0.3, b: 0.28, a: 1.0}
+  placeholderColor: {r: 0.25, g: 0.3, b: 0.28, a: 1}
   placeholderScale: {x: 1, y: 1, z: 1}
-  photo: {fileID: 0}
+  photo: {fileID: 21300000, guid: 187cdb2de219683488a73247ebcb8d23, type: 3}
   fullImage: {fileID: 0}
   silhouette: {fileID: 0}
