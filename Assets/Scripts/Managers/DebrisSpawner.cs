@@ -78,14 +78,27 @@ public class DebrisSpawner : MonoBehaviour
             }
 
             Vector3 rayOrigin = new Vector3(rx, floorY + 30f, rz);
-            Vector3 spawnPos;
-            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 50f, ~0, QueryTriggerInteraction.Ignore))
+            Vector3 spawnPos = new Vector3(rx, floorY, rz);
+            int terrainMask = LayerMask.GetMask("Terrain", "Default");
+            if (terrainMask == 0) terrainMask = ~0;
+            var hits = Physics.RaycastAll(rayOrigin, Vector3.down, 50f, terrainMask, QueryTriggerInteraction.Ignore);
+            float bestDist = float.MaxValue;
+            for (int hIdx = 0; hIdx < hits.Length; hIdx++)
             {
-                spawnPos = hit.point;
-            }
-            else
-            {
-                spawnPos = new Vector3(rx, floorY, rz);
+                var hit = hits[hIdx];
+                if (hit.collider == null) continue;
+                if (ContextSteering.IsEnvironmentProp(hit.collider) ||
+                    hit.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                    hit.collider.CompareTag("Environment") ||
+                    hit.collider.CompareTag("Species"))
+                {
+                    continue;
+                }
+                if (Mathf.Abs(hit.point.y - floorY) <= 0.8f && hit.distance < bestDist)
+                {
+                    bestDist = hit.distance;
+                    spawnPos = hit.point;
+                }
             }
 
             // Strictly prevent debris from spawning beyond or below the ocean floor
@@ -116,6 +129,15 @@ public class DebrisSpawner : MonoBehaviour
         if (customDebrisPrefab != null)
         {
             go = Instantiate(customDebrisPrefab, position, Quaternion.identity, _debrisParent);
+            var rends = go.GetComponentsInChildren<Renderer>();
+            if (rends != null && rends.Length > 0)
+            {
+                Bounds b = rends[0].bounds;
+                for (int i = 1; i < rends.Length; i++)
+                    b.Encapsulate(rends[i].bounds);
+                float bottomOffset = go.transform.position.y - b.min.y;
+                go.transform.position = new Vector3(position.x, position.y + bottomOffset - 0.08f, position.z);
+            }
         }
         else
         {
@@ -142,7 +164,7 @@ public class DebrisSpawner : MonoBehaviour
         // 1. Rusted Oil Drum
         var drum = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         drum.transform.SetParent(rootGO.transform, false);
-        drum.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+        drum.transform.localPosition = new Vector3(0f, 1.15f, 0f);
         drum.transform.localScale = new Vector3(1.2f, 1.4f, 1.2f);
         drum.transform.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 15f);
         drum.GetComponent<Renderer>().material = CreateMaterial(new Color(0.45f, 0.32f, 0.22f)); // Rusted iron
@@ -160,7 +182,7 @@ public class DebrisSpawner : MonoBehaviour
         // 3. Plastic Waste Pile
         var plastic = GameObject.CreatePrimitive(PrimitiveType.Cube);
         plastic.transform.SetParent(rootGO.transform, false);
-        plastic.transform.localPosition = new Vector3(-0.8f, 0.25f, -0.3f);
+        plastic.transform.localPosition = new Vector3(-0.8f, 0.22f, -0.3f);
         plastic.transform.localScale = new Vector3(1.4f, 0.5f, 1.1f);
         plastic.transform.localRotation = Quaternion.Euler(5f, Random.Range(0f, 360f), 0f);
         plastic.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.90f, 0.95f, 0.8f));
@@ -169,7 +191,7 @@ public class DebrisSpawner : MonoBehaviour
         // 4. Toxic / Battery Canister
         var batt = GameObject.CreatePrimitive(PrimitiveType.Cube);
         batt.transform.SetParent(rootGO.transform, false);
-        batt.transform.localPosition = new Vector3(0.3f, 0.2f, -0.9f);
+        batt.transform.localPosition = new Vector3(0.3f, 0.18f, -0.9f);
         batt.transform.localScale = new Vector3(0.7f, 0.4f, 0.5f);
         batt.GetComponent<Renderer>().material = CreateMaterial(new Color(0.2f, 0.8f, 0.3f)); // Toxic green
         var c4 = batt.GetComponent<Collider>(); if (c4 != null) c4.isTrigger = true;
@@ -192,7 +214,9 @@ public class DebrisSpawner : MonoBehaviour
         if (_debrisParent == null) return;
         for (int i = _debrisParent.childCount - 1; i >= 0; i--)
         {
-            Destroy(_debrisParent.GetChild(i).gameObject);
+            var child = _debrisParent.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
         }
     }
 

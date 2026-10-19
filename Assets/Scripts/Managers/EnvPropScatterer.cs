@@ -387,11 +387,19 @@ public class EnvPropScatterer : MonoBehaviour
 
         string prefabName = entry.prefab.name.ToLower();
         bool isClam = prefabName.Contains("clam") || prefabName.Contains("shell");
-        bool isRock = entry.targetBiome == BiomeBand.Rock || prefabName.Contains("rock") || prefabName.Contains("boulder") || prefabName.Contains("cone") || prefabName.Contains("cube") || prefabName.Contains("sphere") || prefabName.Contains("bisect");
+        bool isDune = prefabName.Contains("ripple") || prefabName.Contains("sand");
         bool isSeagrass = prefabName.Contains("seagrass");
+        bool isCoral = prefabName.Contains("coral");
+        bool isRock = !isClam && !isDune && !isSeagrass && !isCoral &&
+                      (entry.targetBiome == BiomeBand.Rock || prefabName.Contains("rock") || prefabName.Contains("boulder") ||
+                       prefabName.Contains("cone") || prefabName.Contains("cube") || prefabName.Contains("sphere") || prefabName.Contains("bisect"));
 
         // Slope check: reject seagrass on near-vertical cliff walls (slope > 55 deg)
         if (isSeagrass && normal.y < 0.57f)
+            return false;
+
+        // Reject wide coral clusters, clam shells, and sand ripples on steep cliff walls (slope > 47 deg)
+        if ((isCoral || isClam || isDune) && normal.y < 0.68f)
             return false;
 
         // Rotation & Scale with globalScaleMultiplier and non-uniform scale matrix
@@ -409,20 +417,28 @@ public class EnvPropScatterer : MonoBehaviour
 
         Vector3 finalScale = Vector3.Scale(scaleAxis, Vector3.one * randomScale);
 
-        Quaternion rot = Quaternion.identity;
         Quaternion slopeAlign = Quaternion.FromToRotation(Vector3.up, normal);
         Quaternion randomSpin = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        Quaternion customOffsetRot = (!isRock && entry.rotationOffset != Vector3.zero)
+            ? Quaternion.Euler(entry.rotationOffset)
+            : Quaternion.identity;
+        Quaternion prefabRot = entry.prefab != null ? entry.prefab.transform.rotation : Quaternion.identity;
 
-        if (isClam)
+        Quaternion flatRot = Quaternion.identity;
+        Quaternion slopeTiltRot = Quaternion.identity;
+
+        if (isClam || isDune)
         {
-            // Clam shells lay completely flat on the sand dunes, smoothly conforming to seabed slope
-            Quaternion clamTilt = Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f));
-            rot = slopeAlign * randomSpin * clamTilt;
+            // Clam shells and sand ripples lay flat on the sand dunes, smoothly conforming to seabed slope
+            Quaternion subtleJitter = isClam ? Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f)) : Quaternion.identity;
+            flatRot = randomSpin * subtleJitter * customOffsetRot * prefabRot;
+            slopeTiltRot = slopeAlign;
         }
         else if (isRock)
         {
-            // Initial spawn rotation is Identity; OrientRockFlat will dynamically align its shortest axis to the normal
-            rot = Quaternion.identity;
+            // Oriented after instantiation once MeshFilter and lossyScale are available
+            flatRot = prefabRot;
+            slopeTiltRot = Quaternion.identity;
         }
         else if (isSeagrass)
         {
@@ -430,38 +446,31 @@ public class EnvPropScatterer : MonoBehaviour
             float slopeAngle = Vector3.Angle(Vector3.up, normal);
             float tiltAngle = Mathf.Min(slopeAngle, 45f);
             Vector3 tiltAxis = Vector3.Cross(Vector3.up, normal);
-            Quaternion tiltRot = Quaternion.identity;
             if (tiltAxis.sqrMagnitude > 0.001f)
             {
-                tiltRot = Quaternion.AngleAxis(tiltAngle, tiltAxis.normalized);
+                slopeTiltRot = Quaternion.AngleAxis(tiltAngle, tiltAxis.normalized);
             }
             Quaternion naturalSway = Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f));
-            rot = tiltRot * randomSpin * naturalSway;
+            flatRot = randomSpin * naturalSway * customOffsetRot * prefabRot;
         }
         else if (entry.alignToSurface)
         {
-            // Slerp towards surface normal based on surfaceTiltStrength
+            // Slerp towards surface normal based on surfaceTiltStrength (wide coral clusters conform closely to reef slopes)
             float tilt = Mathf.Clamp01(entry.surfaceTiltStrength);
-            rot = Quaternion.Slerp(randomSpin, slopeAlign * randomSpin, tilt);
+            if (isCoral)
+                tilt = Mathf.Max(tilt, 0.78f);
+            slopeTiltRot = Quaternion.Slerp(Quaternion.identity, slopeAlign, tilt);
+            flatRot = randomSpin * customOffsetRot * prefabRot;
         }
         else
         {
-            rot = randomSpin;
+            slopeTiltRot = Quaternion.identity;
+            flatRot = randomSpin * customOffsetRot * prefabRot;
         }
 
-        // Apply custom rotation offset if specified (e.g. for models with non-standard export axes)
-        if (!isRock && entry.rotationOffset != Vector3.zero)
-        {
-            rot = rot * Quaternion.Euler(entry.rotationOffset);
-        }
-
-        // Multiply by the prefab's native author-configured rotation
-        Quaternion prefabRot = entry.prefab != null ? entry.prefab.transform.rotation : Quaternion.identity;
-        Quaternion finalRot = isRock ? prefabRot : (rot * prefabRot);
-
-        // Spawn instance at floorY with finalRot
+        // Spawn instance at floorY with initial rotation
         Vector3 spawnPos = new Vector3(px, floorY, pz);
-        GameObject go = Instantiate(entry.prefab, spawnPos, finalRot, _propParent);
+        GameObject go = Instantiate(entry.prefab, spawnPos, slopeTiltRot * flatRot, _propParent);
         go.transform.localScale = finalScale;
 
         // For rocks: Orient dynamically so the longer width lays flat on the surface (unless it's an upright pinnacle)
@@ -470,12 +479,20 @@ public class EnvPropScatterer : MonoBehaviour
             if (isPinnacle)
             {
                 // Align upward along blended normal with slight natural tilt
+                flatRot = randomSpin * prefabRot;
                 Vector3 blendedNormal = Vector3.Slerp(Vector3.up, normal, 0.22f);
-                go.transform.rotation = Quaternion.FromToRotation(Vector3.up, blendedNormal) * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                slopeTiltRot = Quaternion.FromToRotation(Vector3.up, blendedNormal);
+                go.transform.rotation = slopeTiltRot * flatRot;
             }
             else
             {
-                OrientRockFlat(go, normal);
+                // First orient the rock flat on a horizontal plane (Vector3.up) to capture its true un-tilted flatRot,
+                // then tilt onto the seabed slope via slopeAlign
+                go.transform.rotation = prefabRot;
+                OrientRockFlat(go, Vector3.up);
+                flatRot = go.transform.rotation;
+                slopeTiltRot = slopeAlign;
+                go.transform.rotation = slopeTiltRot * flatRot;
             }
         }
 
@@ -490,7 +507,7 @@ public class EnvPropScatterer : MonoBehaviour
         }
 
         // Adjust horizontal and vertical position to sit naturally on the seabed
-        AdjustContactHeight(go, px, floorY, pz, meshGen);
+        AdjustContactHeight(go, px, floorY, pz, meshGen, flatRot, slopeTiltRot, isPinnacle);
 
         // Assign obstacle layer for ContextSteering
         if (entry.isObstacle && _terrainLayerId >= 0)
@@ -545,106 +562,134 @@ public class EnvPropScatterer : MonoBehaviour
             float yaw = Random.Range(0f, 360f);
             go.transform.rotation = Quaternion.AngleAxis(yaw, normal) * go.transform.rotation;
 
-            // Subtle natural tilt wobble (+/- 4 degrees) so rocks settle organically on undulating terrain
+            // Subtle natural tilt wobble (+/- 3 degrees) so rocks settle organically on undulating terrain
             Vector3 wobbleAxis = Vector3.Cross(normal, Random.onUnitSphere).normalized;
             if (wobbleAxis.sqrMagnitude > 0.05f)
             {
-                go.transform.rotation = Quaternion.AngleAxis(Random.Range(-4f, 4f), wobbleAxis) * go.transform.rotation;
+                go.transform.rotation = Quaternion.AngleAxis(Random.Range(-3f, 3f), wobbleAxis) * go.transform.rotation;
             }
         }
     }
 
     /// <summary>
-    /// Calculates the object's mesh bounds and adjusts position so the base embeds slightly
-    /// into the sand rather than floating. Also shifts horizontally if the original 3D model
-    /// had an off-center origin/pivot (e.g. coral clusters) so the visible model sits right
-    /// at the sampled seabed coordinate.
+    /// Calculates the object's un-tilted flat-ground mesh bounds and adjusts its world position
+    /// so the base center sits at (targetFloorX, targetFloorZ) and the tilted base footprint
+    /// embeds cleanly into sloped terrain without floating overhangs or buried upslope halves.
     /// </summary>
-    private void AdjustContactHeight(GameObject go, float targetFloorX, float floorY, float targetFloorZ, OceanFloorMeshGenerator meshGen)
+    private void AdjustContactHeight(GameObject go, float targetFloorX, float floorY, float targetFloorZ,
+                                     OceanFloorMeshGenerator meshGen, Quaternion flatRot, Quaternion slopeTiltRot, bool isPinnacle = false)
     {
         var renderers = go.GetComponentsInChildren<Renderer>();
         if (renderers != null && renderers.Length > 0)
         {
-            Bounds combinedBounds = renderers[0].bounds;
+            // 1. Measure un-tilted flat-ground bounds at world origin so slope tilt never inflates height or shifts base center
+            Quaternion finalRot = slopeTiltRot * flatRot;
+            go.transform.position = Vector3.zero;
+            go.transform.rotation = flatRot;
+
+            Bounds flatBounds = renderers[0].bounds;
             for (int i = 1; i < renderers.Length; i++)
-                combinedBounds.Encapsulate(renderers[i].bounds);
+                flatBounds.Encapsulate(renderers[i].bounds);
 
-            // 1. Shift GameObject horizontally if the visual mesh is offset from the transform pivot
-            Vector3 horizontalShift = new Vector3(combinedBounds.center.x - targetFloorX, 0f, combinedBounds.center.z - targetFloorZ);
-            if (horizontalShift.sqrMagnitude > 0.001f)
-            {
-                go.transform.position -= horizontalShift;
-            }
+            // Restore final sloped rotation
+            go.transform.rotation = finalRot;
 
-            // Re-sample true seabed elevation at the object's final horizontal coordinate
-            float trueFloorY = meshGen != null ? meshGen.SampleHeight(go.transform.position.x, go.transform.position.z) : floorY;
+            float trueHeight = Mathf.Max(0.05f, flatBounds.size.y);
+            float yMin = flatBounds.min.y;
+            float cx = flatBounds.center.x;
+            float cz = flatBounds.center.z;
+            float rx = flatBounds.extents.x;
+            float rz = flatBounds.extents.z;
 
-            // 2. Adjust vertical position so base embeds naturally into seabed
-            float bottomY = combinedBounds.min.y;
-            float height = combinedBounds.size.y;
-            float pivotY = go.transform.position.y;
+            // 2. Shift GameObject horizontally so the center of its bottom base lands at (targetFloorX, targetFloorZ)
+            Vector3 baseCenterFlat = new Vector3(cx, yMin, cz);
+            Vector3 baseCenterOffset = slopeTiltRot * baseCenterFlat;
+            float pivotX = targetFloorX - baseCenterOffset.x;
+            float pivotZ = targetFloorZ - baseCenterOffset.z;
 
-            float bottomOffset = pivotY - bottomY;
+            float centerFloorY = meshGen != null
+                ? Mathf.Max(meshGen.SampleHeight(targetFloorX, targetFloorZ), meshGen.BaseY)
+                : floorY;
 
             string objName = go.name.ToLower();
             bool isSeagrass = objName.Contains("seagrass");
+            bool isDune = objName.Contains("ripple") || objName.Contains("sand");
             bool isClam = objName.Contains("clam") || objName.Contains("shell");
-            bool isRock = objName.Contains("rock") || objName.Contains("boulder") || objName.Contains("cone") || objName.Contains("cube") || objName.Contains("sphere") || objName.Contains("bisect");
+            bool isCoral = objName.Contains("coral");
+            bool isRock = !isSeagrass && !isDune && !isClam && !isCoral &&
+                          (objName.Contains("rock") || objName.Contains("boulder") || objName.Contains("cone") ||
+                           objName.Contains("cube") || objName.Contains("sphere") || objName.Contains("bisect"));
 
-            float targetY;
-            Vector3 pos = go.transform.position;
+            // 3. Determine natural embed depth from un-tilted thickness/height
+            float sink;
+            float footprintFrac;
+            float maxSlopeEmbed;
 
             if (isSeagrass)
             {
-                // Firmly root and plant seagrass into the ground across sloped terrain:
-                // Sample seabed elevation around base perimeter to find lowest ground contact point
-                float baseRadius = Mathf.Max(combinedBounds.extents.x, combinedBounds.extents.z) * 0.55f;
-                float minGroundY = trueFloorY;
-                for (int a = 0; a < 8; a++)
-                {
-                    float rad = a * (Mathf.PI * 2f / 8f);
-                    float sx = go.transform.position.x + Mathf.Cos(rad) * baseRadius;
-                    float sz = go.transform.position.z + Mathf.Sin(rad) * baseRadius;
-                    float sy = meshGen != null ? meshGen.SampleHeight(sx, sz) : trueFloorY;
-                    if (sy < minGroundY) minGroundY = sy;
-                }
-
-                // Plant roots firmly into sediment (14% height embed) anchored at lowest ground point
-                float sink = height * 0.14f;
-                targetY = Mathf.Min(trueFloorY, minGroundY) + bottomOffset - sink;
-                pos.y = targetY;
-                go.transform.position = pos;
+                sink = trueHeight * 0.14f;
+                footprintFrac = 0.55f;
+                maxSlopeEmbed = trueHeight * 0.65f;
+            }
+            else if (isDune)
+            {
+                sink = trueHeight * 0.25f;
+                footprintFrac = 0.60f;
+                maxSlopeEmbed = Mathf.Max(trueHeight * 0.50f, 0.20f);
+            }
+            else if (isClam)
+            {
+                sink = trueHeight * 0.42f;
+                footprintFrac = 0.60f;
+                maxSlopeEmbed = Mathf.Max(trueHeight * 0.45f, 0.20f);
+            }
+            else if (isRock)
+            {
+                sink = isPinnacle ? (trueHeight * 0.12f) : (trueHeight * Random.Range(0.24f, 0.34f));
+                footprintFrac = isPinnacle ? 0.45f : 0.60f;
+                maxSlopeEmbed = isPinnacle ? (trueHeight * 0.22f) : Mathf.Max(trueHeight * 0.45f, 0.25f);
             }
             else
             {
-                float sink;
-                if (isClam)
-                {
-                    sink = height * 0.48f; // Clam shell semi-buried flat in the sand, bottom half submerged
-                }
-                else if (isRock)
-                {
-                    sink = height * Random.Range(0.28f, 0.38f); // Rocks firmly embedded into sediment
-                }
-                else
-                {
-                    sink = height * naturalSinkFraction;
-                }
-
-                targetY = trueFloorY + bottomOffset - sink;
-
-                // Safety floor clamp: Ensure no prop base penetrates beyond/below the ocean floor
-                targetY = Mathf.Max(targetY, trueFloorY - sink);
-                pos.y = targetY;
-                go.transform.position = pos;
+                sink = trueHeight * naturalSinkFraction;
+                footprintFrac = 0.55f;
+                maxSlopeEmbed = trueHeight * 0.38f;
             }
 
-            // 3. Ocean surface safety clamp: Ensure no prop breaches above water surface (Y = 0)
-            float topOffset = combinedBounds.max.y - pivotY;
-            if (targetY + topOffset > -0.5f)
+            // 4. Sample seabed across the tilted base footprint (center + 8 perimeter points)
+            // so neither the center nor the downslope edge ever hangs in mid-air on sloped terrain
+            float centerPivotY = centerFloorY - baseCenterOffset.y - sink;
+            float minPivotY = centerPivotY;
+
+            float sampleRx = rx * footprintFrac;
+            float sampleRz = rz * footprintFrac;
+            for (int a = 0; a < 8; a++)
             {
-                pos.y = -0.5f - topOffset;
-                go.transform.position = pos;
+                float rad = a * (Mathf.PI * 2f / 8f);
+                Vector3 ptFlat = new Vector3(cx + Mathf.Cos(rad) * sampleRx, yMin, cz + Mathf.Sin(rad) * sampleRz);
+                Vector3 ptOffset = slopeTiltRot * ptFlat;
+                float wx = pivotX + ptOffset.x;
+                float wz = pivotZ + ptOffset.z;
+                float gy = meshGen != null
+                    ? Mathf.Max(meshGen.SampleHeight(wx, wz), meshGen.BaseY)
+                    : centerFloorY;
+                float reqPivotY = gy - ptOffset.y - sink;
+                if (reqPivotY < minPivotY)
+                    minPivotY = reqPivotY;
+            }
+
+            float targetY = isSeagrass ? minPivotY : Mathf.Max(minPivotY, centerPivotY - maxSlopeEmbed);
+            go.transform.position = new Vector3(pivotX, targetY, pivotZ);
+
+            // 5. Ocean surface safety clamp: Ensure no prop breaches above water surface (Y = 0)
+            Bounds finalBounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                finalBounds.Encapsulate(renderers[i].bounds);
+
+            if (finalBounds.max.y > -0.5f)
+            {
+                float excess = finalBounds.max.y - (-0.5f);
+                go.transform.position = new Vector3(pivotX, targetY - excess, pivotZ);
             }
         }
     }
@@ -751,7 +796,11 @@ public class EnvPropScatterer : MonoBehaviour
     {
         if (_propParent == null) return;
         for (int i = _propParent.childCount - 1; i >= 0; i--)
-            Destroy(_propParent.GetChild(i).gameObject);
+        {
+            var child = _propParent.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
+        }
     }
 
     private static Material _cachedRockMaterial;

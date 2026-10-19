@@ -88,7 +88,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
         float sampled = Mathf.Lerp(h0, h1, fz);
         if (IsSunlightZone())
             sampled = Mathf.Min(sampled, -10.0f);
-        return sampled;
+        return Mathf.Max(sampled, _baseY);
     }
 
     /// <summary>
@@ -153,6 +153,7 @@ public class OceanFloorMeshGenerator : MonoBehaviour
 
         _meshCollider.sharedMesh = null;
         _meshCollider.sharedMesh = _mesh;
+        Physics.SyncTransforms();
 
         Debug.Log($"[OceanFloor] Generated {_resX}x{_resZ} mesh across {_width * 1.35f:0}x{_length * 1.35f:0}m, " +
                   $"amplitude={_amplitude}m, baseY={_baseY}m");

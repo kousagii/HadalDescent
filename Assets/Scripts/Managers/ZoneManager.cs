@@ -317,6 +317,7 @@ public class ZoneManager : MonoBehaviour
                   $"Display: {zone.displayDepthMin}-{zone.displayDepthMax}m");
 
         // 5. Generate terrain via Perlin Noise (TerrainGenerator must be in the zone scene)
+        // Note: TerrainGenerator.Generate() orchestrates mesh, props, landmarks, species, and debris in order.
         var terrain = FindFirstObjectByType<TerrainGenerator>();
         if (terrain != null)
         {
@@ -326,18 +327,18 @@ public class ZoneManager : MonoBehaviour
         {
             Debug.LogWarning("[ZoneManager] No TerrainGenerator found in scene. " +
                              "Add a GameObject with TerrainGenerator to the zone scene.");
-        }
 
-        // 6. Spawn species using ecological placement rules
-        var spawner = FindFirstObjectByType<SpeciesSpawner>();
-        if (spawner != null)
-        {
-            spawner.SpawnForZone(CurrentZoneIndex);
-        }
-        else
-        {
-            Debug.LogWarning("[ZoneManager] No SpeciesSpawner found in scene. " +
-                             "Add a GameObject with SpeciesSpawner to the zone scene.");
+            // 6. Fallback: Spawn species directly only if TerrainGenerator was not present to orchestrate it
+            var spawner = FindFirstObjectByType<SpeciesSpawner>();
+            if (spawner != null)
+            {
+                spawner.SpawnForZone(CurrentZoneIndex);
+            }
+            else
+            {
+                Debug.LogWarning("[ZoneManager] No SpeciesSpawner found in scene. " +
+                                 "Add a GameObject with SpeciesSpawner to the zone scene.");
+            }
         }
 
         // 7. Play zone-specific BGM

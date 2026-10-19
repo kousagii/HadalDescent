@@ -168,6 +168,7 @@ public class TerrainGenerator : MonoBehaviour
         }
 
         // --- Phase 1: Generate ocean floor mesh ---
+        AlignLegacyOceanFloorCollider(_seabedY);
         Material seabedMat = envPropSet != null ? envPropSet.seabedMaterial : null;
         _meshGen.Generate(
             _zoneW, _zoneL, _seabedY,
@@ -236,5 +237,32 @@ public class TerrainGenerator : MonoBehaviour
                          ?? gameObject.AddComponent<OceanFloorMeshGenerator>();
         _propScatterer = GetComponent<EnvPropScatterer>()
                          ?? gameObject.AddComponent<EnvPropScatterer>();
+    }
+
+    private void AlignLegacyOceanFloorCollider(float seabedY)
+    {
+        var env = GameObject.Find("Environment");
+        Transform floorTransform = env != null ? env.transform.Find("OceanFloor") : null;
+        if (floorTransform == null)
+        {
+            var found = GameObject.Find("OceanFloor");
+            if (found != null && found != gameObject && found.GetComponent<OceanFloorMeshGenerator>() == null)
+                floorTransform = found.transform;
+        }
+
+        if (floorTransform != null)
+        {
+            Vector3 pos = floorTransform.position;
+            pos.y = seabedY;
+            floorTransform.position = pos;
+
+            var box = floorTransform.GetComponent<BoxCollider>();
+            if (box != null)
+            {
+                // Shift BoxCollider center down by half its Y size so its top face sits flush with the visual plane at seabedY
+                box.center = new Vector3(box.center.x, -Mathf.Abs(box.size.y) * 0.5f, box.center.z);
+            }
+            Physics.SyncTransforms();
+        }
     }
 }

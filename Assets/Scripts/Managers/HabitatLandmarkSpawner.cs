@@ -218,7 +218,8 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             if (landmarkGO == null) continue;
             landmarkGO.transform.SetParent(_landmarksParent, true);
 
-            // 2. Measure actual model footprint radius and geometry center offset
+            // 2. Measure actual model footprint radius and geometry center offset in unrotated pose
+            landmarkGO.transform.rotation = Quaternion.identity;
             float measuredFootprintRadius = 14f;
             Vector3 boundsCenterOffset = Vector3.zero;
             var initialRenderers = landmarkGO.GetComponentsInChildren<Renderer>(true);
@@ -233,7 +234,8 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             }
             measuredFootprintRadius = Mathf.Max(measuredFootprintRadius, isSeagrass ? 22f : (isCoral ? 24f : 14f));
 
-            Vector3 surfacePos;
+            Vector3 surfacePos = Vector3.zero;
+            Vector3 candidatePos = Vector3.zero;
             Vector3 surfaceNormal = Vector3.up;
 
             // 3. Search for a flat, level surface using 13-point concentric footprint sampling
@@ -243,7 +245,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 baseAngle,
                 w * 0.40f,
                 footprintRadius: measuredFootprintRadius,
-                out Vector3 candidatePos,
+                out candidatePos,
                 out Vector3 candidateNormal,
                 out float bestHeightVariance,
                 zoneIndex,
@@ -256,6 +258,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             if (shouldScaleDown)
             {
                 landmarkGO.transform.localScale = Vector3.one * 0.85f;
+                boundsCenterOffset *= 0.85f;
                 Debug.Log($"[HabitatLandmarkSpawner] Rugged seabed terrain detected for '{landmarkGO.name}' (variance={bestHeightVariance:F1}m). Scaled to 85% to fit snugly without overhanging.");
             }
             else
@@ -263,17 +266,32 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 landmarkGO.transform.localScale = Vector3.one;
             }
 
-            // Raycast down onto the physical terrain mesh collider from above candidate point
+            // Raycast down onto the physical terrain mesh collider from above candidate point, ignoring props, species, and landmark colliders
+            surfacePos = candidatePos;
+            surfaceNormal = candidateNormal;
+            int terrainMask = LayerMask.GetMask("Terrain", "Default");
+            if (terrainMask == 0) terrainMask = ~0;
             Vector3 rayOrigin = new Vector3(candidatePos.x, candidatePos.y + raycastDropHeight, candidatePos.z);
-            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, raycastDropHeight * 2.5f, ~0, QueryTriggerInteraction.Ignore))
+            var hits = Physics.RaycastAll(rayOrigin, Vector3.down, raycastDropHeight * 2.5f, terrainMask, QueryTriggerInteraction.Ignore);
+            float bestDist = float.MaxValue;
+            for (int hIdx = 0; hIdx < hits.Length; hIdx++)
             {
-                surfacePos = hit.point;
-                surfaceNormal = hit.normal;
-            }
-            else
-            {
-                surfacePos = candidatePos;
-                surfaceNormal = candidateNormal;
+                var hit = hits[hIdx];
+                if (hit.collider == null) continue;
+                if (hit.collider.transform.IsChildOf(landmarkGO.transform)) continue;
+                if (ContextSteering.IsEnvironmentProp(hit.collider) ||
+                    hit.collider.GetComponentInParent<EnvironmentFactTarget>() != null ||
+                    hit.collider.CompareTag("Environment") ||
+                    hit.collider.CompareTag("Species"))
+                {
+                    continue;
+                }
+                if (Mathf.Abs(hit.point.y - candidatePos.y) <= 1.0f && hit.distance < bestDist)
+                {
+                    bestDist = hit.distance;
+                    surfacePos = hit.point;
+                    if (hit.normal.y > 0.5f) surfaceNormal = hit.normal;
+                }
             }
 
             // Subtle slope compliance (15%) + random yaw
@@ -674,6 +692,10 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             var childRenderers = child.GetComponentsInChildren<Renderer>();
             if (childRenderers == null || childRenderers.Length == 0) continue;
 
+            string n = child.name.ToLower();
+            // Preserve spires intentionally perched atop a carbonate mound (e.g. LopheliaSpire on CarbonateBioherm)
+            if (n.Contains("lopheliaspire")) continue;
+
             Bounds b = childRenderers[0].bounds;
             for (int i = 1; i < childRenderers.Length; i++)
                 b.Encapsulate(childRenderers[i].bounds);
@@ -694,17 +716,17 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             }
 
             // Determine natural embed sink depth based on object type
-            string n = child.name.ToLower();
-            float sink = n.Contains("rock") ? Mathf.Clamp(b.size.y * 0.22f, 0.4f, 1.8f) : 0.35f;
+            float sink = n.Contains("rock")
+                ? Mathf.Clamp(b.size.y * 0.22f, 0.4f, 1.8f)
+                : Mathf.Min(0.35f, b.size.y * 0.22f);
 
-            // If the bottom of this child's geometry is above the seabed (floating in open water),
-            // or hanging off a slope drop-off, lower it so it embeds solidly into the sediment!
+            // Align the bottom of this child's geometry to the local seabed (both lowering floating elements
+            // and raising elements that would otherwise be buried under sloped sediment)
             float bottomY = b.min.y;
             float targetBottomY = minFloorY - sink;
 
             float dy = targetBottomY - bottomY;
-            // Lower floating elements, or slightly raise elements that are buried too deeply under sediment
-            if (dy < -0.05f || dy > 1.5f)
+            if (Mathf.Abs(dy) > 0.03f)
             {
                 child.position += new Vector3(0f, dy, 0f);
             }

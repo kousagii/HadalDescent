@@ -123,12 +123,26 @@ public class CreatureLocomotion : MonoBehaviour
         var rends = GetComponentsInChildren<Renderer>();
         if (rends != null && rends.Length > 0)
         {
+            Quaternion origRot = transform.rotation;
+            Vector3 origPos = transform.position;
+            Quaternion baseRot = (_data != null && _data.modelPrefab != null)
+                ? _data.modelPrefab.transform.localRotation
+                : Quaternion.identity;
+
+            transform.rotation = baseRot;
+            transform.position = Vector3.zero;
+
             Bounds b = rends[0].bounds;
             for (int i = 1; i < rends.Length; i++)
             {
                 if (rends[i] != null) b.Encapsulate(rends[i].bounds);
             }
-            _bottomToPivot = Mathf.Max(0.4f, transform.position.y - b.min.y);
+
+            transform.rotation = origRot;
+            transform.position = origPos;
+
+            // Exact signed vertical distance from lowest visual point (b.min.y) to pivot (0)
+            _bottomToPivot = -b.min.y;
             _bodyRadius = Mathf.Clamp(Mathf.Max(b.extents.x, b.extents.y), 0.4f, 4.0f);
             _bodyLength = Mathf.Max(1.0f, b.extents.z);
         }
@@ -568,10 +582,31 @@ public class CreatureLocomotion : MonoBehaviour
         {
             scaleFactorY = transform.localScale.y;
         }
-        float effectiveOffset = _bottomToPivot + Mathf.Max(0.06f, (_data != null ? _data.benthicSurfaceOffset : 0.1f) * Mathf.Clamp(scaleFactorY, 0.5f, 1.5f));
-        float baseTargetY = _groundY + effectiveOffset;
+        scaleFactorY = Mathf.Clamp(scaleFactorY, 0.5f, 1.5f);
 
         bool isRay = _data != null && (_data.taxonomicClass == TaxonomicClass.Chondrichthyes || (_data.commonName != null && _data.commonName.IndexOf("ray", System.StringComparison.OrdinalIgnoreCase) >= 0));
+        bool isBottomWalkerByName = _data != null && _data.commonName != null && (
+            _data.commonName.IndexOf("tripod", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            _data.commonName.IndexOf("sea pig", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            _data.commonName.IndexOf("worm", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            _data.commonName.IndexOf("isopod", System.StringComparison.OrdinalIgnoreCase) >= 0
+        );
+        bool isGroundedCrawler = _data != null && (
+            _data.taxonomicClass == TaxonomicClass.Malacostraca ||
+            _data.taxonomicClass == TaxonomicClass.Gastropoda ||
+            _data.taxonomicClass == TaxonomicClass.Asteroidea ||
+            isBottomWalkerByName
+        );
+
+        // True benthic crawlers (lobsters, snails, sea stars, crabs, amphipods, tripod fish) plant their legs/foot
+        // directly into the sediment (-2.5cm to -3.5cm contact embed) so they never hover above the sand.
+        // Swimming benthic rays and demersal fishes skim smoothly just above the seabed (+6cm above belly contact).
+        float surfaceClearance = isGroundedCrawler
+            ? ((isLobster ? -0.035f : -0.025f) * scaleFactorY)
+            : (0.06f * scaleFactorY);
+
+        float effectiveOffset = _bottomToPivot + surfaceClearance;
+        float baseTargetY = _groundY + effectiveOffset;
 
         // Proactive coral/prop evasion & upward glide lift for benthic crawlers:
         // Proactively probe ahead along forward heading using SphereCastAll
@@ -591,12 +626,12 @@ public class CreatureLocomotion : MonoBehaviour
         bool hasLowPropAhead = false;
         Vector3 lateralAvoidance = Vector3.zero;
 
-        // 1. Proactive forward SphereCastAll to detect low props (clams, small stones, low coral plates) and deflect around tall ones
-        var aheadHits = Physics.SphereCastAll(probeOrigin, probeRadius, probeDir, probeDist, propMask, QueryTriggerInteraction.Collide);
+        // 1. Proactive forward SphereCastAll to detect solid low props (clams, small stones, low coral plates) and deflect around tall ones
+        var aheadHits = Physics.SphereCastAll(probeOrigin, probeRadius, probeDir, probeDist, propMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < aheadHits.Length; i++)
         {
             var h = aheadHits[i];
-            if (h.collider != null && h.collider.transform.root != transform.root && !h.collider.CompareTag("Species"))
+            if (h.collider != null && !h.collider.isTrigger && h.collider.transform.root != transform.root && !h.collider.CompareTag("Species"))
             {
                 if (ContextSteering.IsEnvironmentProp(h.collider))
                 {
@@ -622,12 +657,12 @@ public class CreatureLocomotion : MonoBehaviour
             }
         }
 
-        // 2. Direct overlap sphere check directly under/around the creature so lift is maintained continuously while moving over the prop
-        var directProps = Physics.OverlapSphere(transform.position + Vector3.up * 0.35f, probeRadius * 1.25f, propMask, QueryTriggerInteraction.Collide);
+        // 2. Direct overlap sphere check directly under/around the creature so lift is maintained continuously while moving over solid props
+        var directProps = Physics.OverlapSphere(transform.position + Vector3.up * 0.35f, probeRadius * 1.25f, propMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < directProps.Length; i++)
         {
             var dp = directProps[i];
-            if (dp != null && dp.transform.root != transform.root && !dp.CompareTag("Species"))
+            if (dp != null && !dp.isTrigger && dp.transform.root != transform.root && !dp.CompareTag("Species"))
             {
                 if (ContextSteering.IsEnvironmentProp(dp) && dp.bounds.size.y <= 0.85f)
                 {
@@ -800,22 +835,7 @@ public class CreatureLocomotion : MonoBehaviour
 
         Vector3 newPos = _rb.position + moveDir * forwardSpeed * Time.fixedDeltaTime + contactPush + creatureRepulsion;
 
-        // 5. Smooth height calculation with upward gliding over obstacles (3.2f lerp rate eliminates popping)
-        float targetY = baseTargetY + _benthicGlideLift;
-        if (_hasGroundHit || _benthicGlideLift > 0.01f)
-        {
-            newPos.y = Mathf.Lerp(newPos.y, targetY, 3.2f * Time.fixedDeltaTime);
-        }
-        else
-        {
-            newPos.y = targetY;
-        }
-
-        _rb.MovePosition(newPos);
-
-        // 6. Dynamic seabed slope alignment ("Angled at the bottom when moving"):
-        // Conforms pitch & roll dynamically to the terrain contours along the direction of travel
-        // When stopped or moving very slowly, stabilizes heading to current flat facing to eliminate in-place rotational jitter
+        // 5. Dynamic seabed slope sampling along longitudinal body span (front & rear)
         Vector3 hHeading;
         if (_currentSpeed > 0.25f && surfaceTangent.sqrMagnitude > 0.01f)
         {
@@ -839,6 +859,26 @@ public class CreatureLocomotion : MonoBehaviour
         float frontFloorY = (tg != null && tg.HasGenerated) ? tg.SampleHeight(frontPos.x, frontPos.z) : _groundY;
         float rearFloorY  = (tg != null && tg.HasGenerated) ? tg.SampleHeight(rearPos.x, rearPos.z) : _groundY;
 
+        // For grounded crawlers (lobsters, snails, sea stars), blend center and front/rear ground heights on convex crests
+        // so front and rear legs remain planted in the sand rather than teetering above a ridge
+        float referenceGroundY = isGroundedCrawler
+            ? Mathf.Min(_groundY, (_groundY + frontFloorY + rearFloorY) / 3f)
+            : _groundY;
+
+        // Smooth height calculation with upward gliding over obstacles (3.2f lerp rate eliminates popping)
+        float targetY = referenceGroundY + effectiveOffset + _benthicGlideLift;
+        if (_hasGroundHit || _benthicGlideLift > 0.01f)
+        {
+            newPos.y = Mathf.Lerp(newPos.y, targetY, 3.2f * Time.fixedDeltaTime);
+        }
+        else
+        {
+            newPos.y = targetY;
+        }
+
+        _rb.MovePosition(newPos);
+
+        // 6. Dynamic seabed slope alignment ("Angled at the bottom when moving"):
         // Compute the true terrain slope forward vector along travel heading
         Vector3 rawSlopeForward = (new Vector3(hHeading.x * (probeSpan * 2f), frontFloorY - rearFloorY, hHeading.z * (probeSpan * 2f))).normalized;
 
@@ -915,7 +955,7 @@ public class CreatureLocomotion : MonoBehaviour
         int mask = terrainLayerIndex >= 0 ? (1 << terrainLayerIndex) : LayerMask.GetMask("Default");
 
         Vector3 rayOrigin = transform.position + Vector3.up * 6f;
-        var hits = Physics.RaycastAll(rayOrigin, Vector3.down, 50f, mask, QueryTriggerInteraction.Collide);
+        var hits = Physics.RaycastAll(rayOrigin, Vector3.down, 50f, mask, QueryTriggerInteraction.Ignore);
         float bestY = float.MinValue;
         Vector3 bestNormal = Vector3.up;
         bool found = false;

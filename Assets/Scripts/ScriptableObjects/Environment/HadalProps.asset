@@ -24,8 +24,8 @@ MonoBehaviour:
     scaleMultiplier: {x: 1, y: 1, z: 1}
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
-    alignToSurface: 0
-    surfaceTiltStrength: 0
+    alignToSurface: 1
+    surfaceTiltStrength: 0.85
     isObstacle: 0
   - prefab: {fileID: 2186149373037722737, guid: 88869dd8f07a1d84697814aed446aea9, type: 3}
     targetBiome: 1
@@ -47,7 +47,7 @@ MonoBehaviour:
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
     alignToSurface: 1
-    surfaceTiltStrength: 0.4
+    surfaceTiltStrength: 0.95
     isObstacle: 0
   - prefab: {fileID: 7421165138432068010, guid: 05c16c6ad7f5051488e932f154cda4e4, type: 3}
     targetBiome: 2
@@ -58,7 +58,7 @@ MonoBehaviour:
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
     alignToSurface: 1
-    surfaceTiltStrength: 0.4
+    surfaceTiltStrength: 0.82
     isObstacle: 1
   - prefab: {fileID: 1808083442225580806, guid: a9161ed125368bd43aa3d45b51a92151, type: 3}
     targetBiome: 2
@@ -69,7 +69,7 @@ MonoBehaviour:
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
     alignToSurface: 1
-    surfaceTiltStrength: 0.45
+    surfaceTiltStrength: 0.80
     isObstacle: 1
   - prefab: {fileID: 5180856457655891404, guid: 736a76a8a3111434f9955e7aa172ccf9, type: 3}
     targetBiome: 2
@@ -80,7 +80,7 @@ MonoBehaviour:
     rotationOffset: {x: 0, y: 0, z: 0}
     materialOverride: {fileID: 0}
     alignToSurface: 1
-    surfaceTiltStrength: 0.35
+    surfaceTiltStrength: 0.78
     isObstacle: 1
   - prefab: {fileID: 3192758430457380383, guid: d9b4b6f302d83ea4f9c91a6636606914, type: 3}
     targetBiome: 2

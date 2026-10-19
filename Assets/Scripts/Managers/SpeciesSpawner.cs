@@ -943,8 +943,11 @@ public class SpeciesSpawner : MonoBehaviour
 
     private void SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation, Vector3? wanderCenter = null)
     {
+        Quaternion finalRot = data.modelPrefab != null
+            ? (rotation * data.modelPrefab.transform.localRotation)
+            : rotation;
         GameObject go = data.modelPrefab != null
-            ? Instantiate(data.modelPrefab, position, rotation, creatureParent)
+            ? Instantiate(data.modelPrefab, position, finalRot, creatureParent)
             : CreatePlaceholder(data, position, rotation);
 
         go.name = $"{data.commonName} [{data.speciesId}]";
@@ -1256,11 +1259,15 @@ public class SpeciesSpawner : MonoBehaviour
             var renderers = go.GetComponentsInChildren<Renderer>();
             if (renderers != null && renderers.Length > 0)
             {
-                // Measure unrotated, object-space local bounds of the visual mesh
+                // Measure unrotated, object-space local bounds of the visual mesh in its authored upright pose
+                Quaternion baseRot = (data != null && data.modelPrefab != null)
+                    ? data.modelPrefab.transform.localRotation
+                    : Quaternion.identity;
                 Quaternion originalRot = go.transform.rotation;
                 Vector3 originalPos = go.transform.position;
+                Quaternion deltaRot = originalRot * Quaternion.Inverse(baseRot);
 
-                go.transform.rotation = Quaternion.identity;
+                go.transform.rotation = baseRot;
                 go.transform.position = Vector3.zero;
 
                 Bounds localBounds = renderers[0].bounds;
@@ -1268,7 +1275,6 @@ public class SpeciesSpawner : MonoBehaviour
                     localBounds.Encapsulate(renderers[i].bounds);
 
                 go.transform.rotation = originalRot;
-                go.transform.position = originalPos;
 
                 bool isCoral = data != null && data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isSponge = data != null && data.taxonomicClass == TaxonomicClass.Demospongiae;
@@ -1277,7 +1283,18 @@ public class SpeciesSpawner : MonoBehaviour
                 float cx = localBounds.center.x;
                 float cz = localBounds.center.z;
                 float yMin = localBounds.min.y;
-                bottomToPivot = Mathf.Max(0f, -yMin);
+                // Keep exact signed vertical distance from mesh bottom to pivot (handles elevated meshes like Pacific blue sea star where yMin > 0)
+                bottomToPivot = -yMin;
+
+                // Horizontally shift GameObject if the visual mesh center is offset from the root pivot (e.g. Giant Clam, Bubble-tip Sea Anemone)
+                // so the visual specimen sits directly on the flatness-validated spawn coordinate
+                Vector3 horizOffset = deltaRot * new Vector3(cx, 0f, cz);
+                horizOffset.y = 0f;
+                if (horizOffset.sqrMagnitude > 0.001f)
+                {
+                    originalPos -= horizOffset;
+                }
+                go.transform.position = originalPos;
 
                 float scaleFactorY = 1.0f;
                 if (data != null && data.modelPrefab != null && data.modelPrefab.transform.localScale.y > 0.001f)
@@ -1290,15 +1307,33 @@ public class SpeciesSpawner : MonoBehaviour
 
                 if (isCoral || isSponge)
                 {
-                    // Branching corals & upright sponges: anchor the central trunk base firmly into the seabed.
-                    // The trunk base is at local (cx * 0.2f, yMin, cz * 0.2f)
-                    Vector3 trunkLocal = new Vector3(cx * 0.2f, yMin, cz * 0.2f);
-                    Vector3 trunkWorld = originalPos + originalRot * trunkLocal;
-                    float gTrunk = SampleGroundAt(trunkWorld.x, trunkWorld.z);
+                    // Branching corals & upright sponges: sample center trunk base and 4 perimeter points around the trunk pad
+                    float trunkR = Mathf.Clamp(Mathf.Min(localBounds.extents.x, localBounds.extents.z) * 0.45f, 0.15f * scaleFactorY, 0.65f * scaleFactorY);
+                    Vector3[] trunkPts = new Vector3[]
+                    {
+                        new Vector3(cx, yMin, cz),
+                        new Vector3(cx + trunkR, yMin, cz),
+                        new Vector3(cx - trunkR, yMin, cz),
+                        new Vector3(cx, yMin, cz + trunkR),
+                        new Vector3(cx, yMin, cz - trunkR)
+                    };
 
                     float sink = (isCoral ? 0.08f : 0.06f) * scaleFactorY;
+                    float minRequiredY = float.MaxValue;
+                    float centerTargetY = 0f;
+
+                    for (int i = 0; i < trunkPts.Length; i++)
+                    {
+                        Vector3 ptOffset = deltaRot * trunkPts[i];
+                        Vector3 ptWorld = originalPos + ptOffset;
+                        float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
+                        float targetY = gy - ptOffset.y - sink;
+                        if (i == 0) centerTargetY = targetY;
+                        if (targetY < minRequiredY) minRequiredY = targetY;
+                    }
+
                     Vector3 pos = originalPos;
-                    pos.y = gTrunk - (originalRot * trunkLocal).y - sink;
+                    pos.y = Mathf.Max(minRequiredY, centerTargetY - (0.18f * scaleFactorY));
                     go.transform.position = pos;
                 }
                 else if (isMoundOrClam)
@@ -1320,9 +1355,10 @@ public class SpeciesSpawner : MonoBehaviour
 
                     for (int i = 0; i < localPts.Length; i++)
                     {
-                        Vector3 ptWorld = originalPos + originalRot * localPts[i];
+                        Vector3 ptOffset = deltaRot * localPts[i];
+                        Vector3 ptWorld = originalPos + ptOffset;
                         float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
-                        float targetY = gy - (originalRot * localPts[i]).y - sink;
+                        float targetY = gy - ptOffset.y - sink;
                         if (i == 0) centerTargetY = targetY;
                         if (targetY < minRequiredY) minRequiredY = targetY;
                     }
@@ -1372,9 +1408,10 @@ public class SpeciesSpawner : MonoBehaviour
 
                     for (int i = 0; i < localPts.Length; i++)
                     {
-                        Vector3 ptWorld = originalPos + originalRot * localPts[i];
+                        Vector3 ptOffset = deltaRot * localPts[i];
+                        Vector3 ptWorld = originalPos + ptOffset;
                         float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
-                        float targetY = gy - (originalRot * localPts[i]).y - sink;
+                        float targetY = gy - ptOffset.y - sink;
                         if (i == 0) centerTargetY = targetY;
                         if (targetY < minRequiredY) minRequiredY = targetY;
                     }
@@ -1434,7 +1471,9 @@ public class SpeciesSpawner : MonoBehaviour
         if (creatureParent == null) return;
         for (int i = creatureParent.childCount - 1; i >= 0; i--)
         {
-            Destroy(creatureParent.GetChild(i).gameObject);
+            var child = creatureParent.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
         }
     }
 
