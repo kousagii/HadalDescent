@@ -32,7 +32,7 @@ MonoBehaviour:
   minDepthFraction: 0
   maxDepthFraction: 0.94
   instanceCount: 5
-  wanderRadius: 12
+  wanderRadius: 20
   moveSpeed: 1.6
   fleeSpeed: 4.5
   fleeRange: 10
@@ -45,6 +45,7 @@ MonoBehaviour:
   undulationFrequency: 2
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
+  benthicSupportPoints: []
   minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 8967409437995112517, guid: 7830ef8c3155ca94bb0dc76a046b67b4, type: 3}
   modelYawOffset: 0

@@ -124,7 +124,7 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
     private void Start()
     {
         EnsureUI();
-        HideInstant();
+        if (!_isOpen) HideInstant();
     }
 
     public void EnsureUI()
@@ -401,6 +401,7 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
     /// </summary>
     public void ShowSlideshow(int minigameNumber, Action onFinished = null)
     {
+        CancelSlideshow();
         if (minigameNumber < 1 || minigameNumber > 4)
         {
             onFinished?.Invoke();
@@ -436,6 +437,7 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
         if (_currentSlides.Count == 0)
         {
             Debug.LogWarning($"[MinigameInstructionOverlay] No slides found for Minigame {minigameNumber}. Proceeding immediately.");
+            HideInstant();
             onFinished?.Invoke();
             return;
         }
@@ -528,17 +530,28 @@ public class MinigameInstructionOverlay : MonoBehaviour, IBeginDragHandler, IDra
 
     private void CloseOverlay()
     {
-        _isOpen = false;
+        if (!_isOpen) return;
+        var callback = _onFinishedCallback;
         HideInstant();
-        _onFinishedCallback?.Invoke();
-        _onFinishedCallback = null;
+        callback?.Invoke();
     }
+
+    /// <summary>Abort instructions without launching the pending minigame.</summary>
+    public void CancelSlideshow() => HideInstant();
 
     public void HideInstant()
     {
+        _isOpen = false;
+        _isDragging = false;
+        _onFinishedCallback = null;
         if (overlayRoot != null) overlayRoot.SetActive(false);
         if (_panelRect != null) _panelRect.gameObject.SetActive(false);
-        if (_canvasGroup != null) _canvasGroup.alpha = 0f;
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = 0f;
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+        }
     }
 
     // -----------------------------------------------------------------------

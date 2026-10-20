@@ -60,6 +60,7 @@ public class SpeciesSpawner : MonoBehaviour
     private List<Vector3>  _usedPositions = new List<Vector3>();
     private readonly List<Vector3> _anemonePositions = new List<Vector3>();
     private bool           _hasSpawned = false;
+    private readonly Collider[] _benthicOverlapBuffer = new Collider[128];
 
     // -----------------------------------------------------------------------
     // Entry point
@@ -142,6 +143,8 @@ public class SpeciesSpawner : MonoBehaviour
 
         EnsureCreatureParent();
         ClearExistingCreatures();
+        // Props were just generated/moved; final footprint queries must see their current poses.
+        Physics.SyncTransforms();
 
         var allSpecies = registry.GetSpeciesAvailableForZone(zoneIndex);
 
@@ -196,7 +199,9 @@ public class SpeciesSpawner : MonoBehaviour
         {
             if (TryFindSpawnPosition(data, out Vector3 pos, out Quaternion rot, out Vector3? wanderCenter))
             {
-                SpawnInstance(data, pos, rot, wanderCenter);
+                var instance = SpawnInstance(data, pos, rot, wanderCenter);
+                if (instance == null) continue;
+                pos = instance.transform.position;
                 _usedPositions.Add(pos);
                 if (isAnemone)
                 {
@@ -365,9 +370,12 @@ public class SpeciesSpawner : MonoBehaviour
                 {
                     if (TryFindSpawnPosition(anemoneData, out Vector3 aPos, out Quaternion aRot))
                     {
-                        SpawnInstance(anemoneData, aPos, aRot);
-                        _usedPositions.Add(aPos);
-                        _anemonePositions.Add(aPos);
+                        var host = SpawnInstance(anemoneData, aPos, aRot);
+                        if (host != null)
+                        {
+                            _usedPositions.Add(host.transform.position);
+                            _anemonePositions.Add(host.transform.position);
+                        }
                     }
                 }
             }
@@ -941,7 +949,7 @@ public class SpeciesSpawner : MonoBehaviour
     // Instantiation
     // -----------------------------------------------------------------------
 
-    private void SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation, Vector3? wanderCenter = null)
+    private GameObject SpawnInstance(SpeciesData data, Vector3 position, Quaternion rotation, Vector3? wanderCenter = null)
     {
         Quaternion finalRot = data.modelPrefab != null
             ? (rotation * data.modelPrefab.transform.localRotation)
@@ -962,7 +970,25 @@ public class SpeciesSpawner : MonoBehaviour
             ? ComputeInstanceScale(data, baseScale, globalMinScale, globalMaxScale, scaleDistributionCurvature)
             : baseScale;
 
-        Vector3 center = wanderCenter.HasValue ? wanderCenter.Value : position;
+        // Placement/locomotion owns the world transform. Evaluate the initial
+        // skeletal pose before measuring contact, without imported root motion.
+        foreach (var animator in go.GetComponentsInChildren<Animator>())
+        {
+            animator.applyRootMotion = false;
+            if (animator.isActiveAndEnabled && animator.runtimeAnimatorController != null)
+                animator.Update(0f);
+        }
+
+        bool benthic = data.isStationary || data.locomotionArchetype == LocomotionArchetype.BenthicFollower;
+        if (benthic && !TryPlaceBenthicInstance(go, data))
+        {
+            // Exhausted candidates must not force an intersecting fallback into the scene.
+            go.SetActive(false);
+            Destroy(go);
+            return null;
+        }
+
+        Vector3 center = wanderCenter.HasValue ? wanderCenter.Value : go.transform.position;
 
         if (data.isStationary) SetupStationary(go, data);
         else                   SetupMobile(go, data, center);
@@ -972,6 +998,48 @@ public class SpeciesSpawner : MonoBehaviour
         {
             go.SetActive(false);
         }
+        if (benthic) Physics.SyncTransforms();
+        return go;
+    }
+
+    private bool TryPlaceBenthicInstance(GameObject go, SpeciesData data)
+    {
+        // Measure the final specimen scale and evaluated pose, including long limbs.
+        if (!CreatureGeometry.TryMeasure(go.transform, Quaternion.identity, out Bounds body, out Vector3[] supports)) return false;
+        for (int attempt = 0; attempt < 12; attempt++)
+        {
+            if (attempt > 0)
+            {
+                if (!TryFindSpawnPosition(data, out Vector3 candidate, out Quaternion rotation)) break;
+                Quaternion prefabRotation = data.modelPrefab != null ? data.modelPrefab.transform.localRotation : Quaternion.identity;
+                go.transform.SetPositionAndRotation(candidate, rotation * prefabRotation);
+            }
+            PlaceContact(go, data, body, supports);
+            if (data.benthicSupportPoints != null && data.benthicSupportPoints.Length > 0)
+            {
+                var points = new Vector3[data.benthicSupportPoints.Length];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    points[i] = Vector3.Scale(data.benthicSupportPoints[i], go.transform.lossyScale);
+                    body.Encapsulate(points[i]);
+                }
+                Vector3 pos = go.transform.position;
+                float scale = data.modelPrefab != null && Mathf.Abs(data.modelPrefab.transform.localScale.y) > 0.001f
+                    ? Mathf.Abs(go.transform.localScale.y / data.modelPrefab.transform.localScale.y) : 1f;
+                float clearance = data.taxonomicClass == TaxonomicClass.Chondrichthyes
+                    ? Mathf.Max(0.06f, data.benthicSurfaceOffset) : Mathf.Max(0f, data.groundContactClearance);
+                pos.y = BenthicClearance.MinimumRootY(pos, go.transform.rotation, body, clearance * scale,
+                    p => BenthicPlacement.SampleFloor(terrain, p, _zoneDef != null ? -_zoneDef.playableDepth : -200f), points);
+                go.transform.position = pos;
+            }
+            Vector3 final = go.transform.position;
+            if (!IsSeparated(final, GetMinSeparationForSpecies(data))) continue;
+            if (BenthicPlacement.IsBlocked(final, go.transform.rotation, body, go.transform, _benthicOverlapBuffer, out _)) continue;
+
+            // No final root/geometry adjustment is allowed after this check.
+            return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -1128,8 +1196,7 @@ public class SpeciesSpawner : MonoBehaviour
             box.isTrigger = false;
         }
 
-        // 3. Align bottom of object to surface so it sits firmly on the seabed/rocks
-        AdjustContactHeight(go, data);
+        // Final contact and footprint clearance were validated before adding gameplay components.
 
         try { go.tag = "Species"; } catch { }
 
@@ -1200,28 +1267,34 @@ public class SpeciesSpawner : MonoBehaviour
 
         var locomotion = go.GetComponent<CreatureLocomotion>();
         if (locomotion == null) locomotion = go.AddComponent<CreatureLocomotion>();
-        locomotion.Initialize(data);
 
         var cs = go.GetComponent<ContextSteering>();
         if (cs == null) cs = go.AddComponent<ContextSteering>();
 
         var ai = go.GetComponent<SpeciesAI>();
         if (ai == null) ai = go.AddComponent<SpeciesAI>();
+        // AI initialization also initializes locomotion once, after all peers exist.
         ai.Initialize(data, spawnCenter);
 
         var trackable = go.GetComponent<SonarTrackable>();
         if (trackable == null) trackable = go.AddComponent<SonarTrackable>();
         bool discovered = GameManager.Instance != null && GameManager.Instance.IsDiscovered(data.zoneIndex, data.speciesId);
         trackable.Initialize(SonarTrackable.SonarTargetType.Species, data.commonName, discovered);
-
-        if (data.locomotionArchetype == LocomotionArchetype.BenthicFollower)
-        {
-            AdjustContactHeight(go, data);
-        }
     }
 
     private void AdjustContactHeight(GameObject go, SpeciesData data)
     {
+        PlaceContact(go, data, null, null);
+    }
+
+    private void PlaceContact(GameObject go, SpeciesData data, Bounds? cachedBounds, Vector3[] cachedSupport)
+    {
+        // Authored contact points bypass combined-bounds centering and its later
+        // height safeguard, which can lift multipart colonies above their trunk.
+        var contact = go.GetComponent<CreatureGroundContact>();
+        float fallbackFloorY = _zoneDef != null ? -_zoneDef.playableDepth : -200f;
+        if (data != null && data.isStationary && contact != null && contact.TryPlace(terrain, fallbackFloorY)) return;
+
         // Temporarily disable the creature's own colliders so our ground-finding
         // raycast passes through to the actual terrain surface beneath.
         var ownColliders = go.GetComponentsInChildren<Collider>();
@@ -1240,6 +1313,8 @@ public class SpeciesSpawner : MonoBehaviour
 
             float SampleGroundAt(float wx, float wz)
             {
+                if (terrain != null && terrain.GetComponent<OceanFloorMeshGenerator>() != null)
+                    return BenthicPlacement.SampleFloor(terrain, new Vector3(wx, 0f, wz), -D);
                 float trueFloorY = terrain != null ? terrain.SampleHeight(wx, wz) : -D;
                 Vector3 ray = new Vector3(wx, trueFloorY + 25f, wz);
                 if (Physics.Raycast(ray, Vector3.down, out RaycastHit h, 35f, terrainMask, QueryTriggerInteraction.Ignore))
@@ -1256,29 +1331,21 @@ public class SpeciesSpawner : MonoBehaviour
             }
 
             float bottomToPivot = 0f;
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers != null && renderers.Length > 0)
+            Quaternion baseRot = !cachedBounds.HasValue && data != null && data.modelPrefab != null
+                ? data.modelPrefab.transform.localRotation : Quaternion.identity;
+            Bounds localBounds = cachedBounds.GetValueOrDefault();
+            Vector3[] measuredSupport = cachedSupport;
+            if (cachedBounds.HasValue || CreatureGeometry.TryMeasure(go.transform, baseRot, out localBounds, out measuredSupport))
             {
-                // Measure unrotated, object-space local bounds of the visual mesh in its authored upright pose
-                Quaternion baseRot = (data != null && data.modelPrefab != null)
-                    ? data.modelPrefab.transform.localRotation
-                    : Quaternion.identity;
+                // Skinned renderer envelopes can extend below the shell/trunk.
+                // Measure actual pose geometry without moving the live transform.
                 Quaternion originalRot = go.transform.rotation;
                 Vector3 originalPos = go.transform.position;
                 Quaternion deltaRot = originalRot * Quaternion.Inverse(baseRot);
 
-                go.transform.rotation = baseRot;
-                go.transform.position = Vector3.zero;
-
-                Bounds localBounds = renderers[0].bounds;
-                for (int i = 1; i < renderers.Length; i++)
-                    localBounds.Encapsulate(renderers[i].bounds);
-
-                go.transform.rotation = originalRot;
-
                 bool isCoral = data != null && data.commonName.IndexOf("Coral", System.StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isSponge = data != null && data.taxonomicClass == TaxonomicClass.Demospongiae;
-                bool isMoundOrClam = data != null && (data.taxonomicClass == TaxonomicClass.Anthozoa || data.taxonomicClass == TaxonomicClass.Bivalvia);
+                bool isAnemone = data != null && data.taxonomicClass == TaxonomicClass.Anthozoa;
 
                 float cx = localBounds.center.x;
                 float cz = localBounds.center.z;
@@ -1336,7 +1403,7 @@ public class SpeciesSpawner : MonoBehaviour
                     pos.y = Mathf.Max(minRequiredY, centerTargetY - (0.18f * scaleFactorY));
                     go.transform.position = pos;
                 }
-                else if (isMoundOrClam)
+                else if (isAnemone)
                 {
                     // Sea Anemones & Giant Clams: sample 5 points across the base pad/hinge
                     float baseR = Mathf.Clamp(localBounds.extents.x * 0.35f, 0.25f * scaleFactorY, 0.8f * scaleFactorY);
@@ -1371,54 +1438,14 @@ public class SpeciesSpawner : MonoBehaviour
                 else
                 {
                     // Flat / creeping species (Starfish, Snail, Lobster): underside conforms to terrain slope
-                    float rx = localBounds.extents.x * 0.65f;
-                    float rz = localBounds.extents.z * 0.65f;
-                    Vector3[] localPts = new Vector3[]
-                    {
-                        new Vector3(cx, yMin, cz),
-                        new Vector3(cx + rx, yMin, cz),
-                        new Vector3(cx - rx, yMin, cz),
-                        new Vector3(cx, yMin, cz + rz),
-                        new Vector3(cx, yMin, cz - rz)
-                    };
-
-                    float sink = 0.035f * scaleFactorY;
-                    float maxPen = 0.06f * scaleFactorY;
-                    if (data != null)
-                    {
-                        if (data.taxonomicClass == TaxonomicClass.Asteroidea)
-                        {
-                            sink = 0.025f * scaleFactorY; // Starfish: proportional embed ensures all 5 arms touch sand
-                            maxPen = 0.04f * scaleFactorY;
-                        }
-                        else if (data.taxonomicClass == TaxonomicClass.Malacostraca)
-                        {
-                            sink = 0.045f * scaleFactorY; // Lobster: proportional embed ensures legs touch seabed firmly
-                            maxPen = 0.08f * scaleFactorY;
-                        }
-                        else if (data.taxonomicClass == TaxonomicClass.Gastropoda)
-                        {
-                            sink = 0.035f * scaleFactorY; // Cone Snail: proportional embed
-                            maxPen = 0.06f * scaleFactorY;
-                        }
-                    }
-
-                    float minRequiredY = float.MaxValue;
-                    float centerTargetY = 0f;
-
-                    for (int i = 0; i < localPts.Length; i++)
-                    {
-                        Vector3 ptOffset = deltaRot * localPts[i];
-                        Vector3 ptWorld = originalPos + ptOffset;
-                        float gy = SampleGroundAt(ptWorld.x, ptWorld.z);
-                        float targetY = gy - ptOffset.y - sink;
-                        if (i == 0) centerTargetY = targetY;
-                        if (targetY < minRequiredY) minRequiredY = targetY;
-                    }
-
+                    // Fit the measured feet/underside to the physical floor. Never use
+                    // the lowest required root height: that buries the uphill limbs.
+                    float clearance = data != null ? Mathf.Max(0f, data.groundContactClearance) * scaleFactorY : 0.01f;
                     Vector3 pos = originalPos;
-                    pos.y = Mathf.Max(minRequiredY, centerTargetY - maxPen);
+                    pos.y = BenthicClearance.MinimumRootY(pos, deltaRot, localBounds, clearance,
+                        p => SampleGroundAt(p.x, p.z), measuredSupport);
                     go.transform.position = pos;
+                    return; // The legacy anti-floating clamp must not undo contact safety.
                 }
             }
             else

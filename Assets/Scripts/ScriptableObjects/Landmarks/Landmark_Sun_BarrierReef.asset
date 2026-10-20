@@ -16,7 +16,7 @@ MonoBehaviour:
   habitatName: Coral Reef Matrix
   category: Biogenic Aragonite Ecosystem
   zoneIndex: 0
-  depthRangeText: "50\u2013100 m"
+  depthRangeText: "10\u201350 m"
   habitatDescription: An expansive three-dimensional calcium carbonate fortress constructed
     over thousands of years by hermatypic stony corals (Scleractinia) and crustose
     coralline algae in sunlit waters.

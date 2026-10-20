@@ -216,7 +216,6 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     private GameObject _resultsPanel;
 
     private float _phaseTimeRemaining;
-    private float _totalPhaseTime = 25f;
 
     private static readonly Vector3 StageOrigin = new Vector3(0f, 1500f, 0f);
 
@@ -369,7 +368,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var allCams = FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var c in allCams)
         {
-            if (c != _minigameCam && c.enabled)
+            if (c != _minigameCam && c.enabled && c.targetTexture == null)
             {
                 c.enabled = false;
                 _disabledSceneCams.Add(c);
@@ -380,6 +379,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private void RestoreSceneCamera()
     {
+        if (_minigameCam != null) _minigameCam.enabled = false;
         foreach (var c in _disabledSceneCams)
         {
             if (c != null) c.enabled = true;
@@ -561,7 +561,6 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         _objectiveTarget = _variation == CleanupRoundRules.Variation.MixedCleanup
             ? Mathf.Max(1, Mathf.CeilToInt(_initialDebrisCount * 0.7f))
             : _spawnedDebris.FindAll(item => item.category == ObjectiveCategory()).Count;
-        _totalPhaseTime = Mathf.Max(25f, _initialDebrisCount * 3.8f);
         _roundObjectiveText = CreateUIText(_dedicatedCanvasGO.transform, "CleanupObjective", "", 19f,
             new Vector2(0f, 1f), TextAlignmentOptions.TopLeft, new Color(0.2f, 1f, 0.9f), new Vector2(700f, 60f));
         _roundObjectiveText.rectTransform.pivot = new Vector2(0f, 1f);
@@ -1008,13 +1007,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             }
 
             // Immediately initialize labels with uppercase formatted text to avoid unstyled placeholder flash
-            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{(int)_totalPhaseTime:00}");
+            SetText(customTimerText, customTimerTextLegacy, $"TIME: 0:{CleanupRoundRules.PhaseDurationSeconds:00}");
             SetText(customScoreText, customScoreTextLegacy, "COLLECT: 0");
 
             // Fallbacks in case HUD does not contain Timer/Score
             if (customTimerText == null && customTimerTextLegacy == null)
             {
-                customTimerText = CreateUIText(_dedicatedCanvasGO.transform, "TimerText_Auto", "TIME: 0:25", 28, new Vector2(0.85f, 0.94f), TextAlignmentOptions.Right, Color.white);
+                customTimerText = CreateUIText(_dedicatedCanvasGO.transform, "TimerText_Auto", $"TIME: 0:{CleanupRoundRules.PhaseDurationSeconds:00}", 28, new Vector2(0.85f, 0.94f), TextAlignmentOptions.Right, Color.white);
             }
             if (customScoreText == null && customScoreTextLegacy == null)
             {
@@ -1093,7 +1092,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var topBar = CreateUIPanel(_dedicatedCanvasGO.transform, "TopBar", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -45f), new Vector2(850f, 80f), new Color(0.02f, 0.08f, 0.15f, 0.92f));
         customScoreText = CreateUIText(topBar.transform, "CollectText", "COLLECT: 0", 26, new Vector2(0.20f, 0.5f), TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
         CreateUIText(topBar.transform, "PhaseTitle", "REMOVAL PHASE", 36, new Vector2(0.50f, 0.5f), TextAlignmentOptions.Center, new Color(0f, 0.93f, 0.85f));
-        customTimerText = CreateUIText(topBar.transform, "TimerText", "TIME: 0:25", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
+        customTimerText = CreateUIText(topBar.transform, "TimerText", $"TIME: 0:{CleanupRoundRules.PhaseDurationSeconds:00}", 26, new Vector2(0.80f, 0.5f), TextAlignmentOptions.Center, Color.white);
 
         BuildVirtualJoystick();
 
@@ -1301,7 +1300,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private IEnumerator ExtractionPhaseRoutine()
     {
-        _phaseTimeRemaining = _totalPhaseTime;
+        _phaseTimeRemaining = CleanupRoundRules.PhaseDurationSeconds;
 
         // Finish an in-flight drop/reel, including the last item, before changing phases.
         while ((_phaseTimeRemaining > 0f && _spawnedDebris.Count > 0) || _clawState != ClawState.Idle)

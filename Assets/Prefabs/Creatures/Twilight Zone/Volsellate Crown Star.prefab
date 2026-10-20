@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &3969085028515410564
+--- !u!1001 &8375920459737761387
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -8,89 +8,113 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 755343381768946090, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
-      propertyPath: m_Name
-      value: Volsellate Crown Star
-      objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -4748361991329772099, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d35ad5fe567d96e4db7872bcc9c5bd80, type: 2}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.25
+      value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 4.1899996
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -1.5494487
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -29.975344
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5053419905963296015, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - target: {fileID: -3910990755373119420, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6371281226974694171, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_DirtyAABB
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6371281226974694171, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_AABB.m_Center.y
+      value: 0.10237934
+      objectReference: {fileID: 0}
+    - target: {fileID: 6371281226974694171, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_AABB.m_Extent.x
+      value: 5.416283
+      objectReference: {fileID: 0}
+    - target: {fileID: 6371281226974694171, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_AABB.m_Extent.y
+      value: 0.17971751
+      objectReference: {fileID: 0}
+    - target: {fileID: 6371281226974694171, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_AABB.m_Extent.z
+      value: 5.416283
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+      propertyPath: m_Name
+      value: Volsellate Crown Star
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 755343381768946090, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8656915330603777908}
-    - targetCorrespondingSourceObject: {fileID: 755343381768946090, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
+      addedObject: {fileID: 8391868684201447458}
+    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4721683430814249879}
-  m_SourcePrefab: {fileID: -4161369568681901532, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
---- !u!1 &4426617321393271598 stripped
+      addedObject: {fileID: 5973452907580136209}
+  m_SourcePrefab: {fileID: -4161369568681901532, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+--- !u!1 &973924058118178348 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 755343381768946090, guid: 46ff4bf4c038db94fa1e53b71bf2c975, type: 3}
-  m_PrefabInstance: {fileID: 3969085028515410564}
+  m_CorrespondingSourceObject: {fileID: 8771091787928289351, guid: 8ec71c048493eed4397eb518cd3ec1f7, type: 3}
+  m_PrefabInstance: {fileID: 8375920459737761387}
   m_PrefabAsset: {fileID: 0}
---- !u!54 &8656915330603777908
+--- !u!54 &8391868684201447458
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4426617321393271598}
+  m_GameObject: {fileID: 973924058118178348}
   serializedVersion: 5
   m_Mass: 1
   m_LinearDamping: 2
@@ -111,13 +135,13 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!65 &4721683430814249879
+--- !u!65 &5973452907580136209
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4426617321393271598}
+  m_GameObject: {fileID: 973924058118178348}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -130,5 +154,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10.832566, y: 0.35943502, z: 10.832566}
-  m_Center: {x: 0, y: 0.10237934, z: 0}
+  m_Size: {x: 11.176797, y: 1.5457666, z: 11.330399}
+  m_Center: {x: 0.13441038, y: 0.23448265, z: 0.019207}

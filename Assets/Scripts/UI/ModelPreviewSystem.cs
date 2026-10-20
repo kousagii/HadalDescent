@@ -72,6 +72,7 @@ public class ModelPreviewSystem : MonoBehaviour
     private bool       _isDragging     = false;
     private float      _idleTimer      = 0f;
     private Material   _silhouetteMat;
+    private RawImage   _activePreviewImage;
     private Light      _keyLight;
     private Light      _fillLight;
 
@@ -128,6 +129,15 @@ public class ModelPreviewSystem : MonoBehaviour
 
     private void Update()
     {
+        // A preview camera must never become a second screen camera after a context
+        // loss or minigame handoff, and should not render an invisible empty stage.
+        if (previewCamera != null)
+        {
+            bool visible = _previewInstance != null && _activePreviewImage != null && _activePreviewImage.isActiveAndEnabled;
+            if (visible && previewRT != null && !previewRT.IsCreated()) previewRT.Create();
+            previewCamera.targetTexture = previewRT;
+            previewCamera.enabled = visible && previewRT != null && previewRT.IsCreated();
+        }
         if (_previewInstance != null && !_isDragging)
         {
             _idleTimer += Time.deltaTime;
@@ -148,7 +158,8 @@ public class ModelPreviewSystem : MonoBehaviour
             previewRT = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32)
             {
                 name = "ModelPreview_RT",
-                antiAliasing = 4,
+                antiAliasing = 1,
+                memorylessMode = RenderTextureMemoryless.None,
                 filterMode = FilterMode.Bilinear
             };
             previewRT.Create();
@@ -159,6 +170,9 @@ public class ModelPreviewSystem : MonoBehaviour
             var camGO = new GameObject("PreviewCamera", typeof(Camera));
             camGO.transform.SetParent(transform, false);
             previewCamera = camGO.GetComponent<Camera>();
+            previewCamera.enabled = false;
+            previewCamera.allowMSAA = false;
+            previewCamera.allowHDR = false;
             previewCamera.clearFlags = CameraClearFlags.SolidColor;
             previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             previewCamera.fieldOfView = 28f;
@@ -259,39 +273,39 @@ public class ModelPreviewSystem : MonoBehaviour
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
         previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
 
-        // 4. Clear RenderTexture and Render offscreen
+        // 4. Render offscreen; never cache an unsuccessful request as a blank model.
         RenderTexture prevActive = RenderTexture.active;
-        RenderTexture.active = previewRT;
-        GL.Clear(true, true, Color.clear); // Explicitly clear color and depth buffers
-
-        Texture2D snap;
-        bool prevFog = RenderSettings.fog;
+        Texture2D snap = null;
         try
         {
-            RenderSettings.fog = false;
-
-            var prevTarget = previewCamera.targetTexture;
-            previewCamera.targetTexture = previewRT;
-            previewCamera.Render();
-            previewCamera.targetTexture = prevTarget;
+            if (!PreviewRenderUtility.Render(previewCamera, previewRT))
+            {
+                Debug.LogWarning("[ModelPreview] Offscreen render request failed.");
+                return requireModel ? null : (isSilhouette && data.silhouette != null ? data.silhouette : data.photo);
+            }
 
             // 5. Read pixels into Texture2D
+            RenderTexture.active = previewRT;
             snap = new Texture2D(previewRT.width, previewRT.height, TextureFormat.RGBA32, false);
             snap.ReadPixels(new Rect(0, 0, previewRT.width, previewRT.height), 0, 0);
             snap.Apply();
         }
+        catch
+        {
+            if (snap != null) Destroy(snap);
+            throw;
+        }
         finally
         {
-            RenderSettings.fog = prevFog;
+            RenderTexture.active = prevActive;
+            // Immediate cleanup prevents overlap between same-frame captures.
+            DestroyImmediate(tempPivot);
+            if (_previewInstance != null)
+            {
+                _previewInstance.SetActive(true);
+                FrameCamera(_previewInstance);
+            }
         }
-
-        RenderTexture.active = prevActive;
-
-        // 6. Cleanup temporary pivot & model immediately (prevents same-frame multi-model overlap in loops)
-        DestroyImmediate(tempPivot);
-
-        // Restore active live preview if present
-        if (_previewInstance != null) _previewInstance.SetActive(true);
 
         // 7. Create and cache Sprite
         Rect spriteRect = requireModel ? GetVisibleModelRect(snap) : new Rect(0, 0, snap.width, snap.height);
@@ -354,6 +368,7 @@ public class ModelPreviewSystem : MonoBehaviour
         FrameCamera(_previewInstance);
 
         var targetImage = customRawImage != null ? customRawImage : previewRawImage;
+        _activePreviewImage = targetImage;
         if (targetImage != null)
         {
             targetImage.texture = previewRT;
@@ -452,6 +467,8 @@ public class ModelPreviewSystem : MonoBehaviour
 
     public void ClearPreview()
     {
+        _activePreviewImage = null;
+        if (previewCamera != null) previewCamera.enabled = false;
         if (_previewInstance != null)
         {
             Destroy(_previewInstance);

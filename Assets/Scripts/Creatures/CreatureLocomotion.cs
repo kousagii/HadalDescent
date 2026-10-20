@@ -34,6 +34,12 @@ public class CreatureLocomotion : MonoBehaviour
     private Transform _visualModel;
     private Vector3   _baseModelScale = Vector3.one;
 
+    // The lobster clip also animates its skeleton's locomotion bone. Keep that
+    // internal path in place so the visible body stays over its sampled feet.
+    private Transform _lobsterMotionBone;
+    private Vector3 _lobsterMotionPosition;
+    private Quaternion _lobsterMotionRotation;
+
     // -----------------------------------------------------------------------
     // Runtime state
     // -----------------------------------------------------------------------
@@ -44,6 +50,17 @@ public class CreatureLocomotion : MonoBehaviour
     private float _currentSpeed;
     private float _currentBankAngle;
     private float _previousYaw;
+    private Vector3 _nextPosition;
+    private Bounds _movementBounds;
+    private Bounds _benthicObstacleBounds;
+    private Quaternion _benthicNextRotation;
+    private float _benthicContactClearance;
+    private readonly Collider[] _benthicOverlapBuffer = new Collider[128];
+    private Vector3[] _benthicSupportPoints;
+    private TerrainGenerator _floorTerrain;
+    private MeshCollider _floorCollider;
+    private System.Func<Vector3, float> _floorSampler;
+    private Vector3 MovementForward => CreatureFacing.Forward(_rb.rotation, _steering != null ? _steering.ModelYawOffset : (_data != null ? _data.modelYawOffset : 0f));
 
     public LocomotionArchetype Archetype => _data != null ? _data.locomotionArchetype : LocomotionArchetype.PelagicCruiser;
     public SpeciesData Data => _data;
@@ -115,32 +132,33 @@ public class CreatureLocomotion : MonoBehaviour
             _rb.interpolation  = RigidbodyInterpolation.Interpolate;
         }
 
-        MeasureBodyDimensions();
+        // SpeciesSpawner supplies data and an evaluated pose before measuring.
     }
 
     private void MeasureBodyDimensions()
     {
-        var rends = GetComponentsInChildren<Renderer>();
-        if (rends != null && rends.Length > 0)
+        if (CreatureGeometry.TryMeasure(transform, Quaternion.identity, out Bounds modelBounds, out Vector3[] measuredSupport,
+            Archetype == LocomotionArchetype.BenthicFollower))
         {
-            Quaternion origRot = transform.rotation;
-            Vector3 origPos = transform.position;
-            Quaternion baseRot = (_data != null && _data.modelPrefab != null)
-                ? _data.modelPrefab.transform.localRotation
-                : Quaternion.identity;
-
-            transform.rotation = baseRot;
-            transform.position = Vector3.zero;
-
-            Bounds b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++)
+            _benthicObstacleBounds = modelBounds;
+            Bounds b = CreatureFacing.MovementBounds(modelBounds, _data != null ? _data.modelYawOffset : 0f);
+            Quaternion correction = Quaternion.Euler(0f, _data != null ? _data.modelYawOffset : 0f, 0f);
+            _benthicSupportPoints = measuredSupport;
+            if (_benthicSupportPoints != null)
+                for (int i = 0; i < _benthicSupportPoints.Length; i++)
+                    _benthicSupportPoints[i] = correction * _benthicSupportPoints[i];
+            if (_data != null && _data.benthicSupportPoints != null && _data.benthicSupportPoints.Length > 0)
             {
-                if (rends[i] != null) b.Encapsulate(rends[i].bounds);
+                _benthicSupportPoints = new Vector3[_data.benthicSupportPoints.Length];
+                for (int i = 0; i < _benthicSupportPoints.Length; i++)
+                {
+                    Vector3 point = Vector3.Scale(_data.benthicSupportPoints[i], transform.lossyScale);
+                    _benthicObstacleBounds.Encapsulate(point);
+                    _benthicSupportPoints[i] = correction * point;
+                    b.Encapsulate(_benthicSupportPoints[i]);
+                }
             }
-
-            transform.rotation = origRot;
-            transform.position = origPos;
-
+            _movementBounds = b;
             // Exact signed vertical distance from lowest visual point (b.min.y) to pivot (0)
             _bottomToPivot = -b.min.y;
             _bodyRadius = Mathf.Clamp(Mathf.Max(b.extents.x, b.extents.y), 0.4f, 4.0f);
@@ -152,13 +170,21 @@ public class CreatureLocomotion : MonoBehaviour
             _bodyRadius = Mathf.Clamp(Mathf.Max(s.x, s.y) * 0.5f, 0.4f, 4.0f);
             _bodyLength = Mathf.Max(1.0f, s.z);
             _bottomToPivot = _bodyRadius;
+            _movementBounds = new Bounds(Vector3.zero, new Vector3(_bodyRadius * 2f, _bodyRadius * 2f, _bodyLength * 2f));
+            _benthicObstacleBounds = _movementBounds;
         }
     }
 
     public void Initialize(SpeciesData data)
     {
         _data = data;
+        // The spawner can add SpeciesAI after this component's Awake.
+        _ai = GetComponent<SpeciesAI>();
+        _steering = GetComponent<ContextSteering>();
+        _floorSampler = SampleBenthicFloor;
+        CacheLobsterMotionBone();
         MeasureBodyDimensions();
+        _previousYaw = Mathf.Atan2(MovementForward.x, MovementForward.z) * Mathf.Rad2Deg;
         _cycleTimer = Random.Range(0f, 20f); // wide desync window across individuals
 
         if (_data != null && _data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter)
@@ -187,6 +213,34 @@ public class CreatureLocomotion : MonoBehaviour
             // Wait one frame for the state machine to initialize, then offset
             StartCoroutine(DesyncAnimatorCoroutine());
         }
+    }
+
+    private void CacheLobsterMotionBone()
+    {
+        _lobsterMotionBone = null;
+        if (_data == null || _data.speciesId != "spiny_lobster_001") return;
+        foreach (var skin in GetComponentsInChildren<SkinnedMeshRenderer>())
+        {
+            foreach (var bone in skin.bones)
+            {
+                if (bone == null || bone.name != "Bone") continue;
+                // Initialization follows Animator.Update(0), before the clip is
+                // desynchronized, and uses the same pose as contact measurement.
+                _lobsterMotionBone = bone;
+                _lobsterMotionPosition = bone.localPosition;
+                _lobsterMotionRotation = bone.localRotation;
+                return;
+            }
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (_lobsterMotionBone == null) return;
+        // Generic bone curves still run with applyRootMotion disabled. Remove
+        // only this bone's path/yaw after animation; retain all child leg motion.
+        _lobsterMotionBone.localPosition = _lobsterMotionPosition;
+        _lobsterMotionBone.localRotation = _lobsterMotionRotation;
     }
 
     private System.Collections.IEnumerator DesyncAnimatorCoroutine()
@@ -229,6 +283,8 @@ public class CreatureLocomotion : MonoBehaviour
         float targetSpeed = _steering != null ? _steering.MoveSpeed : _data.moveSpeed;
 
         _cycleTimer += Time.fixedDeltaTime;
+        _nextPosition = _rb.position;
+        _benthicNextRotation = _rb.rotation;
 
         switch (_data.locomotionArchetype)
         {
@@ -267,6 +323,11 @@ public class CreatureLocomotion : MonoBehaviour
 
         UpdateBankingAndYaw();
         EnforcePlayableAndDepthBounds();
+        if (_data.locomotionArchetype == LocomotionArchetype.BenthicFollower)
+            FinalizeBenthicStep();
+        // Propulsion and bounds correction share one proposed step. A second
+        // MovePosition from the old body position would erase forward progress.
+        _rb.MovePosition(_nextPosition);
     }
 
     // -----------------------------------------------------------------------
@@ -280,19 +341,19 @@ public class CreatureLocomotion : MonoBehaviour
         float minSpeed = targetSpeed * Mathf.Max(0.25f, _data.minCruiseSpeedFraction);
         if (steerDir.sqrMagnitude < 0.01f)
         {
-            steerDir = transform.forward;
+            steerDir = MovementForward;
         }
 
         _currentSpeed = Mathf.Lerp(_currentSpeed, Mathf.Max(minSpeed, targetSpeed), 2.0f * Time.fixedDeltaTime);
 
         // Biomechanical hydrodynamic forward propulsion:
-        // Marine vertebrates generate thrust strictly along their longitudinal body axis (transform.forward).
+        // Marine vertebrates generate thrust strictly along their longitudinal body axis (MovementForward).
         // Propelling strictly forward guarantees dolphins and sharks will NEVER slide sideways or swim backward!
-        float forwardDot = Vector3.Dot(transform.forward, steerDir.normalized);
+        float forwardDot = Vector3.Dot(MovementForward, steerDir.normalized);
         float turnDrag = Mathf.Clamp01((forwardDot + 1f) * 0.5f); // 1.0 when facing target, ~0.5 at 90 deg, ~0 at 180 deg
         float forwardSpeed = Mathf.Max(minSpeed * 0.45f, _currentSpeed * Mathf.Lerp(0.40f, 1.0f, turnDrag));
 
-        Vector3 moveStep = transform.forward * forwardSpeed * Time.fixedDeltaTime;
+        Vector3 moveStep = MovementForward * forwardSpeed * Time.fixedDeltaTime;
         Vector3 newPos = _rb.position + moveStep;
 
         // Boundaries and depth safety
@@ -310,26 +371,17 @@ public class CreatureLocomotion : MonoBehaviour
         float safeClearance = Mathf.Max(2.5f, _bottomToPivot + 1.0f);
         float minSwimY = Mathf.Max(effBottomY, floorAtPos + safeClearance);
 
-        // In very shallow water where seabed rises near surface, stay halfway between seabed and surface
-        if (minSwimY > effTopY)
-        {
-            newPos.y = Mathf.Lerp(floorAtPos + 0.8f, effTopY, 0.5f);
-        }
-        else
-        {
-            newPos.y = Mathf.Clamp(newPos.y, minSwimY, effTopY);
-        }
+        newPos.y = CreatureMotionBounds.ClampDepth(newPos.y, minSwimY, effTopY);
 
         // Hydrodynamic velocity sanitization:
         // Ensure dynamic physics collisions or external contacts can NEVER impart a backward velocity
-        float backwardDot = Vector3.Dot(_rb.linearVelocity, transform.forward);
+        float backwardDot = Vector3.Dot(_rb.linearVelocity, MovementForward);
         if (backwardDot < 0f)
         {
-            _rb.linearVelocity = Vector3.ProjectOnPlane(_rb.linearVelocity, transform.forward);
+            _rb.linearVelocity = Vector3.ProjectOnPlane(_rb.linearVelocity, MovementForward);
         }
 
-        // Exactly ONCE per FixedUpdate: apply unified position (eliminates jitter from multiple calls)
-        _rb.MovePosition(newPos);
+        _nextPosition = newPos;
 
         // Smooth heading rotation towards steerDir (horizontal when not going upward)
         float turnBoost = forwardDot < 0.5f ? 1.6f : 1.0f;
@@ -389,7 +441,7 @@ public class CreatureLocomotion : MonoBehaviour
         // Temporal low-pass filter on heading direction
         if (_smoothedHoverDir.sqrMagnitude < 0.01f)
         {
-            _smoothedHoverDir = transform.forward;
+            _smoothedHoverDir = MovementForward;
         }
         if (steerMagnitude > 0.05f)
         {
@@ -403,7 +455,7 @@ public class CreatureLocomotion : MonoBehaviour
             0f);
 
         Vector3 moveStep = (_smoothedHoverDir * _currentSpeed + hoverFloat) * Time.fixedDeltaTime;
-        _rb.MovePosition(_rb.position + moveStep);
+        _nextPosition = _rb.position + moveStep;
 
         // Smooth heading alignment: maximum 25 degrees pitch clamp keeps clownfish level and upright
         if (_currentSpeed > 0.08f)
@@ -473,7 +525,7 @@ public class CreatureLocomotion : MonoBehaviour
             }
             else if (effectiveDir.sqrMagnitude < 0.01f)
             {
-                effectiveDir = (Vector3.up * 0.55f + transform.forward * 0.25f).normalized;
+                effectiveDir = (Vector3.up * 0.55f + MovementForward * 0.25f).normalized;
             }
             else
             {
@@ -483,12 +535,12 @@ public class CreatureLocomotion : MonoBehaviour
         }
         else if (effectiveDir.sqrMagnitude < 0.01f)
         {
-            effectiveDir = transform.forward;
+            effectiveDir = MovementForward;
         }
 
         // 4. Translation step
         Vector3 moveStep = effectiveDir.normalized * _currentSpeed * Time.fixedDeltaTime;
-        _rb.MovePosition(_rb.position + moveStep);
+        _nextPosition = _rb.position + moveStep;
 
         // 5. 3D Rotation to face movement direction
         if (effectiveDir.sqrMagnitude > 0.001f)
@@ -509,8 +561,8 @@ public class CreatureLocomotion : MonoBehaviour
             }
         }
 
-        // 6. Subtle, organic visual model pulsation (only applied when no skeletal animator is active)
-        if (_visualModel != null)
+        // 6. Visual-only pulsation must not resize the Rigidbody/collider root.
+        if (_visualModel != null && _visualModel != transform)
         {
             float deformMagnitude = _animator != null ? 0f : 0.065f;
             float squash = 1f - visualDeform * deformMagnitude;
@@ -540,32 +592,24 @@ public class CreatureLocomotion : MonoBehaviour
 
         float yawOffset = _steering != null ? _steering.ModelYawOffset : 0f;
 
-        // 2. Check for crustacean backward tail-flip escape
-        bool isFleeing = _ai != null && _ai.IsFleeing;
-        bool isLobster = _data != null && _data.taxonomicClass == TaxonomicClass.Malacostraca;
+        // The shrimp follows the threat-aware steering goal. Only the lobster
+        // keeps a brief backward phase, with facing separate from travel.
+        bool backwardEscape = UsesBackwardEscape();
 
         Quaternion curRot = _rb != null ? _rb.rotation : transform.rotation;
-        Vector3 effectiveDir = steerDir;
-        if (isLobster && isFleeing)
-        {
-            // Backward tail-flip: propel backward relative to current true facing
-            Vector3 fleeBack = yawOffset != 0f
-                ? -(curRot * Quaternion.Euler(0f, -yawOffset, 0f) * Vector3.forward)
-                : -(curRot * Vector3.forward);
-            effectiveDir = fleeBack;
+        if (backwardEscape)
             targetSpeed = Mathf.Clamp(targetSpeed, 1.4f, 2.0f);
-        }
 
         Vector3 trueFacing = yawOffset != 0f
             ? (curRot * Quaternion.Euler(0f, -yawOffset, 0f) * Vector3.forward)
             : curRot * Vector3.forward;
         Vector3 flatFacing = Vector3.ProjectOnPlane(trueFacing, _groundNormal).normalized;
-        if (flatFacing.sqrMagnitude < 0.001f) flatFacing = transform.forward;
+        if (flatFacing.sqrMagnitude < 0.001f) flatFacing = MovementForward;
 
         // 3. Project steering vector onto terrain tangent plane
-        Vector3 rawTangent = Vector3.ProjectOnPlane(effectiveDir, _groundNormal).normalized;
+        Vector3 rawTangent = Vector3.ProjectOnPlane(steerDir, _groundNormal).normalized;
         if (rawTangent.sqrMagnitude < 0.001f)
-            rawTangent = flatFacing;
+            rawTangent = backwardEscape ? -flatFacing : flatFacing;
 
         Vector3 targetTangent = rawTangent;
 
@@ -589,7 +633,8 @@ public class CreatureLocomotion : MonoBehaviour
             _data.commonName.IndexOf("tripod", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
             _data.commonName.IndexOf("sea pig", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
             _data.commonName.IndexOf("worm", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-            _data.commonName.IndexOf("isopod", System.StringComparison.OrdinalIgnoreCase) >= 0
+            _data.commonName.IndexOf("isopod", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            _data.speciesId == "ring_batfish_001" || _data.speciesId == "albatross_coffinfish_001"
         );
         bool isGroundedCrawler = _data != null && (
             _data.taxonomicClass == TaxonomicClass.Malacostraca ||
@@ -598,12 +643,12 @@ public class CreatureLocomotion : MonoBehaviour
             isBottomWalkerByName
         );
 
-        // True benthic crawlers (lobsters, snails, sea stars, crabs, amphipods, tripod fish) plant their legs/foot
-        // directly into the sediment (-2.5cm to -3.5cm contact embed) so they never hover above the sand.
-        // Swimming benthic rays and demersal fishes skim smoothly just above the seabed (+6cm above belly contact).
+        // Walkers use a small positive foot clearance instead of sinking their
+        // measured underside into sediment. Swimming rays keep their own profile.
         float surfaceClearance = isGroundedCrawler
-            ? ((isLobster ? -0.035f : -0.025f) * scaleFactorY)
-            : (0.06f * scaleFactorY);
+            ? (Mathf.Max(0f, _data.groundContactClearance) * scaleFactorY)
+            : ((isRay ? Mathf.Max(0.06f, _data.benthicSurfaceOffset) : 0.06f) * scaleFactorY);
+        _benthicContactClearance = surfaceClearance;
 
         float effectiveOffset = _bottomToPivot + surfaceClearance;
         float baseTargetY = _groundY + effectiveOffset;
@@ -631,13 +676,13 @@ public class CreatureLocomotion : MonoBehaviour
         for (int i = 0; i < aheadHits.Length; i++)
         {
             var h = aheadHits[i];
-            if (h.collider != null && !h.collider.isTrigger && h.collider.transform.root != transform.root && !h.collider.CompareTag("Species"))
+            if (h.collider != null && !h.collider.isTrigger && !h.collider.transform.IsChildOf(transform) && !h.collider.CompareTag("Species"))
             {
                 if (ContextSteering.IsEnvironmentProp(h.collider))
                 {
                     float propHeight = h.collider.bounds.size.y;
                     float topY = h.collider.bounds.max.y;
-                    if (propHeight <= 0.85f)
+                    if (!isGroundedCrawler && propHeight <= 0.85f)
                     {
                         if (topY > highestLowPropTop) highestLowPropTop = topY;
                         if (h.distance < closestPropDist) closestPropDist = h.distance;
@@ -662,9 +707,9 @@ public class CreatureLocomotion : MonoBehaviour
         for (int i = 0; i < directProps.Length; i++)
         {
             var dp = directProps[i];
-            if (dp != null && !dp.isTrigger && dp.transform.root != transform.root && !dp.CompareTag("Species"))
+            if (dp != null && !dp.isTrigger && !dp.transform.IsChildOf(transform) && !dp.CompareTag("Species"))
             {
-                if (ContextSteering.IsEnvironmentProp(dp) && dp.bounds.size.y <= 0.85f)
+                if (!isGroundedCrawler && ContextSteering.IsEnvironmentProp(dp) && dp.bounds.size.y <= 0.85f)
                 {
                     float topY = dp.bounds.max.y;
                     if (topY > highestLowPropTop) highestLowPropTop = topY;
@@ -775,7 +820,7 @@ public class CreatureLocomotion : MonoBehaviour
             for (int p = 0; p < touchingProps.Length; p++)
             {
                 var col = touchingProps[p];
-                if (col != null && col.transform.root != transform.root && !col.isTrigger && ContextSteering.IsEnvironmentProp(col))
+                if (col != null && !col.transform.IsChildOf(transform) && !col.isTrigger && ContextSteering.IsEnvironmentProp(col))
                 {
                     if (col.bounds.max.y > transform.position.y)
                     {
@@ -813,19 +858,7 @@ public class CreatureLocomotion : MonoBehaviour
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 4f * Time.fixedDeltaTime);
 
         // 4. Lateral Evasion Glide & Propulsion on the seabed:
-        Vector3 moveDir;
-        if (isRay)
-        {
-            // Rays are flat swimming discs with full lateral hydrodynamics: glide along evasion tangent
-            moveDir = Vector3.Slerp(flatFacing, surfaceTangent, 0.85f).normalized;
-        }
-        else
-        {
-            // Crawlers blend toward evasion tangent when facing is blocked
-            float facingDot = Vector3.Dot(flatFacing, surfaceTangent);
-            float lateralBlend = facingDot < 0.6f ? 0.70f : 0.25f;
-            moveDir = Vector3.Slerp(flatFacing, surfaceTangent, lateralBlend).normalized;
-        }
+        Vector3 moveDir = BenthicTravelDirection(flatFacing, surfaceTangent, isRay, backwardEscape);
         if (moveDir.sqrMagnitude < 0.001f) moveDir = surfaceTangent;
 
         // Turn-in-place before advancing: maintains continuous glide velocity while turning to eliminate freezing
@@ -840,6 +873,7 @@ public class CreatureLocomotion : MonoBehaviour
         if (_currentSpeed > 0.25f && surfaceTangent.sqrMagnitude > 0.01f)
         {
             hHeading = Vector3.ProjectOnPlane(surfaceTangent, Vector3.up).normalized;
+            if (backwardEscape) hHeading = -hHeading;
         }
         else
         {
@@ -856,8 +890,8 @@ public class CreatureLocomotion : MonoBehaviour
         Vector3 frontPos = newPos + hHeading * probeSpan;
         Vector3 rearPos  = newPos - hHeading * probeSpan;
 
-        float frontFloorY = (tg != null && tg.HasGenerated) ? tg.SampleHeight(frontPos.x, frontPos.z) : _groundY;
-        float rearFloorY  = (tg != null && tg.HasGenerated) ? tg.SampleHeight(rearPos.x, rearPos.z) : _groundY;
+        float frontFloorY = SampleBenthicFloor(frontPos);
+        float rearFloorY = SampleBenthicFloor(rearPos);
 
         // For grounded crawlers (lobsters, snails, sea stars), blend center and front/rear ground heights on convex crests
         // so front and rear legs remain planted in the sand rather than teetering above a ridge
@@ -876,7 +910,7 @@ public class CreatureLocomotion : MonoBehaviour
             newPos.y = targetY;
         }
 
-        _rb.MovePosition(newPos);
+        _nextPosition = newPos;
 
         // 6. Dynamic seabed slope alignment ("Angled at the bottom when moving"):
         // Compute the true terrain slope forward vector along travel heading
@@ -929,18 +963,108 @@ public class CreatureLocomotion : MonoBehaviour
         // Proper orientation: construct slope rotation first, then rotate by modelYawOffset around local up (slopeNormal)
         // This guarantees that models with yaw offsets (180 deg for stingray, -90 for lobster) pitch correctly along the slope!
         Quaternion slopeBaseRot = Quaternion.LookRotation(slopeForward, slopeNormal);
-        Quaternion targetRot = slopeBaseRot * Quaternion.Euler(0f, yawOffset, 0f);
+        Quaternion targetRot = CreatureFacing.ModelRotation(slopeBaseRot, yawOffset);
 
         float maxTurnRate = _steering != null ? _steering.TurnSpeed : 50f;
         float angleDelta = Quaternion.Angle(_rb.rotation, targetRot);
 
         // Continuous smooth rotation when moving, stable calm resting when stationary
+        Quaternion nextRotation = _rb.rotation;
         if (angleDelta > 0.02f && (_currentSpeed > 0.08f || angleDelta > 6f))
         {
             float turnRatio = Mathf.Clamp01(angleDelta / 20f);
             float effectiveRate = Mathf.Lerp(8f, maxTurnRate, turnRatio);
-            _rb.MoveRotation(Quaternion.RotateTowards(_rb.rotation, targetRot, effectiveRate * Time.fixedDeltaTime));
+            nextRotation = Quaternion.RotateTowards(_rb.rotation, targetRot, effectiveRate * Time.fixedDeltaTime);
         }
+        _benthicNextRotation = nextRotation;
+    }
+
+    private bool UsesBackwardEscape()
+    {
+        return _data != null && _data.speciesId == "spiny_lobster_001" &&
+            _ai != null && _ai.IsFleeing && _ai.FleeElapsed < 0.8f;
+    }
+
+    private static Vector3 BenthicTravelDirection(Vector3 facing, Vector3 tangent, bool isRay, bool backwardEscape)
+    {
+        if (backwardEscape) return tangent;
+        float blend = isRay ? 0.85f : (Vector3.Dot(facing, tangent) < 0.6f ? 0.70f : 0.25f);
+        return Vector3.Slerp(facing, tangent, blend).normalized;
+    }
+
+    // Run after perimeter correction so that its final X/Z cannot bypass floor/prop checks.
+    private void FinalizeBenthicStep()
+    {
+        if (_floorSampler == null) _floorSampler = SampleBenthicFloor;
+        Vector3 position = _nextPosition;
+        Quaternion rotation = _benthicNextRotation;
+        ConstrainBenthicFloor(ref position, rotation);
+        if (BenthicPlacement.IsBlocked(position, rotation, _benthicObstacleBounds, transform, _benthicOverlapBuffer, out Vector3 away) ||
+            BenthicPlacement.IsBlocked(Vector3.Lerp(_rb.position, position, 0.5f), Quaternion.Slerp(_rb.rotation, rotation, 0.5f),
+                _benthicObstacleBounds, transform, _benthicOverlapBuffer, out _))
+        {
+            // Cancel the unsafe step. A clear turn in place lets the existing
+            // steering/AI pick a route around a prop rather than entering it.
+            position = _rb.position;
+            ConstrainBenthicFloor(ref position, rotation);
+            if (BenthicPlacement.IsBlocked(position, rotation, _benthicObstacleBounds, transform, _benthicOverlapBuffer, out _))
+                rotation = _rb.rotation;
+            ConstrainBenthicFloor(ref position, rotation);
+            _currentSpeed = 0f;
+            _rb.linearVelocity = Vector3.zero;
+            if (away.sqrMagnitude < 0.001f) away = -MovementForward;
+            _ai?.TurnAwayFromBoundary(away);
+        }
+        _nextPosition = position;
+        _rb.MoveRotation(rotation);
+    }
+
+    private void ConstrainBenthicFloor(ref Vector3 position, Quaternion rotation)
+    {
+        Quaternion correction = Quaternion.Euler(0f, -_data.modelYawOffset, 0f);
+        float required = BenthicClearance.MinimumRootY(position, _rb.rotation * correction, _movementBounds,
+            _benthicContactClearance, _floorSampler, _benthicSupportPoints);
+        if (Quaternion.Angle(_rb.rotation, rotation) > 0.02f)
+            required = Mathf.Max(required, BenthicClearance.MinimumRootY(position, rotation * correction, _movementBounds,
+                _benthicContactClearance, _floorSampler, _benthicSupportPoints));
+        // Upward safety is immediate; the existing follower still smooths descent.
+        position.y = Mathf.Max(position.y, required);
+    }
+
+    /// <summary>Use the authored animated underside before the first visible physics tick.</summary>
+    public void ApplySpawnClearance()
+    {
+        if (_data == null || _data.locomotionArchetype != LocomotionArchetype.BenthicFollower ||
+            _benthicSupportPoints == null || _benthicSupportPoints.Length == 0) return;
+        if (_floorSampler == null) _floorSampler = SampleBenthicFloor;
+        float scaleRatio = _data.modelPrefab != null && Mathf.Abs(_data.modelPrefab.transform.localScale.y) > 0.001f
+            ? Mathf.Abs(transform.localScale.y / _data.modelPrefab.transform.localScale.y) : 1f;
+        Quaternion travelRotation = transform.rotation * Quaternion.Euler(0f, -_data.modelYawOffset, 0f);
+        Vector3 position = transform.position;
+        float minimum = BenthicClearance.MinimumRootY(position, travelRotation, _movementBounds,
+            (_data.taxonomicClass == TaxonomicClass.Chondrichthyes
+                ? Mathf.Max(0.06f, _data.benthicSurfaceOffset) : Mathf.Max(0f, _data.groundContactClearance))
+                * Mathf.Clamp(scaleRatio, 0.5f, 1.5f), _floorSampler, _benthicSupportPoints);
+        position.y = Mathf.Max(position.y, minimum);
+        _rb.position = position;
+        transform.position = position;
+    }
+
+    private float SampleBenthicFloor(Vector3 point)
+    {
+        if (_floorTerrain == null) _floorTerrain = TerrainGenerator.Instance != null ? TerrainGenerator.Instance : FindFirstObjectByType<TerrainGenerator>();
+        if (_floorCollider == null && _floorTerrain != null)
+        {
+            var generator = _floorTerrain.GetComponent<OceanFloorMeshGenerator>();
+            if (generator != null) _floorCollider = generator.GetComponent<MeshCollider>();
+        }
+        if (_floorCollider != null && _floorCollider.enabled && _floorCollider.sharedMesh != null)
+        {
+            Bounds floorBounds = _floorCollider.bounds;
+            var ray = new Ray(new Vector3(point.x, floorBounds.max.y + 1f, point.z), Vector3.down);
+            if (_floorCollider.Raycast(ray, out RaycastHit hit, floorBounds.size.y + 2f) && hit.normal.y > 0f) return hit.point.y;
+        }
+        return _floorTerrain != null && _floorTerrain.HasGenerated ? _floorTerrain.SampleHeight(point.x, point.z) : _groundY;
     }
 
     private void SampleGround()
@@ -987,7 +1111,12 @@ public class CreatureLocomotion : MonoBehaviour
         float targetGroundY = analyticalY;
         Vector3 targetGroundNormal = analyticalNormal;
 
-        if (found)
+        if (_data != null && _data.locomotionArchetype == LocomotionArchetype.BenthicFollower)
+        {
+            // All benthics use the physical floor, not a differently interpolated height.
+            targetGroundY = SampleBenthicFloor(_rb.position);
+        }
+        else if (found)
         {
             // If raycast hit is close to analytical seabed (+/- 0.6m), it is the physical mesh surface.
             // Blend smooth analytical normal (continuous C1 gradient) with raycast normal (local mesh facet)
@@ -1049,7 +1178,7 @@ public class CreatureLocomotion : MonoBehaviour
 
         // Drift slowly with ambient ocean current
         pos += _ambientCurrent * (0.25f * Time.fixedDeltaTime);
-        _rb.MovePosition(pos);
+        _nextPosition = pos;
 
         // Gentle roll and pitch swell bobbing without spinning or jittering yaw
         float roll = Mathf.Sin(_cycleTimer * 1.2f) * 5f;
@@ -1118,7 +1247,7 @@ public class CreatureLocomotion : MonoBehaviour
         float safeHalfW = _steering != null ? _steering.SafeHalfWidth : 240f;
         float safeHalfL = _steering != null ? _steering.SafeHalfLength : 240f;
 
-        Vector3 pos = _rb.position;
+        Vector3 pos = _nextPosition;
         bool clamped = false;
         Vector3 boundaryNormal = Vector3.zero;
 
@@ -1180,7 +1309,7 @@ public class CreatureLocomotion : MonoBehaviour
             float floorAtPos = tg != null && tg.HasGenerated ? tg.SampleHeight(pos.x, pos.z) : -200f;
 
             // Probe seabed under entire longitudinal body length so pitching nose and tail never clip into hills
-            Vector3 fwd = transform.forward;
+            Vector3 fwd = MovementForward;
             float probeSpan = isHoverBurst ? 0.35f : Mathf.Max(3.0f, _bodyLength * 0.45f);
             float floorNose = tg != null && tg.HasGenerated ? tg.SampleHeight(pos.x + fwd.x * probeSpan, pos.z + fwd.z * probeSpan) : floorAtPos;
             float floorTail = tg != null && tg.HasGenerated ? tg.SampleHeight(pos.x - fwd.x * probeSpan, pos.z - fwd.z * probeSpan) : floorAtPos;
@@ -1191,23 +1320,18 @@ public class CreatureLocomotion : MonoBehaviour
                 ? (highestFloorUnderBody + safeClearance)
                 : Mathf.Max(effBottomY, highestFloorUnderBody + safeClearance);
 
-            if (pos.y > effTopY)
+            float projectedY = CreatureMotionBounds.ClampDepth(pos.y, minSwimY, effTopY);
+            if (!Mathf.Approximately(pos.y, projectedY))
             {
-                pos.y = effTopY;
-                boundaryNormal.y = -1f;
-                clamped = true;
-            }
-            else if (pos.y < minSwimY)
-            {
-                pos.y = minSwimY;
-                boundaryNormal.y = 1f;
+                boundaryNormal.y = Mathf.Sign(projectedY - pos.y);
+                pos.y = projectedY;
                 clamped = true;
             }
         }
 
         if (clamped)
         {
-            _rb.MovePosition(pos);
+            _nextPosition = pos;
             if (_ai != null && boundaryNormal.sqrMagnitude > 0.01f && Time.time >= _nextBoundaryTurnCooldown)
             {
                 _nextBoundaryTurnCooldown = Time.time + 1.5f;
@@ -1225,7 +1349,7 @@ public class CreatureLocomotion : MonoBehaviour
     {
         if (steerDir.sqrMagnitude < 0.01f)
         {
-            steerDir = transform.forward;
+            steerDir = MovementForward;
         }
 
         float freq = Mathf.Max(0.5f, _data.undulationFrequency);
@@ -1235,16 +1359,16 @@ public class CreatureLocomotion : MonoBehaviour
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 3f * Time.fixedDeltaTime);
 
         // 2. Physical propulsion along body forward with obstacle deflection
-        float forwardDot = Vector3.Dot(transform.forward, steerDir.normalized);
+        float forwardDot = Vector3.Dot(MovementForward, steerDir.normalized);
         float turnDrag = Mathf.Clamp01((forwardDot + 1f) * 0.5f);
         float forwardSpeed = _currentSpeed * Mathf.Lerp(0.35f, 1.0f, turnDrag);
 
         Vector3 moveDir = forwardDot < 0.6f
-            ? Vector3.Slerp(transform.forward, steerDir.normalized, 0.40f).normalized
-            : transform.forward;
+            ? Vector3.Slerp(MovementForward, steerDir.normalized, 0.40f).normalized
+            : MovementForward;
 
         Vector3 moveStep = moveDir * forwardSpeed * Time.fixedDeltaTime;
-        _rb.MovePosition(_rb.position + moveStep);
+        _nextPosition = _rb.position + moveStep;
 
         // 3. Smooth heading rotation
         float turnBoost = forwardDot < 0.5f ? 1.6f : 1.0f;
@@ -1297,14 +1421,14 @@ public class CreatureLocomotion : MonoBehaviour
 
             Vector3 upVector = Mathf.Abs(lookDir.y) > 0.95f ? Vector3.forward : Vector3.up;
             Quaternion baseLook = Quaternion.LookRotation(lookDir, upVector);
-            targetRot = baseLook * Quaternion.Euler(Mathf.Clamp(extraPitch, -30f, 30f), yawOffset, _currentBankAngle);
+            targetRot = CreatureFacing.ModelRotation(baseLook * Quaternion.Euler(Mathf.Clamp(extraPitch, -30f, 30f), 0f, _currentBankAngle), yawOffset);
         }
         else
         {
             Vector3 flatDir = new Vector3(dir.x, 0f, dir.z);
             if (flatDir.sqrMagnitude < 0.001f)
             {
-                flatDir = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+                flatDir = Vector3.ProjectOnPlane(MovementForward, Vector3.up);
                 if (flatDir.sqrMagnitude < 0.001f) flatDir = Vector3.forward;
             }
             flatDir.Normalize();
@@ -1330,7 +1454,7 @@ public class CreatureLocomotion : MonoBehaviour
 
             Quaternion baseLook = Quaternion.LookRotation(pitchedForward, Vector3.up);
             // Apply modelYawOffset around the model's true local up axis, and bank angle around local forward
-            targetRot = baseLook * Quaternion.Euler(0f, yawOffset, _currentBankAngle);
+            targetRot = CreatureFacing.ModelRotation(baseLook * Quaternion.Euler(0f, 0f, _currentBankAngle), yawOffset);
         }
 
         // Natural, smooth hydrodynamic turning without stepping or ratcheting
@@ -1350,7 +1474,7 @@ public class CreatureLocomotion : MonoBehaviour
         if (_data != null && (_data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter || _data.locomotionArchetype == LocomotionArchetype.Sessile))
             return;
 
-        float currentYaw = transform.eulerAngles.y;
+        float currentYaw = Mathf.Atan2(MovementForward.x, MovementForward.z) * Mathf.Rad2Deg;
         float deltaYaw   = Mathf.DeltaAngle(_previousYaw, currentYaw);
         _previousYaw     = currentYaw;
 

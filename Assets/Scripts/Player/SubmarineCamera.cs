@@ -80,6 +80,8 @@ public class SubmarineCamera : MonoBehaviour
         var cam = GetComponent<Camera>();
         if (cam != null)
         {
+            int previewLayer = LayerMask.NameToLayer("ModelPreview");
+            if (previewLayer >= 0) cam.cullingMask &= ~(1 << previewLayer);
             // Reduce near clip plane to prevent clipping into terrain/obstacles on close approach
             cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, 0.03f);
 
@@ -98,7 +100,11 @@ public class SubmarineCamera : MonoBehaviour
     private void LateUpdate()
     {
         // Suppress gameplay camera rotation while Shop is open, modal is active, or dragging preview
-        if ((ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging ||
+        if (UIManager.IsAnyMinigameActive() ||
+            (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) ||
+            (CinematicSequencer.Instance != null && CinematicSequencer.Instance.IsPlaying) ||
+            (UIManager.Instance != null && !UIManager.Instance.IsExplorationHUDVisible) ||
+            (ShopManager.Instance != null && ShopManager.Instance.IsOpen) || SubmarinePreviewRotator.IsAnyDragging ||
             (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             if (dragZone != null) dragZone.ConsumeTouchDelta();
@@ -111,13 +117,8 @@ public class SubmarineCamera : MonoBehaviour
 
         // --- 1. Read drag delta from the UI touch zone ---
         Vector2 drag = Vector2.zero;
-        if (dragZone != null)
+        if (dragZone != null && dragZone.isActiveAndEnabled)
         {
-            if (!dragZone.gameObject.activeInHierarchy)
-            {
-                dragZone.gameObject.SetActive(true);
-                dragZone.enabled = true;
-            }
             drag = dragZone.ConsumeTouchDelta();
         }
 

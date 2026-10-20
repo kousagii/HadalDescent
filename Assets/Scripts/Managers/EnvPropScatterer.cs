@@ -44,6 +44,7 @@ public class EnvPropScatterer : MonoBehaviour
 
     private Transform _propParent;
     private int       _terrainLayerId = -1;
+    private TerrainGenerator _terrain;
 
     // -----------------------------------------------------------------------
     // Public API
@@ -68,6 +69,7 @@ public class EnvPropScatterer : MonoBehaviour
             return;
         }
 
+        _terrain = terrain;
         _terrainLayerId = LayerMask.NameToLayer("Terrain");
         EnsurePropParent();
         ClearExistingProps();
@@ -140,7 +142,8 @@ public class EnvPropScatterer : MonoBehaviour
         // ── Phase 1: Biome Ecosystem Formations ───────────────────────────
         float zoneAreaRatio = (width * length) / (300f * 300f);
         int totalClusters = Mathf.RoundToInt(clusterCount * zoneAreaRatio * propSet.propDensity);
-        totalClusters = Mathf.Clamp(totalClusters, 12, 110);
+        // Double formation counts even in zones that already reach the density cap.
+        totalClusters = Mathf.Clamp(totalClusters, 12, 110) * 2;
 
         int coralColorSequence = 0;
 
@@ -171,7 +174,7 @@ public class EnvPropScatterer : MonoBehaviour
                 }
 
                 // 2. Dense Coral Garden: tightly clustered corals on & around the base (Idea A: Oasis density)
-                int reefItems = Random.Range(propsPerCluster + 2, propsPerCluster + 12);
+                int reefItems = Random.Range(propsPerCluster + 2, propsPerCluster + 12) * 2;
                 float reefRadius = Random.Range(clusterRadius * 0.75f, clusterRadius * 1.25f);
                 for (int i = 0; i < reefItems; i++)
                 {
@@ -263,7 +266,7 @@ public class EnvPropScatterer : MonoBehaviour
                 // 1. Dense, lush continuous seagrass carpet
                 if (seagrassProps.Count > 0)
                 {
-                    int grassCount = Random.Range(38, 65);
+                    int grassCount = Random.Range(38, 65) * 2;
                     float meadowRadius = Random.Range(6.5f, 11.5f);
                     for (int i = 0; i < grassCount; i++)
                     {
@@ -317,8 +320,8 @@ public class EnvPropScatterer : MonoBehaviour
                 float roll = Random.value;
                 if (roll < 0.50f && seagrassProps.Count > 0)
                 {
-                    // Small stray grass tuft (2 to 4 patches clustered together)
-                    int tuftSize = Random.Range(2, 5);
+                    // Small stray grass tuft (4 to 8 patches clustered together)
+                    int tuftSize = Random.Range(2, 5) * 2;
                     for (int t = 0; t < tuftSize; t++)
                     {
                         Vector2 tOff = Random.insideUnitCircle * 1.5f;
@@ -390,6 +393,16 @@ public class EnvPropScatterer : MonoBehaviour
         bool isDune = prefabName.Contains("ripple") || prefabName.Contains("sand");
         bool isSeagrass = prefabName.Contains("seagrass");
         bool isCoral = prefabName.Contains("coral");
+        // Cluster offsets can cross a biome boundary; validate each plant/coral's actual position.
+        if ((isSeagrass || isCoral) && _terrain != null &&
+            _terrain.GetBiomeAt(px, pz) != (isSeagrass ? BiomeBand.Soft : BiomeBand.Hard))
+            return false;
+
+        if (meshGen.IsSunlightZone() &&
+            ((isSeagrass && (floorY < -40f || floorY > -5f)) ||
+             (isCoral && (floorY < -50f || floorY > -10f))))
+            return false;
+
         bool isRock = !isClam && !isDune && !isSeagrass && !isCoral &&
                       (entry.targetBiome == BiomeBand.Rock || prefabName.Contains("rock") || prefabName.Contains("boulder") ||
                        prefabName.Contains("cone") || prefabName.Contains("cube") || prefabName.Contains("sphere") || prefabName.Contains("bisect"));

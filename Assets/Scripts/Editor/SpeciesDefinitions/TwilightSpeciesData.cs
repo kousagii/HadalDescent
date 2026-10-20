@@ -29,15 +29,21 @@ public static class TwilightSpeciesData
             interestingFact        = "It can use its fins almost like legs to walk along the seafloor.",
             rdpReward              = 75,
             scanDifficulty         = 2,
-            isStationary           = true, // Walks slowly on seafloor, scannable benthic entity
+            isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Soft,
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 0.63f,
             instanceCount          = 3,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            wanderRadius           = 12f,
+            moveSpeed              = 0.45f,
+            fleeSpeed              = 0.9f,
+            turnSpeed              = 40f,
             placeholderShape       = PlaceholderShape.Sphere,
             placeholderColor       = new Color(0.90f, 0.42f, 0.35f, 1f),
             placeholderScale       = new Vector3(0.8f, 0.6f, 0.9f),
+            modelYawOffset         = -90f,
             previewScaleMultiplier = 1.0f
         }));
 
@@ -69,6 +75,7 @@ public static class TwilightSpeciesData
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.78f, 0.84f, 0.90f, 1f),
             placeholderScale       = new Vector3(0.3f, 2.5f, 0.3f),
+            modelYawOffset         = -90f,
             previewScaleMultiplier = 0.9f
         }));
 
@@ -100,6 +107,7 @@ public static class TwilightSpeciesData
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.70f, 0.80f, 0.90f, 1f),
             placeholderScale       = new Vector3(0.5f, 0.7f, 0.2f),
+            modelYawOffset         = 90f,
             previewScaleMultiplier = 1.0f
         }));
 
@@ -113,18 +121,23 @@ public static class TwilightSpeciesData
             zoneIndex              = 1,
             habitat                = "Deep seafloor (90–590 m)",
             depthRangeText         = "90–590 m",
-            explorationHint        = "Perched motionlessly on hard gravel and rock ledges resembling an alien carving.",
+            explorationHint        = "Look for slow movement across hard gravel and rock ledges.",
             characteristics        = "Wide, flattened body with a large head.",
             ecologicalRole         = "Finds and eats small animals on the seafloor.",
             interestingFact        = "Its unusual shape can make it look like a tiny alien creature.",
             rdpReward              = 80,
             scanDifficulty         = 2,
-            isStationary           = true,
+            isStationary           = false,
             isShy                  = false,
             preferredBiome         = BiomeBand.Hard,
             minDepthFraction       = 0.00f,
             maxDepthFraction       = 0.49f,
             instanceCount          = 4,
+            locomotionArchetype    = LocomotionArchetype.BenthicFollower,
+            wanderRadius           = 10f,
+            moveSpeed              = 0.55f,
+            fleeSpeed              = 1.1f,
+            turnSpeed              = 45f,
             placeholderShape       = PlaceholderShape.Cylinder,
             placeholderColor       = new Color(0.68f, 0.58f, 0.45f, 1f),
             placeholderScale       = new Vector3(0.9f, 0.4f, 0.8f),
@@ -336,6 +349,14 @@ public static class TwilightSpeciesData
             placeholderShape       = PlaceholderShape.Cylinder,
             placeholderColor       = new Color(0.42f, 0.38f, 0.32f, 1f),
             placeholderScale       = new Vector3(2.0f, 0.3f, 2.0f),
+            benthicSurfaceOffset   = 0.4f,
+            benthicSupportPoints   = new[] {
+                new Vector3(0f, -1.32f, -0.13886f),
+                new Vector3(-3.18176f, -1.32f, -0.13886f),
+                new Vector3(3.18175f, -1.32f, -0.13886f),
+                new Vector3(0.03609f, -1.32f, 2.97558f),
+                new Vector3(0f, -1.32f, -7.43684f)
+            },
             previewScaleMultiplier = 0.9f
         }));
 
@@ -367,6 +388,7 @@ public static class TwilightSpeciesData
             placeholderShape       = PlaceholderShape.Capsule,
             placeholderColor       = new Color(0.22f, 0.25f, 0.30f, 1f),
             placeholderScale       = new Vector3(0.6f, 1.8f, 0.6f),
+            modelYawOffset         = 90f,
             previewScaleMultiplier = 1.0f
         }));
 

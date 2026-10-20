@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,8 @@ public class ResearchModelPreviewUI : MonoBehaviour
     private float _horizontalRadius;
     private float _verticalRadius;
     private float _nextRender;
+    private Coroutine _renderPending;
+    private bool _renderFailed;
 
     public bool Initialize(SpeciesData species)
     {
@@ -46,7 +49,7 @@ public class ResearchModelPreviewUI : MonoBehaviour
 
         _stage = new GameObject("ResearchModelStage_" + _slot);
         _stage.SetActive(false);
-        _stage.transform.position = new Vector3(12000f + _slot * 2000f, 12000f, 12000f);
+        _stage.transform.position = new Vector3(_slot * 8f, -20f, 0f);
         var pivot = new GameObject("RotationPivot");
         pivot.transform.SetParent(_stage.transform, false);
         _pivot = pivot.transform;
@@ -63,6 +66,11 @@ public class ResearchModelPreviewUI : MonoBehaviour
             body.detectCollisions = false;
         }
         foreach (var animator in model.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+        foreach (var skin in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+        {
+            skin.updateWhenOffscreen = true;
+            skin.forceMatrixRecalculationPerRender = true;
+        }
         foreach (var audio in model.GetComponentsInChildren<AudioSource>(true)) audio.enabled = false;
         foreach (var camera in model.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
         foreach (var light in model.GetComponentsInChildren<Light>(true)) light.enabled = false;
@@ -72,6 +80,11 @@ public class ResearchModelPreviewUI : MonoBehaviour
         var renderers = model.GetComponentsInChildren<Renderer>(true);
         if (renderers.Length == 0) { Release(); return false; }
         Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        float diameter = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+        if (diameter <= 0.00001f) { Release(); return false; }
+        model.transform.localScale /= diameter;
+        bounds = renderers[0].bounds;
         for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
         model.transform.position += _pivot.position - bounds.center;
         // Frame the full horizontal sweep once, so rotation never causes zoom
@@ -97,17 +110,21 @@ public class ResearchModelPreviewUI : MonoBehaviour
         var cameraData = cameraGO.AddComponent<UniversalAdditionalCameraData>();
         cameraData.renderPostProcessing = false;
         cameraData.renderShadows = false;
+        cameraData.requiresDepthTexture = false;
+        cameraData.requiresColorTexture = false;
         _texture = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32)
         {
             name = "ResearchModelRT_" + _slot,
-            antiAliasing = 2,
+            antiAliasing = 1,
+            memorylessMode = RenderTextureMemoryless.None,
             filterMode = FilterMode.Bilinear
         };
-        _texture.Create();
+        if (!_texture.Create()) { Release(); return false; }
         _camera.targetTexture = _texture;
         _image.texture = _texture;
+        _image.enabled = false;
         _stage.SetActive(true);
-        Render();
+        ScheduleRender();
         return true;
     }
 
@@ -120,7 +137,24 @@ public class ResearchModelPreviewUI : MonoBehaviour
         _pivot.localRotation = Quaternion.Euler(0f, _yaw, 0f);
         if (Time.unscaledTime < _nextRender) return;
         _nextRender = Time.unscaledTime + RenderInterval;
-        Render();
+        ScheduleRender();
+    }
+
+    private void ScheduleRender()
+    {
+        if (_renderPending == null && isActiveAndEnabled) _renderPending = StartCoroutine(RenderAfterFrame());
+    }
+
+    private IEnumerator RenderAfterFrame()
+    {
+        yield return new WaitForEndOfFrame();
+        _renderPending = null;
+        if (_camera != null && _image != null) Render();
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (!paused && _camera != null) ScheduleRender();
     }
 
     private void Render()
@@ -129,17 +163,12 @@ public class ResearchModelPreviewUI : MonoBehaviour
         float aspect = area.width > 1f && area.height > 1f ? area.width / area.height : 1f;
         _camera.aspect = aspect;
         _camera.orthographicSize = Mathf.Max(_verticalRadius, _horizontalRadius / aspect) * 1.04f;
-        bool fog = RenderSettings.fog;
-        RenderTexture active = RenderTexture.active;
-        try
+        bool rendered = PreviewRenderUtility.Render(_camera, _texture);
+        _image.enabled = rendered;
+        if (!rendered && !_renderFailed)
         {
-            RenderSettings.fog = false;
-            _camera.Render();
-        }
-        finally
-        {
-            RenderSettings.fog = fog;
-            RenderTexture.active = active;
+            _renderFailed = true;
+            Debug.LogWarning($"[ResearchPreview] Rendering failed; GPU={SystemInfo.graphicsDeviceName}, API={SystemInfo.graphicsDeviceType}.");
         }
     }
 
@@ -148,6 +177,8 @@ public class ResearchModelPreviewUI : MonoBehaviour
 
     private void Release()
     {
+        if (_renderPending != null) StopCoroutine(_renderPending);
+        _renderPending = null;
         if (_pivot != null && !string.IsNullOrEmpty(_speciesId)) SavedYaw[_speciesId] = _yaw;
         if (_image != null) _image.texture = null;
         if (_camera != null) _camera.targetTexture = null;

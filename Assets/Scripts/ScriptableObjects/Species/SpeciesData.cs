@@ -143,8 +143,14 @@ public class SpeciesData : ScriptableObject
     [Tooltip("Amplitude of procedural swimming yaw undulation (degrees).")]
     public float undulationAmplitude = 12f;
 
-    [Tooltip("Target clearance above ocean floor for benthic species (metres).")]
+    [Tooltip("Swimming clearance above the ocean floor for benthic rays (metres). Ground walkers use groundContactClearance instead.")]
     public float benthicSurfaceOffset = 0.5f;
+
+    [Tooltip("Small clearance at measured feet/underside for seabed walkers and flat stationary species. Replaces the old automatic sediment sinking.")]
+    [Min(0f)] public float groundContactClearance = 0.01f;
+
+    [Tooltip("Optional model-local underside support points covering the animation's lowest wing/body positions. Scaled per specimen and cached at initialization; empty uses a measured footprint.")]
+    public Vector3[] benthicSupportPoints;
 
     [Tooltip("Minimum cruise speed fraction (creature never drops below this fraction of moveSpeed).")]
     [Range(0f, 1f)] public float minCruiseSpeedFraction = 0.0f;

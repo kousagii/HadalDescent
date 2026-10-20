@@ -45,6 +45,12 @@ MonoBehaviour:
   undulationFrequency: 2
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
+  benthicSupportPoints:
+  - {x: 0, y: -1.32, z: -0.13886}
+  - {x: -3.18176, y: -1.32, z: -0.13886}
+  - {x: 3.18175, y: -1.32, z: -0.13886}
+  - {x: 0.03609, y: -1.32, z: 2.97558}
+  - {x: 0, y: -1.32, z: -7.43684}
   minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 3518059371471924535, guid: 89630bf8f624b0d49875b3a7f3d7fb1b, type: 3}
   modelYawOffset: 0

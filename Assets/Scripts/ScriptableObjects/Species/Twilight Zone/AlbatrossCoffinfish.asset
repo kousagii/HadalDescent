@@ -28,18 +28,18 @@ MonoBehaviour:
   interestingFact: It can use its fins almost like legs to walk along the seafloor.
   rdpReward: 75
   scanDifficulty: 2
-  isStationary: 1
+  isStationary: 0
   isShy: 0
   preferredBiome: 1
   minDepthFraction: 0
   maxDepthFraction: 0.63
   instanceCount: 3
-  wanderRadius: 0
-  moveSpeed: 0
-  fleeSpeed: 0
+  wanderRadius: 12
+  moveSpeed: 3
+  fleeSpeed: 0.9
   fleeRange: 10
   returnThreshold: 40
-  turnSpeed: 65
+  turnSpeed: 40
   locomotionArchetype: 3
   pulseFrequency: 0.8
   pulseDutyCycle: 0.35
@@ -49,7 +49,7 @@ MonoBehaviour:
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
   modelPrefab: {fileID: 6364420839327656414, guid: 70c1c838e16d2b44cbdedf2fc5b131a9, type: 3}
-  modelYawOffset: 0
+  modelYawOffset: -90
   previewScaleMultiplier: 1
   enableScaleVariation: 1
   uniformScaleRange: {x: 0.75, y: 1.25}

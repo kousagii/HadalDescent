@@ -82,7 +82,7 @@ public class ContextSteering : MonoBehaviour
     public float MoveSpeed
     {
         get => moveSpeed;
-        set => moveSpeed = Mathf.Max(0.01f, value);
+        set => moveSpeed = Mathf.Max(0f, value);
     }
 
     /// <summary>Turning responsiveness.</summary>
@@ -96,16 +96,14 @@ public class ContextSteering : MonoBehaviour
     public float ModelYawOffset
     {
         get => modelYawOffset;
-        set => modelYawOffset = value;
+        set { modelYawOffset = value; _hasMeasuredBody = false; }
     }
 
     /// <summary>Expose current smoothed movement direction.</summary>
     public Vector3 LastSteerDir { get; private set; }
 
     /// <summary>True model-facing forward vector in world coordinates, respecting modelYawOffset.</summary>
-    public Vector3 TrueForward => modelYawOffset != 0f
-        ? (transform.rotation * Quaternion.Euler(0f, -modelYawOffset, 0f) * Vector3.forward)
-        : transform.forward;
+    public Vector3 TrueForward => CreatureFacing.Forward(_rb != null ? _rb.rotation : transform.rotation, modelYawOffset);
 
     /// <summary>Safe horizontal boundary radius (half-width) for wander/flee clamping.</summary>
     public float SafeHalfWidth => _playableHalfWidth;
@@ -189,14 +187,9 @@ public class ContextSteering : MonoBehaviour
 
     private void MeasureBodyDimensions()
     {
-        var cols = GetComponentsInChildren<Collider>();
-        if (cols != null && cols.Length > 0)
+        if (CreatureGeometry.TryMeasure(transform, Quaternion.identity, out Bounds modelBounds))
         {
-            Bounds b = cols[0].bounds;
-            for (int i = 1; i < cols.Length; i++)
-            {
-                if (cols[i] != null) b.Encapsulate(cols[i].bounds);
-            }
+            Bounds b = CreatureFacing.MovementBounds(modelBounds, modelYawOffset);
             _bodyRadius = Mathf.Clamp(Mathf.Min(b.extents.x, b.extents.y), 0.4f, 4.0f);
             _bodyLength = Mathf.Max(1.0f, b.extents.z);
         }
@@ -221,8 +214,10 @@ public class ContextSteering : MonoBehaviour
         if (!_hasMeasuredBody)
             MeasureBodyDimensions();
 
-        // Guaranteed player boundary enforcement (keeps creature inside scannable perimeter even if idle or drifting)
-        EnforceZonePlayableBounds();
+        // Locomotion projects its complete movement step once. Running a second
+        // boundary owner here can repeatedly replace its avoidance goal.
+        if (_locomotion == null) _locomotion = GetComponent<CreatureLocomotion>();
+        if (_locomotion == null) EnforceZonePlayableBounds();
 
         if (_goal == Vector3.zero) return;
 
@@ -298,7 +293,7 @@ public class ContextSteering : MonoBehaviour
         if (_locomotion == null)
         {
             float sphereRadius = Mathf.Clamp(_bodyRadius * 0.7f, 0.35f, 2.0f);
-            if (Physics.SphereCast(transform.position, sphereRadius, transform.forward, out RaycastHit forwardHit, 0.7f, terrainLayer, QueryTriggerInteraction.Ignore))
+            if (Physics.SphereCast(transform.position, sphereRadius, TrueForward, out RaycastHit forwardHit, 0.7f, terrainLayer, QueryTriggerInteraction.Ignore))
             {
                 if (IsValidObstacle(forwardHit.collider))
                 {

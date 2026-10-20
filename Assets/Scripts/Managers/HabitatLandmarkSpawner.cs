@@ -116,13 +116,13 @@ public class HabitatLandmarkSpawner : MonoBehaviour
         var terrain = FindFirstObjectByType<TerrainGenerator>();
 
         float w = 600f;
-        float d = 150f;
+        float length = 600f;
 
         if (ZoneConfig.IsValidZone(zoneIndex))
         {
             var def = ZoneConfig.Zones[zoneIndex];
             w = def.playableWidth;
-            d = def.playableDepth;
+            length = def.playableLength;
         }
 
         int seed = GameManager.Instance != null
@@ -159,14 +159,8 @@ public class HabitatLandmarkSpawner : MonoBehaviour
         {
             HabitatLandmarkData data = i < landmarks.Count ? landmarks[i] : null;
 
-            bool isCoral = (data != null && (data.factId.Contains("coral_reef") || data.factId.Contains("barrier_reef"))) || (zoneIndex == 0 && i == 0);
-            bool isSeagrass = (data != null && (data.factId.Contains("seagrass") || data.factId.Contains("kelp"))) || (zoneIndex == 0 && i == 1);
-
             // Seed random state deterministically for this specific landmark index
             Random.InitState((int)(seed * 8191 + i * 1337 + 777));
-
-            // Default target biome based on data or landmark type
-            BiomeBand targetBiome = GetTargetBiomeForLandmark(data, zoneIndex, i);
 
             // Distribute landmarks in distinct angular sectors so they never bunch up
             float baseAngle = (i * (360f / Mathf.Max(1, count)) + Random.Range(-25f, 25f)) * Mathf.Deg2Rad;
@@ -186,7 +180,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 );
             }
 
-            if (matchingTarget == null && i < existingTargets.Count)
+            if (data == null && i < existingTargets.Count)
             {
                 matchingTarget = existingTargets[i];
             }
@@ -218,8 +212,17 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             if (landmarkGO == null) continue;
             landmarkGO.transform.SetParent(_landmarksParent, true);
 
+            // Identify the actual landmark rather than assuming registry/scene ordering.
+            var target = landmarkGO.GetComponent<EnvironmentFactTarget>();
+            string landmarkId = (target != null ? target.FactId : data != null ? data.factId : landmarkGO.name).ToLowerInvariant();
+            bool isCoral = landmarkId.Contains("coral_reef") || landmarkId.Contains("barrier_reef");
+            bool isSeagrass = landmarkId.Contains("seagrass") || landmarkId.Contains("sea_grass") || landmarkId.Contains("kelp");
+            BiomeBand targetBiome = isCoral ? BiomeBand.Hard : isSeagrass ? BiomeBand.Soft
+                : target != null ? target.TargetBiome : GetTargetBiomeForLandmark(data, zoneIndex, i);
+
             // 2. Measure actual model footprint radius and geometry center offset in unrotated pose
             landmarkGO.transform.rotation = Quaternion.identity;
+            landmarkGO.transform.localScale = Vector3.one;
             float measuredFootprintRadius = 14f;
             Vector3 boundsCenterOffset = Vector3.zero;
             var initialRenderers = landmarkGO.GetComponentsInChildren<Renderer>(true);
@@ -229,7 +232,7 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 for (int r = 1; r < initialRenderers.Length; r++)
                     initBounds.Encapsulate(initialRenderers[r].bounds);
 
-                measuredFootprintRadius = Mathf.Max(initBounds.extents.x, initBounds.extents.z);
+                measuredFootprintRadius = new Vector2(initBounds.extents.x, initBounds.extents.z).magnitude;
                 boundsCenterOffset = initBounds.center - landmarkGO.transform.position;
             }
             measuredFootprintRadius = Mathf.Max(measuredFootprintRadius, isSeagrass ? 22f : (isCoral ? 24f : 14f));
@@ -238,12 +241,13 @@ public class HabitatLandmarkSpawner : MonoBehaviour
             Vector3 candidatePos = Vector3.zero;
             Vector3 surfaceNormal = Vector3.up;
 
-            // 3. Search for a flat, level surface using 13-point concentric footprint sampling
+            // 3. Search the playable seabed, keeping the whole footprint in its habitat.
             bool foundFlatSpot = FindFlatBiomeLocation(
                 terrain,
                 targetBiome,
                 baseAngle,
                 w * 0.40f,
+                length * 0.40f,
                 footprintRadius: measuredFootprintRadius,
                 out candidatePos,
                 out Vector3 candidateNormal,
@@ -253,18 +257,28 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 isSeagrass
             );
 
-            // If rugged seabed terrain detected (variance > 2.5m), scale down landmark slightly (85%)
-            bool shouldScaleDown = bestHeightVariance > 2.5f || !foundFlatSpot;
-            if (shouldScaleDown)
+            // Retry with a smaller footprint, without relaxing habitat or depth rules.
+            float placementScale = 1f;
+            for (int retry = 0; !foundFlatSpot && retry < 2; retry++)
             {
-                landmarkGO.transform.localScale = Vector3.one * 0.85f;
-                boundsCenterOffset *= 0.85f;
-                Debug.Log($"[HabitatLandmarkSpawner] Rugged seabed terrain detected for '{landmarkGO.name}' (variance={bestHeightVariance:F1}m). Scaled to 85% to fit snugly without overhanging.");
+                placementScale = retry == 0 ? 0.85f : 0.7f;
+                foundFlatSpot = FindFlatBiomeLocation(terrain, targetBiome, baseAngle,
+                    w * 0.40f, length * 0.40f, measuredFootprintRadius * placementScale,
+                    out candidatePos, out candidateNormal, out bestHeightVariance,
+                    zoneIndex, isCoral, isSeagrass);
             }
-            else
+
+            if (!foundFlatSpot)
             {
-                landmarkGO.transform.localScale = Vector3.one;
+                landmarkGO.SetActive(false);
+                Debug.LogWarning($"[HabitatLandmarkSpawner] No suitable {targetBiome} habitat found for '{landmarkGO.name}' in Zone {zoneIndex}; landmark disabled instead of placed in the wrong habitat.");
+                continue;
             }
+
+            landmarkGO.transform.localScale = Vector3.one * placementScale;
+            boundsCenterOffset *= placementScale;
+            measuredFootprintRadius *= placementScale;
+            landmarkGO.SetActive(true);
 
             // Raycast down onto the physical terrain mesh collider from above candidate point, ignoring props, species, and landmark colliders
             surfacePos = candidatePos;
@@ -372,13 +386,14 @@ public class HabitatLandmarkSpawner : MonoBehaviour
 
     /// <summary>
     /// Searches for a flat, level position matching the landmark's target biome band.
-    /// Samples a 13-point concentric footprint grid to detect and avoid ridges, slopes, and drop-offs.
+    /// Checks habitat, depth and slope across a 19-point footprint, including near zone edges.
     /// </summary>
     private bool FindFlatBiomeLocation(
         TerrainGenerator terrain,
         BiomeBand targetBiome,
         float baseAngle,
-        float maxDist,
+        float halfWidth,
+        float halfLength,
         float footprintRadius,
         out Vector3 bestPos,
         out Vector3 bestNormal,
@@ -394,94 +409,84 @@ public class HabitatLandmarkSpawner : MonoBehaviour
         if (terrain == null) return false;
 
         float bestScore = float.MinValue;
-        bool found = false;
+        float maxX = halfWidth - footprintRadius;
+        float maxZ = halfLength - footprintRadius;
+        if (maxX <= 0f || maxZ <= 0f) return false;
 
-        int totalAttempts = (isCoralReef || isSeagrass) ? 120 : 80;
+        const int sectorAttempts = 96;
+        const int gridSize = 40;
+        int totalAttempts = sectorAttempts + gridSize * gridSize;
 
         for (int attempt = 0; attempt < totalAttempts; attempt++)
         {
-            float angleOffset = Random.Range(-65f, 65f) * Mathf.Deg2Rad;
-            float angle = baseAngle + angleOffset;
-            float dist = Random.Range(maxDist * 0.16f, maxDist * 0.48f);
-
-            float cx = Mathf.Cos(angle) * dist;
-            float cz = Mathf.Sin(angle) * dist;
-
-            // 1. Biome Check
-            BiomeBand currentBiome = terrain.GetBiomeAt(cx, cz);
-            bool biomeMatch = (currentBiome == targetBiome);
-
-            // Coral reef landmark MUST be in Hard biome if possible
-            if (isCoralReef && currentBiome != BiomeBand.Hard && attempt < 80)
-                continue;
-
-            // Seagrass bed prefers soft sediment
-            if (isSeagrass && currentBiome != BiomeBand.Soft && attempt < 80)
-                continue;
-
-            if (!biomeMatch && !isCoralReef && attempt < 35)
-                continue;
-
-            float centerH = terrain.SampleHeight(cx, cz);
-
-            // 2. Depth Check: Coral Reef in Sunlight Zone belongs on shallow sunlit plateau at depth 18m to 42m (Y in [-42f, -18f])
-            if (zoneIndex == 0 && isCoralReef)
+            float cx, cz;
+            if (attempt < sectorAttempts)
             {
-                if (centerH < -45f || centerH > -15f)
+                float angle = baseAngle + Random.Range(-65f, 65f) * Mathf.Deg2Rad;
+                float dist = Random.Range(0.16f, 0.85f) * Mathf.Min(maxX, maxZ);
+                cx = Mathf.Cos(angle) * dist;
+                cz = Mathf.Sin(angle) * dist;
+            }
+            else
+            {
+                // Cover the full rectangle when the preferred angular sector has no suitable habitat.
+                int cell = attempt - sectorAttempts;
+                cx = Mathf.Lerp(-maxX, maxX, (cell % gridSize + 0.5f) / gridSize);
+                cz = Mathf.Lerp(-maxZ, maxZ, (cell / gridSize + 0.5f) / gridSize);
+            }
+
+            bool overlapsLandmark = false;
+            foreach (var placed in _registeredLandmarks)
+            {
+                float dx = cx - placed.center.x;
+                float dz = cz - placed.center.z;
+                float clearance = footprintRadius + placed.radius + 5f;
+                if (dx * dx + dz * dz < clearance * clearance)
                 {
-                    if (attempt < 80 || centerH < -55f || centerH > -10f)
-                        continue;
+                    overlapsLandmark = true;
+                    break;
                 }
             }
+            if (overlapsLandmark) continue;
 
-            // 3. Center Flatness Check
+            float centerH = terrain.SampleHeight(cx, cz);
             Vector3 centerNormal = terrain.SampleNormal(cx, cz);
-            float centerFlatness = centerNormal.y;
-            if (centerFlatness < 0.90f)
-                continue;
+            if (centerNormal.y < 0.90f) continue;
 
-            // 4. Multi-Point Footprint Sampling (Center + 12 outer ring + 6 inner ring = 19 points)
             float minH = centerH;
             float maxH = centerH;
-            float minNormalY = centerFlatness;
-
-            // Outer ring (12 points)
-            for (int k = 0; k < 12; k++)
+            float minNormalY = centerNormal.y;
+            bool validFootprint = true;
+            for (int sample = 0; sample < 19; sample++)
             {
-                float rad = k * (Mathf.PI * 2f / 12f);
-                float px = cx + Mathf.Cos(rad) * footprintRadius;
-                float pz = cz + Mathf.Sin(rad) * footprintRadius;
-                float ph = terrain.SampleHeight(px, pz);
-                Vector3 pn = terrain.SampleNormal(px, pz);
-                if (ph < minH) minH = ph;
-                if (ph > maxH) maxH = ph;
-                if (pn.y < minNormalY) minNormalY = pn.y;
-            }
+                // Center, 12 outer points and 6 inner points.
+                float radius = sample == 0 ? 0f : sample <= 12 ? footprintRadius : footprintRadius * 0.5f;
+                float angle = sample <= 12
+                    ? (sample - 1) * Mathf.PI * 2f / 12f
+                    : (sample - 13) * Mathf.PI * 2f / 6f + 0.39f;
+                float px = cx + Mathf.Cos(angle) * radius;
+                float pz = cz + Mathf.Sin(angle) * radius;
+                float height = terrain.SampleHeight(px, pz);
+                float normalY = terrain.SampleNormal(px, pz).y;
+                float depth = -height;
 
-            // Inner ring (6 points)
-            for (int k = 0; k < 6; k++)
-            {
-                float rad = (k * (Mathf.PI * 2f / 6f)) + 0.39f;
-                float px = cx + Mathf.Cos(rad) * (footprintRadius * 0.5f);
-                float pz = cz + Mathf.Sin(rad) * (footprintRadius * 0.5f);
-                float ph = terrain.SampleHeight(px, pz);
-                Vector3 pn = terrain.SampleNormal(px, pz);
-                if (ph < minH) minH = ph;
-                if (ph > maxH) maxH = ph;
-                if (pn.y < minNormalY) minNormalY = pn.y;
+                // Habitat and sunlight depth requirements never relax on later attempts.
+                bool wrongDepth = zoneIndex == 0 &&
+                    ((isSeagrass && (depth < 5f || depth > 40f)) ||
+                     (isCoralReef && (depth < 10f || depth > 50f)));
+                if (terrain.GetBiomeAt(px, pz) != targetBiome || wrongDepth || normalY < 0.85f)
+                {
+                    validFootprint = false;
+                    break;
+                }
+                minH = Mathf.Min(minH, height);
+                maxH = Mathf.Max(maxH, height);
+                minNormalY = Mathf.Min(minNormalY, normalY);
             }
-
             float heightVariance = maxH - minH;
+            if (!validFootprint || heightVariance > 2.5f) continue;
 
-            // Reject if slope drops off too severely across landmark footprint
-            if (minNormalY < 0.85f)
-                continue;
-
-            if (heightVariance > 2.5f)
-                continue;
-
-            // Score candidate
-            float score = (biomeMatch ? 150f : 0f) + (centerFlatness * 60f) + (minNormalY * 40f) - (heightVariance * 15f);
+            float score = centerNormal.y * 60f + minNormalY * 40f - heightVariance * 15f;
 
             if (zoneIndex == 0 && isCoralReef)
             {
@@ -495,27 +500,13 @@ public class HabitatLandmarkSpawner : MonoBehaviour
                 bestPos = new Vector3(cx, centerH, cz);
                 bestNormal = centerNormal;
                 bestHeightVariance = heightVariance;
-                found = (heightVariance <= 2.0f);
-
-                // Early exit on near-ideal plateau
-                if (biomeMatch && centerFlatness >= 0.95f && heightVariance <= 1.4f)
-                {
-                    if (!isCoralReef || (centerH >= -40f && centerH <= -18f))
-                        break;
-                }
+                if (centerNormal.y >= 0.95f && heightVariance <= 1.4f)
+                    break;
             }
         }
 
-        // If no candidate met strict variance <= 2.8m, but we found a valid best score, use bestPos
-        if (bestScore > float.MinValue)
-        {
-            return found;
-        }
-
-        bestPos = new Vector3(Mathf.Cos(baseAngle) * maxDist * 0.28f, terrain.SampleHeight(Mathf.Cos(baseAngle) * maxDist * 0.28f, Mathf.Sin(baseAngle) * maxDist * 0.28f), Mathf.Sin(baseAngle) * maxDist * 0.28f);
-        bestNormal = terrain.SampleNormal(bestPos.x, bestPos.z);
-        bestHeightVariance = 4.0f;
-        return false;
+        // No unchecked position fallback: the caller retries a smaller footprint or skips placement.
+        return bestScore > float.MinValue;
     }
 
     private BiomeBand GetTargetBiomeForLandmark(HabitatLandmarkData data, int zoneIndex, int index)

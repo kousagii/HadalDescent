@@ -613,6 +613,14 @@ public class RadioTextboxUI : MonoBehaviour
         _fadeOutCoroutine = StartCoroutine(FadeOutRoutine());
     }
 
+    public void CancelMessages()
+    {
+        _messageQueue.Clear();
+        _onCompleteCallback = null;
+        _isTyping = false;
+        HideInstant();
+    }
+
     public void HideInstant()
     {
         if (_typewriterCoroutine != null) { StopCoroutine(_typewriterCoroutine); _typewriterCoroutine = null; }

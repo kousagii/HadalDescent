@@ -419,9 +419,79 @@ public static class SpeciesDataGenerator
             moveSpeed              = 0.35f,
             fleeSpeed              = 1.6f,
             turnSpeed              = 65f,
-            modelYawOffset         = -90f,
+            modelYawOffset         = 180f,
             locomotionArchetype    = LocomotionArchetype.BenthicFollower,
             benthicSurfaceOffset   = 0.18f,
+            // In-place walking-cycle envelope, including the lowest foot poses.
+            benthicSupportPoints   = new Vector3[]
+            {
+                new Vector3(-0.453987f, -1.049981f, 0.388845f),
+                new Vector3(2.338842f, -0.328100f, -0.241543f),
+                new Vector3(-2.481753f, 0.320173f, -1.399402f),
+                new Vector3(-2.159491f, 0.030748f, 1.677892f),
+                new Vector3(-0.053395f, -0.754445f, -1.073020f),
+                new Vector3(2.232319f, -0.281709f, 0.485253f),
+                new Vector3(-0.041701f, -0.669571f, 1.159231f),
+                new Vector3(-0.871612f, -0.864495f, -0.856209f),
+                new Vector3(-2.796035f, 0.375333f, -0.904594f),
+                new Vector3(-1.756325f, -0.181095f, 1.812198f),
+                new Vector3(-2.033283f, 0.277620f, -1.661602f),
+                new Vector3(-0.942984f, -0.938976f, 0.689355f),
+                new Vector3(-2.592289f, 0.348735f, 1.291689f),
+                new Vector3(2.232319f, -0.281709f, -0.485253f),
+                new Vector3(0.101665f, -0.892733f, -0.776648f),
+                new Vector3(0.205734f, -0.833323f, 0.897130f),
+                new Vector3(-2.589691f, 0.112310f, 0.410313f),
+                new Vector3(2.338842f, -0.328100f, 0.241543f),
+                new Vector3(-0.773528f, -0.932018f, -0.746330f),
+                new Vector3(-0.997616f, -0.888800f, -0.548304f),
+                new Vector3(-0.199961f, -0.879476f, 0.898797f),
+                new Vector3(-0.041730f, -0.668016f, -1.160296f),
+                new Vector3(-2.666075f, 0.342314f, -1.178968f),
+                new Vector3(2.285622f, -0.306770f, 0.431528f),
+                new Vector3(2.285622f, -0.306770f, -0.431528f),
+                new Vector3(-2.409738f, 0.197845f, 1.501745f),
+                new Vector3(-0.786088f, -1.010574f, 0.481742f),
+                new Vector3(2.356982f, -0.335721f, -0.029150f),
+                new Vector3(-2.200743f, 0.289446f, -1.594098f),
+                new Vector3(-0.021313f, -0.919464f, -0.739120f),
+                new Vector3(-0.954438f, -0.780694f, -0.943893f),
+                new Vector3(-1.992403f, -0.065335f, 1.750811f),
+                new Vector3(-0.343635f, -1.040102f, 0.423335f),
+                new Vector3(-0.073467f, -0.829044f, -0.964331f),
+                new Vector3(-0.870634f, -0.984229f, 0.579790f),
+                new Vector3(-0.772213f, -0.918034f, -0.802810f),
+                new Vector3(0.235920f, -0.861661f, 0.787356f),
+                new Vector3(-0.918775f, -0.904132f, -0.665472f),
+                new Vector3(-2.758299f, 0.357273f, -1.004352f),
+                new Vector3(-0.980917f, -0.893045f, 0.775818f),
+                new Vector3(0.513666f, -0.696384f, -0.930104f),
+                new Vector3(0.525409f, -0.700723f, 0.916628f),
+                new Vector3(-1.857853f, -0.134480f, 1.791453f),
+                new Vector3(0.132973f, -0.856924f, 0.881262f),
+                new Vector3(0.450841f, -0.728943f, -0.914050f),
+                new Vector3(-2.244274f, 0.082991f, 1.627714f),
+                new Vector3(-0.070704f, -0.744893f, 1.086706f),
+                new Vector3(-2.479167f, 0.250827f, 1.432379f),
+                new Vector3(-0.903807f, -0.964420f, 0.637549f),
+                new Vector3(0.030969f, -0.911301f, -0.757383f),
+                new Vector3(-0.803534f, -0.918198f, -0.781254f),
+                new Vector3(-2.776892f, 0.363303f, -0.960188f),
+                new Vector3(-0.389773f, -1.047000f, 0.409837f),
+                new Vector3(2.350007f, -0.332906f, 0.173172f),
+                new Vector3(2.350007f, -0.332906f, -0.173172f),
+                new Vector3(-1.757983f, -0.183293f, 1.810546f),
+                new Vector3(-2.418280f, 0.312346f, -1.453735f),
+                new Vector3(-0.743497f, -1.017633f, 0.438902f),
+                new Vector3(-0.908734f, -0.964118f, 0.633201f),
+                new Vector3(-0.292575f, -1.027090f, 0.294176f),
+                new Vector3(-0.846848f, -0.912876f, -0.751045f),
+                new Vector3(-0.957896f, -0.924489f, 0.719013f),
+                new Vector3(-0.967756f, -0.896237f, -0.595768f),
+                new Vector3(-0.928587f, -0.806595f, -0.920959f),
+                new Vector3(0.065843f, -0.903230f, -0.767631f),
+                new Vector3(0.105781f, -0.863051f, 0.874180f),
+            },
             placeholderShape       = PlaceholderShape.Cube,
             placeholderColor       = new Color(0.85f, 0.40f, 0.15f, 1f),
             placeholderScale       = new Vector3(1.2f, 0.5f, 1.5f),
@@ -664,6 +734,8 @@ public static class SpeciesDataGenerator
         asset.undulationFrequency    = config.undulationFrequency > 0f ? config.undulationFrequency : 2.0f;
         asset.undulationAmplitude    = config.undulationAmplitude > 0f ? config.undulationAmplitude : 12f;
         asset.benthicSurfaceOffset   = config.benthicSurfaceOffset > 0f ? config.benthicSurfaceOffset : 0.4f;
+        asset.benthicSupportPoints   = config.benthicSupportPoints;
+        asset.groundContactClearance = Mathf.Max(0f, config.groundContactClearance ?? 0.01f);
         asset.minCruiseSpeedFraction = config.minCruiseSpeedFraction;
         asset.turnSpeed              = config.turnSpeed > 0f ? config.turnSpeed : 65f;
         if (config.modelYawOffset != 0f) asset.modelYawOffset = config.modelYawOffset;
@@ -744,6 +816,8 @@ public static class SpeciesDataGenerator
         public float undulationFrequency;
         public float undulationAmplitude;
         public float benthicSurfaceOffset;
+        public Vector3[] benthicSupportPoints;
+        public float? groundContactClearance;
         public float minCruiseSpeedFraction;
         public float turnSpeed;
         public float modelYawOffset;

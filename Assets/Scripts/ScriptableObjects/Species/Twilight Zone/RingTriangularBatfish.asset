@@ -19,27 +19,26 @@ MonoBehaviour:
   zoneIndex: 1
   habitat: "Deep seafloor (90\u2013590 m)"
   depthRangeText: "90\u2013590 m"
-  explorationHint: Perched motionlessly on hard gravel and rock ledges resembling
-    an alien carving.
+  explorationHint: Look for slow movement across hard gravel and rock ledges.
   secondaryZoneIndices: 
   characteristics: Wide, flattened body with a large head.
   ecologicalRole: Finds and eats small animals on the seafloor.
   interestingFact: Its unusual shape can make it look like a tiny alien creature.
   rdpReward: 80
   scanDifficulty: 2
-  isStationary: 1
+  isStationary: 0
   isShy: 0
   preferredBiome: 2
   minDepthFraction: 0
   maxDepthFraction: 0.49
   instanceCount: 4
-  wanderRadius: 0
-  moveSpeed: 0
-  fleeSpeed: 0
+  wanderRadius: 10
+  moveSpeed: 4
+  fleeSpeed: 1.1
   fleeRange: 10
   returnThreshold: 40
-  turnSpeed: 65
-  locomotionArchetype: 6
+  turnSpeed: 45
+  locomotionArchetype: 3
   pulseFrequency: 0.8
   pulseDutyCycle: 0.35
   bankingAngle: 0
@@ -47,7 +46,7 @@ MonoBehaviour:
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 4235766173927022434, guid: 00f8e76129690cc4fa3a88e16c091db9, type: 3}
+  modelPrefab: {fileID: 7646832864164644454, guid: 00f8e76129690cc4fa3a88e16c091db9, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1

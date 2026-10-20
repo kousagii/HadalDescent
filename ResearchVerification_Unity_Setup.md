@@ -175,6 +175,15 @@ Santos introduction. No existing species assets, fonts, materials, textures,
 scene assets, or prefabs were edited by this implementation. Existing Midnight
 and font edits present before implementation were preserved.
 
+## Android preview repair
+
+Research models now use normalized preview stages, single-sample render targets,
+and explicit URP render requests. Rotation remains active while the ocean is paused.
+Rebuild the Android APK to include the rendering and graphics API changes.
+See [Android rendering fixes](Android_Rendering_Fixes.md) for the investigation,
+automated checks, and device acceptance steps. Actual GPU rendering still needs
+verification on the affected phone.
+
 ## Verification and remaining Play Mode checks
 
 Portable production-logic checks can be run from the repository root:

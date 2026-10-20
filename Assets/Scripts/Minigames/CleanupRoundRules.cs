@@ -8,6 +8,7 @@ public static class CleanupRoundRules
 {
     public enum Variation { MixedCleanup, CurrentSweep, HeavyRecovery, PriorityRecovery }
     public const int MaximumItems = 11;
+    public const float PhaseDurationSeconds = 30f;
 
     public static List<Item> BuildManifest(int zone, int plastics, int metals, int hazards,
         Variation variation, Random random)
@@ -58,7 +59,7 @@ public static class CleanupRoundRules
         }
     }
 
-    public static float SortingSeconds(int count) => count <= 0 ? 0f : 8f + count * 5f;
+    public static float SortingSeconds(int count) => count <= 0 ? 0f : PhaseDurationSeconds;
 
     public static bool TouchesFish(float centerX, float centerY, float halfWidth, float halfHeight,
         float fishX, float fishY)

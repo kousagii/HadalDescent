@@ -38,7 +38,7 @@ public static class Program
             layouts.Add(string.Join(",", manifest));
             var repeated = CleanupRoundRules.BuildManifest(zone, 2, 2, 1, variation, new Random(seed));
             Check(manifest.SequenceEqual(repeated), "Reproducible generation");
-            Check(CleanupRoundRules.SortingSeconds(manifest.Count) == 8 + 5 * manifest.Count, "Proportional sorting budget");
+            Check(CleanupRoundRules.SortingSeconds(manifest.Count) == 30f, "Fixed sorting budget across zones and item counts");
         }
         Check(observed.Count == 10, "All ten asset variants appear, including both pipes");
         Check(layouts.Count > 100, "Meaningfully varied selections and order");

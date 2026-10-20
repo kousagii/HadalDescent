@@ -708,7 +708,7 @@ public class TutorialManager : MonoBehaviour
             onComplete: () =>
             {
                 // Automated trigger of Minigame 4 after radio speech completes
-                if (!_step7CompletedHandled && MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)
+                if (_currentPhase == TutorialPhase.Step7_HazardEncounter && !_step7CompletedHandled && MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)
                 {
                     TutorialArrowUI.Instance?.Hide();
                     hazard?.DeactivateHazard();
@@ -727,7 +727,7 @@ public class TutorialManager : MonoBehaviour
 
     public void OnHazardCompleted(bool survived)
     {
-        if (_step7CompletedHandled) return;
+        if (_currentPhase != TutorialPhase.Step7_HazardEncounter || _step7CompletedHandled) return;
         _step7CompletedHandled = true;
 
         TutorialArrowUI.Instance?.Hide();
@@ -2246,6 +2246,8 @@ public class TutorialManager : MonoBehaviour
     {
         _currentPhase = TutorialPhase.Inactive;
         _step4ASpeciesData = null;
+        _step7CompletedHandled = true;
+        StopAllCoroutines();
 
         if (_step1Routine != null)
         {
@@ -2254,10 +2256,10 @@ public class TutorialManager : MonoBehaviour
         }
 
         CinematicSequencer.Instance?.SkipCinematic();
-        RadioTextboxUI.Instance?.HideInstant();
+        RadioTextboxUI.Instance?.CancelMessages();
         TutorialArrowUI.Instance?.Hide();
         TutorialArrowUI.Instance?.SetSonarLegendVisible(false);
-        MinigameInstructionOverlay.Instance?.HideInstant();
+        MinigameInstructionOverlay.Instance?.CancelSlideshow();
 
         // Forcibly abort and clean up any active minigame & restore normal controls
         if (MinigameManager.Instance != null)

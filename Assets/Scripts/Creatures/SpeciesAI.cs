@@ -38,12 +38,20 @@ public class SpeciesAI : MonoBehaviour
     private Vector3 _wanderTarget;
     private float   _wanderArrivalThreshold = 2.5f;
 
+    private const float MaxFleeDuration = 6f;
+    private const float FleeRecoveryDuration = 3f;
+    private float _fleeElapsed;
+    private float _fleeCooldownUntil;
+    private Vector3 _fleeThreatPosition;
+    private Vector3 _fleeDirection = Vector3.forward;
+
     // -----------------------------------------------------------------------
     // Public state
     // -----------------------------------------------------------------------
 
     public SpeciesData Data        { get; private set; }
     public bool IsFleeing          => _state == AIState.Fleeing;
+    public float FleeElapsed       => IsFleeing ? _fleeElapsed : 0f;
 
     private bool _isDiscovered;
     public bool IsDiscovered
@@ -59,6 +67,7 @@ public class SpeciesAI : MonoBehaviour
 
     /// <summary>Spawn center origin used as home anchor for wander and return.</summary>
     public Vector3 SpawnCenter => _spawnCenter;
+    private Vector3 FacingForward => _steering != null ? _steering.TrueForward : CreatureFacing.Forward(transform.rotation, Data != null ? Data.modelYawOffset : 0f);
 
     // -----------------------------------------------------------------------
     // Initialization (called by SpeciesSpawner after AddComponent)
@@ -114,8 +123,13 @@ public class SpeciesAI : MonoBehaviour
     public void Flee(Vector3 threatWorldPosition)
     {
         _isWaitingAtWanderTarget = false;
+        _fleeThreatPosition = threatWorldPosition;
         if (_state == AIState.Fleeing) return;
         _state = AIState.Fleeing;
+        _fleeElapsed = 0f;
+        // Capture a fallback once. A directly overlapping/overhead threat must
+        // not make the escape direction follow the body's changing rotation.
+        _fleeDirection = FacingForward;
         if (_steering != null) _steering.MoveSpeed = (Data != null ? Data.fleeSpeed : 5f) * _speedMultiplier;
         SetFleeGoalAwayFrom(threatWorldPosition);
     }
@@ -155,6 +169,7 @@ public class SpeciesAI : MonoBehaviour
 
         // Autonomous shy-flee: if submarine enters fleeRange, flee independently of scanner
         if (_state == AIState.Wandering
+            && Time.time >= _fleeCooldownUntil
             && Data != null && Data.isShy
             && _playerTransform != null)
         {
@@ -254,13 +269,22 @@ public class SpeciesAI : MonoBehaviour
 
     private void UpdateFlee()
     {
+        _fleeElapsed += Time.deltaTime;
         if (_playerTransform != null)
-            SetFleeGoalAwayFrom(_playerTransform.position);
+            _fleeThreatPosition = _playerTransform.position;
+        SetFleeGoalAwayFrom(_fleeThreatPosition);
 
         float distFromSpawn = Vector3.Distance(transform.position, _spawnCenter);
         float threshold     = Data != null ? Data.returnThreshold : 40f;
-        if (distFromSpawn > threshold)
+        float triggerRange = Data != null ? Mathf.Max(0f, Data.fleeRange) : 10f;
+        float safeDistance = Mathf.Max(triggerRange * 1.5f, triggerRange + 3f);
+        bool reachedSafety = _fleeElapsed >= 0.75f &&
+            Vector3.Distance(transform.position, _fleeThreatPosition) >= safeDistance;
+        if (reachedSafety || _fleeElapsed >= MaxFleeDuration || distFromSpawn > threshold)
+        {
+            _fleeCooldownUntil = Time.time + FleeRecoveryDuration;
             EnterReturning();
+        }
     }
 
     private void UpdateReturn()
@@ -337,20 +361,20 @@ public class SpeciesAI : MonoBehaviour
                     // Steer back towards spawn center when drifting far or when initial forward attempts breach habitat
                     float bankYaw = Random.Range(-30f, 30f);
                     float pitchDev = Random.Range(-3f, 3f);
-                    Vector3 baseHeading = (toCenter.normalized * 0.75f + transform.forward * 0.25f).normalized;
+                    Vector3 baseHeading = (toCenter.normalized * 0.75f + FacingForward * 0.25f).normalized;
                     patrolHeading = Quaternion.Euler(pitchDev, bankYaw, 0f) * baseHeading;
                 }
                 else if (attempt == 0 && Random.value < 0.45f)
                 {
                     float bankYaw = (Random.value > 0.5f ? 1f : -1f) * Random.Range(25f, 50f);
                     float pitchDev = Random.Range(-6f, 6f);
-                    patrolHeading = Quaternion.Euler(pitchDev, bankYaw, 0f) * transform.forward;
+                    patrolHeading = Quaternion.Euler(pitchDev, bankYaw, 0f) * FacingForward;
                 }
                 else
                 {
                     float yawDev = Random.Range(-35f, 35f) * (attempt + 1) * 0.5f;
                     float pitchDev = Random.Range(-4f, 4f);
-                    patrolHeading = Quaternion.Euler(pitchDev, yawDev, 0f) * transform.forward;
+                    patrolHeading = Quaternion.Euler(pitchDev, yawDev, 0f) * FacingForward;
                 }
 
                 float minStep = Mathf.Max(25f, radius * 0.35f);
@@ -373,7 +397,7 @@ public class SpeciesAI : MonoBehaviour
             {
                 // Steer directly toward _spawnCenter (which was validated at spawn time)
                 Vector3 returnDir = toCenter.normalized;
-                if (returnDir.sqrMagnitude < 0.01f) returnDir = transform.forward;
+                if (returnDir.sqrMagnitude < 0.01f) returnDir = FacingForward;
                 chosenCandidate = transform.position + returnDir * Mathf.Min(35f, distFromOrigin);
             }
 
@@ -400,9 +424,9 @@ public class SpeciesAI : MonoBehaviour
             float bestScore = float.MinValue;
             int speciesMask = LayerMask.GetMask("Creatures", "Default");
 
-            Vector3 trueFacing = _steering != null ? _steering.TrueForward : transform.forward;
+            Vector3 trueFacing = _steering != null ? _steering.TrueForward : FacingForward;
             Vector3 flatFacing = Vector3.ProjectOnPlane(trueFacing, Vector3.up).normalized;
-            if (flatFacing.sqrMagnitude < 0.01f) flatFacing = transform.forward;
+            if (flatFacing.sqrMagnitude < 0.01f) flatFacing = FacingForward;
 
             // Organic exploratory anchor: explore outward from current position while tethered to spawnCenter
             Vector3 toSpawn = _spawnCenter - transform.position;
@@ -607,14 +631,18 @@ public class SpeciesAI : MonoBehaviour
 
     private void SetFleeGoalAwayFrom(Vector3 threat)
     {
-        Vector3 rawFleeDir = (transform.position - threat).normalized;
-        if (rawFleeDir == Vector3.zero)
-        {
-            rawFleeDir = _steering != null ? _steering.TrueForward : transform.forward;
-        }
-
         bool isBenthic = Data != null && Data.locomotionArchetype == LocomotionArchetype.BenthicFollower;
         bool isSurfaceDrifter = Data != null && Data.locomotionArchetype == LocomotionArchetype.SurfaceDrifter;
+        Vector3 rawFleeDir = transform.position - threat;
+        if (isBenthic || isSurfaceDrifter) rawFleeDir.y = 0f;
+        if (rawFleeDir.sqrMagnitude < 0.001f)
+        {
+            rawFleeDir = _fleeDirection;
+            if (isBenthic || isSurfaceDrifter) rawFleeDir.y = 0f;
+            if (rawFleeDir.sqrMagnitude < 0.001f) rawFleeDir = Vector3.forward;
+        }
+        rawFleeDir.Normalize();
+        _fleeDirection = rawFleeDir;
 
         float safeHalfW  = _steering != null ? _steering.SafeHalfWidth  : 240f;
         float safeHalfL  = _steering != null ? _steering.SafeHalfLength : 240f;
@@ -712,7 +740,7 @@ public class SpeciesAI : MonoBehaviour
         boundaryNormal.Normalize();
 
         // 1. Determine a turn direction that points away from the boundary and back toward safe waters
-        Vector3 trueFacing = _steering != null ? _steering.TrueForward : transform.forward;
+        Vector3 trueFacing = _steering != null ? _steering.TrueForward : FacingForward;
         Vector3 turnDir = Vector3.Reflect(trueFacing, boundaryNormal).normalized;
         if (isSurfaceDrifter)
         {
@@ -732,14 +760,14 @@ public class SpeciesAI : MonoBehaviour
             if (boundaryNormal.y < -0.5f)
             {
                 // Ceiling/surface boundary: preserve horizontal swimming heading with gentle downward pitch (~18°)
-                Vector3 flatHeading = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+                Vector3 flatHeading = new Vector3(FacingForward.x, 0f, FacingForward.z).normalized;
                 if (flatHeading.sqrMagnitude < 0.01f) flatHeading = Vector3.forward;
                 turnDir = (flatHeading * 0.95f + Vector3.down * 0.31f).normalized;
             }
             else if (boundaryNormal.y > 0.5f)
             {
                 // Seabed boundary: preserve horizontal heading with gentle upward pitch (~18°)
-                Vector3 flatHeading = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+                Vector3 flatHeading = new Vector3(FacingForward.x, 0f, FacingForward.z).normalized;
                 if (flatHeading.sqrMagnitude < 0.01f) flatHeading = Vector3.forward;
                 turnDir = (flatHeading * 0.95f + Vector3.up * 0.31f).normalized;
             }
@@ -835,7 +863,9 @@ public class SpeciesAI : MonoBehaviour
             _spawnCenter.y = Mathf.Min(transform.position.y - 3f, -8f);
         }
 
-        _state = AIState.Wandering;
+        // Deflection must not restart fleeing and reset its timer when the
+        // next proximity check runs. Locomotion still receives the avoidance goal.
+        if (_state != AIState.Fleeing) _state = AIState.Wandering;
     }
 
     private void OnTriggerEnter(Collider other)

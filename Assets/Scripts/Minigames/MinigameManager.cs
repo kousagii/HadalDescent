@@ -43,7 +43,9 @@ public class MinigameManager : MonoBehaviour
     // -----------------------------------------------------------------------
 
     private bool _minigameActive = false;
-    public bool IsMinigameActive => _minigameActive;
+    private bool _cancelling;
+    private int _activityVersion;
+    public bool IsMinigameActive => _minigameActive || _cancelling;
 
     [Header("Minigame Component References (Auto-found if unassigned)")]
     [SerializeField] private CaptureAndFocusMinigame      _mg1;
@@ -94,17 +96,27 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void CancelActiveMinigame()
     {
-        ResearchVerificationMinigame.Instance?.CancelMinigame();
-        _minigameActive = false;
-        Time.timeScale = 1f;
-
-        EnableControls();
-        UIManager.Instance?.SetExplorationHUDVisible(true);
-
-        if (_mg1 != null) _mg1.CancelMinigame();
-        if (_mg2 != null) _mg2.CancelMinigame();
-        if (_mg3 != null) _mg3.CancelMinigame();
-        if (_mg4 != null) _mg4.CancelMinigame();
+        if (_cancelling) return;
+        _cancelling = true;
+        _activityVersion++;
+        try
+        {
+            FindFirstObjectByType<MinigameInstructionOverlay>(FindObjectsInactive.Include)?.CancelSlideshow();
+            ResearchVerificationMinigame.Instance?.CancelMinigame();
+            _minigameActive = false;
+            if (_mg1 != null) _mg1.CancelMinigame();
+            if (_mg2 != null) _mg2.CancelMinigame();
+            if (_mg3 != null) _mg3.CancelMinigame();
+            if (_mg4 != null) _mg4.CancelMinigame();
+        }
+        finally
+        {
+            _minigameActive = false;
+            _cancelling = false;
+            Time.timeScale = 1f;
+            EnableControls();
+            UIManager.Instance?.SetExplorationHUDVisible(!UIManager.IsMenuScene(SceneManager.GetActiveScene().name));
+        }
     }
 
     private void EnsureMinigameComponents()
@@ -167,13 +179,14 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerScanMinigame(SpeciesData data, Action onSuccess, Action onFail)
     {
-        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
+        if (IsMinigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring request.");
             return;
         }
 
         _minigameActive = true;
+        int launchVersion = ++_activityVersion;
         DisableControls();
         Time.timeScale = 0f;
         UIManager.Instance?.SetExplorationHUDVisible(false);
@@ -182,6 +195,7 @@ public class MinigameManager : MonoBehaviour
 
         Action wrappedSuccess = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             Time.timeScale = 1f;
             _minigameActive = false;
             EnableControls();
@@ -191,6 +205,7 @@ public class MinigameManager : MonoBehaviour
         };
         Action wrappedFail = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             Time.timeScale = 1f;
             _minigameActive = false;
             EnableControls();
@@ -204,6 +219,7 @@ public class MinigameManager : MonoBehaviour
 
         Action startMinigame = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             if ((pick == 1 || forceMG1) && !forceMG2)
             {
                 _mg1.Initialize(data, zone, wrappedSuccess, wrappedFail);
@@ -257,7 +273,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerDebrisCleanupMinigame(DebrisCluster cluster, Action onSuccess = null, Action onFail = null)
     {
-        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
+        if (IsMinigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring cleanup request.");
             return;
@@ -271,16 +287,18 @@ public class MinigameManager : MonoBehaviour
         }
 
         _minigameActive = true;
+        int launchVersion = ++_activityVersion;
         DisableControls();
         UIManager.Instance?.SetExplorationHUDVisible(false);
         TutorialArrowUI.Instance?.Hide();
         RadioTextboxUI.Instance?.HideInstant();
 
-        Action wrappedSuccess = () => { _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onSuccess?.Invoke(); };
-        Action wrappedFail    = () => { _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onFail?.Invoke(); };
+        Action wrappedSuccess = () => { if (!IsCurrentActivity(launchVersion)) return; _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onSuccess?.Invoke(); };
+        Action wrappedFail    = () => { if (!IsCurrentActivity(launchVersion)) return; _minigameActive = false; EnableControls(); UIManager.Instance?.SetExplorationHUDVisible(true); AudioManager.Instance?.StopClawSFX(); onFail?.Invoke(); };
 
         Action startMG3 = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             int zone = ZoneManager.CurrentZoneIndex;
             _mg3.Initialize(cluster, zone, wrappedSuccess, wrappedFail);
             _mg3.Show();
@@ -306,7 +324,7 @@ public class MinigameManager : MonoBehaviour
     /// </summary>
     public void TriggerHazardDodgeMinigame(int zoneIndex, Action<int> onSuccess = null, Action onFail = null)
     {
-        if (_minigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
+        if (IsMinigameActive || (ResearchVerificationMinigame.Instance != null && ResearchVerificationMinigame.Instance.IsOpen))
         {
             Debug.LogWarning("[MinigameManager] Minigame already active - ignoring hazard request.");
             return;
@@ -331,6 +349,7 @@ public class MinigameManager : MonoBehaviour
         }
 
         _minigameActive = true;
+        int launchVersion = ++_activityVersion;
         DisableControls();
         UIManager.Instance?.SetExplorationHUDVisible(false);
         TutorialArrowUI.Instance?.Hide();
@@ -338,6 +357,7 @@ public class MinigameManager : MonoBehaviour
 
         Action<int> wrappedSuccess = (reward) =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             _minigameActive = false;
             EnableControls();
             UIManager.Instance?.SetExplorationHUDVisible(true);
@@ -346,6 +366,7 @@ public class MinigameManager : MonoBehaviour
 
         Action wrappedFail = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             _minigameActive = false;
             EnableControls();
             UIManager.Instance?.SetExplorationHUDVisible(true);
@@ -354,6 +375,7 @@ public class MinigameManager : MonoBehaviour
 
         Action startMG4 = () =>
         {
+            if (!IsCurrentActivity(launchVersion)) return;
             _mg4.Initialize(zoneIndex, wrappedSuccess, wrappedFail);
             _mg4.Show();
         };
@@ -421,6 +443,8 @@ public class MinigameManager : MonoBehaviour
     // -----------------------------------------------------------------------
     // Controls management
     // -----------------------------------------------------------------------
+
+    private bool IsCurrentActivity(int version) => version == _activityVersion && _minigameActive && !_cancelling;
 
     private void DisableControls()
     {

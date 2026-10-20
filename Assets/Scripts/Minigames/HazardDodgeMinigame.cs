@@ -142,7 +142,7 @@ public class HazardDodgeMinigame : MonoBehaviour
         var allCams = FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var c in allCams)
         {
-            if (c != _stageCamera && c.enabled)
+            if (c != _stageCamera && c.enabled && c.targetTexture == null)
             {
                 c.enabled = false;
                 _disabledSceneCams.Add(c);
@@ -153,6 +153,9 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void RestoreSceneCamera()
     {
+        // Stop the high-depth screen camera before restoring exploration; Destroy
+        // alone is deferred and can otherwise overwrite the restored scene frame.
+        if (_stageCamera != null) _stageCamera.enabled = false;
         foreach (var c in _disabledSceneCams)
         {
             if (c != null) c.enabled = true;
@@ -197,6 +200,7 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void SetExplorationHUDActive(bool active)
     {
+        if (active && UIManager.IsAnyMinigameActive()) return;
         UIManager.Instance?.SetExplorationHUDVisible(active);
 
         var allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -857,15 +861,21 @@ public class HazardDodgeMinigame : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(2.8f);
 
+        // Mark completion before hiding a root that may also host this component.
+        // Otherwise OnDisable aborts this coroutine and discards its completion.
+        _isActive = false;
+        var successCallback = _onSuccess;
+        var failCallback = _onFail;
+        _onSuccess = null;
+        _onFail = null;
         RestoreSceneCamera();
         CleanupStage();
         if (_rootUI != null) _rootUI.gameObject.SetActive(false);
         if (customUIRoot != null) customUIRoot.SetActive(false);
         HideAllBanners();
 
-        _isActive = false;
-        if (success) _onSuccess?.Invoke(totalReward);
-        else         _onFail?.Invoke();
+        if (success) successCallback?.Invoke(totalReward);
+        else         failCallback?.Invoke();
 
         SetExplorationHUDActive(true);
     }
@@ -1259,6 +1269,12 @@ public class HazardDodgeMinigame : MonoBehaviour
         _isFinished = true;
         _isRunning  = false;
         _isActive   = false;
+        _onSuccess = null;
+        _onFail = null;
+        HideAllBanners();
+        if (_explorationVignette != null) _explorationVignette.color = Color.clear;
+        if (_redVignette != null) _redVignette.color = Color.clear;
+        if (customRedVignette != null) customRedVignette.color = Color.clear;
 
         CleanupStage();
 
