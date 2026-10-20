@@ -8,7 +8,7 @@ using UnityEngine;
 ///   - Automatically integrates with SonarTrackable (Type = Hazard) to render as a red danger blip on Sonar.
 ///   - Triggers Mini-game 4 (Hazard Dodge) when the player submarine enters its proximity.
 ///   - Configurable cooldown to prevent spamming.
-///   - Optional global periodic surge timer for deeper zones (~2-3 min in Abyss/Hadal, ~3-4 min in Midnight).
+///   - Periodic encounters after 2-3 minutes of exploration in Sunlight/Twilight, 1-2 in deeper zones.
 /// </summary>
 [RequireComponent(typeof(SphereCollider))]
 public class HazardZoneTrigger : MonoBehaviour
@@ -20,7 +20,7 @@ public class HazardZoneTrigger : MonoBehaviour
     [Tooltip("Detection radius in meters to trigger the minigame.")]
     [SerializeField] private float triggerRadius = 14f;
 
-    [Tooltip("Cooldown in seconds before this specific hazard zone can trigger again.")]
+    [Tooltip("Cooldown for optional spatial proximity. Periodic encounter intervals are determined by zone.")]
     [SerializeField] private float triggerCooldown = 180f;
 
     [Header("Testing & Automation")]
@@ -50,6 +50,7 @@ public class HazardZoneTrigger : MonoBehaviour
     private float           _sceneStartTime;
     private float           _lastTriggerTime = 0f;
     private bool            _isTriggering    = false;
+    private float           _periodicTimer;
 
     private void Awake()
     {
@@ -96,17 +97,18 @@ public class HazardZoneTrigger : MonoBehaviour
         {
             StartCoroutine(TestTriggerRoutine());
         }
-        else if (enablePeriodicSurge)
+        if (enablePeriodicSurge)
         {
             StartCoroutine(PeriodicSurgeRoutine());
         }
     }
 
-    private bool IsHazardTriggerSuppressed()
+    private bool IsHazardTriggerSuppressed(bool ignoreStartupGrace = false)
     {
         // 1. Startup grace period after zone loading
-        if (Time.time - _sceneStartTime < sceneStartGracePeriod) return true;
+        if (!ignoreStartupGrace && Time.time - _sceneStartTime < sceneStartGracePeriod) return true;
         if (ZoneBoundaryTrigger._globalCooldownTimer > 0f) return true;
+        if (CinematicSequencer.Instance != null && CinematicSequencer.Instance.IsPlaying) return true;
 
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive)
         {
@@ -190,11 +192,11 @@ public class HazardZoneTrigger : MonoBehaviour
             yield return null;
         }
 
-        TriggerHazardMinigame();
+        TryTriggerHazardMinigame(ignoreStartupGrace: true);
     }
 
     /// <summary>
-    /// Deactivates this hazard zone trigger so it disappears both from the world (trigger zone) and the sonar map.
+    /// Retires the spatial marker, keeping periodic managers alive for later encounters.
     /// </summary>
     public void DeactivateHazard()
     {
@@ -207,17 +209,33 @@ public class HazardZoneTrigger : MonoBehaviour
         {
             _collider.enabled = false;
         }
-        gameObject.SetActive(false);
+        enableSpatialProximity = false;
+        if (enablePeriodicSurge)
+            _periodicTimer = NextSurgeInterval();
+        else
+            gameObject.SetActive(false);
     }
 
     /// <summary>
     /// Initiates Phase 1 & 2 of Mini-game 4.
-    /// Can also be clicked directly from the Inspector component context menu!
+    /// Normal gameplay entry point, respecting startup grace and activity guards.
     /// </summary>
-    [ContextMenu("▶ Test Trigger Hazard Minigame Now")]
     public void TriggerHazardMinigame()
     {
-        if (IsHazardTriggerSuppressed()) return;
+        TryTriggerHazardMinigame(ignoreStartupGrace: false);
+    }
+
+    [ContextMenu("▶ Test Trigger Hazard Minigame Now")]
+    private void TestTriggerHazardMinigameNow()
+    {
+        if (!Application.isPlaying) return;
+        // Skip waiting in a safe exploration state; never interrupt another activity.
+        TryTriggerHazardMinigame(ignoreStartupGrace: true);
+    }
+
+    private void TryTriggerHazardMinigame(bool ignoreStartupGrace)
+    {
+        if (IsHazardTriggerSuppressed(ignoreStartupGrace)) return;
         if (UIManager.IsAnyPanelOrModalOpen(includeMinigames: false)) return;
         if (MinigameManager.Instance == null || MinigameManager.Instance.IsMinigameActive) return;
 
@@ -230,7 +248,7 @@ public class HazardZoneTrigger : MonoBehaviour
 
         int activeZone = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : zoneIndex;
 
-        // Deactivate the hazard zone trigger GameObject immediately
+        // Consume the marker and restart the periodic countdown, if enabled.
         DeactivateHazard();
 
         MinigameManager.Instance.TriggerHazardDodgeMinigame(
@@ -256,48 +274,29 @@ public class HazardZoneTrigger : MonoBehaviour
 
     private IEnumerator PeriodicSurgeRoutine()
     {
-        // Initial grace period delay on zone entry before any periodic surge countdown starts
-        yield return new WaitForSeconds(sceneStartGracePeriod);
-
+        _periodicTimer = NextSurgeInterval();
         while (true)
         {
-            int activeZone = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : zoneIndex;
-
-            // Frequency based on zone depth:
-            // Sunlight: ~180s (3m), Twilight: ~180s (3m), Midnight: ~150s (2.5m), Abyss/Hadal: ~120s (2m)
-            float interval = activeZone switch
+            // Count exploration only. The startup grace overlaps this countdown,
+            // rather than adding another 25 seconds to the requested interval.
+            bool exploring = !UIManager.IsAnyPanelOrModalOpen() &&
+                (TutorialManager.Instance == null || !TutorialManager.Instance.IsTutorialActive) &&
+                (CinematicSequencer.Instance == null || !CinematicSequencer.Instance.IsPlaying) &&
+                (MinigameManager.Instance == null || !MinigameManager.Instance.IsMinigameActive) &&
+                ZoneBoundaryTrigger._globalCooldownTimer <= 0f;
+            if (exploring)
             {
-                3 => Random.Range(120f, 180f), // Abyss: ~2-3 min
-                4 => Random.Range(120f, 180f), // Hadal: ~2-3 min
-                2 => Random.Range(180f, 240f), // Midnight: ~3-4 min
-                1 => Random.Range(200f, 260f), // Twilight: ~3.5-4.5 min
-                _ => Random.Range(120f, 180f)  // Sunlight test
-            };
-
-            // Countdown timer that strictly pauses whenever Shop, Bestiary, Pause, or any popup is open!
-            // Time spent browsing menus does NOT count down, preventing sudden activation upon closing.
-            float timer = interval;
-            while (timer > 0f)
-            {
-                if (!UIManager.IsAnyPanelOrModalOpen() && (TutorialManager.Instance == null || !TutorialManager.Instance.IsTutorialActive))
-                {
-                    timer -= Time.deltaTime;
-                }
-                yield return null;
+                _periodicTimer = Mathf.Max(0f, _periodicTimer - Time.deltaTime);
+                if (_periodicTimer <= 0f) TriggerHazardMinigame();
             }
-
-            // Once countdown elapses, wait until all menus/modals are closed before triggering
-            while (UIManager.IsAnyPanelOrModalOpen() || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive))
-            {
-                yield return null;
-            }
-
-            // Only trigger if player is exploring peacefully (no other minigame or popup open)
-            if (MinigameManager.Instance != null && !MinigameManager.Instance.IsMinigameActive)
-            {
-                TriggerHazardMinigame();
-            }
+            yield return null;
         }
+    }
+
+    private float NextSurgeInterval()
+    {
+        int activeZone = ZoneManager.CurrentZoneIndex >= 0 ? ZoneManager.CurrentZoneIndex : zoneIndex;
+        return HazardDodgeRules.SurgeIntervalSeconds(activeZone, Random.value);
     }
 
     private void OnDrawGizmos()

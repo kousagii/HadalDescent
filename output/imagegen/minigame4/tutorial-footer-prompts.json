@@ -1,0 +1,19 @@
+{
+  "mode": "built-in image_gen",
+  "pages": [
+    {
+      "page": 2,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-1f030a7c-16a3-4164-9efd-618a1337076d.png"
+      ],
+      "prompt": "Precise layout edit of this tutorial card. Change ONLY the horizontal placement of the bottom footer text \"COLLECT RARE PEARLS FOR BONUS RDP.\" Center this one line horizontally on the entire canvas, directly beneath the gameplay screenshot, with equal blue margin on its left and right. At 1536 pixel canvas width its text center should be x=768, aligned with the screenshot center. Preserve its current vertical baseline, white hand-lettered font, size, spelling and punctuation. Everything else must remain unchanged: top instruction and numbered badge, screenshots, chevron, pearl, arrows, blue backdrop, composition, image dimensions and 3:2 aspect ratio. Do not change any other text, do not add or remove any artwork."
+    },
+    {
+      "page": 3,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-840c08c4-31ef-41fb-8cd2-f7d5456dcda9.png"
+      ],
+      "prompt": "Precise layout edit of this tutorial card. Change ONLY the horizontal alignment of the two bottom footer lines:\n\"HITS DAMAGE YOUR HULL.\"\n\"FAILURE COSTS 50 RDP.\"\nCenter BOTH lines individually on the entire canvas, directly under the screenshot, text-align CENTER. At 1536 pixel canvas width the center of each line must be x=768, aligned with the screenshot center. The two lines must share this same center axis rather than a common left edge. Preserve their current vertical placement and line spacing, white hand-lettered font, font size, spelling and punctuation. Keep everything else unchanged: top heading and circled 3 badge, gameplay screenshot, brown sediment, submarine, arrow, blue backdrop, composition, image dimensions and 3:2 aspect ratio. No additional edits or new artwork."
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "mode": "built-in image_gen",
+  "generation": [
+    {
+      "page": 1,
+      "refs": [
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-1.png",
+        "C:/Users/ashle/AppData/Local/Temp/codex-clipboard-9b99650e-4764-475e-a7d5-cad29ac0f29a.png",
+        "C:/Users/ashle/AppData/Local/Temp/codex-clipboard-2cecb480-71fc-4f2d-9a67-4411083b7967.png"
+      ],
+      "prompt": "Use case: compositing / text-localization. Edit target: first input image, the existing 600x400 (3:2 landscape) tutorial page 1. Supporting insert images: input 2 is the user's actual red hazard alert screenshot, input 3 is the user's actual current gameplay screenshot. Deliver ONE finished tutorial image, not a mockup or a collage of pages.\nMatch the existing tutorial's EXACT visual language: uniform teal-blue background sampled from input 1, black/dark-teal outlined circle badge containing white numeral 1 at the upper left, irregular white hand-lettered ALL-CAPS tutorial font copied from input 1. Do not use the gameplay HUD's font for the tutorial text. Match margins, density, crisp screenshot edges and simple black gesture icons from the original. Keep 3:2 aspect ratio and fill the canvas; no outside border.\nReplace the top instruction with these exact words in two or three clean lines:\n\"WHEN A HAZARD ALERT APPEARS,\nSWIPE LEFT OR RIGHT TO DODGE.\"\nIn the body, use the supplied real screenshots faithfully, without inventing gameplay: a compact centered alert strip from input 2 directly above a larger rectangular gameplay crop from input 3. The alert text must remain \"ENTERING A ROCKY PASSAGE\", \"SWIPE TO DODGE.\", \"COLLECT RARE PEARLS FOR BONUS RDP\". Keep the screenshot content sharp, correctly proportioned and inside the same body area used by the original (approximately x64..540, y95..326 on a 600x400 canvas). The strip should be about 55 pixels tall, the gameplay image about 175 pixels tall. Keep the two original-style black outlined swipe hands with left and right arrows at the bottom corners, pointing outward, without covering the important screenshot content. No extra paragraphs, no new labels, no lane words. Preserve the blue background, badge style and original hand-lettered font. The screenshot submarine is metallic blue-gray, not yellow."
+    },
+    {
+      "page": 2,
+      "refs": [
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-2.png",
+        "C:/Users/ashle/AppData/Local/Temp/codex-clipboard-2cecb480-71fc-4f2d-9a67-4411083b7967.png"
+      ],
+      "prompt": "Use case: compositing / text-localization. Edit target: input 1, the existing 600x400 (3:2 landscape) tutorial page 2. Input 2 is a supporting insert: the user's actual current gameplay screenshot with cyan LEFT-facing chevron at center and cyan pearl on right. Deliver ONE finished tutorial page.\nPreserve the EXACT current tutorial design: solid teal-blue background sampled from input 1, circled badge 2 in upper left with the same thick dark outline, WHITE irregular hand-lettered ALL-CAPS tutorial font matching input 1 exactly (NOT the screenshot HUD's monospaced font), matching margins, flat screenshot layout and simple black annotations. Keep 3:2 aspect ratio; no outside border.\nReplace header with these exact two lines, sized to fit without clipping:\n\"CHEVRONS PUSH YOU IN THEIR DIRECTION.\nSWIPE AWAY FROM ROCKS.\"\nReplace the old central game image with the provided actual screenshot input 2, preserving its composition, proportions, metallic blue-gray submarine, cyan left chevron, flowing particles, pearl on right, three lanes, HUD and pause icon. Keep the screenshot as the largest rectangular body image, around x52..552 and y112..354 on a 600x400 canvas. Do not redraw or invent rocks or gameplay objects. Add a simple thin black curved annotation arrow pointing at the cyan chevron, and retain the original-style black cursor/pointing arrow near the pearl without covering the pearl. The left chevron must clearly remain LEFT-facing; do not mirror screenshot.\nAdd this exact short white hand-lettered footer below the screenshot, fully within the blue lower margin:\n\"COLLECT RARE PEARLS FOR BONUS RDP.\"\nUse the same white tutorial font as the original, slightly smaller for the footer. No lane words, no swipe-to-steady instruction, no stability meter, no extra text or decorations."
+    },
+    {
+      "page": 3,
+      "refs": [
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-3.png",
+        "C:/Users/ashle/AppData/Local/Temp/codex-clipboard-f35c335c-c4d0-4972-aeae-3708f504052c.png"
+      ],
+      "prompt": "Use case: compositing / text-localization. Edit target: input 1, existing 600x400 (3:2 landscape) tutorial page 3. Supporting insert input 2 is the user's actual sediment gameplay screenshot. Deliver ONE finished tutorial page.\nPreserve EXACTLY the existing tutorial visual system: uniform teal-blue background sampled from input 1, top-left white numeral 3 inside the thick dark outlined circle, matching WHITE irregular chunky hand-lettered ALL-CAPS font copied from the original tutorial, similar margins and clear hierarchy. Do NOT use the screenshot's monospaced HUD font for tutorial instructions. Keep the 3:2 canvas and no outside border.\nReplace the old header with these exact words in two lines:\n\"SEDIMENT CLOUDS REDUCE VISIBILITY.\nKEEP DODGING UNTIL YOUR VIEW CLEARS.\"\nReplace both old screenshot strips and hull-compromised panel with one large rectangular actual screenshot input 2, approximately x52..552 and y105..348 on a 600x400 canvas. Preserve its real game composition, metallic submarine at right, visibly hazy water and brown silt around it, rock on left, cyan pearl lower middle, HUD and pause icon; no invented effects, no cartoon repainting. Add one original-style simple black pointer arrow in a blue-margin-adjacent area pointing toward the brown sediment cloud by the right-hand submarine, without covering the submarine or HUD. The screenshot itself supplies the sediment visualization.\nBelow the screenshot, add this exact short two-line footer in the SAME white tutorial lettering, smaller but readable:\n\"HITS DAMAGE YOUR HULL.\nFAILURE COSTS 50 RDP.\"\nKeep all text and pointers within the canvas and comfortable margins, no overlap, no new labels on lanes, no additional graphics or new colors."
+    }
+  ],
+  "backgroundRefinement": [
+    {
+      "page": 1,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-fa6b2d23-25d8-41c3-8fb0-70ab13cb951b.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-1.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 1. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    },
+    {
+      "page": 2,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-c8939453-b4fb-4dda-a36c-7f161dd01a5f.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-2.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 2. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    },
+    {
+      "page": 3,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-9fd7c9f2-6781-4032-a803-502ff6034671.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-3.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 3. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    }
+  ],
+  "centeredFooters": [
+    {
+      "page": 2,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-1f030a7c-16a3-4164-9efd-618a1337076d.png"
+      ],
+      "prompt": "Precise layout edit of this tutorial card. Change ONLY the horizontal placement of the bottom footer text \"COLLECT RARE PEARLS FOR BONUS RDP.\" Center this one line horizontally on the entire canvas, directly beneath the gameplay screenshot, with equal blue margin on its left and right. At 1536 pixel canvas width its text center should be x=768, aligned with the screenshot center. Preserve its current vertical baseline, white hand-lettered font, size, spelling and punctuation. Everything else must remain unchanged: top instruction and numbered badge, screenshots, chevron, pearl, arrows, blue backdrop, composition, image dimensions and 3:2 aspect ratio. Do not change any other text, do not add or remove any artwork."
+    },
+    {
+      "page": 3,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-840c08c4-31ef-41fb-8cd2-f7d5456dcda9.png"
+      ],
+      "prompt": "Precise layout edit of this tutorial card. Change ONLY the horizontal alignment of the two bottom footer lines:\n\"HITS DAMAGE YOUR HULL.\"\n\"FAILURE COSTS 50 RDP.\"\nCenter BOTH lines individually on the entire canvas, directly under the screenshot, text-align CENTER. At 1536 pixel canvas width the center of each line must be x=768, aligned with the screenshot center. The two lines must share this same center axis rather than a common left edge. Preserve their current vertical placement and line spacing, white hand-lettered font, font size, spelling and punctuation. Keep everything else unchanged: top heading and circled 3 badge, gameplay screenshot, brown sediment, submarine, arrow, blue backdrop, composition, image dimensions and 3:2 aspect ratio. No additional edits or new artwork."
+    }
+  ],
+  "typography": {
+    "page": 3,
+    "refs": [
+      "C:/Unity/HadalDescent/Assets/Resources/Tutorial/Minigame 4-3.png",
+      "C:/Unity/HadalDescent/Assets/Resources/Tutorial/Minigame 4-2.png",
+      "C:/Unity/HadalDescent/Assets/Resources/Tutorial/Minigame 4-1.png"
+    ],
+    "prompt": "Precise typography normalization. Input 1 is the EDIT TARGET, tutorial page 3. Input 2 is the exact font-size reference, page 2. Input 3 confirms the matching heading scale, page 1. Return ONLY the corrected page 3.\nMake page 3 use the SAME instructional heading font size and SAME footer font size as page 2; page 3 currently has visibly oversized bottom text. Keep the irregular white hand-lettered font style and weight unchanged.\nTypography specification on this 1536x1024 image: heading capital-letter height about 48 pixels, consistent with the headings in reference pages 1 and 2. Footer capital-letter height about 38 pixels, EXACTLY matching the footer in reference page 2, with 48-52 pixels between line baselines. Use one uniform footer font size for BOTH lines. Keep these two footer lines individually HORIZONTALLY CENTERED around x=768:\n\"HITS DAMAGE YOUR HULL.\"\n\"FAILURE COSTS 50 RDP.\"\nKeep the heading LEFT ALIGNED beside badge 3 and preserve its exact wording:\n\"SEDIMENT CLOUDS REDUCE VISIBILITY.\"\n\"KEEP DODGING UNTIL YOUR VIEW CLEARS.\"\nThe heading may occupy its existing two-line area; use the reference heading size without stretching letters. Preserve its starting x near190 and existing generous margins.\nOnly adjust typography size/spacing/alignment as specified. Preserve the screenshot's exact position and size, the numbered badge, arrow, colors and blue background, sediment, submarine and 3:2 image dimensions. Do not copy text from the other pages, do not change wording or add any new artwork. Bottom footer must remain centered and be visibly smaller than the heading, at the SAME scale as the page 2 footer."
+  },
+  "savedAssets": [
+    "Assets/Arts/Tutorial/Minigame 4-1.png",
+    "Assets/Arts/Tutorial/Minigame 4-2.png",
+    "Assets/Arts/Tutorial/Minigame 4-3.png",
+    "Assets/Resources/Tutorial/Minigame 4-1.png",
+    "Assets/Resources/Tutorial/Minigame 4-2.png",
+    "Assets/Resources/Tutorial/Minigame 4-3.png"
+  ],
+  "finalTypographyScale": {
+    "mode": "built-in image_gen",
+    "revision": {
+      "page": 3,
+      "refs": [
+        "C:/Unity/HadalDescent/Assets/Resources/Tutorial/Minigame 4-3.png",
+        "C:/Unity/HadalDescent/Assets/Resources/Tutorial/Minigame 4-2.png"
+      ],
+      "prompt": "Precisely resize text in INPUT 1 ONLY (tutorial page 3), using input 2 as font-size reference. The previous text was made TOO SMALL. INCREASE ALL WHITE TUTORIAL INSTRUCTION TEXT IN PAGE 3 BY 15 PERCENT from its current size. This includes both top heading lines and both centered bottom footer lines. The footer letters currently measure about 33 pixels high; enlarge them to about 38 pixels high, matching page 2's footer. The heading letters currently measure 41-44 pixels high; enlarge them to about 47-50 pixels high, matching page 2's heading.\nKeep the same font style, weight, wording and colors. Keep the top heading left aligned near x190, in two lines, without clipping at the right edge. Keep BOTH footer lines individually centered at x768 with their shared center axis and original vertical area under the screenshot; use the same size for both footer lines.\nExact page 3 text, unchanged:\n\"SEDIMENT CLOUDS REDUCE VISIBILITY.\"\n\"KEEP DODGING UNTIL YOUR VIEW CLEARS.\"\n\"HITS DAMAGE YOUR HULL.\"\n\"FAILURE COSTS 50 RDP.\"\nDo not resize the numbered badge or any text INSIDE the gameplay screenshot. Do not change the screenshot, arrow, background or layout. Output the same 1536x1024, 3:2 image. Only enlarge the tutorial heading and footer lettering by 15%, retaining centered footers."
+    }
+  }
+}

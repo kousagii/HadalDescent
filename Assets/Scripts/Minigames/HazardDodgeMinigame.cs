@@ -16,16 +16,16 @@ using TMPro;
 ///   Phase 2 (3-Lane Emergency Run):
 ///     - Player controls the submarine across 3 lanes: Left (-X), Center (0), Right (+X).
 ///     - Controls: Touch swipe left/right, on-screen tap, or Keyboard (A/D, Arrow keys).
-///     - Hazards (Thermal Vents, Whirlpools, Falling Rocks) stream downward along lanes.
-///     - Collectibles: Floating High-Pressure Data Pods (+10 to +25 RDP) rewarding risky lane shifts.
+///     - Rocks, localized currents, vent plumes and sediment fronts approach along lanes.
+///     - Collectibles: Floating High-Pressure Data Pods (+5 RDP each).
 ///     - Fixed Hull Integrity: 3 hits (2 in Abyss/Hadal) with NO mid-run health restoration.
-///     - Distance countdown: 50m down to 0m.
+///     - Zone-specific distance countdown over a 20-second run.
 ///   Phase 3 (Outcome):
 ///     - Win (0m left): Awards high-yield Extreme Depth Survey Data (+Bonus RDP) + collected Pods.
 ///     - Fail (Hull hits depleted): -50 RDP penalty (clamped to 0 minimum), returns to exploration.
 ///
-/// Features built-in procedural 3D primitives so it works out of the box, with Inspector slots
-/// ready for custom models/prefabs.
+/// Uses the existing environment rock assets, with Inspector slots for custom models/prefabs
+/// and procedural fallbacks if an asset is unavailable.
 /// </summary>
 public class HazardDodgeMinigame : MonoBehaviour
 {
@@ -33,14 +33,14 @@ public class HazardDodgeMinigame : MonoBehaviour
     // Inspector & Custom Prefab Slots
     // -----------------------------------------------------------------------
 
-    [Header("Custom 3D Prefabs (Optional — procedural primitives used if null)")]
+    [Header("Custom 3D Prefabs (Optional — existing assets used if null)")]
     [Tooltip("Custom top-view Submarine 3D model prefab.")]
     [SerializeField] private GameObject customSubmarinePrefab;
 
     [Tooltip("Custom Thermal Vent 3D prefab.")]
     [SerializeField] private GameObject customThermalVentPrefab;
 
-    [Tooltip("Custom Whirlpool / Vortex 3D prefab.")]
+    [Tooltip("Legacy serialized slot. Current hazards now use a directional chevron.")]
     [SerializeField] private GameObject customWhirlpoolPrefab;
 
     [Tooltip("Custom Falling Rock / Boulder 3D prefab.")]
@@ -102,7 +102,7 @@ public class HazardDodgeMinigame : MonoBehaviour
     private static readonly int[]   ZoneHullHits   = { 3, 3, 3, 2, 2 };
     private static readonly int[]   ZoneBaseBonus  = { 50, 100, 150, 200, 250 };
 
-    private const float RunDurationSeconds = 20f; // 25 seconds total duration
+    private const float RunDurationSeconds = 20f;
 
     // -----------------------------------------------------------------------
     // Runtime State
@@ -121,6 +121,20 @@ public class HazardDodgeMinigame : MonoBehaviour
     private int          _collectedRdp   = 0;
     private bool         _isRunning      = false;
     private bool         _isFinished     = false;
+    private bool _ventFieldRun;
+    private System.Random _hazardRandom;
+    private float _impactCooldown;
+    private readonly HazardDodgeConditions _conditions = new HazardDodgeConditions();
+    private float _steeringX, _movementIntensity, _nearDisturbance, _cameraImpact;
+    private HazardDodgeAtmosphere _atmosphere;
+    private Vector3 _cameraRestPosition;
+    private Quaternion _cameraRestRotation;
+    private bool _effectsPaused;
+    private HazardDodgeVisualAssets _hazardAssets;
+    private Material _hazardParticleMaterial;
+    private Material _hazardMarkerMaterial;
+    private Texture2D _hazardParticleTexture;
+    private Image _sedimentOverlay;
 
     // Swipe tracking
     private Vector2      _touchStartPos;
@@ -284,7 +298,9 @@ public class HazardDodgeMinigame : MonoBehaviour
     // Hazard Item Representation
     // -----------------------------------------------------------------------
 
-    public enum HazardType { ThermalVent, Whirlpool, FallingRock, DataPod }
+    // Preserve existing numeric values for serialized and external references.
+    public enum HazardType { ThermalVent = 0, Whirlpool = 1, FallingRock = 2, DataPod = 3,
+        CurrentSurge = 4, SedimentCloud = 5, RockOutcrop = 6 }
 
     private class ActiveHazardItem
     {
@@ -293,6 +309,9 @@ public class HazardDodgeMinigame : MonoBehaviour
         public int        Lane;
         public float      ZPos;
         public bool       CollectedOrHit;
+        public int CurrentDirection;
+        public float Intensity;
+        public HazardDodgeVisual Visual;
     }
 
     // -----------------------------------------------------------------------
@@ -320,6 +339,13 @@ public class HazardDodgeMinigame : MonoBehaviour
         _currentLane   = 1;
         _targetX       = 0f;
         _currentX      = 0f;
+        _spawnTimer = 0f;
+        _impactCooldown = 0f;
+        _conditions.Reset();
+        _steeringX = _movementIntensity = _nearDisturbance = _cameraImpact = 0f;
+        _effectsPaused = false;
+        _hazardRandom = new System.Random(UnityEngine.Random.Range(0, int.MaxValue));
+        _ventFieldRun = _zoneIndex >= 2 && _hazardRandom.NextDouble() < .45;
         _isRunning     = false;
         _isFinished    = false;
         _touchActive   = false;
@@ -335,6 +361,10 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         BuildStage();
         BuildUI();
+        BuildHazardFeedback();
+        SetWarningText(_ventFieldRun ? "ENTERING A VENT FIELD" : "ENTERING A ROCKY PASSAGE",
+            "SWIPE TO DODGE.",
+            "COLLECT RARE PEARLS FOR BONUS RDP");
 
         StartCoroutine(Phase1AlertSequence());
     }
@@ -475,18 +505,28 @@ public class HazardDodgeMinigame : MonoBehaviour
     private void Update()
     {
         if (_isFinished) return;
-        if (PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused) return;
+        bool paused = PauseMenuUI.Instance != null && PauseMenuUI.Instance.IsPaused;
+        if (paused != _effectsPaused)
+        {
+            _effectsPaused = paused;
+            _touchActive = false;
+            _hasSwipedThisTouch = false;
+            foreach (var item in _activeItems) if (item.Visual != null) item.Visual.SetPaused(paused);
+            _atmosphere?.SetPaused(paused);
+        }
+        if (paused) return;
 
         HandleInput();
 
         if (!_isRunning) return;
 
-        float dt = Time.unscaledDeltaTime;
-        if (dt <= 0f || dt > 0.1f) dt = 0.016f;
+        float dt = Mathf.Clamp(Time.unscaledDeltaTime, 0f, .1f);
+        if (dt <= 0f) return;
+        _impactCooldown = Mathf.Max(0f, _impactCooldown - dt);
 
         float speed = baseScrollSpeed * ZoneSpeedMults[_zoneIndex];
 
-        // 1. Update Distance over 25 seconds
+        // 1. Update Distance over the fixed run duration
         float distStep = (_totalDistance / RunDurationSeconds) * dt;
         _distanceLeft -= distStep;
         if (_distanceLeft <= 0f)
@@ -497,14 +537,9 @@ public class HazardDodgeMinigame : MonoBehaviour
         }
 
         // 2. Smooth Submarine Lane Movement & Bank Tilt
-        _currentX = Mathf.Lerp(_currentX, _targetX, dt * laneSwitchSpeed);
-        if (_submarineObj != null)
-        {
-            float tiltNorm = laneWidth > 0.01f ? Mathf.Clamp((_targetX - _currentX) / laneWidth, -1f, 1f) : 0f;
-            float tilt = tiltNorm * -28.0f; // Snappy, sleek banking roll clamped to 28 degrees
-            _submarineObj.transform.localPosition = new Vector3(_currentX, 0f, -2.2f);
-            _submarineObj.transform.localRotation = Quaternion.Euler(0f, submarineYawOffset, tilt);
-        }
+        UpdateSubmarineMotion(dt, speed);
+        UpdateCameraFeedback(dt);
+        _atmosphere?.Tick(_conditions, _movementIntensity, _currentX, _zoneIndex);
 
         // 3. Spawn Obstacles & Data Pods
         _spawnTimer -= dt;
@@ -516,9 +551,60 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         // 4. Update & Scroll Active Items
         UpdateActiveItems(speed, dt);
+        UpdateHazardFeedback();
 
         // 5. Update HUD Text
         UpdateHUD();
+    }
+
+    private void UpdateSubmarineMotion(float dt, float speed)
+    {
+        _conditions.Tick(dt, _movementIntensity, _nearDisturbance);
+        _steeringX = Mathf.Lerp(_steeringX, _targetX, 1f - Mathf.Exp(-laneSwitchSpeed * dt));
+        float previousX = _currentX;
+        _currentX = Mathf.Clamp(_steeringX, -laneWidth, laneWidth);
+        _movementIntensity = Mathf.Clamp01(Mathf.Abs(_currentX - previousX) / Mathf.Max(.01f, laneWidth * dt * 2f));
+        if (_submarineObj != null)
+        {
+            float tiltNorm = laneWidth > 0.01f ? Mathf.Clamp((_targetX - _currentX) / laneWidth, -1f, 1f) : 0f;
+            float tilt = Mathf.Clamp(tiltNorm * -28f, -30f, 30f);
+            float heave = Mathf.Sin(_conditions.Clock * 2f) * (.025f + _conditions.Pressure * .035f);
+            _submarineObj.transform.localPosition = new Vector3(_currentX, heave, -2.2f);
+            _submarineObj.transform.localRotation = Quaternion.Euler(_conditions.Pressure * Mathf.Sin(_conditions.Clock * 3f), submarineYawOffset, tilt);
+        }
+    }
+
+    private int NearbySolidLanes(float speed)
+    {
+        int blocked = 0;
+        foreach (var obstacle in _activeItems)
+            if (obstacle.GameObject != null && HazardDodgeRules.DamagesHull(obstacle.Type) &&
+                Mathf.Abs(obstacle.ZPos + 2.2f) < 3f + speed * .45f)
+                blocked |= 1 << obstacle.Lane;
+        return blocked;
+    }
+
+    private void ApplyCurrentPush(int direction, float intensity, float speed)
+    {
+        int actualLane = Mathf.Clamp(Mathf.RoundToInt(_currentX / laneWidth) + 1, 0, 2);
+        int next = HazardDodgeRules.SafeCurrentDestination(actualLane, direction, NearbySolidLanes(speed));
+        if (next == actualLane) return;
+        SetLane(next);
+        _conditions.BeginCurrent(direction, intensity);
+    }
+
+    private void UpdateCameraFeedback(float dt)
+    {
+        if (_stageCamera == null) return;
+        _cameraImpact = Mathf.MoveTowards(_cameraImpact, 0f, dt * 3f);
+        float t = _conditions.Clock;
+        float pressure = _conditions.Pressure;
+        var sway = new Vector3(Mathf.Sin(t * .8f) * (.025f + pressure * .05f),
+            Mathf.Sin(t * 1.1f) * .025f, 0f);
+        var impact = new Vector3(Mathf.Sin(t * 67f),0f,Mathf.Sin(t * 53f)) * (_cameraImpact * .12f);
+        _stageCamera.transform.localPosition = _cameraRestPosition + sway + impact;
+        _stageCamera.transform.localRotation = _cameraRestRotation * Quaternion.Euler(0f,0f,
+            Mathf.Sin(t * 1.4f) * (.08f + pressure * .28f));
     }
 
     // -----------------------------------------------------------------------
@@ -557,6 +643,11 @@ public class HazardDodgeMinigame : MonoBehaviour
             }
             else if (ts.primaryTouch.press.wasReleasedThisFrame)
             {
+                if (_touchActive && !_hasSwipedThisTouch)
+                {
+                    float deltaX = ts.primaryTouch.position.ReadValue().x - _touchStartPos.x;
+                    if (Mathf.Abs(deltaX) > swipeSensitivity) ShiftLane(deltaX > 0 ? 1 : -1);
+                }
                 _touchActive = false;
                 _hasSwipedThisTouch = false;
             }
@@ -584,6 +675,11 @@ public class HazardDodgeMinigame : MonoBehaviour
                 }
                 else if (ptr.press.wasReleasedThisFrame)
                 {
+                    if (_touchActive && !_hasSwipedThisTouch)
+                    {
+                        float deltaX = ptr.position.ReadValue().x - _touchStartPos.x;
+                        if (Mathf.Abs(deltaX) > swipeSensitivity) ShiftLane(deltaX > 0 ? 1 : -1);
+                    }
                     _touchActive = false;
                     _hasSwipedThisTouch = false;
                 }
@@ -626,96 +722,42 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void SpawnHazardWave()
     {
-        // Pick 1 or 2 lanes to block, leaving at least 1 lane open
-        int openLane = UnityEngine.Random.Range(0, 3);
-
+        var wave = HazardDodgeRules.BuildWave(_zoneIndex, _ventFieldRun, _hazardRandom);
+        float speed = baseScrollSpeed * ZoneSpeedMults[_zoneIndex];
         for (int lane = 0; lane < 3; lane++)
-        {
-            if (lane == openLane)
-            {
-                // 35% chance to spawn a glowing High-Pressure Data Pod in the open lane (Risk vs Reward!)
-                if (UnityEngine.Random.value < 0.35f)
-                {
-                    SpawnItem(HazardType.DataPod, lane, 32f);
-                }
-                continue;
-            }
-
-            // 65% chance to spawn a hazard in blocked lanes
-            if (UnityEngine.Random.value < 0.70f)
-            {
-                HazardType hType = PickHazardTypeForZone(_zoneIndex);
-                SpawnItem(hType, lane, 32f);
-            }
-        }
+            if (wave.Lanes[lane].HasValue)
+                SpawnItem(wave.Lanes[lane].Value, lane, 32f + speed * wave.ArrivalDelays[lane],
+                    wave.OpenLane, wave.CurrentDirections[lane]);
     }
 
-    private HazardType PickHazardTypeForZone(int zone)
+    private void SpawnItem(HazardType type, int lane, float zPos, int openLane, int currentDirection = 0)
     {
-        float roll = UnityEngine.Random.value;
-        if (zone <= 1)
+        if (type == HazardType.Whirlpool) type = HazardType.CurrentSurge;
+        int direction = currentDirection != 0 ? System.Math.Sign(currentDirection) : openLane > lane ? 1 : -1;
+        float intensity = type == HazardType.CurrentSurge ? UnityEngine.Random.Range(.7f,1.4f) :
+            type == HazardType.SedimentCloud ? UnityEngine.Random.Range(.5f,1f) : 1f;
+        Vector3 position = _stageOrigin + new Vector3((lane - 1) * laneWidth, 0f, zPos);
+        GameObject go;
+        HazardDodgeVisual visual = null;
+        if (type == HazardType.DataPod)
         {
-            return roll < 0.5f ? HazardType.ThermalVent : HazardType.Whirlpool;
-        }
-        else if (zone == 2)
-        {
-            if (roll < 0.4f) return HazardType.ThermalVent;
-            if (roll < 0.7f) return HazardType.Whirlpool;
-            return HazardType.FallingRock;
+            go = customDataPodPrefab != null
+                ? Instantiate(customDataPodPrefab, position, Quaternion.identity, _stageRoot.transform)
+                : CreateProceduralDataPod(position);
         }
         else
         {
-            if (roll < 0.35f) return HazardType.FallingRock;
-            if (roll < 0.70f) return HazardType.ThermalVent;
-            return HazardType.Whirlpool;
+            GameObject supplied = type == HazardType.ThermalVent ? customThermalVentPrefab :
+                type == HazardType.FallingRock || type == HazardType.RockOutcrop ? customRockPrefab : null;
+            visual = HazardDodgeVisual.Create(_stageRoot.transform, position, type, laneWidth,
+                direction, intensity, _hazardAssets, _hazardParticleMaterial, _hazardMarkerMaterial, supplied);
+            go = visual.gameObject;
         }
-    }
-
-    private void SpawnItem(HazardType type, int lane, float zPos)
-    {
-        GameObject go = null;
-        float xPos = (lane - 1) * laneWidth;
-        Vector3 worldPos = _stageOrigin + new Vector3(xPos, 0f, zPos);
-
-        switch (type)
-        {
-            case HazardType.ThermalVent:
-                go = customThermalVentPrefab != null
-                    ? Instantiate(customThermalVentPrefab, worldPos, Quaternion.identity, _stageRoot.transform)
-                    : CreateProceduralThermalVent(worldPos);
-                break;
-
-            case HazardType.Whirlpool:
-                go = customWhirlpoolPrefab != null
-                    ? Instantiate(customWhirlpoolPrefab, worldPos, Quaternion.identity, _stageRoot.transform)
-                    : CreateProceduralWhirlpool(worldPos);
-                break;
-
-            case HazardType.FallingRock:
-                go = customRockPrefab != null
-                    ? Instantiate(customRockPrefab, worldPos, Quaternion.identity, _stageRoot.transform)
-                    : CreateProceduralRock(worldPos);
-                break;
-
-            case HazardType.DataPod:
-                go = customDataPodPrefab != null
-                    ? Instantiate(customDataPodPrefab, worldPos, Quaternion.identity, _stageRoot.transform)
-                    : CreateProceduralDataPod(worldPos);
-                break;
-        }
-
-        if (go != null)
-        {
-            SetLayerRecursive(go, 0);
-            _activeItems.Add(new ActiveHazardItem
-            {
-                GameObject     = go,
-                Type           = type,
-                Lane           = lane,
-                ZPos           = zPos,
-                CollectedOrHit = false
-            });
-        }
+        SetLayerRecursive(go, 0);
+        _activeItems.Add(new ActiveHazardItem {
+            GameObject = go, Type = type, Lane = lane, ZPos = zPos,
+            CurrentDirection = direction, Intensity = intensity, Visual = visual
+        });
     }
 
     // -----------------------------------------------------------------------
@@ -724,55 +766,51 @@ public class HazardDodgeMinigame : MonoBehaviour
 
     private void UpdateActiveItems(float speed, float dt)
     {
+        _nearDisturbance = 0f;
+        // Move every item first so current safety cannot depend on list order.
+        foreach (var item in _activeItems)
+        {
+            if (item.GameObject == null) continue;
+            item.ZPos -= speed * dt;
+            item.GameObject.transform.position = _stageOrigin + new Vector3((item.Lane - 1) * laneWidth, 0f, item.ZPos);
+            float near = Mathf.Clamp01(1f - Mathf.Abs(item.ZPos + 2.2f) / 7f) *
+                Mathf.Clamp01(1f - Mathf.Abs((item.Lane - 1) * laneWidth - _currentX) / laneWidth);
+            if (HazardDodgeRules.DamagesHull(item.Type)) _nearDisturbance = Mathf.Max(_nearDisturbance, near * _movementIntensity);
+            item.Visual?.Tick((item.ZPos + 2.2f) / Mathf.Max(.01f, speed), near * _movementIntensity, _conditions.Pressure);
+            if (item.Type == HazardType.DataPod) item.GameObject.transform.Rotate(Vector3.up, 120f * dt);
+        }
         for (int i = _activeItems.Count - 1; i >= 0; i--)
         {
             var item = _activeItems[i];
-            if (item == null || item.GameObject == null)
+            if (item.GameObject == null) { _activeItems.RemoveAt(i); continue; }
+            float x = (item.Lane - 1) * laneWidth;
+            float hitThreshold = Mathf.Max(1.4f, laneWidth * .38f);
+            if (!item.CollectedOrHit && HazardDodgeRules.CrossesSubmarine(item.ZPos + speed * dt, item.ZPos, -2.2f) &&
+                Mathf.Abs(_currentX - x) < hitThreshold)
             {
-                _activeItems.RemoveAt(i);
-                continue;
-            }
-
-            // Scroll item downward
-            item.ZPos -= speed * dt;
-            float xPos = (item.Lane - 1) * laneWidth;
-            item.GameObject.transform.position = _stageOrigin + new Vector3(xPos, 0f, item.ZPos);
-
-            // Animate spin/rotation
-            if (item.Type == HazardType.Whirlpool)
-                item.GameObject.transform.Rotate(Vector3.forward, 180f * dt);
-            else if (item.Type == HazardType.DataPod)
-                item.GameObject.transform.Rotate(Vector3.up, 120f * dt);
-
-            // Collision check with submarine (submarine is located at Z = -2.2f)
-            float subZ = -2.2f;
-            if (!item.CollectedOrHit && Mathf.Abs(item.ZPos - subZ) < 2.0f)
-            {
-                // Lane alignment check (scaled to laneWidth)
-                float hitThreshold = Mathf.Max(1.4f, laneWidth * 0.38f);
-                if (item.Lane == _currentLane && Mathf.Abs(_currentX - xPos) < hitThreshold)
+                item.CollectedOrHit = true;
+                if (item.Type == HazardType.DataPod)
                 {
-                    item.CollectedOrHit = true;
-
-                    if (item.Type == HazardType.DataPod)
-                    {
-                        // Collect Data Pod (+5 RDP bonus)
-                        _collectedRdp += 5;
-                        if (customPearlSFX != null && AudioManager.Instance != null)
-                            AudioManager.Instance.PlaySFX(customPearlSFX);
-                        else
-                            AudioManager.Instance?.PlayPearlCollectSFX();
-                        StartCoroutine(FlashItemCollection(item.GameObject));
-                    }
-                    else
-                    {
-                        // Hit Hazard!
-                        OnHazardHit();
-                    }
+                    _collectedRdp += 5;
+                    if (customPearlSFX != null && AudioManager.Instance != null) AudioManager.Instance.PlaySFX(customPearlSFX);
+                    else AudioManager.Instance?.PlayPearlCollectSFX();
+                    StartCoroutine(FlashItemCollection(item.GameObject));
+                }
+                else if (item.Type == HazardType.CurrentSurge)
+                {
+                    ApplyCurrentPush(item.CurrentDirection, item.Intensity, speed);
+                }
+                else if (item.Type == HazardType.SedimentCloud)
+                {
+                    _conditions.EnterSediment(item.Intensity);
+                }
+                else if (_impactCooldown <= 0f)
+                {
+                    _impactCooldown = .75f;
+                    OnHazardHit();
+                    if (_isFinished) return;
                 }
             }
-
-            // Despawn if scrolled past camera
             if (item.ZPos < -10f)
             {
                 Destroy(item.GameObject);
@@ -812,20 +850,14 @@ public class HazardDodgeMinigame : MonoBehaviour
         if (_redVignette != null)      _redVignette.color = new Color(0.85f, 0.15f, 0.12f, 0.28f);
         if (customRedVignette != null) customRedVignette.color = new Color(0.85f, 0.15f, 0.12f, 0.28f);
 
-        Vector3 origCamPos = _stageCamera != null ? _stageCamera.transform.localPosition : Vector3.zero;
+        _cameraImpact = 1f;
         float elapsed = 0f;
         while (elapsed < 0.35f)
         {
-            elapsed += Time.unscaledDeltaTime;
-            if (_stageCamera != null)
-            {
-                Vector2 shake = UnityEngine.Random.insideUnitCircle * 0.35f;
-                _stageCamera.transform.localPosition = origCamPos + new Vector3(shake.x, 0f, shake.y);
-            }
+            if (PauseMenuUI.Instance == null || !PauseMenuUI.Instance.IsPaused) elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        if (_stageCamera != null)      _stageCamera.transform.localPosition = origCamPos;
         if (_redVignette != null)      _redVignette.color = new Color(0f, 0f, 0f, 0f);
         if (customRedVignette != null) customRedVignette.color = new Color(0f, 0f, 0f, 0f);
     }
@@ -839,6 +871,11 @@ public class HazardDodgeMinigame : MonoBehaviour
         if (_isFinished) return;
         _isFinished = true;
         _isRunning  = false;
+        _conditions.Reset();
+        _atmosphere?.ClearConditions();
+        _atmosphere?.SetPaused(true);
+        UpdateHazardFeedback();
+        foreach (var item in _activeItems) if (item.Visual != null) item.Visual.SetPaused(true);
 
         if (success)
         {
@@ -883,6 +920,45 @@ public class HazardDodgeMinigame : MonoBehaviour
     // -----------------------------------------------------------------------
     // HUD & UI Updates
     // -----------------------------------------------------------------------
+
+    private void BuildHazardFeedback()
+    {
+        Transform parent = customUIRoot != null ? customUIRoot.transform : _rootUI;
+        if (parent == null) return;
+        var overlay = new GameObject("SedimentVisibility", typeof(RectTransform), typeof(Image));
+        overlay.transform.SetParent(parent, false);
+        overlay.transform.SetAsFirstSibling();
+        var rect = overlay.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.sizeDelta = Vector2.zero;
+        _sedimentOverlay = overlay.GetComponent<Image>();
+        _sedimentOverlay.raycastTarget = false;
+        _sedimentOverlay.color = Color.clear;
+    }
+
+    private void UpdateHazardFeedback()
+    {
+        if (_sedimentOverlay != null)
+            _sedimentOverlay.color = new Color(.38f,.29f,.16f,
+                _atmosphere != null && _atmosphere.SupportsScreenEffect ? 0f : _conditions.Sediment * .45f);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Test Conditions/Current - Push Right")]
+    private void TestRightCurrent() => TestCurrent(1);
+    [ContextMenu("Test Conditions/Current - Push Left")]
+    private void TestLeftCurrent() => TestCurrent(-1);
+    private void TestCurrent(int direction)
+    {
+        if (!Application.isPlaying || !_isRunning) return;
+        ApplyCurrentPush(direction, 1f, baseScrollSpeed * ZoneSpeedMults[_zoneIndex]);
+    }
+    [ContextMenu("Test Conditions/Light Sediment")]
+    private void TestLightSediment() { if (_isRunning) _conditions.EnterSediment(.5f); }
+    [ContextMenu("Test Conditions/Dense Sediment")]
+    private void TestDenseSediment() { if (_isRunning) _conditions.EnterSediment(1f); }
+#endif
 
     private void UpdateHUD()
     {
@@ -951,6 +1027,24 @@ public class HazardDodgeMinigame : MonoBehaviour
 
         _stageRoot = new GameObject("HazardDodgeStage");
         _stageRoot.transform.position = _stageOrigin;
+        _hazardAssets = Resources.Load<HazardDodgeVisualAssets>("HazardDodgeVisuals");
+        var particleSource = _hazardAssets != null ? _hazardAssets.particles : null;
+        if (particleSource == null) particleSource = Resources.Load<Material>("Materials/Hazard_Particles");
+        _hazardParticleMaterial = particleSource != null ? new Material(particleSource) : CreateUnlitMaterial(Color.white);
+        _hazardMarkerMaterial = new Material(_hazardParticleMaterial);
+        _hazardMarkerMaterial.SetTexture("_BaseMap", Texture2D.whiteTexture);
+        _hazardParticleTexture = new Texture2D(32,32,TextureFormat.RGBA32,false);
+        _hazardParticleTexture.name = "HazardSoftParticle";
+        _hazardParticleTexture.wrapMode = TextureWrapMode.Clamp;
+        _hazardParticleTexture.filterMode = FilterMode.Bilinear;
+        for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++)
+        {
+            float radius = new Vector2((x-15.5f)/15.5f,(y-15.5f)/15.5f).magnitude;
+            float alpha = Mathf.Clamp01(1f-radius);
+            _hazardParticleTexture.SetPixel(x,y,new Color(1f,1f,1f,alpha*alpha));
+        }
+        _hazardParticleTexture.Apply(false,true);
+        _hazardParticleMaterial.SetTexture("_BaseMap", _hazardParticleTexture);
 
         // 1. Direct-to-Screen Minigame Camera (Framed for lower-third submarine view with 3 equal full-screen lanes)
         var camGO = new GameObject("StageCamera", typeof(Camera));
@@ -1053,6 +1147,12 @@ public class HazardDodgeMinigame : MonoBehaviour
         {
             _submarineObj.transform.localScale = Vector3.one * submarineScaleMultiplier;
         }
+        _cameraRestPosition = _stageCamera.transform.localPosition;
+        _cameraRestRotation = _stageCamera.transform.localRotation;
+        _atmosphere = camGO.AddComponent<HazardDodgeAtmosphere>();
+        var water = _hazardAssets != null ? _hazardAssets.underwater : null;
+        if (water == null) water = Resources.Load<Material>("Materials/Hazard_Underwater");
+        _atmosphere.Initialize(water, _hazardParticleMaterial, laneWidth);
     }
 
     private void CreateLaneLine(float xOffset, Color glowCol)
@@ -1144,60 +1244,6 @@ public class HazardDodgeMinigame : MonoBehaviour
         Destroy(glow.GetComponent<Collider>());
     }
 
-    private GameObject CreateProceduralThermalVent(Vector3 worldPos)
-    {
-        var go = new GameObject("ThermalVent");
-        go.transform.position = worldPos;
-
-        // Rock Chimney Cone (Cylinder)
-        var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        cone.transform.SetParent(go.transform, false);
-        cone.transform.localScale = new Vector3(2.8f, 1.6f, 2.8f);
-        cone.GetComponent<Renderer>().material = CreateLitMaterial(new Color(0.18f, 0.12f, 0.08f));
-        Destroy(cone.GetComponent<Collider>());
-
-        // Glowing Core Plume (Sphere)
-        var plume = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        plume.transform.SetParent(go.transform, false);
-        plume.transform.localPosition = new Vector3(0f, 1.2f, 0f);
-        plume.transform.localScale = new Vector3(2.2f, 2.6f, 2.2f);
-        plume.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(1.0f, 0.35f, 0.05f, 0.90f));
-        Destroy(plume.GetComponent<Collider>());
-
-        return go;
-    }
-
-    private GameObject CreateProceduralWhirlpool(Vector3 worldPos)
-    {
-        var go = new GameObject("Whirlpool");
-        go.transform.position = worldPos;
-
-        // Outer Vortex Ring (Cylinder)
-        var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        ring.transform.SetParent(go.transform, false);
-        ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        ring.transform.localScale = new Vector3(4.2f, 0.15f, 4.2f);
-        ring.GetComponent<Renderer>().material = CreateUnlitMaterial(new Color(0.10f, 0.85f, 0.95f, 0.65f));
-        Destroy(ring.GetComponent<Collider>());
-
-        return go;
-    }
-
-    private GameObject CreateProceduralRock(Vector3 worldPos)
-    {
-        var go = new GameObject("FallingRock");
-        go.transform.position = worldPos;
-
-        // Jagged Rock Sphere
-        var rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        rock.transform.SetParent(go.transform, false);
-        rock.transform.localScale = new Vector3(2.8f, 2.4f, 2.8f);
-        rock.GetComponent<Renderer>().material = CreateLitMaterial(new Color(0.25f, 0.22f, 0.20f));
-        Destroy(rock.GetComponent<Collider>());
-
-        return go;
-    }
-
     private GameObject CreateProceduralDataPod(Vector3 worldPos)
     {
         var go = new GameObject("RarePearl");
@@ -1248,6 +1294,16 @@ public class HazardDodgeMinigame : MonoBehaviour
                 Destroy(item.GameObject);
         }
         _activeItems.Clear();
+        if (_sedimentOverlay != null) Destroy(_sedimentOverlay.gameObject);
+        _sedimentOverlay = null;
+        if (_atmosphere != null) _atmosphere.enabled = false;
+        _atmosphere = null;
+        _conditions.Reset();
+        if (_hazardParticleMaterial != null) Destroy(_hazardParticleMaterial);
+        if (_hazardMarkerMaterial != null) Destroy(_hazardMarkerMaterial);
+        if (_hazardParticleTexture != null) Destroy(_hazardParticleTexture);
+        _hazardParticleMaterial = _hazardMarkerMaterial = null;
+        _hazardParticleTexture = null;
 
         if (_stageRoot != null)
         {

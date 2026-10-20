@@ -113,17 +113,22 @@ MonoBehaviour:
   customResultsSummaryText: {fileID: 0}
   customResultsSummaryTextLegacy: {fileID: 0}
   customReturnButton: {fileID: 0}
+  debrisModelScale: 1
   customClawPrefab: {fileID: 0}
   customTrolleyPrefab: {fileID: 0}
-  prefabWaterBottle: {fileID: 0}
-  prefabPlasticBag: {fileID: 0}
-  prefabSixPackRings: {fileID: 0}
+  prefabWaterBottle: {fileID: 4675191273122846483, guid: ccf2cfc7b49cf9d40aaeb1fa65f8df58, type: 3}
+  prefabPlasticBag: {fileID: 7627272315150106599, guid: ae88efb757495af44b93b263eb25f8ab, type: 3}
+  prefabSixPackRings: {fileID: 5769400709528336228, guid: ddd2f9a8a76487544a4c3eddb57c4ca5, type: 3}
   prefabSodaCan: {fileID: 9203438958908529027, guid: 411d387d7036bea479c91073364c5797, type: 3}
   prefabMetalPipe: {fileID: 8771091787928289351, guid: 3e098483334c6f842936aa4ee7362328, type: 3}
+  prefabMetalTube: {fileID: 0}
   prefabMetalDrum: {fileID: 8610589388344194305, guid: c8cbe0e31197e7e478f6f111927eb10f, type: 3}
-  prefabBatterySmall: {fileID: 0}
-  prefabBatteryLarge: {fileID: 0}
-  prefabElectronicWaste: {fileID: 0}
+  prefabPlasticBin: {fileID: 0}
+  prefabMetalBin: {fileID: 0}
+  prefabHazardBin: {fileID: 0}
+  prefabBatterySmall: {fileID: 3142448441126184977, guid: ff4e259cc0a5f634db5e3711f75ff0a8, type: 3}
+  prefabBatteryLarge: {fileID: 3656163168319105525, guid: 5e7222606d4561343af8bc14f6ee2516, type: 3}
+  prefabElectronicWaste: {fileID: 1180929341606481810, guid: 27d36fec087e94a47807d7ecf2a01aba, type: 3}
   prefabCoralObstacle: {fileID: 592339605672025169, guid: b3ad47579ae7c5846aa83e61d2859240, type: 3}
   prefabFishObstacle: {fileID: 7950250345750191443, guid: bfaf51a9ae3fa304ea99cf1d0b7c9a89, type: 3}
   customBGM: {fileID: 0}

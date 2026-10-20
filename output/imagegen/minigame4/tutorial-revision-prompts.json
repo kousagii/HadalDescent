@@ -1,0 +1,29 @@
+{
+  "mode": "built-in image_gen",
+  "pages": [
+    {
+      "page": 1,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-fa6b2d23-25d8-41c3-8fb0-70ab13cb951b.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-1.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 1. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    },
+    {
+      "page": 2,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-c8939453-b4fb-4dda-a36c-7f161dd01a5f.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-2.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 2. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    },
+    {
+      "page": 3,
+      "refs": [
+        "C:/Users/ashle/.codex/generated_images/01a153a0-dfc6-70a0-bbdc-f7bc2bf55e82/exec-9fd7c9f2-6781-4032-a803-502ff6034671.png",
+        "C:/Unity/HadalDescent/Assets/Arts/Tutorial/Minigame 4-3.png"
+      ],
+      "prompt": "Precise image edit. First image is the edit target: the updated tutorial page 3. Second image is the ORIGINAL game tutorial design reference. Correct ONLY the blue backdrop of image 1 to match the reference's perfectly flat, uniform solid blue: RGB (31,95,125), hex #1F5F7D. Remove all gradients, texture, vignetting and lighting from the blue area outside the gameplay screenshot(s), including the inside of the numbered circular badge. This must look like a flat UI tutorial card, not a lit poster. Preserve every word and its spelling, the white hand-lettered font, all text positions and sizes, the screenshot content and proportions, black gesture/arrow graphics and numbered badge outline. Preserve the exact composition and 3:2 landscape canvas. Do not add any new text or artwork. The only intended change is a uniform flat #1F5F7D blue card background matching original reference."
+    }
+  ]
+}
