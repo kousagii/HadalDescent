@@ -87,8 +87,12 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     // Inspector: 3D Model Prefab Overrides (Leave empty to use procedural shapes)
     // -----------------------------------------------------------------------
 
+    private const float CollectionModelScale = 2f;
+    private const float MinimumDebrisVisibleSize = 1.4f;
+    private const float FishVisibleSize = 1.8f;
+
     [Header("=== 3D MODEL PREFABS (Optional) ===")]
-    [Tooltip("Global scale multiplier for 3D debris models in the minigame (1.0 = standard minigame size).")]
+    [Tooltip("Additional collection debris scale. Small items have a minimum visible size comparable to the claw.")]
     [Range(0.2f, 2.5f)]
     public float debrisModelScale = 1.0f;
 
@@ -498,7 +502,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             clawGO.name = "ClawHead";
             clawGO.transform.SetParent(_stageRoot.transform, false);
             clawGO.transform.localPosition = new Vector3(0f, _clawRestY, 0f);
-            clawGO.transform.localScale    = new Vector3(0.9f, 0.7f, 0.9f);
+            clawGO.transform.localScale    = new Vector3(1.1f, 0.85f, 1.1f);
             clawGO.GetComponent<Renderer>().material = CreateMaterial(new Color(0.35f, 0.40f, 0.48f));
             _clawHead = clawGO.transform;
 
@@ -552,11 +556,21 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         var itemsToSpawn = CleanupRoundRules.BuildManifest(_zoneIndex, plastics, metals, hazards,
             _variation, new System.Random(UnityEngine.Random.Range(0, int.MaxValue)));
         _initialDebrisCount = itemsToSpawn.Count;
-        float step = 11f / Mathf.Max(1, itemsToSpawn.Count);
         for (int i = 0; i < itemsToSpawn.Count; i++)
         {
-            float posX = -5.5f + (i + 0.5f) * step + UnityEngine.Random.Range(-step * 0.16f, step * 0.16f);
-            SpawnSingleDebris(itemsToSpawn[i], new Vector3(posX, -2.05f + UnityEngine.Random.Range(-0.12f, 0.12f), 0f));
+            SpawnSingleDebris(itemsToSpawn[i], new Vector3(0f, -2.05f, 0f));
+        }
+        // Measure the enlarged models before distributing the available seabed space.
+        var widths = new List<float>();
+        foreach (var item in _spawnedDebris) widths.Add(MeasureCollectionModel(item.worldObject).size.x);
+        float[] positions = CleanupRoundRules.CollectionPositions(widths, 6f);
+        for (int i = 0; i < _spawnedDebris.Count; i++)
+        {
+            var item = _spawnedDebris[i];
+            Vector3 position = item.worldObject.transform.localPosition;
+            position.x += positions[i] - (MeasureCollectionModel(item.worldObject).center.x - _stageRoot.transform.position.x);
+            item.worldObject.transform.localPosition = position;
+            item.restPosition = position;
         }
         _objectiveTarget = _variation == CleanupRoundRules.Variation.MixedCleanup
             ? Mathf.Max(1, Mathf.CeilToInt(_initialDebrisCount * 0.7f))
@@ -619,7 +633,10 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             // Buoyant motion stays above the resting height and within claw reach.
             Vector3 position = item.restPosition + new Vector3(Mathf.Sin(phase) * amplitude,
                 (Mathf.Sin(phase * 0.75f) + 1f) * 0.5f * rise, 0f);
-            position.x = Mathf.Clamp(position.x, -5.8f, 5.8f);
+            Bounds bounds = GetDebrisBounds(item);
+            float centerOffset = bounds.center.x - item.worldObject.transform.position.x;
+            float edge = Mathf.Max(0f, 6f - bounds.extents.x);
+            position.x = Mathf.Clamp(position.x + centerOffset, -edge, edge) - centerOffset;
             item.worldObject.transform.localPosition = position;
         }
     }
@@ -639,8 +656,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.2f, 0.75f, 1.0f, 0.9f);
                 isCustom = prefabWaterBottle != null;
                 go = isCustom ? Instantiate(prefabWaterBottle, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                if (!isCustom) go.transform.localScale = new Vector3(0.40f, 0.65f, 0.40f);
-                targetDim = 0.65f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.30f, 0.50f, 0.30f);
+                targetDim = 0.50f;
                 break;
 
             case DebrisItemType.PlasticBag:
@@ -649,8 +666,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.92f, 0.92f, 0.98f, 0.85f);
                 isCustom = prefabPlasticBag != null;
                 go = isCustom ? Instantiate(prefabPlasticBag, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cube);
-                if (!isCustom) go.transform.localScale = new Vector3(0.65f, 0.55f, 0.20f);
-                targetDim = 0.60f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.55f, 0.48f, 0.18f);
+                targetDim = 0.55f;
                 break;
 
             case DebrisItemType.SixPackRings:
@@ -659,8 +676,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.65f, 0.88f, 1.0f, 0.85f);
                 isCustom = prefabSixPackRings != null;
                 go = isCustom ? Instantiate(prefabSixPackRings, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                if (!isCustom) go.transform.localScale = new Vector3(0.75f, 0.10f, 0.55f);
-                targetDim = 0.55f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.48f, 0.08f, 0.36f);
+                targetDim = 0.48f;
                 break;
 
             case DebrisItemType.SodaCan:
@@ -669,8 +686,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.90f, 0.18f, 0.18f);
                 isCustom = prefabSodaCan != null;
                 go = isCustom ? Instantiate(prefabSodaCan, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                if (!isCustom) go.transform.localScale = new Vector3(0.45f, 0.50f, 0.45f);
-                targetDim = 0.55f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.32f, 0.40f, 0.32f);
+                targetDim = 0.40f;
                 break;
 
             case DebrisItemType.MetalPipe:
@@ -683,10 +700,10 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 go = isCustom ? Instantiate(pipePrefab, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 if (!isCustom)
                 {
-                    go.transform.localScale = new Vector3(0.45f, 0.95f, 0.45f);
+                    go.transform.localScale = new Vector3(0.50f, 1.15f, 0.50f);
                     go.transform.localRotation = Quaternion.Euler(0f, 0f, 75f);
                 }
-                targetDim = 0.85f;
+                targetDim = 1.15f;
                 break;
 
             case DebrisItemType.MetalDrum:
@@ -695,8 +712,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.40f, 0.32f, 0.24f);
                 isCustom = prefabMetalDrum != null;
                 go = isCustom ? Instantiate(prefabMetalDrum, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                if (!isCustom) go.transform.localScale = new Vector3(0.75f, 0.85f, 0.75f);
-                targetDim = 0.95f;
+                if (!isCustom) go.transform.localScale = new Vector3(1.05f, 1.40f, 1.05f);
+                targetDim = 1.40f;
                 break;
 
             case DebrisItemType.BatterySmall:
@@ -705,8 +722,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(1.0f, 0.85f, 0.1f);
                 isCustom = prefabBatterySmall != null;
                 go = isCustom ? Instantiate(prefabBatterySmall, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                if (!isCustom) go.transform.localScale = new Vector3(0.30f, 0.45f, 0.30f);
-                targetDim = 0.45f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.24f, 0.35f, 0.24f);
+                targetDim = 0.25f;
                 break;
 
             case DebrisItemType.BatteryLarge:
@@ -715,8 +732,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.2f, 0.85f, 0.35f);
                 isCustom = prefabBatteryLarge != null;
                 go = isCustom ? Instantiate(prefabBatteryLarge, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cube);
-                if (!isCustom) go.transform.localScale = new Vector3(0.75f, 0.65f, 0.55f);
-                targetDim = 0.70f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.95f, 0.78f, 0.68f);
+                targetDim = 0.95f;
                 break;
 
             case DebrisItemType.ElectronicWaste:
@@ -725,8 +742,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                 deb.itemColor = new Color(0.12f, 0.65f, 0.25f);
                 isCustom = prefabElectronicWaste != null;
                 go = isCustom ? Instantiate(prefabElectronicWaste, _stageRoot.transform) : GameObject.CreatePrimitive(PrimitiveType.Cube);
-                if (!isCustom) go.transform.localScale = new Vector3(0.70f, 0.12f, 0.60f);
-                targetDim = 0.65f;
+                if (!isCustom) go.transform.localScale = new Vector3(0.55f, 0.10f, 0.48f);
+                targetDim = 0.55f;
                 break;
         }
 
@@ -736,12 +753,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             go.transform.SetParent(_stageRoot.transform, false);
             go.transform.localPosition = localPos;
 
-            if (isCustom)
-            {
-                // Normalize, scale, and ground custom 3D model
-                NormalizeCustomModel(go, targetDim, localPos);
-            }
-            else
+            if (!isCustom)
             {
                 // Procedural primitive fallback
                 var rend = go.GetComponentInChildren<Renderer>();
@@ -750,6 +762,8 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
                     rend.material = CreateMaterial(deb.itemColor);
                 }
             }
+            float minimumVisibleSize = type == DebrisItemType.BatterySmall ? 0.5f : MinimumDebrisVisibleSize;
+            NormalizeCollectionDebris(go, targetDim, localPos, minimumVisibleSize);
 
             deb.worldObject = go;
             deb.restPosition = go.transform.localPosition;
@@ -758,53 +772,41 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
         }
     }
 
-    private void NormalizeCustomModel(GameObject go, float targetMaxDim, Vector3 targetLocalPos)
+    private void NormalizeCollectionDebris(GameObject go, float targetMaxDim, Vector3 targetLocalPos,
+        float minimumVisibleSize)
     {
         if (go == null) return;
 
-        // Reset any stray offsets on direct children (e.g. from scene drag before saving as prefab)
-        for (int i = 0; i < go.transform.childCount; i++)
-        {
-            var child = go.transform.GetChild(i);
-            if (Mathf.Abs(child.localPosition.z) > 0.5f || Mathf.Abs(child.localPosition.x) > 0.5f || Mathf.Abs(child.localPosition.y) > 0.5f)
-            {
-                child.localPosition = Vector3.zero;
-            }
-        }
-
-        var rends = go.GetComponentsInChildren<Renderer>();
-        if (rends == null || rends.Length == 0) return;
-
-        // 1. Calculate overall bounding box of the model
-        Bounds b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++)
-        {
-            if (rends[i] != null) b.Encapsulate(rends[i].bounds);
-        }
-
-        // 2. Uniform scale so the maximum dimension matches the desired size
-        float maxDim = Mathf.Max(b.size.x, b.size.y, b.size.z);
+        // Size the silhouette seen by the collection camera, rather than hidden model depth.
+        // Measure geometry directly so spawn-time scaling does not depend on cached renderer bounds.
+        Bounds bounds = MeasureCollectionModel(go);
+        float maxDim = Mathf.Max(bounds.size.x, bounds.size.y);
         if (maxDim > 0.001f)
         {
-            float desiredDim = targetMaxDim * debrisModelScale;
+            float desiredDim = Mathf.Max(minimumVisibleSize, targetMaxDim * CollectionModelScale)
+                * debrisModelScale;
             float scaleMultiplier = desiredDim / maxDim;
             go.transform.localScale = go.transform.localScale * scaleMultiplier;
         }
 
-        // 3. Re-measure bounds after scaling
-        Bounds postBounds = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++)
-        {
-            if (rends[i] != null) postBounds.Encapsulate(rends[i].bounds);
-        }
-
-        // 4. Align bottom flush with the seabed floor (-2.60f) and center at targetLocalPos in X and Z
+        Bounds postBounds = MeasureCollectionModel(go);
+        // Ground both imported and fallback models without changing their internal mesh offsets.
         float floorWorldY = _stageRoot.transform.position.y - 2.60f;
         float yCorrection = floorWorldY - postBounds.min.y;
         float xCorrection = (_stageRoot.transform.position.x + targetLocalPos.x) - postBounds.center.x;
         float zCorrection = (_stageRoot.transform.position.z + 0f) - postBounds.center.z;
 
         go.transform.position += new Vector3(xCorrection, yCorrection, zCorrection);
+    }
+
+    private static Bounds MeasureCollectionModel(GameObject model)
+    {
+        if (CreatureGeometry.TryMeasure(model.transform, model.transform.rotation, out Bounds bounds))
+        {
+            bounds.center += model.transform.position;
+            return bounds;
+        }
+        return GetModelBounds(model);
     }
 
     private void SpawnObstacles()
@@ -832,16 +834,20 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
         for (int i = 0; i < 2; i++)
         {
-            GameObject fishGO = prefabFishObstacle != null 
-                ? Instantiate(prefabFishObstacle, _stageRoot.transform) 
-                : CreateProceduralFish();
-
-            fishGO.name = $"Obstacle_Fish_{i}";
+            // Keep the swimming path on a centered root; imported mesh pivots may be offset.
+            var fishGO = new GameObject($"Obstacle_Fish_{i}");
             fishGO.transform.SetParent(_stageRoot.transform, false);
             float fy = i == 0 ? 0.6f : -0.7f;
             float fx = i == 0 ? -6.5f : 6.5f;
             fishGO.transform.localPosition = new Vector3(fx, fy, 0f);
-            fishGO.transform.localScale    = Vector3.one * 1.4f;
+            fishGO.transform.localRotation = Quaternion.Euler(0f, i == 0 ? -90f : 90f, 0f);
+            GameObject fishModel = prefabFishObstacle != null
+                ? Instantiate(prefabFishObstacle, fishGO.transform)
+                : CreateProceduralFish();
+            fishModel.transform.SetParent(fishGO.transform, false);
+            fishModel.transform.localPosition = Vector3.zero;
+            fishModel.transform.localRotation = Quaternion.identity;
+            NormalizeFishScale(fishModel, FishVisibleSize);
 
             // Lock all physics constraints so claw hits cannot displace fish forward or backward in Z
             foreach (var col in fishGO.GetComponentsInChildren<Collider>())
@@ -856,6 +862,20 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
             StartCoroutine(FishSwimRoutine(fishGO, i == 0 ? 1f : -1f, fy));
             _spawnedObstacles.Add(fishGO);
+        }
+    }
+
+    private static void NormalizeFishScale(GameObject fishGO, float targetMaxDim)
+    {
+        if (fishGO == null) return;
+        fishGO.transform.localScale = Vector3.one;
+        Vector3 center = fishGO.transform.position;
+        Bounds bounds = MeasureCollectionModel(fishGO);
+        float maxDim = Mathf.Max(bounds.size.x, bounds.size.y);
+        if (maxDim > 0.001f)
+        {
+            fishGO.transform.localScale = Vector3.one * (targetMaxDim / maxDim);
+            fishGO.transform.position += center - MeasureCollectionModel(fishGO).center;
         }
     }
 
@@ -1450,15 +1470,14 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
     {
         Vector3 clawPos = _clawHead != null ? _clawHead.position : Vector3.zero;
         DebrisInstance nearest = null;
-        float nearestDistance = 1.15f;
+        float nearestDistance = 0.45f * 0.45f;
         for (int i = 0; i < _spawnedDebris.Count; i++)
         {
             var deb = _spawnedDebris[i];
             if (deb.worldObject == null || deb.isFalling) continue;
-            Vector3 itemCenter = DebrisCenter(deb);
-            float dx = clawPos.x - itemCenter.x;
-            float dy = clawPos.y - itemCenter.y;
-            float dist = Mathf.Sqrt(dx * dx + dy * dy);
+            Bounds bounds = GetDebrisBounds(deb);
+            float dist = CleanupRoundRules.DistanceToDebrisSquared(clawPos.x, clawPos.y,
+                bounds.center.x, bounds.center.y, bounds.extents.x, bounds.extents.y);
             if (dist < nearestDistance)
             {
                 nearest = deb;
@@ -1475,8 +1494,13 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private static Bounds GetDebrisBounds(DebrisInstance item)
     {
-        var renderers = item.worldObject.GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) return new Bounds(item.worldObject.transform.position, Vector3.zero);
+        return GetModelBounds(item.worldObject);
+    }
+
+    private static Bounds GetModelBounds(GameObject model)
+    {
+        var renderers = model.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return new Bounds(model.transform.position, Vector3.zero);
         Bounds bounds = renderers[0].bounds;
         for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
         return bounds;
@@ -1484,7 +1508,7 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
 
     private bool CheckObstacleCollision()
     {
-        Vector3 clawPos = _clawHead != null ? _clawHead.localPosition : Vector3.zero;
+        Vector3 clawPos = _clawHead != null ? _clawHead.position : Vector3.zero;
         Bounds? cargoBounds = _grabbedItem != null && _grabbedItem.worldObject != null
             ? GetDebrisBounds(_grabbedItem) : (Bounds?)null;
         foreach (var obs in _spawnedObstacles)
@@ -1493,19 +1517,22 @@ public class EnvironmentalCleanupMinigame : MonoBehaviour
             // Only swimming live species (fish) trigger eco disturbance
             if (!obs.name.StartsWith("Obstacle_Fish", StringComparison.OrdinalIgnoreCase)) continue;
 
-            Vector3 obsPos = obs.transform.localPosition;
-            // Tight, fair bounding box for swimming live species
-            if (CleanupRoundRules.TouchesFish(clawPos.x, clawPos.y, 0f, 0f, obsPos.x, obsPos.y))
+            Bounds fishBounds = GetModelBounds(obs);
+            Vector3 fishPos = fishBounds.center;
+            // Follow the larger fish while excluding empty corners around its fins.
+            float fishHalfWidth = fishBounds.extents.x * 0.85f;
+            float fishHalfHeight = fishBounds.extents.y * 0.85f;
+            if (CleanupRoundRules.TouchesFish(clawPos.x, clawPos.y, 0f, 0f,
+                fishPos.x, fishPos.y, fishHalfWidth, fishHalfHeight))
             {
                 return true;
             }
             if (cargoBounds.HasValue)
             {
                 Bounds cargo = cargoBounds.Value;
-                Vector3 fishPos = _stageRoot.transform.TransformPoint(obsPos);
                 // This stage is 2.5D: compare X/Y while ignoring model depth offsets.
                 if (CleanupRoundRules.TouchesFish(cargo.center.x, cargo.center.y, cargo.extents.x,
-                    cargo.extents.y, fishPos.x, fishPos.y))
+                    cargo.extents.y, fishPos.x, fishPos.y, fishHalfWidth, fishHalfHeight))
                     return true;
             }
         }

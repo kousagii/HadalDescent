@@ -109,3 +109,14 @@ InitTestScene*.unity*
 # Unity crash recovery auto-generated files
 /[Aa]ssets/_Recovery/
 /[Aa]ssets/_Recovery.meta
+
+# Output, temporary folders and documentation/render files
+[Oo]utput/
+[Tt]mp/
+[Ss]cratch/
+[Tt]ests/
+*.pdf
+*.pdf.meta
+*.md
+*.md.meta
+

@@ -31,7 +31,7 @@ MonoBehaviour:
   preferredBiome: 1
   minDepthFraction: 0.35
   maxDepthFraction: 0.65
-  instanceCount: 3
+  instanceCount: 5
   wanderRadius: 0.0
   moveSpeed: 0.0
   fleeSpeed: 0

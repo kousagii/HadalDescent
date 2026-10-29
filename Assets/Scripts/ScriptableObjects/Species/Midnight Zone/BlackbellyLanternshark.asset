@@ -32,7 +32,7 @@ MonoBehaviour:
   preferredBiome: 3
   minDepthFraction: 0
   maxDepthFraction: 0.3
-  instanceCount: 3
+  instanceCount: 4
   wanderRadius: 40
   moveSpeed: 3.2
   fleeSpeed: 5.76
@@ -46,8 +46,10 @@ MonoBehaviour:
   undulationFrequency: 2
   undulationAmplitude: 12
   benthicSurfaceOffset: 0.4
+  groundContactClearance: 0.01
+  benthicSupportPoints: []
   minCruiseSpeedFraction: 0
-  modelPrefab: {fileID: 0}
+  modelPrefab: {fileID: 2126117618671380107, guid: 439bf98ad78bfee42bccf67209940e85, type: 3}
   modelYawOffset: 0
   previewScaleMultiplier: 1
   enableScaleVariation: 1

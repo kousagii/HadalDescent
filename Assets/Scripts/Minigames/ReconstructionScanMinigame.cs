@@ -7,7 +7,7 @@ using TMPro;
 /// <summary>
 /// Minigame 2 � Reconstruction Scan (sliding tile puzzle).
 ///
-/// Grid sizes: 3x3 for Sunlight/Twilight, 4x4 for Midnight/Abyss/Hadal.
+/// Grid sizes: 3x3 for Sunlight/Twilight/Midnight, 4x4 for Abyss/Hadal.
 /// Tiles: numbered placeholders (1..N-1 + empty) until species photos are added.
 /// When speciesData.photo != null, each tile shows a sprite slice of the photo.
 ///
@@ -25,8 +25,8 @@ public class ReconstructionScanMinigame : MonoBehaviour
     // Difficulty tables (indexed by zoneIndex 0�4)
     // -----------------------------------------------------------------------
 
-    private static readonly int[]   GridSizes = { 3, 3, 4, 4, 4 };
-    private static readonly float[] Timers    = { 60f, 50f, 60f, 50f, 40f };
+    private static readonly int[]   GridSizes = { 3, 3, 3, 4, 4 };
+    private static readonly float[] Timers    = { 60f, 60f, 60f, 60f, 60f };
     private static readonly float[] HintAt    = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f }; // fraction of timer
 
     // -----------------------------------------------------------------------

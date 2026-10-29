@@ -61,11 +61,34 @@ public static class CleanupRoundRules
 
     public static float SortingSeconds(int count) => count <= 0 ? 0f : PhaseDurationSeconds;
 
-    public static bool TouchesFish(float centerX, float centerY, float halfWidth, float halfHeight,
-        float fishX, float fishY)
+    public static float[] CollectionPositions(IReadOnlyList<float> widths, float halfSpan)
     {
-        return Math.Abs(centerX - fishX) < halfWidth + 0.55f &&
-            Math.Abs(centerY - fishY) < halfHeight + 0.38f;
+        var positions = new float[widths.Count];
+        if (widths.Count <= 1) return positions;
+        float requiredSpan = 0f;
+        for (int i = 1; i < widths.Count; i++)
+            requiredSpan += (widths[i - 1] + widths[i]) * 0.5f + 0.18f;
+        float availableSpan = Math.Max(0f, halfSpan * 2f - (widths[0] + widths[widths.Count - 1]) * 0.5f);
+        float spacing = requiredSpan > 0f ? availableSpan / requiredSpan : 0f;
+        positions[0] = -halfSpan + widths[0] * 0.5f;
+        for (int i = 1; i < widths.Count; i++)
+            positions[i] = positions[i - 1] + ((widths[i - 1] + widths[i]) * 0.5f + 0.18f) * spacing;
+        return positions;
+    }
+
+    public static float DistanceToDebrisSquared(float clawX, float clawY,
+        float centerX, float centerY, float halfWidth, float halfHeight)
+    {
+        float dx = Math.Max(0f, Math.Abs(clawX - centerX) - halfWidth);
+        float dy = Math.Max(0f, Math.Abs(clawY - centerY) - halfHeight);
+        return dx * dx + dy * dy;
+    }
+
+    public static bool TouchesFish(float centerX, float centerY, float halfWidth, float halfHeight,
+        float fishX, float fishY, float fishHalfWidth = 0.36f, float fishHalfHeight = 0.25f)
+    {
+        return Math.Abs(centerX - fishX) < halfWidth + fishHalfWidth &&
+            Math.Abs(centerY - fishY) < halfHeight + fishHalfHeight;
     }
 
     public sealed class SortingScore
