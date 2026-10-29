@@ -1,5 +1,0 @@
-System.NullReferenceException: Object reference not set to an instance of an object
-  at UIManager.CreateMinigamePauseButton (UnityEngine.Transform parentTransform) [0x002a1] in C:\Unity\HadalDescent\Assets\Scripts\UI\UIManager.cs:1851 
-  at HazardDodgeMinigame.BuildUI () [0x00724] in C:\Unity\HadalDescent\Assets\Scripts\Minigames\HazardDodgeMinigame.cs:1505 
-  at HazardDodgeMinigame.Show () [0x0016b] in C:\Unity\HadalDescent\Assets\Scripts\Minigames\HazardDodgeMinigame.cs:363 
-  at HazardDodgeTutorialCapture.Begin () [0x000c8] in C:\Unity\HadalDescent\Assets\Scripts\Editor\HazardDodgeTutorialCapture.cs:80 
