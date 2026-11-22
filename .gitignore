@@ -119,4 +119,5 @@ InitTestScene*.unity*
 *.pdf.meta
 *.md
 *.md.meta
+!/README.md
 
